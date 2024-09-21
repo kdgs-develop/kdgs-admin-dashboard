@@ -53,7 +53,7 @@ export function ObituariesTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Reference</TableHead>
+              <TableHead>File Number</TableHead>
               <TableHead>Surname</TableHead>
               <TableHead>Given Names</TableHead>
               <TableHead>Death Date</TableHead>
