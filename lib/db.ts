@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -10,14 +10,21 @@ export async function getObituaries(
   newOffset: number | null;
   totalObituaries: number;
 }> {
-  const where = search ? { surname: { contains: search, mode: 'insensitive' } } : {};
+  const where: Prisma.ObituaryWhereInput = search
+    ? {
+        surname: {
+          contains: search,
+          mode: Prisma.QueryMode.insensitive,
+        },
+      }
+    : {};
 
   const [obituaries, totalObituaries] = await Promise.all([
     prisma.obituary.findMany({
       where,
       take: 5,
       skip: offset,
-      orderBy: { id: 'asc' },
+      orderBy: { reference: 'asc' },
     }),
     prisma.obituary.count({ where }),
   ]);
