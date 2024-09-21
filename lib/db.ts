@@ -2,37 +2,37 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function getProducts(
+export async function getObituaries(
   search: string,
   offset: number
 ): Promise<{
-  products: Product[];
+  obituaries: Obituary[];
   newOffset: number | null;
-  totalProducts: number;
+  totalObituaries: number;
 }> {
-  const where = search ? { name: { contains: search, mode: 'insensitive' } } : {};
+  const where = search ? { surname: { contains: search, mode: 'insensitive' } } : {};
 
-  const [products, totalProducts] = await Promise.all([
-    prisma.product.findMany({
+  const [obituaries, totalObituaries] = await Promise.all([
+    prisma.obituary.findMany({
       where,
       take: 5,
       skip: offset,
       orderBy: { id: 'asc' },
     }),
-    prisma.product.count({ where }),
+    prisma.obituary.count({ where }),
   ]);
 
-  const newOffset = products.length === 5 ? offset + 5 : null;
+  const newOffset = obituaries.length === 5 ? offset + 5 : null;
 
   return {
-    products,
+    obituaries,
     newOffset,
-    totalProducts,
+    totalObituaries,
   };
 }
 
-export async function deleteProductById(id: number) {
-  await prisma.product.delete({ where: { id } });
+export async function deleteObituaryById(id: number) {
+  await prisma.obituary.delete({ where: { id } });
 }
 
-export type Product = Awaited<ReturnType<typeof prisma.product.findUnique>>;
+export type Obituary = Awaited<ReturnType<typeof prisma.obituary.findUnique>>;
