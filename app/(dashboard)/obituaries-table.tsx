@@ -26,7 +26,7 @@ export function ObituariesTable({
   offset,
   totalObituaries
 }: {
-  obituaries: ObituaryType[];
+  obituaries: (ObituaryType | null)[];
   offset: number;
   totalObituaries: number;
 }) {
@@ -65,7 +65,7 @@ export function ObituariesTable({
           </TableHeader>
           <TableBody>
             {obituaries.map((obituary) => (
-              <Obituary key={obituary.id} obituary={obituary} />
+              obituary && <Obituary key={obituary.id} obituary={obituary} />
             ))}
           </TableBody>
         </Table>

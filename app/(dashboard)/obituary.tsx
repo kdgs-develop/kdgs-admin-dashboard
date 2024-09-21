@@ -12,13 +12,13 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import { Obituary as ObituaryType } from '@/lib/db';
 import { deleteObituaryById } from '@/lib/db';
 
-export function Obituary({ obituary }: { obituary: ObituaryType }) {
+export function Obituary({ obituary }: { obituary: NonNullable<ObituaryType> }) {
   return (
     <TableRow>
       <TableCell>{obituary.reference}</TableCell>
-      <TableCell>{obituary.surname}</TableCell>
-      <TableCell>{obituary.givenNames}</TableCell>
-      <TableCell>{obituary.deathDate?.toLocaleDateString()}</TableCell>
+      <TableCell>{obituary.surname ?? 'N/A'}</TableCell>
+      <TableCell>{obituary.givenNames ?? 'N/A'}</TableCell>
+      <TableCell>{obituary.deathDate?.toLocaleDateString() ?? 'N/A'}</TableCell>
       <TableCell>
         <Badge variant={obituary.proofread ? "default" : "secondary"}>
           {obituary.proofread ? "Proofread" : "Not Proofread"}
