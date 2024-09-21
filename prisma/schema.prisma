@@ -1,24 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL_WIN_SERVER")
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL_WIN_SERVER")
 }
 
-model Product {
-  id          Int      @id @default(autoincrement())
-  imageUrl    String
-  name        String
-  status      Status
-  price       Decimal  @db.Decimal(10, 2)
-  stock       Int
-  availableAt DateTime
+model Genealogist {
+  id           Int          @id @default(autoincrement())
+  fullName     String?
+  phone        String?
+  lastAccessAt DateTime?
+  accessTimes  AccessTime[]
+  clerkId      String       @unique
+  role         Role?        @default(INDEXER)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime?    @updatedAt
 }
 
-enum Status {
-  active
-  inactive
-  archived
+model AccessTime {
+  id            Int          @id @default(autoincrement())
+  genealogist   Genealogist? @relation(fields: [genealogistId], references: [id])
+  genealogistId Int?         @db.SmallInt
+  loginAt       DateTime?
+  logoutAt      DateTime?
+}
+
+model Obituary {
+  id             Int           @id @default(autoincrement())
+  reference      String        @unique @db.Char(8)
+  surname        String?
+  title          Title?        @relation(fields: [titleId], references: [id])
+  titleId        Int?          @db.SmallInt
+  givenNames     String?
+  maidenName     String?
+  alsoKnownAs    AlsoKnownAs[]
+  birthDate      DateTime?     @db.Date
+  birthCity      City?         @relation("birthCityId", fields: [birthCityId], references: [id])
+  birthCityId    Int?          @db.SmallInt
+  deathDate      DateTime?     @db.Date
+  deathCity      City?         @relation("deathCityId", fields: [deathCityId], references: [id])
+  deathCityId    Int?          @db.SmallInt
+  burialCemetery String?
+  cemetery       Cemetery?     @relation(fields: [cemeteryId], references: [id])
+  cemeteryId     Int?          @db.SmallInt
+  place          String?
+  periodical     Periodical?   @relation(fields: [periodicalId], references: [id])
+  periodicalId   Int?          @db.SmallInt
+  publishDate    DateTime?     @db.Date
+  page           String?       @db.VarChar(8)
+  column         String?       @db.VarChar(8)
+  notes          String?
+  proofread      Boolean       @default(false)
+  proofreadDate  DateTime?     @db.Date
+  proofreadBy    String?
+  enteredBy      String?
+  enteredOn      DateTime?     @default(now())
+  editedBy       String?
+  editedOn       DateTime?     @updatedAt
+  fileBox        FileBox?      @relation(fields: [fileBoxId], references: [id])
+  fileBoxId      Int?          @db.SmallInt
+  relatives      Relative[]
+
+  // @@index([surname, givenNames])
+}
+
+model Relative {
+  id           Int       @id @default(autoincrement())
+  Obituary     Obituary? @relation(fields: [obituaryId], references: [id])
+  obituaryId   Int
+  surname      String?
+  givenNames   String?
+  relationship String?
+  predeceased  Boolean   @default(false)
+}
+
+model AlsoKnownAs {
+  id         Int      @id @default(autoincrement())
+  obituaryId Int
+  surname    String?
+  otherNames String?
+  Obituary   Obituary @relation(fields: [obituaryId], references: [id])
+}
+
+model City {
+  id                     Int        @id @default(autoincrement())
+  name                   String?
+  province               String?
+  country                Country?   @relation(fields: [countryId], references: [id])
+  countryId              Int?
+  obituaries_birthCityId Obituary[] @relation("birthCityId")
+  obituaries_deathCityId Obituary[] @relation("deathCityId")
+  cemeteries             Cemetery[]
+}
+
+model Country {
+  id     Int    @id @default(autoincrement())
+  name   String
+  cities City[]
+}
+
+model Cemetery {
+  id         Int        @id @default(autoincrement())
+  name       String?
+  city       City?      @relation(fields: [cityId], references: [id])
+  cityId     Int?       @db.SmallInt
+  obituaries Obituary[]
+}
+
+model Periodical {
+  id         Int        @id @default(autoincrement())
+  name       String?
+  obituaries Obituary[]
+}
+
+model Title {
+  id         Int        @id @default(autoincrement())
+  name       String?
+  obituaries Obituary[]
+}
+
+model FileBox {
+  id         Int        @id @default(autoincrement())
+  year       Int        @db.SmallInt
+  number     Int        @db.SmallInt
+  obituaries Obituary[]
+}
+
+enum Role {
+  VIEWER
+  SCANNER
+  INDEXER
+  PROOFREADER
+  ADMIN
 }
