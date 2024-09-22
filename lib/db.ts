@@ -12,10 +12,26 @@ export async function getObituaries(
 }> {
   const where: Prisma.ObituaryWhereInput = search
     ? {
-        surname: {
-          contains: search,
-          mode: Prisma.QueryMode.insensitive,
-        },
+        OR: [
+          {
+            surname: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          },
+          {
+            givenNames: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          },
+          {
+            reference: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          },
+        ],
       }
     : {};
 
