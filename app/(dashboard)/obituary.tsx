@@ -1,4 +1,6 @@
-import { useState } from 'react';
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,11 +15,17 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import { Obituary as ObituaryType } from '@/lib/db';
 import { deleteObituaryById } from '@/lib/db';
 import { EditObituaryDialog } from './edit-obituary-dialog';
+import { getEditObituaryDialogData } from './actions';
 
 export function Obituary({ obituary }: { obituary: NonNullable<ObituaryType> }) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [dialogData, setDialogData] = useState<Awaited<ReturnType<typeof getEditObituaryDialogData>> | null>(null);
 
-  const handleEditClick = () => {
+  const handleEditClick = async () => {
+    if (!dialogData) {
+      const data = await getEditObituaryDialogData();
+      setDialogData(data);
+    }
     setIsEditDialogOpen(true);
   };
 
@@ -26,8 +34,6 @@ export function Obituary({ obituary }: { obituary: NonNullable<ObituaryType> }) 
   };
 
   const handleSave = (updatedObituary: ObituaryType) => {
-    // Handle the updated obituary data here
-    // You might want to update the local state or trigger a refetch of the data
     console.log('Obituary updated:', updatedObituary);
   };
 
@@ -63,12 +69,15 @@ export function Obituary({ obituary }: { obituary: NonNullable<ObituaryType> }) 
           </DropdownMenu>
         </TableCell>
       </TableRow>
-      <EditObituaryDialog
-        obituary={obituary}
-        isOpen={isEditDialogOpen}
-        onClose={handleDialogClose}
-        onSave={handleSave}
-      />
+      {dialogData && (
+        <EditObituaryDialog
+          obituary={obituary}
+          isOpen={isEditDialogOpen}
+          onClose={handleDialogClose}
+          onSave={handleSave}
+          {...dialogData}
+        />
+      )}
     </>
   );
 }
