@@ -16,9 +16,11 @@ import { Obituary as ObituaryType } from '@/lib/db';
 import { deleteObituaryById } from '@/lib/db';
 import { EditObituaryDialog } from './edit-obituary-dialog';
 import { getEditObituaryDialogData } from './actions';
+import { DeleteConfirmationDialog } from './DeleteConfirmationDialog';
 
 export function Obituary({ obituary }: { obituary: NonNullable<ObituaryType> }) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<Awaited<ReturnType<typeof getEditObituaryDialogData>> | null>(null);
 
   const handleEditClick = async () => {
@@ -35,6 +37,15 @@ export function Obituary({ obituary }: { obituary: NonNullable<ObituaryType> }) 
 
   const handleSave = (updatedObituary: ObituaryType) => {
     console.log('Obituary updated:', updatedObituary);
+  };
+
+  const handleDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    await deleteObituaryById(obituary.id);
+    setIsDeleteDialogOpen(false);
   };
 
   return (
@@ -60,11 +71,7 @@ export function Obituary({ obituary }: { obituary: NonNullable<ObituaryType> }) 
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem onSelect={handleEditClick}>Edit</DropdownMenuItem>
-              <DropdownMenuItem>
-                <form action={deleteObituaryById.bind(null, obituary.id)}>
-                  <button type="submit">Delete</button>
-                </form>
-              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={handleDeleteClick}>Delete</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </TableCell>
@@ -78,6 +85,11 @@ export function Obituary({ obituary }: { obituary: NonNullable<ObituaryType> }) 
           {...dialogData}
         />
       )}
+      <DeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteConfirm}
+      />
     </>
   );
 }
