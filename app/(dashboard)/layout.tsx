@@ -1,13 +1,10 @@
 import Link from 'next/link';
 import {
   Home,
-  LineChart,
-  Package,
-  Package2,
-  PanelLeft,
+  Image,
   Settings,
-  ShoppingCart,
-  Users2
+  PanelLeft,
+  Package2
 } from 'lucide-react';
 
 import {
@@ -63,46 +60,24 @@ function DesktopNav() {
     <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
       <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
         <Link
-          href="https://vercel.com/templates/next.js/admin-dashboard-tailwind-postgres-react-nextjs"
+          href="/"
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
           <VercelLogo className="h-3 w-3 transition-all group-hover:scale-110" />
-          <span className="sr-only">Acme Inc</span>
+          <span className="sr-only">Obituary Dashboard</span>
         </Link>
 
-        <NavItem href="#" label="Dashboard">
+        <NavItem href="/" label="Obituaries">
           <Home className="h-5 w-5" />
         </NavItem>
 
-        <NavItem href="#" label="Orders">
-          <ShoppingCart className="h-5 w-5" />
+        <NavItem href="/images" label="Obituary Images">
+          <Image className="h-5 w-5" />
         </NavItem>
 
-        <NavItem href="/" label="Products">
-          <Package className="h-5 w-5" />
+        <NavItem href="/setup" label="Setup">
+          <Settings className="h-5 w-5" />
         </NavItem>
-
-        <NavItem href="/customers" label="Customers">
-          <Users2 className="h-5 w-5" />
-        </NavItem>
-
-        <NavItem href="#" label="Analytics">
-          <LineChart className="h-5 w-5" />
-        </NavItem>
-      </nav>
-      <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link
-              href="#"
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-            >
-              <Settings className="h-5 w-5" />
-              <span className="sr-only">Settings</span>
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="right">Settings</TooltipContent>
-        </Tooltip>
       </nav>
     </aside>
   );
@@ -120,46 +95,32 @@ function MobileNav() {
       <SheetContent side="left" className="sm:max-w-xs">
         <nav className="grid gap-6 text-lg font-medium">
           <Link
-            href="#"
+            href="/"
             className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
           >
             <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
-            <span className="sr-only">Vercel</span>
+            <span className="sr-only">Obituary Dashboard</span>
           </Link>
           <Link
-            href="#"
-            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-          >
-            <Home className="h-5 w-5" />
-            Dashboard
-          </Link>
-          <Link
-            href="#"
-            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            Orders
-          </Link>
-          <Link
-            href="#"
+            href="/"
             className="flex items-center gap-4 px-2.5 text-foreground"
           >
-            <Package className="h-5 w-5" />
-            Products
+            <Home className="h-5 w-5" />
+            Obituaries
           </Link>
           <Link
-            href="#"
+            href="/images"
             className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
           >
-            <Users2 className="h-5 w-5" />
-            Customers
+            <Image className="h-5 w-5" />
+            Obituary Images
           </Link>
           <Link
-            href="#"
+            href="/setup"
             className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
           >
-            <LineChart className="h-5 w-5" />
-            Settings
+            <Settings className="h-5 w-5" />
+            Setup
           </Link>
         </nav>
       </SheetContent>
@@ -173,18 +134,12 @@ function DashboardBreadcrumb() {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link href="#">Dashboard</Link>
+            <Link href="/">Dashboard</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link href="#">Products</Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbPage>All Products</BreadcrumbPage>
+          <BreadcrumbPage>Obituaries</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
