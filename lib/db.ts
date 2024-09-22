@@ -42,4 +42,68 @@ export async function deleteObituaryById(id: number) {
   await prisma.obituary.delete({ where: { id } });
 }
 
+export async function updateObituary(obituaryData: Partial<Obituary> & { id: number }): Promise<Obituary> {
+  const {
+    id,
+    reference,
+    surname,
+    titleId,
+    givenNames,
+    maidenName,
+    birthDate,
+    birthCityId,
+    deathDate,
+    deathCityId,
+    burialCemetery,
+    cemeteryId,
+    place,
+    periodicalId,
+    publishDate,
+    page,
+    column,
+    notes,
+    proofread,
+    proofreadDate,
+    proofreadBy,
+    enteredBy,
+    enteredOn,
+    editedBy,
+    editedOn,
+    fileBoxId,
+  } = obituaryData;
+
+  const updatedObituary = await prisma.obituary.update({
+    where: { id },
+    data: {
+      reference,
+      surname,
+      titleId,
+      givenNames,
+      maidenName,
+      birthDate,
+      birthCityId,
+      deathDate,
+      deathCityId,
+      burialCemetery,
+      cemeteryId,
+      place,
+      periodicalId,
+      publishDate,
+      page,
+      column,
+      notes,
+      proofread,
+      proofreadDate,
+      proofreadBy,
+      enteredBy,
+      enteredOn,
+      editedBy,
+      editedOn,
+      fileBoxId,
+    },
+  });
+
+  return updatedObituary;
+}
+
 export type Obituary = Awaited<ReturnType<typeof prisma.obituary.findUnique>>;
