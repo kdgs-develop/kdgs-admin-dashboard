@@ -16,29 +16,31 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Obituary } from './obituary';
-import { Obituary as ObituaryType } from '@/lib/db';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Obituary as ObituaryType } from '@/lib/db';
 
 export function ObituariesTable({
   obituaries,
   offset,
-  totalObituaries
+  totalObituaries,
+  onRefresh
 }: {
-  obituaries: (ObituaryType | null)[];
+  obituaries: ObituaryType[];
   offset: number;
   totalObituaries: number;
+  onRefresh: () => Promise<{ obituaries: ObituaryType[]; total: number }>;
 }) {
-  let router = useRouter();
-  let obituariesPerPage = 5;
+  const router = useRouter();
+  const obituariesPerPage = 5;
 
   function prevPage() {
-    router.back();
+    router.push(`/?offset=${Math.max(offset - obituariesPerPage, 0)}`, { scroll: false });
   }
 
   function nextPage() {
-    router.push(`/?offset=${offset}`, { scroll: false });
+    router.push(`/?offset=${offset + obituariesPerPage}`, { scroll: false });
   }
 
   return (

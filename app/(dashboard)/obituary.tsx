@@ -35,7 +35,7 @@ export function Obituary({ obituary }: { obituary: NonNullable<ObituaryType> }) 
     setIsEditDialogOpen(false);
   };
 
-  const handleSave = (updatedObituary: ObituaryType) => {
+  const handleSave = (updatedObituary: ObituaryType | Omit<ObituaryType, "id">) => {
     console.log('Obituary updated:', updatedObituary);
   };
 

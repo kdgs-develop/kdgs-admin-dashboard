@@ -30,7 +30,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Obituary, updateObituary } from '@/lib/db';
+import { Obituary } from '@/lib/db';
+import { generateReference } from './actions';
 
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
@@ -61,17 +62,12 @@ const formSchema = z.object({
 });
 
 interface EditObituaryDialogProps {
-  obituary: Obituary;
+  obituary: Obituary | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updatedObituary: Obituary) => void;
+  onSave: (updatedObituary: Obituary | Omit<Obituary, 'id'>) => void;
   titles: { id: number; name: string }[];
-  cities: {
-    id: number;
-    name: string;
-    province: string | null;
-    country: { name: string } | null;
-  }[];
+  cities: { id: number; name: string; province: string | null; country: { name: string } | null }[];
   periodicals: { id: number; name: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
 }
@@ -87,61 +83,63 @@ export function EditObituaryDialog({
   fileBoxes
 }: EditObituaryDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [reference, setReference] = useState(obituary?.reference || '');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: obituary
-      ? {
-          reference: obituary.reference,
-          surname: obituary.surname ?? '',
-          titleId: obituary.titleId ?? undefined,
-          givenNames: obituary.givenNames ?? '',
-          maidenName: obituary.maidenName ?? '',
-          birthDate: obituary.birthDate ?? undefined,
-          birthCityId: obituary.birthCityId ?? undefined,
-          deathDate: obituary.deathDate ?? undefined,
-          deathCityId: obituary.deathCityId ?? undefined,
-          burialCemetery: obituary.burialCemetery ?? '',
-          cemeteryId: obituary.cemeteryId ?? undefined,
-          place: obituary.place ?? '',
-          periodicalId: obituary.periodicalId ?? undefined,
-          publishDate: obituary.publishDate ?? undefined,
-          page: obituary.page ?? '',
-          column: obituary.column ?? '',
-          notes: obituary.notes ?? '',
-          proofread: obituary.proofread ?? false,
-          proofreadDate: obituary.proofreadDate ?? undefined,
-          proofreadBy: obituary.proofreadBy ?? '',
-          enteredBy: obituary.enteredBy ?? '',
-          enteredOn: obituary.enteredOn ?? undefined,
-          editedBy: obituary.editedBy ?? '',
-          editedOn: obituary.editedOn ?? undefined,
-          fileBoxId: obituary.fileBoxId ?? undefined
+      ? Object.fromEntries(
+          Object.entries(obituary).map(([key, value]) => [key, value === null ? undefined : value])
+        )
+      : {
+          reference: '',
+          surname: '',
+          titleId: undefined,
+          givenNames: '',
+          maidenName: '',
+          birthDate: undefined,
+          birthCityId: undefined,
+          deathDate: undefined,
+          deathCityId: undefined,
+          burialCemetery: '',
+          cemeteryId: undefined,
+          place: '',
+          periodicalId: undefined,
+          publishDate: undefined,
+          page: '',
+          column: '',
+          notes: '',
+          proofread: false,
+          proofreadDate: undefined,
+          proofreadBy: '',
+          enteredBy: '',
+          enteredOn: undefined,
+          editedBy: '',
+          editedOn: undefined,
+          fileBoxId: undefined
         }
-      : {}
   });
 
-  console.log('Form errors:', form.formState.errors);
+  const handleGenerateReference = async () => {
+    const surname = form.getValues('surname');
+    if (surname) {
+      const newReference = await generateReference(surname);
+      form.setValue('reference', newReference);
+      setReference(newReference);
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log('onSubmit called with values:', values);
-    if (!obituary || obituary.id === undefined) {
-      throw new Error('Obituary is null or ID is undefined');
-    }
-  
     setIsLoading(true);
     try {
-      const finalValues = {
-        ...values,
-        id: obituary.id
-      };
-  
-      const updatedObituary = await updateObituaryAction(finalValues);
-      onSave(updatedObituary);
+      if (!values.reference) {
+        throw new Error("Reference is required");
+      }
+      const finalValues = obituary ? { ...values, id: obituary.id } : values;
+      await onSave(finalValues);
       onClose();
     } catch (error) {
-      console.error('Failed to update obituary:', error);
-      // Handle error (e.g., show error message to user)
+      console.error('Failed to save obituary:', error);
     } finally {
       setIsLoading(false);
     }
@@ -151,7 +149,7 @@ export function EditObituaryDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Obituary</DialogTitle>
+          <DialogTitle>{obituary ? 'Edit Obituary' : 'Add Obituary'}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -164,9 +162,14 @@ export function EditObituaryDialog({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs">Reference</FormLabel>
-                      <FormControl>
-                        <Input {...field} className="h-8 text-sm" />
-                      </FormControl>
+                      <div className="flex items-center gap-2">
+                        <FormControl>
+                          <Input {...field} className="h-8 text-sm" readOnly />
+                        </FormControl>
+                        <Button type="button" onClick={handleGenerateReference} disabled={!form.getValues('surname')}>
+                          Generate
+                        </Button>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -583,7 +586,7 @@ export function EditObituaryDialog({
             />
 
             <DialogFooter>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || !form.getValues('reference')}>
                 {isLoading ? (
                   <>
                     <span className="loading loading-spinner"></span>

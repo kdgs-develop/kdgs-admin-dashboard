@@ -5,10 +5,10 @@ export type Obituary = Awaited<ReturnType<typeof prisma.obituary.findUnique>>;
 
 export async function getObituaries(
   search: string,
-  offset: number
+  offset: number,
+  limit: number = 10
 ): Promise<{
   obituaries: Obituary[];
-  newOffset: number | null;
   totalObituaries: number;
 }> {
   const where: Prisma.ObituaryWhereInput = search
@@ -39,18 +39,15 @@ export async function getObituaries(
   const [obituaries, totalObituaries] = await Promise.all([
     prisma.obituary.findMany({
       where,
-      take: 5,
+      take: limit,
       skip: offset,
       orderBy: { reference: 'asc' },
     }),
     prisma.obituary.count({ where }),
   ]);
 
-  const newOffset = obituaries.length === 5 ? offset + 5 : null;
-
   return {
     obituaries,
-    newOffset,
     totalObituaries,
   };
 }
