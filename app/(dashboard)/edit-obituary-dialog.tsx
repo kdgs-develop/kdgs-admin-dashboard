@@ -30,7 +30,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { updateObituary } from '@/lib/db';
+import { Obituary, updateObituary } from '@/lib/db';
 
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
@@ -61,7 +61,7 @@ const formSchema = z.object({
 });
 
 interface EditObituaryDialogProps {
-  obituary: Obituary | null;
+  obituary: Obituary;
   isOpen: boolean;
   onClose: () => void;
   onSave: (updatedObituary: Obituary) => void;
