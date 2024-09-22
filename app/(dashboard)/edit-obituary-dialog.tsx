@@ -1,14 +1,12 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogFooter,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -16,15 +14,23 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Obituary } from '@/lib/db';
+import { updateObituaryAction } from './actions';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
 import { updateObituary } from '@/lib/db';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
 
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
@@ -51,7 +57,7 @@ const formSchema = z.object({
   enteredOn: z.date().optional(),
   editedBy: z.string().optional(),
   editedOn: z.date().optional(),
-  fileBoxId: z.number().optional(),
+  fileBoxId: z.number().optional()
 });
 
 interface EditObituaryDialogProps {
@@ -59,55 +65,78 @@ interface EditObituaryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (updatedObituary: Obituary) => void;
+  titles: { id: number; name: string }[];
+  cities: {
+    id: number;
+    name: string;
+    province: string | null;
+    country: { name: string } | null;
+  }[];
+  periodicals: { id: number; name: string }[];
+  fileBoxes: { id: number; year: number; number: number }[];
 }
 
-export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditObituaryDialogProps) {
+export function EditObituaryDialog({
+  obituary,
+  isOpen,
+  onClose,
+  onSave,
+  titles,
+  cities,
+  periodicals,
+  fileBoxes
+}: EditObituaryDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: obituary ? {
-      reference: obituary.reference,
-      surname: obituary.surname ?? '',
-      titleId: obituary.titleId ?? undefined,
-      givenNames: obituary.givenNames ?? '',
-      maidenName: obituary.maidenName ?? '',
-      birthDate: obituary.birthDate ?? undefined,
-      birthCityId: obituary.birthCityId ?? undefined,
-      deathDate: obituary.deathDate ?? undefined,
-      deathCityId: obituary.deathCityId ?? undefined,
-      burialCemetery: obituary.burialCemetery ?? '',
-      cemeteryId: obituary.cemeteryId ?? undefined,
-      place: obituary.place ?? '',
-      periodicalId: obituary.periodicalId ?? undefined,
-      publishDate: obituary.publishDate ?? undefined,
-      page: obituary.page ?? '',
-      column: obituary.column ?? '',
-      notes: obituary.notes ?? '',
-      proofread: obituary.proofread ?? false,
-      proofreadDate: obituary.proofreadDate ?? undefined,
-      proofreadBy: obituary.proofreadBy ?? '',
-      enteredBy: obituary.enteredBy ?? '',
-      enteredOn: obituary.enteredOn ?? undefined,
-      editedBy: obituary.editedBy ?? '',
-      editedOn: obituary.editedOn ?? undefined,
-      fileBoxId: obituary.fileBoxId ?? undefined,
-    } : {},
+    defaultValues: obituary
+      ? {
+          reference: obituary.reference,
+          surname: obituary.surname ?? '',
+          titleId: obituary.titleId ?? undefined,
+          givenNames: obituary.givenNames ?? '',
+          maidenName: obituary.maidenName ?? '',
+          birthDate: obituary.birthDate ?? undefined,
+          birthCityId: obituary.birthCityId ?? undefined,
+          deathDate: obituary.deathDate ?? undefined,
+          deathCityId: obituary.deathCityId ?? undefined,
+          burialCemetery: obituary.burialCemetery ?? '',
+          cemeteryId: obituary.cemeteryId ?? undefined,
+          place: obituary.place ?? '',
+          periodicalId: obituary.periodicalId ?? undefined,
+          publishDate: obituary.publishDate ?? undefined,
+          page: obituary.page ?? '',
+          column: obituary.column ?? '',
+          notes: obituary.notes ?? '',
+          proofread: obituary.proofread ?? false,
+          proofreadDate: obituary.proofreadDate ?? undefined,
+          proofreadBy: obituary.proofreadBy ?? '',
+          enteredBy: obituary.enteredBy ?? '',
+          enteredOn: obituary.enteredOn ?? undefined,
+          editedBy: obituary.editedBy ?? '',
+          editedOn: obituary.editedOn ?? undefined,
+          fileBoxId: obituary.fileBoxId ?? undefined
+        }
+      : {}
   });
 
+  console.log('Form errors:', form.formState.errors);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log('onSubmit called with values:', values);
     if (!obituary || obituary.id === undefined) {
       throw new Error('Obituary is null or ID is undefined');
     }
-
+  
     setIsLoading(true);
     try {
       const finalValues = {
         ...values,
-        id: obituary.id,
+        id: obituary.id
       };
-
-      const updatedObituary = await updateObituary(finalValues);
+  
+      const updatedObituary = await updateObituaryAction(finalValues);
       onSave(updatedObituary);
       onClose();
     } catch (error) {
@@ -161,14 +190,24 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs">Title</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                      <Select
+                        onValueChange={(value) => field.onChange(Number(value))}
+                        defaultValue={field.value?.toString()}
+                      >
                         <FormControl>
                           <SelectTrigger className="h-8 text-sm">
                             <SelectValue placeholder="Select a title" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {/* Add SelectItem for each title */}
+                          {titles.map((title) => (
+                            <SelectItem
+                              key={title.id}
+                              value={title.id.toString()}
+                            >
+                              {title.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -202,7 +241,7 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                   )}
                 />
               </div>
-              
+
               {/* Dates and Location Information */}
               <div className="space-y-2">
                 <FormField
@@ -211,10 +250,7 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Birth Date</FormLabel>
-                      <DatePicker
-                        date={field.value}
-                        setDate={field.onChange}
-                      />
+                      <DatePicker date={field.value} setDate={field.onChange} />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -225,14 +261,24 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs">Birth City</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                      <Select
+                        onValueChange={(value) => field.onChange(Number(value))}
+                        defaultValue={field.value?.toString()}
+                      >
                         <FormControl>
                           <SelectTrigger className="h-8 text-sm">
                             <SelectValue placeholder="Select a city" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {/* Add SelectItem for each city */}
+                          {cities.map((city) => (
+                            <SelectItem
+                              key={city.id}
+                              value={city.id.toString()}
+                            >
+                              {city.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -245,10 +291,7 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Death Date</FormLabel>
-                      <DatePicker
-                        date={field.value}
-                        setDate={field.onChange}
-                      />
+                      <DatePicker date={field.value} setDate={field.onChange} />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -259,14 +302,24 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs">Death City</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                      <Select
+                        onValueChange={(value) => field.onChange(Number(value))}
+                        defaultValue={field.value?.toString()}
+                      >
                         <FormControl>
                           <SelectTrigger className="h-8 text-sm">
                             <SelectValue placeholder="Select a city" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {/* Add SelectItem for each city */}
+                          {cities.map((city) => (
+                            <SelectItem
+                              key={city.id}
+                              value={city.id.toString()}
+                            >
+                              {city.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -288,7 +341,7 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                 />
               </div>
             </div>
-            
+
             {/* Publication Information */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -298,14 +351,24 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-xs">Periodical</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                      <Select
+                        onValueChange={(value) => field.onChange(Number(value))}
+                        defaultValue={field.value?.toString()}
+                      >
                         <FormControl>
                           <SelectTrigger className="h-8 text-sm">
                             <SelectValue placeholder="Select a periodical" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {/* Add SelectItem for each periodical */}
+                          {periodicals.map((periodical) => (
+                            <SelectItem
+                              key={periodical.id}
+                              value={periodical.id.toString()}
+                            >
+                              {periodical.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -318,10 +381,7 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Publish Date</FormLabel>
-                      <DatePicker
-                        date={field.value}
-                        setDate={field.onChange}
-                      />
+                      <DatePicker date={field.value} setDate={field.onChange} />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -356,7 +416,7 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                 />
               </div>
             </div>
-            
+
             {/* Additional Information */}
             <div className="space-y-2">
               <FormField
@@ -386,7 +446,7 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                 )}
               />
             </div>
-            
+
             {/* Proofread Information */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -411,10 +471,7 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Proofread Date</FormLabel>
-                      <DatePicker
-                        date={field.value}
-                        setDate={field.onChange}
-                      />
+                      <DatePicker date={field.value} setDate={field.onChange} />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -436,7 +493,7 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                 />
               </div>
             </div>
-            
+
             {/* Metadata */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -459,10 +516,7 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Entered On</FormLabel>
-                      <DatePicker
-                        date={field.value}
-                        setDate={field.onChange}
-                      />
+                      <DatePicker date={field.value} setDate={field.onChange} />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -488,17 +542,14 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Edited On</FormLabel>
-                      <DatePicker
-                        date={field.value}
-                        setDate={field.onChange}
-                      />
+                      <DatePicker date={field.value} setDate={field.onChange} />
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
             </div>
-            
+
             {/* File Box */}
             <FormField
               control={form.control}
@@ -506,24 +557,41 @@ export function EditObituaryDialog({ obituary, isOpen, onClose, onSave }: EditOb
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-xs">File Box</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                  <Select
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    defaultValue={field.value?.toString()}
+                  >
                     <FormControl>
                       <SelectTrigger className="h-8 text-sm">
                         <SelectValue placeholder="Select a file box" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {/* Add SelectItem for each file box */}
+                      {fileBoxes.map((fileBox) => (
+                        <SelectItem
+                          key={fileBox.id}
+                          value={fileBox.id.toString()}
+                        >
+                          {`Year: ${fileBox.year}, Number: ${fileBox.number}`}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <DialogFooter>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Saving...' : 'Save changes'}
+                {isLoading ? (
+                  <>
+                    <span className="loading loading-spinner"></span>
+                    Saving...
+                  </>
+                ) : (
+                  'Save changes'
+                )}
               </Button>
             </DialogFooter>
           </form>
