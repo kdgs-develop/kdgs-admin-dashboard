@@ -1,19 +1,23 @@
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { File, PlusCircle } from 'lucide-react';
-import { createObituary, getEditObituaryDialogData, fetchObituariesAction } from './actions';
-import { EditObituaryDialog } from './edit-obituary-dialog';
+import { fetchObituariesAction } from './actions';
 import { ObituariesTable } from './obituaries-table';
 
 export default async function DashboardPage({
   searchParams
 }: {
-  searchParams: { search?: string; offset?: string };
+  searchParams: { q?: string; offset?: string };
 }) {
   const offset = Number(searchParams.offset) || 0;
-  const limit = 10;
+  const limit = 5;
+  const search = searchParams.q || '';
 
-  const { obituaries, total: totalObituaries } = await fetchObituariesAction(offset, limit);
+  const { obituaries, total: totalObituaries } = await fetchObituariesAction(
+    offset,
+    limit,
+    search
+  );
 
   return (
     <Tabs defaultValue="all">
@@ -45,8 +49,9 @@ export default async function DashboardPage({
           totalObituaries={totalObituaries}
           onRefresh={async () => {
             'use server';
-            return fetchObituariesAction(offset, limit);
+            return fetchObituariesAction(offset, limit, search);
           }}
+          search={search}
         />
       </TabsContent>
     </Tabs>

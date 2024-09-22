@@ -91,8 +91,8 @@ export async function createObituary(obituaryData: CreateObituaryInput): Promise
   return prisma.obituary.create({ data: obituaryInput });
 }
 
-export async function fetchObituariesAction(offset: number = 0, limit: number = 10) {
+export async function fetchObituariesAction(offset: number = 0, limit: number = 5, search: string = '') {
   'use server';
-  const { obituaries, totalObituaries } = await getObituaries('', offset, limit);
+  const { obituaries, totalObituaries } = await getObituaries(search, offset, limit);
   return { obituaries, total: totalObituaries };
 }

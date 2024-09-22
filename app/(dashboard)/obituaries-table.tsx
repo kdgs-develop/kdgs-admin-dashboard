@@ -25,24 +25,28 @@ export function ObituariesTable({
   obituaries,
   offset,
   totalObituaries,
-  onRefresh
+  onRefresh,
+  search
 }: {
   obituaries: ObituaryType[];
   offset: number;
   totalObituaries: number;
   onRefresh: () => Promise<{ obituaries: ObituaryType[]; total: number }>;
+  search: string;
 }) {
   const router = useRouter();
   const obituariesPerPage = 5;
 
   function prevPage() {
-    router.push(`/?offset=${Math.max(offset - obituariesPerPage, 0)}`, { scroll: false });
+    const newOffset = Math.max(offset - obituariesPerPage, 0);
+    router.push(`/?offset=${newOffset}&q=${search}`, { scroll: false });
   }
 
   function nextPage() {
-    router.push(`/?offset=${offset + obituariesPerPage}`, { scroll: false });
+    const newOffset = offset + obituariesPerPage;
+    router.push(`/?offset=${newOffset}&q=${search}`, { scroll: false });
   }
-
+  
   return (
     <Card>
       <CardHeader>
@@ -77,27 +81,27 @@ export function ObituariesTable({
           <div className="text-xs text-muted-foreground">
             Showing{' '}
             <strong>
-              {Math.min(offset - obituariesPerPage, totalObituaries) + 1}-{offset}
+              {Math.min(offset + 1, totalObituaries)}-{Math.min(offset + obituariesPerPage, totalObituaries)}
             </strong>{' '}
             of <strong>{totalObituaries}</strong> obituaries
           </div>
           <div className="flex">
             <Button
-              formAction={prevPage}
+              onClick={prevPage}
               variant="ghost"
               size="sm"
-              type="submit"
-              disabled={offset === obituariesPerPage}
+              type="button"
+              disabled={offset === 0}
             >
               <ChevronLeft className="mr-2 h-4 w-4" />
               Prev
             </Button>
             <Button
-              formAction={nextPage}
+              onClick={nextPage}
               variant="ghost"
               size="sm"
-              type="submit"
-              disabled={offset + obituariesPerPage > totalObituaries}
+              type="button"
+              disabled={offset + obituariesPerPage >= totalObituaries}
             >
               Next
               <ChevronRight className="ml-2 h-4 w-4" />
