@@ -1,6 +1,7 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { prisma } from './prisma';
+import { Prisma } from '@prisma/client';
 
-const prisma = new PrismaClient();
+export type Obituary = Awaited<ReturnType<typeof prisma.obituary.findUnique>>;
 
 export async function getObituaries(
   search: string,
@@ -122,4 +123,62 @@ export async function updateObituary(obituaryData: Partial<Obituary> & { id: num
   return updatedObituary;
 }
 
-export type Obituary = Awaited<ReturnType<typeof prisma.obituary.findUnique>>;
+export async function getTitles() {
+  return prisma.title.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+    orderBy: {
+      name: 'asc',
+    },
+  });
+}
+
+export async function getCities() {
+  return prisma.city.findMany({
+    select: {
+      id: true,
+      name: true,
+      province: true,
+      country: {
+        select: {
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      name: 'asc',
+    },
+  });
+}
+
+export async function getPeriodicals() {
+  return prisma.periodical.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+    orderBy: {
+      name: 'asc',
+    },
+  });
+}
+
+export async function getFileBoxes() {
+  return prisma.fileBox.findMany({
+    select: {
+      id: true,
+      year: true,
+      number: true,
+    },
+    orderBy: [
+      {
+        year: 'desc',
+      },
+      {
+        number: 'asc',
+      },
+    ],
+  });
+}
