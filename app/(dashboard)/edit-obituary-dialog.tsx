@@ -83,7 +83,6 @@ export function EditObituaryDialog({
   fileBoxes
 }: EditObituaryDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [reference, setReference] = useState(obituary?.reference || '');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -119,15 +118,6 @@ export function EditObituaryDialog({
           fileBoxId: undefined
         }
   });
-
-  const handleGenerateReference = async () => {
-    const surname = form.getValues('surname');
-    if (surname) {
-      const newReference = await generateReference(surname);
-      form.setValue('reference', newReference);
-      setReference(newReference);
-    }
-  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
