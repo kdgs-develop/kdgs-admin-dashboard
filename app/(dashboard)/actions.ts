@@ -47,17 +47,6 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
   };
 }
 
-export async function updateObituaryAction(obituaryData: Partial<Obituary> & { id: number }): Promise<Obituary> {
-  'use server';
-  const updatedObituaryData = {
-    ...obituaryData,
-    reference: 'reference' in obituaryData ? obituaryData.reference : await generateReference(obituaryData.surname || ''),
-  };
-  const updatedObituary = await updateObituary(updatedObituaryData);
-  revalidatePath('/');
-  return updatedObituary;
-}
-
 export async function generateReference(surname: string): Promise<string> {
   const prefix = surname.slice(0, 4).toUpperCase();
   const latestObituary = await prisma.obituary.findFirst({
@@ -95,4 +84,23 @@ export async function fetchObituariesAction(offset: number = 0, limit: number = 
   'use server';
   const { obituaries, totalObituaries } = await getObituaries(search, offset, limit);
   return { obituaries, total: totalObituaries };
+}
+
+
+export async function createObituaryAction(obituaryData: Prisma.ObituaryCreateInput): Promise<Obituary> {
+  'use server';
+  const newObituary = await prisma.obituary.create({
+    data: obituaryData,
+  });
+  return newObituary;
+}
+
+export async function updateObituaryAction(obituaryData: Prisma.ObituaryUpdateInput & { id: number }): Promise<Obituary> {
+  'use server';
+  const { id, ...updateData } = obituaryData;
+  const updatedObituary = await prisma.obituary.update({
+    where: { id },
+    data: updateData,
+  });
+  return updatedObituary;
 }

@@ -1,6 +1,5 @@
-'use client';
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,14 +10,12 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
-import { TableCell, TableRow } from '@/components/ui/table';
 import { Obituary as ObituaryType } from '@/lib/db';
-import { deleteObituaryById } from '@/lib/db';
 import { EditObituaryDialog } from './edit-obituary-dialog';
-import { getEditObituaryDialogData } from './actions';
 import { DeleteConfirmationDialog } from './DeleteConfirmationDialog';
+import { getEditObituaryDialogData, updateObituaryAction, deleteObituary } from './actions';
 
-export function Obituary({ obituary }: { obituary: NonNullable<ObituaryType> }) {
+export function Obituary({ obituary, onUpdate }: { obituary: NonNullable<ObituaryType>; onUpdate: () => void }) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<Awaited<ReturnType<typeof getEditObituaryDialogData>> | null>(null);
@@ -35,8 +32,13 @@ export function Obituary({ obituary }: { obituary: NonNullable<ObituaryType> }) 
     setIsEditDialogOpen(false);
   };
 
-  const handleSave = (updatedObituary: ObituaryType | Omit<ObituaryType, "id">) => {
-    console.log('Obituary updated:', updatedObituary);
+  const handleSave = async (updatedObituary: ObituaryType | Omit<ObituaryType, "id"> | null) => {
+    if (updatedObituary && 'id' in updatedObituary) {
+      await updateObituaryAction(updatedObituary);
+      onUpdate();
+    } else {
+      console.error('Invalid obituary data');
+    }
   };
 
   const handleDeleteClick = () => {
@@ -44,7 +46,10 @@ export function Obituary({ obituary }: { obituary: NonNullable<ObituaryType> }) 
   };
 
   const handleDeleteConfirm = async () => {
-    await deleteObituaryById(obituary.id);
+    const formData = new FormData();
+    formData.append('id', obituary.id.toString());
+    await deleteObituary(formData);
+    onUpdate();
     setIsDeleteDialogOpen(false);
   };
 

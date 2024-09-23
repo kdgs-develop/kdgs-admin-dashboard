@@ -1,11 +1,14 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
+  Table,
   TableHead,
   TableRow,
   TableHeader,
   TableBody,
-  Table
+  TableCell
 } from '@/components/ui/table';
 import {
   Card,
@@ -15,45 +18,60 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Obituary } from './obituary';
-import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Obituary } from './obituary';
 import { Obituary as ObituaryType } from '@/lib/db';
+import { fetchObituariesAction } from './actions';
 
 export function ObituariesTable({
-  obituaries,
   offset,
-  totalObituaries,
-  onRefresh,
-  search
+  limit,
+  search,
+  refreshTrigger
 }: {
-  obituaries: ObituaryType[];
   offset: number;
-  totalObituaries: number;
-  onRefresh: () => Promise<{ obituaries: ObituaryType[]; total: number }>;
+  limit: number;
   search: string;
+  refreshTrigger: number;
 }) {
   const router = useRouter();
-  const obituariesPerPage = 5;
+  const [obituaries, setObituaries] = useState<ObituaryType[]>([]);
+  const [totalObituaries, setTotalObituaries] = useState(0);
+
+  useEffect(() => {
+    fetchObituariesAction(offset, limit, search).then(({ obituaries, total }) => {
+      setObituaries(obituaries ?? []);
+      setTotalObituaries(total);
+    });
+  }, [offset, limit, search, refreshTrigger]);
 
   function prevPage() {
-    const newOffset = Math.max(offset - obituariesPerPage, 0);
+    const newOffset = Math.max(offset - limit, 0);
     router.push(`/?offset=${newOffset}&q=${search}`, { scroll: false });
   }
 
   function nextPage() {
-    const newOffset = offset + obituariesPerPage;
+    const newOffset = offset + limit;
     router.push(`/?offset=${newOffset}&q=${search}`, { scroll: false });
   }
-  
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Obituaries</CardTitle>
-        <CardDescription>
-          Manage obituaries and view their details.
-        </CardDescription>
+    <Card className="w-full">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Obituaries</CardTitle>
+          <CardDescription>
+            Manage obituaries and view their details.
+          </CardDescription>
+        </div>
+        <Button
+          onClick={() => {
+            /* Add logic to open Add Obituary dialog */
+            console.log('Add Obituary clicked');
+          }}
+        >
+          Add Obituary
+        </Button>
       </CardHeader>
       <CardContent>
         <Table>
@@ -71,43 +89,45 @@ export function ObituariesTable({
           </TableHeader>
           <TableBody>
             {obituaries.map((obituary) => (
-              obituary && <Obituary key={obituary.id} obituary={obituary} />
+              obituary && (
+                <Obituary
+                  key={obituary.id}
+                  obituary={obituary}
+                  onUpdate={() => {
+                    fetchObituariesAction(offset, limit, search).then(({ obituaries, total }) => {
+                      setObituaries(obituaries ?? []);
+                      setTotalObituaries(total);
+                    });
+                  }}
+                />
+              )
             ))}
           </TableBody>
         </Table>
       </CardContent>
-      <CardFooter>
-        <form className="flex items-center w-full justify-between">
-          <div className="text-xs text-muted-foreground">
-            Showing{' '}
-            <strong>
-              {Math.min(offset + 1, totalObituaries)}-{Math.min(offset + obituariesPerPage, totalObituaries)}
-            </strong>{' '}
-            of <strong>{totalObituaries}</strong> obituaries
-          </div>
-          <div className="flex">
-            <Button
-              onClick={prevPage}
-              variant="ghost"
-              size="sm"
-              type="button"
-              disabled={offset === 0}
-            >
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Prev
-            </Button>
-            <Button
-              onClick={nextPage}
-              variant="ghost"
-              size="sm"
-              type="button"
-              disabled={offset + obituariesPerPage >= totalObituaries}
-            >
-              Next
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        </form>
+      <CardFooter className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">
+          Showing {Math.min(offset + 1, totalObituaries)}-
+          {Math.min(offset + limit, totalObituaries)} of {totalObituaries} obituaries
+        </div>
+        <div className="space-x-2">
+          <Button
+            onClick={prevPage}
+            disabled={offset === 0}
+            variant="outline"
+            size="sm"
+          >
+            Previous
+          </Button>
+          <Button
+            onClick={nextPage}
+            disabled={offset + limit >= totalObituaries}
+            variant="outline"
+            size="sm"
+          >
+            Next
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
