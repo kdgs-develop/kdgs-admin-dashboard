@@ -32,6 +32,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Obituary } from '@/lib/db';
 import { generateReference } from './actions';
+import { PlusCircle, Trash2 } from 'lucide-react';
 
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
@@ -58,7 +59,16 @@ const formSchema = z.object({
   enteredOn: z.date().optional(),
   editedBy: z.string().optional(),
   editedOn: z.date().optional(),
-  fileBoxId: z.number().optional()
+  fileBoxId: z.number().optional(),
+  relatives: z.array(
+    z.object({
+      id: z.number().optional(), // For existing relatives
+      surname: z.string().optional(),
+      givenNames: z.string().optional(),
+      relationship: z.string().optional(),
+      predeceased: z.boolean().default(false),
+    })
+  ).optional(),
 });
 
 interface EditObituaryDialogProps {
@@ -115,7 +125,8 @@ export function EditObituaryDialog({
           enteredOn: undefined,
           editedBy: '',
           editedOn: undefined,
-          fileBoxId: undefined
+          fileBoxId: undefined,
+          relatives: []
         }
   });
 
@@ -438,6 +449,93 @@ export function EditObituaryDialog({
                   </FormItem>
                 )}
               />
+            </div>
+
+            {/* Relatives */}
+            <div className="space-y-2">
+              <FormLabel className="text-xs">Relatives</FormLabel>
+              {form.watch('relatives')?.map((_, index) => (
+                <div key={index} className="flex items-end space-x-2">
+                  <FormField
+                    control={form.control}
+                    name={`relatives.${index}.surname`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Surname</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="h-8 text-sm" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`relatives.${index}.givenNames`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Given Names</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="h-8 text-sm" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`relatives.${index}.relationship`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Relationship</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="h-8 text-sm" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`relatives.${index}.predeceased`}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className="text-xs">Predeceased</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const relatives = form.getValues('relatives');
+                      relatives?.splice(index, 1);
+                      form.setValue('relatives', relatives || []);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const relatives = form.getValues('relatives') || [];
+                  form.setValue('relatives', [
+                    ...relatives,
+                    { surname: '', givenNames: '', relationship: '', predeceased: false },
+                  ]);
+                }}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Relative
+              </Button>
             </div>
 
             {/* Proofread Information */}

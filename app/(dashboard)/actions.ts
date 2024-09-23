@@ -89,18 +89,42 @@ export async function fetchObituariesAction(offset: number = 0, limit: number = 
 
 export async function createObituaryAction(obituaryData: Prisma.ObituaryCreateInput): Promise<Obituary> {
   'use server';
+  
+  const { relatives, ...restObituaryData } = obituaryData;
+  
   const newObituary = await prisma.obituary.create({
-    data: obituaryData,
+    data: {
+      ...restObituaryData,
+      relatives: {
+        create: relatives as Prisma.RelativeCreateWithoutObituaryInput[]
+      }
+    },
+    include: {
+      relatives: true
+    }
   });
+  
   return newObituary;
 }
 
 export async function updateObituaryAction(obituaryData: Prisma.ObituaryUpdateInput & { id: number }): Promise<Obituary> {
   'use server';
-  const { id, ...updateData } = obituaryData;
+  
+  const { id, relatives, ...updateData } = obituaryData;
+  
   const updatedObituary = await prisma.obituary.update({
     where: { id },
-    data: updateData,
+    data: {
+      ...updateData,
+      relatives: {
+        deleteMany: {}, // This will delete all existing relatives
+        create: relatives as Prisma.RelativeCreateWithoutObituaryInput[]
+      }
+    },
+    include: {
+      relatives: true
+    }
   });
+  
   return updatedObituary;
 }

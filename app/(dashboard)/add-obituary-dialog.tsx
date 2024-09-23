@@ -33,6 +33,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { createObituaryAction, generateReference } from './actions';
+import { PlusCircle, Trash2 } from 'lucide-react';
 
 // Use the same formSchema as in EditObituaryDialog
 const formSchema = z.object({
@@ -60,7 +61,16 @@ const formSchema = z.object({
   enteredOn: z.date().optional(),
   editedBy: z.string().optional(),
   editedOn: z.date().optional(),
-  fileBoxId: z.number().optional()
+  fileBoxId: z.number().optional(),
+  relatives: z.array(
+    z.object({
+      id: z.number().optional(), // For existing relatives
+      surname: z.string().optional(),
+      givenNames: z.string().optional(),
+      relationship: z.string().optional(),
+      predeceased: z.boolean().default(false),
+    })
+  ).optional(),
 });
 
 type AddObituaryDialogProps = {
@@ -89,6 +99,7 @@ export function AddObituaryDialog({
 }: AddObituaryDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [reference, setReference] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -117,7 +128,8 @@ export function AddObituaryDialog({
       enteredOn: new Date(),
       editedBy: '',
       editedOn: undefined,
-      fileBoxId: undefined
+      fileBoxId: undefined,
+      relatives: [],
     }
   });
 
@@ -134,19 +146,20 @@ export function AddObituaryDialog({
     setIsLoading(true);
     try {
       if (!values.reference) {
-        throw new Error("Reference is required");
+        throw new Error('Reference is required');
       }
-      const startTime = Date.now();
-      const newObituary = await createObituaryAction(values);
-      
-      // Ensure loading state is visible for at least 2000ms
-      const elapsedTime = Date.now() - startTime;
-      if (elapsedTime < 2000) {
-        await new Promise(resolve => setTimeout(resolve, 2000 - elapsedTime));
-      }
-      
+      const newObituary = await createObituaryAction({
+        ...values,
+        relatives: values.relatives ? {
+          create: values.relatives.map(({ id, ...relative }) => relative)
+        } : undefined
+      });
       onSave(newObituary);
-      onClose();
+      setIsSuccess(true);
+      setTimeout(() => {
+        setIsSuccess(false);
+        onClose();
+      }, 1500); // Show success message for 1.5 seconds
     } catch (error) {
       console.error('Failed to create obituary:', error);
     } finally {
@@ -466,6 +479,93 @@ export function AddObituaryDialog({
               />
             </div>
 
+            {/* Relatives */}
+            <div className="space-y-2">
+              <FormLabel className="text-xs">Relatives</FormLabel>
+              {form.watch('relatives')?.map((_, index) => (
+                <div key={index} className="flex items-end space-x-2">
+                  <FormField
+                    control={form.control}
+                    name={`relatives.${index}.surname`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Surname</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="h-8 text-sm" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`relatives.${index}.givenNames`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Given Names</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="h-8 text-sm" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`relatives.${index}.relationship`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Relationship</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="h-8 text-sm" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`relatives.${index}.predeceased`}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className="text-xs">Predeceased</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const relatives = form.getValues('relatives');
+                      relatives?.splice(index, 1);
+                      form.setValue('relatives', relatives || []);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const relatives = form.getValues('relatives') || [];
+                  form.setValue('relatives', [
+                    ...relatives,
+                    { surname: '', givenNames: '', relationship: '', predeceased: false },
+                  ]);
+                }}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Relative
+              </Button>
+            </div>
+
             {/* Proofread Information */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -601,12 +701,14 @@ export function AddObituaryDialog({
               )}
             />
             <DialogFooter>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || isSuccess}>
                 {isLoading ? (
                   <>
                     <span className="loading loading-spinner"></span>
                     Creating...
                   </>
+                ) : isSuccess ? (
+                  'Created Successfully!'
                 ) : (
                   'Create Obituary'
                 )}
