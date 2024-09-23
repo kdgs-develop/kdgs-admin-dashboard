@@ -22,6 +22,8 @@ import { Button } from '@/components/ui/button';
 import { Obituary } from './obituary';
 import { Obituary as ObituaryType } from '@/lib/db';
 import { fetchObituariesAction } from './actions';
+import { AddObituaryDialog } from './add-obituary-dialog';
+import { getEditObituaryDialogData } from './actions';
 
 export function ObituariesTable({
   offset,
@@ -37,6 +39,8 @@ export function ObituariesTable({
   const router = useRouter();
   const [obituaries, setObituaries] = useState<ObituaryType[]>([]);
   const [totalObituaries, setTotalObituaries] = useState(0);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [dialogData, setDialogData] = useState<Awaited<ReturnType<typeof getEditObituaryDialogData>> | null>(null);
 
   useEffect(() => {
     fetchObituariesAction(offset, limit, search).then(({ obituaries, total }) => {
@@ -56,6 +60,7 @@ export function ObituariesTable({
   }
 
   return (
+    <>
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
@@ -65,9 +70,12 @@ export function ObituariesTable({
           </CardDescription>
         </div>
         <Button
-          onClick={() => {
-            /* Add logic to open Add Obituary dialog */
-            console.log('Add Obituary clicked');
+          onClick={async () => {
+            if (!dialogData) {
+              const data = await getEditObituaryDialogData();
+              setDialogData(data);
+            }
+            setIsAddDialogOpen(true);
           }}
         >
           Add Obituary
@@ -130,5 +138,17 @@ export function ObituariesTable({
         </div>
       </CardFooter>
     </Card>
+    {dialogData && (
+    <AddObituaryDialog
+      isOpen={isAddDialogOpen}
+      onClose={() => setIsAddDialogOpen(false)}
+      onSave={(newObituary) => {
+        setObituaries([...obituaries, newObituary]);
+        setTotalObituaries(totalObituaries + 1);
+      }}
+      {...dialogData}
+    />
+)}
+    </>
   );
 }
