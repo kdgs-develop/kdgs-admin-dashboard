@@ -134,9 +134,17 @@ export function AddObituaryDialog({
     setIsLoading(true);
     try {
       if (!values.reference) {
-        throw new Error('Reference is required');
+        throw new Error("Reference is required");
       }
+      const startTime = Date.now();
       const newObituary = await createObituaryAction(values);
+      
+      // Ensure loading state is visible for at least 2000ms
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime < 2000) {
+        await new Promise(resolve => setTimeout(resolve, 2000 - elapsedTime));
+      }
+      
       onSave(newObituary);
       onClose();
     } catch (error) {
@@ -165,7 +173,7 @@ export function AddObituaryDialog({
                   name="reference"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs">Reference</FormLabel>
+                      <FormLabel className="text-xs">File Number</FormLabel>
                       <div className="flex items-center gap-2">
                         <FormControl>
                           <Input {...field} className="h-8 text-sm" readOnly />

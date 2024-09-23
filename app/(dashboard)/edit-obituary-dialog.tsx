@@ -151,7 +151,7 @@ export function EditObituaryDialog({
                   name="reference"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs">Reference</FormLabel>
+                      <FormLabel className="text-xs">File Number</FormLabel>
                       <div className="flex items-center gap-2">
                         <FormControl>
                           <Input {...field} className="h-8 text-sm" readOnly />
