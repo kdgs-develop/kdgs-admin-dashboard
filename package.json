@@ -2,11 +2,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate && prisma migrate deploy"
   },
   "dependencies": {
+    "@clerk/nextjs": "^5.6.1",
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^5.10.2",
     "@radix-ui/react-checkbox": "^1.1.1",
@@ -31,6 +33,7 @@
     "next": "^14.2.13",
     "next-auth": "5.0.0-beta.13",
     "postcss": "^8.4.35",
+     "prisma": "^5.10.2",
     "prettier": "^3.2.5",
     "react": "18.2.0",
     "react-day-picker": "^8.10.1",
@@ -41,9 +44,6 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "5.3.3",
     "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "prisma": "^5.10.2"
   },
   "prettier": {
     "arrowParens": "always",
