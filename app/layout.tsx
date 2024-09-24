@@ -1,7 +1,7 @@
 import './globals.css';
 
-import { Analytics } from '@vercel/analytics/react';
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from '@/components/ui/toaster';
+import Providers from './(dashboard)/providers';
 
 export const metadata = {
   title: 'KDGS Admin Dashboard',
@@ -15,11 +15,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
-        {children}
-        <Toaster />
-      </body>
-    </html>
+    <Providers>
+      <html lang="en">
+        <body>
+          {children}
+          <Toaster />
+        </body>
+      </html>
+    </Providers>
   );
 }
