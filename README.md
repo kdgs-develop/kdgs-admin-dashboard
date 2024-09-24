@@ -8,7 +8,7 @@
 </div>
 <br />
 <div align="center">
-  <a href="https://kdgs-admin-dashboard.vercel.app">Deploy</a>
+  <a href="https://kdgs-admin-dashboard.vercel.app">https://kdgs-admin-dashboard.vercel.app</a>
 </div>
 
 ## Overview
