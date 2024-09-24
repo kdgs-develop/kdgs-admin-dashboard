@@ -2,6 +2,7 @@ import './globals.css';
 
 import { Toaster } from '@/components/ui/toaster';
 import Providers from './(dashboard)/providers';
+import { Footer } from '@/components/footer';
 
 export const metadata = {
   title: 'KDGS Admin Dashboard',
@@ -18,10 +19,13 @@ export default function RootLayout({
 }) {
   return (
     <Providers>
-      <html lang="en">
-        <body>
-          {children}
+      <html lang="en" className="h-full">
+        <body className="flex flex-col min-h-full">
+          <div className="flex-grow">
+            {children}
+          </div>
           <Toaster />
+          <Footer />
         </body>
       </html>
     </Providers>
