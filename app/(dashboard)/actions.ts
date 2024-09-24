@@ -1,10 +1,31 @@
 'use server';
-
-import { deleteObituaryById, getObituaries, updateObituary } from '@/lib/db';
-import { revalidatePath } from 'next/cache';
-import { getCities, getFileBoxes, getPeriodicals, getTitles, Obituary } from '@/lib/db';
+revalidatePath('/');
+import {
+  deleteObituaryById,
+  getCities,
+  getFileBoxes,
+  getObituaries,
+  getPeriodicals,
+  getTitles,
+  Obituary
+} from '@/lib/db';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
+
+export async function fetchObituariesAction(
+  offset: number = 0,
+  limit: number = 5,
+  search: string = ''
+) {
+  'use server';
+  const { obituaries, totalObituaries } = await getObituaries(
+    search,
+    offset,
+    limit
+  );
+  return { obituaries, total: totalObituaries };
+}
 
 export async function deleteObituary(formData: FormData) {
   const id = Number(formData.get('id'));
@@ -14,7 +35,12 @@ export async function deleteObituary(formData: FormData) {
 
 interface EditObituaryDialogData {
   titles: { id: number; name: string }[];
-  cities: { id: number; name: string; province: string | null; country: { name: string } | null }[];
+  cities: {
+    id: number;
+    name: string;
+    province: string | null;
+    country: { name: string } | null;
+  }[];
   periodicals: { id: number; name: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
 }
@@ -24,26 +50,34 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
     getTitles(),
     getCities(),
     getPeriodicals(),
-    getFileBoxes(),
+    getFileBoxes()
   ]);
 
-  const titles = rawTitles.filter((title): title is { id: number; name: string } => 
-    title.name !== null
+  const titles = rawTitles.filter(
+    (title): title is { id: number; name: string } => title.name !== null
   );
 
-  const cities = rawCities.filter((city): city is { id: number; name: string; province: string | null; country: { name: string } | null } => 
-    city.name !== null
+  const cities = rawCities.filter(
+    (
+      city
+    ): city is {
+      id: number;
+      name: string;
+      province: string | null;
+      country: { name: string } | null;
+    } => city.name !== null
   );
 
-  const periodicals = rawPeriodicals.filter((periodical): periodical is { id: number; name: string } => 
-    periodical.name !== null
+  const periodicals = rawPeriodicals.filter(
+    (periodical): periodical is { id: number; name: string } =>
+      periodical.name !== null
   );
 
   return {
     titles,
     cities,
     periodicals,
-    fileBoxes,
+    fileBoxes
   };
 }
 
@@ -52,12 +86,12 @@ export async function generateReference(surname: string): Promise<string> {
   const latestObituary = await prisma.obituary.findFirst({
     where: {
       reference: {
-        startsWith: prefix,
-      },
+        startsWith: prefix
+      }
     },
     orderBy: {
-      reference: 'desc',
-    },
+      reference: 'desc'
+    }
   });
 
   let suffix = '0001';
@@ -69,38 +103,79 @@ export async function generateReference(surname: string): Promise<string> {
   return `${prefix}${suffix}`;
 }
 
-type CreateObituaryInput = Omit<Prisma.ObituaryCreateInput, 'reference'> & { reference?: string };
-
-export async function createObituary(obituaryData: CreateObituaryInput): Promise<Obituary> {
-  const obituaryInput: Prisma.ObituaryCreateInput = {
-    ...obituaryData,
-    reference: obituaryData.reference || await generateReference(obituaryData.surname || ''),
-  };
-
-  return prisma.obituary.create({ data: obituaryInput });
-}
-
-export async function fetchObituariesAction(offset: number = 0, limit: number = 5, search: string = '') {
-  'use server';
-  const { obituaries, totalObituaries } = await getObituaries(search, offset, limit);
-  return { obituaries, total: totalObituaries };
-}
+export async function createObituaryAction(
+  obituaryData: Prisma.ObituaryCreateInput & {
+    relatives?: Omit<Prisma.RelativeCreateInput, 'Obituary'>[];
+  }
+): Promise<Obituary> {
+  // Destructure relatives from obituaryData, leaving the rest of the data in restObituaryData
+  const { relatives, ...restObituaryData } = obituaryData;
 
 
-export async function createObituaryAction(obituaryData: Prisma.ObituaryCreateInput): Promise<Obituary> {
-  'use server';
+  // Create a new obituary record in the database
   const newObituary = await prisma.obituary.create({
-    data: obituaryData,
+    data: { ...restObituaryData },
   });
-  return newObituary;
+
+  // Extract the generated id from the new obituary record
+  const { id: newObituaryId } = newObituary;
+  console.log({ newObituaryId });
+  console.log({ relatives });
+  console.log({ newObituary });
+
+  // If there are relatives, create them and associate them with the new obituary
+  if (relatives && relatives.length > 0) {
+    await prisma.relative.createMany({
+      data: relatives.map((relative) => ({
+        obituaryId: newObituaryId,
+        ...relative
+      }))
+    });
+  }
+
+  // Fetch the final obituary record with the associated relatives
+  const finalObituary: Obituary | null = await prisma.obituary.findUnique({
+    where: { id: newObituaryId }
+  });
+
+  // Revalidate the path to update the cache
+  revalidatePath('/');
+  return finalObituary!;
 }
 
-export async function updateObituaryAction(obituaryData: Prisma.ObituaryUpdateInput & { id: number }): Promise<Obituary> {
-  'use server';
-  const { id, ...updateData } = obituaryData;
-  const updatedObituary = await prisma.obituary.update({
+export async function updateObituaryAction(
+  obituaryData: Prisma.ObituaryUpdateInput & {
+    id: number;
+    relatives?: Omit<Prisma.RelativeCreateInput, 'Obituary'>[];
+  }
+): Promise<Obituary> {
+  const { id, relatives, ...updateData } = obituaryData;
+
+  await prisma.obituary.update({
     where: { id },
-    data: updateData,
+    data: {
+      ...updateData,
+      relatives: {
+        deleteMany: {}
+      }
+    },
+    include: { relatives: true }
   });
-  return updatedObituary;
+
+  if (relatives && relatives.length > 0) {
+    await prisma.relative.createMany({
+      data: relatives.map((relative) => ({
+        obituaryId: id,
+        ...relative
+      }))
+    });
+  }
+
+  const finalObituary: Obituary | null = await prisma.obituary.findUnique({
+    where: { id },
+    include: { relatives: true }
+  });
+
+  revalidatePath('/');
+  return finalObituary!;
 }
