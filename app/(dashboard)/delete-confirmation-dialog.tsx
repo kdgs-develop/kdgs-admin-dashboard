@@ -1,19 +1,31 @@
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { useEffect, useState } from 'react';
+import { toast } from '@/hooks/use-toast';
 
 interface DeleteConfirmationDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
 }
 
-export function DeleteConfirmationDialog({ isOpen, onClose, onConfirm }: DeleteConfirmationDialogProps) {
+export function DeleteConfirmationDialog({
+  isOpen,
+  onClose,
+  onConfirm
+}: DeleteConfirmationDialogProps) {
   const [num1, setNum1] = useState(0);
   const [num2, setNum2] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -24,11 +36,33 @@ export function DeleteConfirmationDialog({ isOpen, onClose, onConfirm }: DeleteC
     }
   }, [isOpen]);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (parseInt(userAnswer) === num1 + num2) {
-      onConfirm();
+      setIsLoading(true);
+      try {
+        await onConfirm();
+        onClose();
+        toast({
+          title: 'Deletion successful',
+          description: 'The item has been successfully deleted.',
+        });
+      } catch (error) {
+        console.error('Failed to delete:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to delete the item. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       setError('Incorrect answer. Deletion not possible.');
+      toast({
+        title: 'Incorrect answer',
+        description: 'Please provide the correct answer to proceed with deletion.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -38,9 +72,11 @@ export function DeleteConfirmationDialog({ isOpen, onClose, onConfirm }: DeleteC
         <DialogHeader>
           <DialogTitle>Confirm Deletion</DialogTitle>
         </DialogHeader>
-        <div>
+        <div className='flex flex-col gap-4'>
           <p>To confirm deletion, please solve this simple math problem:</p>
-          <p>{num1} + {num2} = ?</p>
+          <p>
+            {num1} + {num2} = ?
+          </p>
           <Input
             type="number"
             value={userAnswer}
@@ -50,8 +86,12 @@ export function DeleteConfirmationDialog({ isOpen, onClose, onConfirm }: DeleteC
           {error && <p className="text-red-500">{error}</p>}
         </div>
         <DialogFooter>
-          <Button onClick={onClose} variant="outline">Cancel</Button>
-          <Button onClick={handleConfirm}>Proceed and Delete</Button>
+          <Button onClick={onClose} variant="outline">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirm} disabled={isLoading}>
+            {isLoading ? 'Deleting...' : 'Proceed and Delete'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

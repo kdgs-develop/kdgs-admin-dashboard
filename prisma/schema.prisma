@@ -75,7 +75,7 @@ model Obituary {
 
 model Relative {
   id           Int       @id @default(autoincrement())
-  Obituary     Obituary? @relation(fields: [obituaryId], references: [id])
+  Obituary     Obituary @relation(fields: [obituaryId], references: [id])
   obituaryId   Int
   surname      String?
   givenNames   String?

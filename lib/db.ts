@@ -1,7 +1,11 @@
+'use server';
+
 import { prisma } from './prisma';
 import { Prisma } from '@prisma/client';
 
-export type Obituary = Awaited<ReturnType<typeof prisma.obituary.findUnique>>;
+export type Obituary = Awaited<ReturnType<typeof prisma.obituary.findUnique>> & {
+  relatives?: Awaited<ReturnType<typeof prisma.relative.findMany>>;
+};
 
 export async function getObituaries(
   search: string,
@@ -52,8 +56,22 @@ export async function getObituaries(
   };
 }
 
+// export async function deleteObituaryById(id: number) {
+//   await prisma.obituary.delete({ where: { id } });
+// }
+
 export async function deleteObituaryById(id: number) {
-  await prisma.obituary.delete({ where: { id } });
+  await prisma.$transaction(async (prisma) => {
+    // Delete all relatives associated with the obituary
+    await prisma.relative.deleteMany({
+      where: { obituaryId: id }
+    });
+
+    // Delete the obituary
+    await prisma.obituary.delete({
+      where: { id }
+    });
+  });
 }
 
 export async function updateObituary(obituaryData: Partial<Obituary> & { id: number }): Promise<Obituary> {
@@ -84,6 +102,7 @@ export async function updateObituary(obituaryData: Partial<Obituary> & { id: num
     editedBy,
     editedOn,
     fileBoxId,
+    relatives,
   } = obituaryData;
 
   const updatedObituary = await prisma.obituary.update({
@@ -114,6 +133,10 @@ export async function updateObituary(obituaryData: Partial<Obituary> & { id: num
       editedBy,
       editedOn,
       fileBoxId,
+      relatives: {
+        deleteMany: {},
+        create: relatives,
+      },
     },
   });
 

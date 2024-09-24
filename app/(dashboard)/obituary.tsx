@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
-import { Obituary as ObituaryType } from '@/lib/db';
+import { Obituary as ObituaryType, updateObituary } from '@/lib/db';
 import { EditObituaryDialog } from './edit-obituary-dialog';
 import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 import { getEditObituaryDialogData, updateObituaryAction, deleteObituary } from './actions';
@@ -32,14 +32,14 @@ export function Obituary({ obituary, onUpdate }: { obituary: NonNullable<Obituar
     setIsEditDialogOpen(false);
   };
 
-  const handleSave = async (updatedObituary: ObituaryType | Omit<ObituaryType, "id"> | null) => {
-    if (updatedObituary && 'id' in updatedObituary) {
-      await updateObituaryAction(updatedObituary);
-      onUpdate();
-    } else {
-      console.error('Invalid obituary data');
-    }
-  };
+  // const handleSave = async (updatedObituary: ObituaryType | Omit<ObituaryType, "id"> | null) => {
+  //   if (updatedObituary && 'id' in updatedObituary) {
+  //     await updateObituary(updatedObituary);
+  //     onUpdate();
+  //   } else {
+  //     console.error('Invalid obituary data');
+  //   }
+  // };
 
   const handleDeleteClick = () => {
     setIsDeleteDialogOpen(true);
@@ -86,7 +86,7 @@ export function Obituary({ obituary, onUpdate }: { obituary: NonNullable<Obituar
           obituary={obituary}
           isOpen={isEditDialogOpen}
           onClose={handleDialogClose}
-          onSave={handleSave}
+          // onSave={handleSave}
           {...dialogData}
         />
       )}

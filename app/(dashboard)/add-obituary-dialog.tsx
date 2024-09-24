@@ -29,11 +29,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Obituary } from '@/lib/db';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { createObituaryAction, generateReference } from './actions';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { Prisma } from '@prisma/client';
 
 // Use the same formSchema as in EditObituaryDialog
 const formSchema = z.object({
@@ -62,15 +64,16 @@ const formSchema = z.object({
   editedBy: z.string().optional(),
   editedOn: z.date().optional(),
   fileBoxId: z.number().optional(),
-  relatives: z.array(
-    z.object({
-      id: z.number().optional(), // For existing relatives
-      surname: z.string().optional(),
-      givenNames: z.string().optional(),
-      relationship: z.string().optional(),
-      predeceased: z.boolean().default(false),
-    })
-  ).optional(),
+  relatives: z
+    .array(
+      z.object({
+        surname: z.string().optional(),
+        givenNames: z.string().optional(),
+        relationship: z.string().optional(),
+        predeceased: z.boolean().default(false)
+      })
+    )
+    .optional()
 });
 
 type AddObituaryDialogProps = {
@@ -129,7 +132,7 @@ export function AddObituaryDialog({
       editedBy: '',
       editedOn: undefined,
       fileBoxId: undefined,
-      relatives: [],
+      relatives: undefined
     }
   });
 
@@ -142,30 +145,42 @@ export function AddObituaryDialog({
     }
   };
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
+  // ... (previous imports)
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      if (!values.reference) {
-        throw new Error('Reference is required');
-      }
+      setIsLoading(true);
+      const { relatives, ...rest } = values;
+  
+      const formattedRelatives = relatives?.map(relative => ({
+        surname: relative.surname,
+        givenNames: relative.givenNames,
+        relationship: relative.relationship,
+        predeceased: relative.predeceased
+      }));
+  
       const newObituary = await createObituaryAction({
-        ...values,
-        relatives: values.relatives ? {
-          create: values.relatives.map(({ id, ...relative }) => relative)
-        } : undefined
+        ...rest,
+        relatives: formattedRelatives || []
       });
+  
       onSave(newObituary);
-      setIsSuccess(true);
-      setTimeout(() => {
-        setIsSuccess(false);
-        onClose();
-      }, 1500); // Show success message for 1.5 seconds
+      onClose();
+      toast({
+        title: "Obituary created",
+        description: "Your new obituary has been created successfully.",
+      });
     } catch (error) {
-      console.error('Failed to create obituary:', error);
+      console.error('Error creating obituary:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem creating the obituary. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   // Render form fields similar to EditObituaryDialog
 
@@ -557,7 +572,12 @@ export function AddObituaryDialog({
                   const relatives = form.getValues('relatives') || [];
                   form.setValue('relatives', [
                     ...relatives,
-                    { surname: '', givenNames: '', relationship: '', predeceased: false },
+                    {
+                      surname: '',
+                      givenNames: '',
+                      relationship: '',
+                      predeceased: false
+                    }
                   ]);
                 }}
               >

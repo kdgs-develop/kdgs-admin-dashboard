@@ -25,14 +25,15 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { updateObituaryAction } from './actions';
+import { Obituary, updateObituary } from '@/lib/db';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Obituary } from '@/lib/db';
-import { generateReference } from './actions';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { updateObituaryAction } from './actions';
+import { toast } from '@/hooks/use-toast';
+import { Prisma } from '@prisma/client';
 
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
@@ -60,24 +61,30 @@ const formSchema = z.object({
   editedBy: z.string().optional(),
   editedOn: z.date().optional(),
   fileBoxId: z.number().optional(),
-  relatives: z.array(
-    z.object({
-      id: z.number().optional(), // For existing relatives
-      surname: z.string().optional(),
-      givenNames: z.string().optional(),
-      relationship: z.string().optional(),
-      predeceased: z.boolean().default(false),
-    })
-  ).optional(),
+  relatives: z
+    .array(
+      z.object({
+        surname: z.string().optional(),
+        givenNames: z.string().optional(),
+        relationship: z.string().optional(),
+        predeceased: z.boolean().default(false)
+      })
+    )
+    .optional()
 });
 
 interface EditObituaryDialogProps {
   obituary: Obituary | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updatedObituary: Obituary | Omit<Obituary, 'id'>) => void;
+  onSave?: (updatedObituary: Obituary | Omit<Obituary, 'id'>) => void;
   titles: { id: number; name: string }[];
-  cities: { id: number; name: string; province: string | null; country: { name: string } | null }[];
+  cities: {
+    id: number;
+    name: string;
+    province: string | null;
+    country: { name: string } | null;
+  }[];
   periodicals: { id: number; name: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
 }
@@ -98,7 +105,10 @@ export function EditObituaryDialog({
     resolver: zodResolver(formSchema),
     defaultValues: obituary
       ? Object.fromEntries(
-          Object.entries(obituary).map(([key, value]) => [key, value === null ? undefined : value])
+          Object.entries(obituary).map(([key, value]) => [
+            key,
+            value === null ? undefined : value
+          ])
         )
       : {
           reference: '',
@@ -130,27 +140,53 @@ export function EditObituaryDialog({
         }
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      if (!values.reference) {
-        throw new Error("Reference is required");
+      setIsLoading(true);
+      const { relatives, ...rest } = values;
+  
+      if (!obituary?.id) {
+        throw new Error("Obituary ID is missing");
       }
-      const finalValues = obituary ? { ...values, id: obituary.id } : values;
-      await onSave(finalValues);
+  
+      const formattedRelatives = relatives?.map(relative => ({
+        surname: relative.surname,
+        givenNames: relative.givenNames,
+        relationship: relative.relationship,
+        predeceased: relative.predeceased
+      }));
+  
+      await updateObituaryAction({
+        id: obituary?.id!,
+        ...rest,
+        relatives: formattedRelatives || []
+      });
+  
+      // onSave(updatedObituary);
       onClose();
+      toast({
+        title: 'Obituary updated',
+        description: 'The obituary has been successfully updated.',
+      });
     } catch (error) {
-      console.error('Failed to save obituary:', error);
+      console.error('Failed to update obituary:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update obituary. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{obituary ? 'Edit Obituary' : 'Add Obituary'}</DialogTitle>
+          <DialogTitle>
+            {obituary ? 'Edit Obituary' : 'Add Obituary'}
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -529,7 +565,12 @@ export function EditObituaryDialog({
                   const relatives = form.getValues('relatives') || [];
                   form.setValue('relatives', [
                     ...relatives,
-                    { surname: '', givenNames: '', relationship: '', predeceased: false },
+                    {
+                      surname: '',
+                      givenNames: '',
+                      relationship: '',
+                      predeceased: false
+                    }
                   ]);
                 }}
               >
@@ -674,7 +715,10 @@ export function EditObituaryDialog({
             />
 
             <DialogFooter>
-              <Button type="submit" disabled={isLoading || !form.getValues('reference')}>
+              <Button
+                type="submit"
+                disabled={isLoading || !form.getValues('reference')}
+              >
                 {isLoading ? (
                   <>
                     <span className="loading loading-spinner"></span>
