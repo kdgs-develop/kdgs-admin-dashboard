@@ -6,7 +6,9 @@ import Providers from './(dashboard)/providers';
 export const metadata = {
   title: 'KDGS Admin Dashboard',
   description:
-    'A user admin dashboard configured with Next.js, Postgres, NextAuth, Tailwind CSS, TypeScript, and Prettier.'
+    'Secure administrative interface for the Kelowna and District Genealogical Society. Manage obituaries, member records, and genealogical resources efficiently with this Next.js-powered dashboard, featuring Clerk authentication, Postgres database, and a responsive Tailwind CSS design.',
+  copyright: '© 2024 Javier Gongora. All rights reserved.',
+  creator: 'Javier Gongora'
 };
 
 export default function RootLayout({
