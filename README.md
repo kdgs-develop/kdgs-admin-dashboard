@@ -1,64 +1,100 @@
-<div align="center"><strong>Next.js 14 Admin Dashboard Template</strong></div>
-<div align="center">Built with the Next.js App Router</div>
+# KDGS Admin Dashboard
+
+<div align="center">
+  <strong>Next.js 14 Admin Dashboard for Kelowna and District Genealogical Society</strong>
+</div>
+<div align="center">
+  Built with the Next.js App Router
+</div>
 <br />
 <div align="center">
-<a href="https://next-admin-dash.vercel.app/">Demo</a>
-<span> · </span>
-<a href="https://vercel.com/templates/next.js/admin-dashboard-tailwind-postgres-react-nextjs">Clone & Deploy</a>
-<span>
+  <a href="https://your-demo-url.com">Demo</a>
+  <span> · </span>
+  <a href="https://your-deployment-url.com">Deploy</a>
 </div>
 
 ## Overview
 
-This is a starter template using the following stack:
+This is an advanced admin dashboard for the Kelowna and District Genealogical Society, designed to manage obituaries and genealogical resources efficiently. It leverages modern web technologies to provide a secure, responsive, and user-friendly interface.
 
-- Framework - [Next.js (App Router)](https://nextjs.org)
-- Language - [TypeScript](https://www.typescriptlang.org)
-- Auth - [Auth.js](https://authjs.dev)
-- Database - [Postgres](https://vercel.com/postgres)
-- Deployment - [Vercel](https://vercel.com/docs/concepts/next.js/overview)
-- Styling - [Tailwind CSS](https://tailwindcss.com)
-- Components - [Shadcn UI](https://ui.shadcn.com/)
-- Analytics - [Vercel Analytics](https://vercel.com/analytics)
-- Formatting - [Prettier](https://prettier.io)
+## Tech Stack
 
-This template uses the new Next.js App Router. This includes support for enhanced layouts, colocation of components, tests, and styles, component-level data fetching, and more.
+- **Framework**: [Next.js 14](https://nextjs.org) (with App Router)
+- **Language**: [TypeScript](https://www.typescriptlang.org)
+- **Authentication**: [Clerk](https://clerk.com)
+- **Database**: [PostgreSQL](https://www.postgresql.org) with [Prisma](https://www.prisma.io) as ORM
+- **Styling**: [Tailwind CSS](https://tailwindcss.com)
+- **UI Components**: [Shadcn UI](https://ui.shadcn.com/)
+- **Forms**: [React Hook Form](https://react-hook-form.com) with [Zod](https://github.com/colinhacks/zod) for validation
+- **API**: Next.js API Routes
+- **Deployment**: [Vercel](https://vercel.com)
+
+## Key Features
+
+- **Secure Authentication**: Utilizes Clerk for robust user authentication and management.
+- **Obituary Management**: Full CRUD operations for obituaries with an intuitive interface.
+- **Advanced Search**: Efficient searching and filtering of obituary records.
+- **Responsive Design**: Mobile-friendly interface with dark mode support.
+- **Server Actions**: Leverages Next.js server actions for efficient data operations.
+
+## Key Components
+
+1. **Dashboard Layout**: Provides the main structure for authenticated pages, including navigation and user management.
+
+2. **Obituaries Table**: Displays a paginated table of obituaries with search functionality.
+
+3. **Obituary Component**: Represents a single obituary row with options to edit or delete.
+
+4. **Edit Obituary Dialog**: A modal form for editing existing obituaries.
+
+5. **Add Obituary Dialog**: A modal form for adding new obituaries.
+
+6. **Server Actions**: Server-side functions for data operations (fetch, create, update, delete obituaries).
+
+7. **Authentication Middleware**: Ensures only authenticated users can access protected routes.
 
 ## Getting Started
 
-During the deployment, Vercel will prompt you to create a new Postgres database. This will add the necessary environment variables to your project.
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Set up environment variables in `.env.local`
+4. Run the development server:
+   ```
+   npm run dev
+   ```
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-Inside the Vercel Postgres dashboard, create a table based on the schema defined in this repository.
+## Authentication
 
-```
-CREATE TYPE status AS ENUM ('active', 'inactive', 'archived');
+This project uses Clerk for authentication. The middleware ensures that only authenticated users can access protected routes. To set up Clerk:
 
-CREATE TABLE products (
-  id SERIAL PRIMARY KEY,
-  image_url TEXT NOT NULL,
-  name TEXT NOT NULL,
-  status status NOT NULL,
-  price NUMERIC(10, 2) NOT NULL,
-  stock INTEGER NOT NULL,
-  available_at TIMESTAMP NOT NULL
-);
-```
+1. Install `@clerk/nextjs`
+2. Set up environment keys in `.env.local`
+3. Wrap your app in `<ClerkProvider />`
+4. Create a `middleware.ts` file to protect routes
 
-Then, uncomment `app/api/seed.ts` and hit `http://localhost:3000/api/seed` to seed the database with products.
+## Deployment
 
-Next, copy the `.env.example` file to `.env` and update the values. Follow the instructions in the `.env.example` file to set up your GitHub OAuth application.
+This project is designed to be deployed on Vercel. Follow these steps:
 
-```bash
-npm i -g vercel
-vercel link
-vercel env pull
-```
+1. Push your code to a GitHub repository
+2. Connect your repository to Vercel
+3. Configure your environment variables in Vercel's dashboard
+4. Deploy!
 
-Finally, run the following commands to start the development server:
+## Contributing
 
-```
-pnpm install
-pnpm dev
-```
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-You should now be able to access the application at http://localhost:3000.
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+## Copyright
+
+© 2024 Javier Gongora. All rights reserved.
+
+This software, the KDGS Admin Dashboard, was developed by Javier Gongora.
