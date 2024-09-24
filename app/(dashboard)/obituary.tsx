@@ -12,7 +12,7 @@ import {
 import { MoreHorizontal } from 'lucide-react';
 import { Obituary as ObituaryType } from '@/lib/db';
 import { EditObituaryDialog } from './edit-obituary-dialog';
-import { DeleteConfirmationDialog } from './delete-confimation-dialog';
+import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 import { getEditObituaryDialogData, updateObituaryAction, deleteObituary } from './actions';
 
 export function Obituary({ obituary, onUpdate }: { obituary: NonNullable<ObituaryType>; onUpdate: () => void }) {
