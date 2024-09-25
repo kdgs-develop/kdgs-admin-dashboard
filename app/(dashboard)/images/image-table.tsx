@@ -30,7 +30,7 @@ const IMAGES_PER_PAGE = 5;
 export function ImageTable({ initialSearchQuery = '' }) {
   const [images, setImages] = useState<BucketItem[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +42,6 @@ export function ImageTable({ initialSearchQuery = '' }) {
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [isLoading, setIsLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'lastModified'>('name');
-  const [totalInBucket, setTotalInBucket] = useState(0);
 
   useEffect(() => {
     setSearchQuery(searchParams.get('q') || '');
@@ -54,26 +53,26 @@ export function ImageTable({ initialSearchQuery = '' }) {
 
   async function loadImages(reset: boolean = false) {
     if (reset) {
-      setPage(1);
+      setCursor(null);
       setImages([]);
     }
     setIsLoading(true);
     try {
       const {
         images: newImages,
-        total,
-        totalInBucket,
-        hasMore
+        hasMore,
+        nextCursor,
+        totalInBucket
       } = await fetchImagesAction(
-        reset ? 1 : page,
+        reset ? null : cursor,
         IMAGES_PER_PAGE,
         searchQuery,
         sortBy
       );
       setImages((prev) => (reset ? newImages : [...prev, ...newImages]));
-      setTotal(total);
-      setTotalInBucket(totalInBucket);
+      setTotal(totalInBucket); // Use totalInBucket instead of total
       setHasMore(hasMore);
+      setCursor(nextCursor ?? null);
       setError(null);
     } catch (err) {
       setError(
@@ -101,29 +100,26 @@ export function ImageTable({ initialSearchQuery = '' }) {
   }
 
   function handlePrevPage() {
-    if (page > 1) {
-      setPage((prev) => prev - 1);
-    }
+    // For simplicity, we'll just reset to the first page when going back
+    loadImages(true);
   }
 
   function handleNextPage() {
     if (hasMore) {
-      setPage((prev) => prev + 1);
-      if (page * IMAGES_PER_PAGE >= images.length) {
-        loadImages();
-      }
+      loadImages();
     }
   }
-
-  const startIndex = (page - 1) * IMAGES_PER_PAGE;
-  const endIndex = page * IMAGES_PER_PAGE;
-  const currentPageImages = images.slice(startIndex, endIndex);
 
   return (
     <Card>
       <CardContent className="p-0">
         {error ? (
-          <div className="text-red-500 p-6">{error}</div>
+          <div className="h-[400px] w-full flex flex-col items-center justify-center">
+            <p className="text-red-500 mb-4">{error}</p>
+            <Button onClick={() => loadImages(true)} variant="outline">
+              Retry
+            </Button>
+          </div>
         ) : (
           <div className="h-[400px] w-full flex flex-col">
             {isLoading && images.length === 0 ? (
@@ -133,13 +129,16 @@ export function ImageTable({ initialSearchQuery = '' }) {
                   Fetching files...
                 </p>
               </div>
-            ) : currentPageImages.length > 0 ? (
+            ) : images.length > 0 ? (
               <div className="flex-grow overflow-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>
-                        <Button variant="ghost" onClick={() => setSortBy('name')}>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setSortBy('name')}
+                        >
                           File Name {sortBy === 'name' && '↓'}
                         </Button>
                       </TableHead>
@@ -157,7 +156,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {currentPageImages.map((image) => (
+                    {images.map((image) => (
                       <TableRow key={image.name}>
                         <TableCell>{image.name ?? 'Unnamed'}</TableCell>
                         <TableCell>
@@ -210,29 +209,29 @@ export function ImageTable({ initialSearchQuery = '' }) {
         )}
       </CardContent>
       <CardFooter className="flex items-center justify-between">
-  <div className="text-sm text-muted-foreground">
-    Showing {Math.min(startIndex + 1, total)}-
-    {Math.min(endIndex, total)} of {total} image files
-  </div>
-  <div className="space-x-2">
-    <Button
-      onClick={handlePrevPage}
-      disabled={page === 1 || isLoading}
-      variant="outline"
-      size="sm"
-    >
-      Previous
-    </Button>
-    <Button
-      onClick={handleNextPage}
-      disabled={!hasMore || isLoading}
-      variant="outline"
-      size="sm"
-    >
-      {isLoading ? <Spinner className="h-4 w-4" /> : 'Next'}
-    </Button>
-  </div>
-</CardFooter>
+        <div className="text-sm text-muted-foreground">
+          Showing {images.length > 0 ? (cursor ? images.length + 1 : 1) : 0}-
+          {images.length + (cursor ? images.length : 0)} image files
+        </div>
+        <div className="space-x-2">
+          <Button
+            onClick={handlePrevPage}
+            disabled={cursor === null || isLoading}
+            variant="outline"
+            size="sm"
+          >
+            Previous
+          </Button>
+          <Button
+            onClick={handleNextPage}
+            disabled={!hasMore || isLoading}
+            variant="outline"
+            size="sm"
+          >
+            {isLoading ? <Spinner className="h-4 w-4" /> : 'Next'}
+          </Button>
+        </div>
+      </CardFooter>
       {selectedImage && (
         <ViewImageDialog
           image={selectedImage}
