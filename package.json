@@ -30,11 +30,12 @@
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "lucide-react": "^0.344.0",
+    "minio": "^8.0.1",
     "next": "^14.2.13",
     "next-auth": "5.0.0-beta.13",
     "postcss": "^8.4.35",
-     "prisma": "^5.10.2",
     "prettier": "^3.2.5",
+    "prisma": "^5.10.2",
     "react": "18.2.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "18.2.0",
@@ -50,5 +51,8 @@
     "singleQuote": true,
     "tabWidth": 2,
     "trailingComma": "none"
+  },
+  "devDependencies": {
+    "@types/minio": "^7.1.0"
   }
 }
