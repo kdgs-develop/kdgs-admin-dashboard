@@ -24,7 +24,7 @@ import { EditImageDialog } from './edit-image-dialog';
 import { RenameImageDialog } from './rename-image-dialog';
 import { useSearchParams } from 'next/navigation';
 
-export function ImageTable() {
+export function ImageTable({ initialSearchQuery = '' }) {
   const [images, setImages] = useState<BucketItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -35,7 +35,11 @@ export function ImageTable() {
   const [selectedImageToRename, setSelectedImageToRename] =
     useState<BucketItem | null>(null);
   const searchParams = useSearchParams();
-  const searchQuery = searchParams.get('q') || '';
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+
+  useEffect(() => {
+    setSearchQuery(searchParams.get('q') || '');
+  }, [searchParams]);
 
   useEffect(() => {
     loadImages();
