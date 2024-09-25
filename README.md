@@ -3,6 +3,11 @@
 <div align="center">
   <strong>Next.js 14 Admin Dashboard for Kelowna and District Genealogical Society</strong>
 </div>
+<br />
+<div align="center">
+  <img style="width: 45%;" src="https://github.com/user-attachments/assets/70635475-5e72-49f0-9e23-c562612ed1d6" alt="kdgs image"/>
+</div>
+<br />
 <div align="center">
   Built with the Next.js App Router
 </div>
