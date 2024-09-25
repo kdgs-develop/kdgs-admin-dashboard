@@ -18,17 +18,24 @@ import { SearchInput } from './search';
 import { currentUser, User } from '@clerk/nextjs/server'
 import { redirect } from "next/navigation";
 import { UserClerkButton } from './user-clerk-button';
+import { TransitionWrapper } from './providers';
+import { DashboardBreadcrumb } from './dashboard-breadcrumb';
 
 export default async function DashboardLayout({
-  children
+  children,
+  pathname
 }: {
   children: React.ReactNode;
+  pathname: string;
 }) {
   const authUser: User | null = await currentUser();
 
   if (!authUser) {
     redirect("/login");
   }
+
+  const isImagesRoute = pathname?.startsWith('/images');
+  const searchContext = isImagesRoute ? 'images' : 'obituaries';
 
   return (
     <div className="flex flex-col min-h-full">
@@ -37,11 +44,13 @@ export default async function DashboardLayout({
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
           <MobileNav />
           <DashboardBreadcrumb />
-          <SearchInput />
+          <SearchInput context={searchContext} />
           <UserClerkButton />
         </header>
         <main className="flex-grow grid items-start gap-2 p-4 sm:px-6 sm:py-0 md:gap-4 bg-muted/40">
-          {children}
+          <TransitionWrapper>
+            {children}
+          </TransitionWrapper>
         </main>
       </div>
       <Analytics />
@@ -119,23 +128,5 @@ function MobileNav() {
         </nav>
       </SheetContent>
     </Sheet>
-  );
-}
-
-function DashboardBreadcrumb() {
-  return (
-    <Breadcrumb className="hidden md:flex">
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link href="/">Dashboard</Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbPage>Obituaries</BreadcrumbPage>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
   );
 }

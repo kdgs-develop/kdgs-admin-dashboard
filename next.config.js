@@ -2,16 +2,15 @@
 const nextConfig = {
   images: {
     remotePatterns: [
+      // ... existing patterns
       {
-        protocol: 'https',
-        hostname: 'avatars.githubusercontent.com'
+        protocol: 'https', // or 'http' if you're not using SSL
+        hostname: process.env.MINIO_ENDPOINT,
+        port: process.env.MINIO_PORT,
+        pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: '*.public.blob.vercel-storage.com'
-      }
-    ]
-  }
+    ],
+  },
 };
 
 module.exports = nextConfig;
