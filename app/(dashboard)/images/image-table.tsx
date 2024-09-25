@@ -38,6 +38,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [isLoading, setIsLoading] = useState(false);
+  const [sortBy, setSortBy] = useState<'name' | 'lastModified'>('name');
 
   useEffect(() => {
     setSearchQuery(searchParams.get('q') || '');
@@ -45,12 +46,17 @@ export function ImageTable({ initialSearchQuery = '' }) {
 
   useEffect(() => {
     loadImages();
-  }, [page, searchQuery]);
+  }, [page, searchQuery, sortBy]);
 
   async function loadImages() {
     setIsLoading(true);
     try {
-      const { images, total } = await fetchImagesAction(page, 5, searchQuery);
+      const { images, total } = await fetchImagesAction(
+        page,
+        5,
+        searchQuery,
+        sortBy
+      );
       setImages(images);
       setTotal(total);
       setError(null);
@@ -97,9 +103,21 @@ export function ImageTable({ initialSearchQuery = '' }) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>File Name</TableHead>
+                    <TableHead>
+                      <Button variant="ghost" onClick={() => setSortBy('name')}>
+                        File Name {sortBy === 'name' && '↓'}
+                      </Button>
+                    </TableHead>
                     <TableHead>Format</TableHead>
                     <TableHead>Size</TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        onClick={() => setSortBy('lastModified')}
+                      >
+                        Last Modified {sortBy === 'lastModified' && '↓'}
+                      </Button>
+                    </TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -114,15 +132,31 @@ export function ImageTable({ initialSearchQuery = '' }) {
                         {((image.size ?? 0) / 1024).toFixed(2)} KB
                       </TableCell>
                       <TableCell>
+                        {image.lastModified?.toLocaleString() ?? 'Unknown'}
+                      </TableCell>
+                      <TableCell>
                         <div className="flex space-x-2">
-                          <Button onClick={() => setSelectedImage(image)}>
+                          <Button
+                            className="hover:bg-green-100"
+                            onClick={() => setSelectedImage(image)}
+                            variant="outline"
+                            size="sm"
+                          >
                             View
                           </Button>
-                          <Button onClick={() => setSelectedImageToEdit(image)}>
+                          <Button
+                            className="hover:bg-green-100"
+                            onClick={() => setSelectedImageToEdit(image)}
+                            variant="outline"
+                            size="sm"
+                          >
                             Edit
                           </Button>
                           <Button
+                            className="hover:bg-green-100"
                             onClick={() => setSelectedImageToRename(image)}
+                            variant="outline"
+                            size="sm"
                           >
                             Rename
                           </Button>
@@ -153,12 +187,16 @@ export function ImageTable({ initialSearchQuery = '' }) {
               <Button
                 onClick={() => setPage(page - 1)}
                 disabled={page === 1 || isLoading}
+                variant="outline"
+                size="sm"
               >
                 Previous
               </Button>
               <Button
                 onClick={() => setPage(page + 1)}
                 disabled={page * 5 >= total || isLoading}
+                variant="outline"
+                size="sm"
               >
                 Next
               </Button>

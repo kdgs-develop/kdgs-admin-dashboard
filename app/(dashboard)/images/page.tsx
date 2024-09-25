@@ -23,7 +23,7 @@ export default function ImagesPage() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>Obituary Files</CardTitle>
+          <CardTitle>Obituary Images</CardTitle>
           <CardDescription>
             View and manage image files from our KDGS storage server.
           </CardDescription>
