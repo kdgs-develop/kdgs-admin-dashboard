@@ -53,8 +53,5 @@
     "singleQuote": true,
     "tabWidth": 2,
     "trailingComma": "none"
-  },
-  "devDependencies": {
-    "@types/minio": "^7.1.0"
   }
 }
