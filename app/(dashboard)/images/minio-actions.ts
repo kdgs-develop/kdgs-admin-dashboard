@@ -21,19 +21,18 @@ export async function fetchImagesAction(
       throw new Error(`Bucket "${bucketName}" does not exist`);
     }
 
-    const objects: BucketItem[] = [];
+    const allObjects: BucketItem[] = [];
     const stream = minioClient.listObjects(bucketName, '', true);
 
     await new Promise((resolve, reject) => {
-      stream.on('data', (obj) => objects.push(obj));
+      stream.on('data', (obj) => {
+        allObjects.push(obj);
+      });
       stream.on('error', reject);
       stream.on('end', resolve);
     });
 
-    console.log('Objects fetched:', objects.length);
-
-    // Filter objects based on the search query
-    let filteredObjects = objects.filter((obj) =>
+    const filteredObjects = allObjects.filter((obj) =>
       obj.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -50,12 +49,14 @@ export async function fetchImagesAction(
     });
 
     const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
+    const endIndex = page * limit;
     const paginatedObjects = filteredObjects.slice(startIndex, endIndex);
 
     return {
       images: paginatedObjects,
-      total: filteredObjects.length
+      total: filteredObjects.length,
+      totalInBucket: allObjects.length,
+      hasMore: filteredObjects.length > endIndex
     };
   } catch (error) {
     console.error('Error connecting to Minio:', error);

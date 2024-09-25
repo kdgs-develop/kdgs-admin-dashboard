@@ -25,10 +25,13 @@ import {
 import { RenameImageDialog } from './rename-image-dialog';
 import { ViewImageDialog } from './view-image-dialog';
 
+const IMAGES_PER_PAGE = 5;
+
 export function ImageTable({ initialSearchQuery = '' }) {
   const [images, setImages] = useState<BucketItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedImageToEdit, setSelectedImageToEdit] =
@@ -39,26 +42,38 @@ export function ImageTable({ initialSearchQuery = '' }) {
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [isLoading, setIsLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'lastModified'>('name');
+  const [totalInBucket, setTotalInBucket] = useState(0);
 
   useEffect(() => {
     setSearchQuery(searchParams.get('q') || '');
   }, [searchParams]);
 
   useEffect(() => {
-    loadImages();
-  }, [page, searchQuery, sortBy]);
+    loadImages(true);
+  }, [searchQuery, sortBy]);
 
-  async function loadImages() {
+  async function loadImages(reset: boolean = false) {
+    if (reset) {
+      setPage(1);
+      setImages([]);
+    }
     setIsLoading(true);
     try {
-      const { images, total } = await fetchImagesAction(
-        page,
-        5,
+      const {
+        images: newImages,
+        total,
+        totalInBucket,
+        hasMore
+      } = await fetchImagesAction(
+        reset ? 1 : page,
+        IMAGES_PER_PAGE,
         searchQuery,
         sortBy
       );
-      setImages(images);
+      setImages((prev) => (reset ? newImages : [...prev, ...newImages]));
       setTotal(total);
+      setTotalInBucket(totalInBucket);
+      setHasMore(hasMore);
       setError(null);
     } catch (err) {
       setError(
@@ -72,18 +87,37 @@ export function ImageTable({ initialSearchQuery = '' }) {
 
   async function handleDelete(fileName: string) {
     await deleteImageAction(fileName);
-    loadImages();
+    loadImages(true);
   }
 
   async function handleRotate(fileName: string, degrees: number) {
     await rotateImageAction(fileName, degrees);
-    loadImages();
+    loadImages(true);
   }
 
   async function handleRename(oldName: string, newName: string) {
     await renameImageAction(oldName, newName);
-    loadImages();
+    loadImages(true);
   }
+
+  function handlePrevPage() {
+    if (page > 1) {
+      setPage((prev) => prev - 1);
+    }
+  }
+
+  function handleNextPage() {
+    if (hasMore) {
+      setPage((prev) => prev + 1);
+      if (page * IMAGES_PER_PAGE >= images.length) {
+        loadImages();
+      }
+    }
+  }
+
+  const startIndex = (page - 1) * IMAGES_PER_PAGE;
+  const endIndex = page * IMAGES_PER_PAGE;
+  const currentPageImages = images.slice(startIndex, endIndex);
 
   return (
     <Card>
@@ -91,83 +125,82 @@ export function ImageTable({ initialSearchQuery = '' }) {
         {error ? (
           <div className="text-red-500 p-6">{error}</div>
         ) : (
-          <div className="min-h-[300px] w-full">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px]">
+          <div className="h-[400px] w-full flex flex-col">
+            {isLoading && images.length === 0 ? (
+              <div className="flex-grow flex flex-col items-center justify-center">
                 <Spinner className="h-8 w-8 mb-4" />
                 <p className="text-sm text-muted-foreground text-center">
                   Fetching files...
                 </p>
               </div>
-            ) : images.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>
-                      <Button variant="ghost" onClick={() => setSortBy('name')}>
-                        File Name {sortBy === 'name' && '↓'}
-                      </Button>
-                    </TableHead>
-                    <TableHead>Format</TableHead>
-                    <TableHead>Size</TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        onClick={() => setSortBy('lastModified')}
-                      >
-                        Last Modified {sortBy === 'lastModified' && '↓'}
-                      </Button>
-                    </TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {images.map((image) => (
-                    <TableRow key={image.name}>
-                      <TableCell>{image.name ?? 'Unnamed'}</TableCell>
-                      <TableCell>
-                        {image.name?.split('.').pop() ?? 'Unknown'}
-                      </TableCell>
-                      <TableCell>
-                        {((image.size ?? 0) / 1024).toFixed(2)} KB
-                      </TableCell>
-                      <TableCell>
-                        {image.lastModified?.toLocaleString() ?? 'Unknown'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            className="hover:bg-green-100"
-                            onClick={() => setSelectedImage(image)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            View
-                          </Button>
-                          <Button
-                            className="hover:bg-green-100"
-                            onClick={() => setSelectedImageToEdit(image)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            className="hover:bg-green-100"
-                            onClick={() => setSelectedImageToRename(image)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            Rename
-                          </Button>
-                        </div>
-                      </TableCell>
+            ) : currentPageImages.length > 0 ? (
+              <div className="flex-grow overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>
+                        <Button variant="ghost" onClick={() => setSortBy('name')}>
+                          File Name {sortBy === 'name' && '↓'}
+                        </Button>
+                      </TableHead>
+                      <TableHead>Format</TableHead>
+                      <TableHead>Size</TableHead>
+                      <TableHead>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setSortBy('lastModified')}
+                        >
+                          Last Modified {sortBy === 'lastModified' && '↓'}
+                        </Button>
+                      </TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {currentPageImages.map((image) => (
+                      <TableRow key={image.name}>
+                        <TableCell>{image.name ?? 'Unnamed'}</TableCell>
+                        <TableCell>
+                          {image.name?.split('.').pop() ?? 'Unknown'}
+                        </TableCell>
+                        <TableCell>
+                          {((image.size ?? 0) / 1024).toFixed(2)} KB
+                        </TableCell>
+                        <TableCell>
+                          {image.lastModified?.toLocaleString() ?? 'Unknown'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button
+                              onClick={() => setSelectedImage(image)}
+                              variant="ghost"
+                              size="sm"
+                            >
+                              View
+                            </Button>
+                            <Button
+                              onClick={() => setSelectedImageToEdit(image)}
+                              variant="ghost"
+                              size="sm"
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              onClick={() => setSelectedImageToRename(image)}
+                              variant="ghost"
+                              size="sm"
+                            >
+                              Rename
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             ) : (
-              <div className="flex items-center justify-center w-full h-full min-h-[300px]">
+              <div className="flex-grow flex items-center justify-center">
                 <p className="text-sm text-muted-foreground text-center">
                   No results
                 </p>
@@ -177,37 +210,29 @@ export function ImageTable({ initialSearchQuery = '' }) {
         )}
       </CardContent>
       <CardFooter className="flex items-center justify-between">
-        {total > 0 ? (
-          <>
-            <div className="text-sm text-muted-foreground">
-              Showing {Math.min((page - 1) * 5 + 1, total)}-
-              {Math.min(page * 5, total)} of {total} image files
-            </div>
-            <div className="space-x-2">
-              <Button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1 || isLoading}
-                variant="outline"
-                size="sm"
-              >
-                Previous
-              </Button>
-              <Button
-                onClick={() => setPage(page + 1)}
-                disabled={page * 5 >= total || isLoading}
-                variant="outline"
-                size="sm"
-              >
-                Next
-              </Button>
-            </div>
-          </>
-        ) : (
-          <div className="text-sm text-muted-foreground">
-            No image files found
-          </div>
-        )}
-      </CardFooter>
+  <div className="text-sm text-muted-foreground">
+    Showing {Math.min(startIndex + 1, total)}-
+    {Math.min(endIndex, total)} of {total} image files
+  </div>
+  <div className="space-x-2">
+    <Button
+      onClick={handlePrevPage}
+      disabled={page === 1 || isLoading}
+      variant="outline"
+      size="sm"
+    >
+      Previous
+    </Button>
+    <Button
+      onClick={handleNextPage}
+      disabled={!hasMore || isLoading}
+      variant="outline"
+      size="sm"
+    >
+      {isLoading ? <Spinner className="h-4 w-4" /> : 'Next'}
+    </Button>
+  </div>
+</CardFooter>
       {selectedImage && (
         <ViewImageDialog
           image={selectedImage}
