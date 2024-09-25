@@ -4,14 +4,17 @@ import { Spinner } from '@/components/icons';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useTransition } from 'react';
+import { useTransition, useEffect, useState } from 'react';
 
 export function SearchInput() {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const [context, setContext] = useState('obituaries');
 
-  const context = pathname.startsWith('/images') ? 'images' : 'obituaries';
+  useEffect(() => {
+    setContext(pathname.startsWith('/images') ? 'images' : 'obituaries');
+  }, [pathname]);
 
   function searchAction(formData: FormData) {
     let value = formData.get('q') as string;
@@ -19,7 +22,7 @@ export function SearchInput() {
     params.set('q', value);
     params.set('offset', '0');
     startTransition(() => {
-      const baseUrl = context === 'obituaries' ? '/' : '/images';
+      const baseUrl = context === 'images' ? '/images' : '/';
       router.push(`${baseUrl}?${params.toString()}`);
     });
   }

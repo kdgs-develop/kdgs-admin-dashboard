@@ -39,9 +39,8 @@ export function ImageTable({ initialSearchQuery = '' }) {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [isLoading, setIsLoading] = useState(false);
-  const [sortBy, setSortBy] = useState<'name' | 'lastModified'>('name');
-  const [prevCursors, setPrevCursors] = useState<string[]>([]);
   const [imagesPerPage, setImagesPerPage] = useState<number>(5);
+  const [prevCursors, setPrevCursors] = useState<string[]>([]);
 
   const tableRef = useRef<HTMLDivElement>(null);
   const [tableHeight, setTableHeight] = useState('400px');
@@ -51,8 +50,10 @@ export function ImageTable({ initialSearchQuery = '' }) {
   }, [searchParams]);
 
   useEffect(() => {
+    setCursor(null);
+    setPrevCursors([]);
     loadImages(true);
-  }, [searchQuery, sortBy, imagesPerPage]);
+  }, [searchQuery, imagesPerPage]);
 
   useEffect(() => {
     function updateTableHeight() {
@@ -86,8 +87,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
       } = await fetchImagesAction(
         reset ? null : cursor,
         imagesPerPage,
-        searchQuery,
-        sortBy
+        searchQuery
       );
       setImages(newImages);
       setHasMore(hasMore);
@@ -164,24 +164,10 @@ export function ImageTable({ initialSearchQuery = '' }) {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>
-                        <Button
-                          variant="ghost"
-                          onClick={() => setSortBy('name')}
-                        >
-                          File Name {sortBy === 'name' && '↓'}
-                        </Button>
-                      </TableHead>
+                      <TableHead>File Name</TableHead>
                       <TableHead>Format</TableHead>
                       <TableHead>Size</TableHead>
-                      <TableHead>
-                        <Button
-                          variant="ghost"
-                          onClick={() => setSortBy('lastModified')}
-                        >
-                          Last Modified {sortBy === 'lastModified' && '↓'}
-                        </Button>
-                      </TableHead>
+                      <TableHead>Last Modified</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>

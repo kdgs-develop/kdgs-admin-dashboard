@@ -4,12 +4,10 @@ import minioClient from '@/lib/minio-client';
 import { BucketItem, BucketStream } from 'minio';
 import { revalidatePath } from 'next/cache';
 
-
 export async function fetchImagesAction(
   cursor: string | null,
   limit: number,
-  searchQuery: string = '',
-  sortBy: 'name' | 'lastModified' = 'name'
+  searchQuery: string = ''
 ) {
   const bucketName = process.env.MINIO_BUCKET_NAME!;
   try {
@@ -18,17 +16,17 @@ export async function fetchImagesAction(
       throw new Error(`Bucket "${bucketName}" does not exist`);
     }
 
-    const prefix = searchQuery.toLowerCase();
+    const prefix = searchQuery.toUpperCase();
     const objects: BucketItem[] = [];
+    
     let hasMore = false;
     let nextCursor: string | undefined = undefined;
-    let totalInBucket = 0;
 
     // Now, get the paginated results
     const stream: BucketStream<BucketItem> = minioClient.listObjectsV2(bucketName, prefix, true, cursor ?? undefined);
 
     for await (const obj of stream) {
-      if (obj.name?.toLowerCase().includes(searchQuery.toLowerCase())) {
+      if (obj.name?.toLowerCase().startsWith(searchQuery.toLowerCase())) {
         objects.push(obj);
         if (objects.length >= limit + 1) {
           hasMore = true;
@@ -42,18 +40,6 @@ export async function fetchImagesAction(
     if (hasMore) {
       objects.pop();
     }
-
-    // Sort the objects
-    objects.sort((a, b) => {
-      if (sortBy === 'name') {
-        return (a.name ?? '').localeCompare(b.name ?? '');
-      } else if (sortBy === 'lastModified') {
-        const dateA = a.lastModified?.getTime() ?? 0;
-        const dateB = b.lastModified?.getTime() ?? 0;
-        return dateB - dateA;
-      }
-      return 0;
-    });
 
     return {
       images: objects,
