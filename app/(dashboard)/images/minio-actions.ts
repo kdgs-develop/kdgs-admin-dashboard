@@ -69,3 +69,17 @@ export async function rotateImageAction(fileName: string, degrees: number) {
   console.log(`Rotating image ${fileName} by ${degrees} degrees`);
   revalidatePath('/');
 }
+
+export async function renameImageAction(oldName: string, newName: string) {
+  const bucketName = process.env.MINIO_BUCKET_NAME!;
+  try {
+    // Copy the object to the new name
+    await minioClient.copyObject(bucketName, newName, `/${bucketName}/${oldName}`);
+    // Remove the old object
+    await minioClient.removeObject(bucketName, oldName);
+    revalidatePath('/');
+  } catch (error) {
+    console.error('Error renaming image:', error);
+    throw new Error(`Failed to rename image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}

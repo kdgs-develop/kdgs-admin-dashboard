@@ -11,7 +11,7 @@ export default function ImagesPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Image Files</CardTitle>
+        <CardTitle>Obituary Image Files</CardTitle>
         <CardDescription>
           View and manage image files stored in Minio S3.
         </CardDescription>

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { BucketItem } from 'minio';
 import { DeleteImageConfirmationDialog } from './delete-image-confirmation-dialog';
 
-interface ImageDialogProps {
+interface EditImageDialogProps {
   image: BucketItem | null;
   onClose: () => void;
   onDelete: (fileName: string) => void;
@@ -13,16 +13,21 @@ interface ImageDialogProps {
   getImageUrl: (fileName: string) => Promise<string>;
 }
 
-export function ImageDialog({ image, onClose, onDelete, onRotate, getImageUrl }: ImageDialogProps) {
+export function EditImageDialog({ image, onClose, onDelete, onRotate, getImageUrl }: EditImageDialogProps) {
   const [rotation, setRotation] = useState(0);
   const [imageUrl, setImageUrl] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchImageUrl() {
       if (image && image.name) {
+        setIsLoading(true);
         const url = await getImageUrl(image.name);
-        setImageUrl(url);
+        setTimeout(() => {
+          setImageUrl(url);
+          setIsLoading(false);
+        }, 500); // Minimum loading time of 500ms
       }
     }
     fetchImageUrl();
@@ -55,17 +60,23 @@ export function ImageDialog({ image, onClose, onDelete, onRotate, getImageUrl }:
       <Dialog open={!!image} onOpenChange={onClose}>
         <DialogContent className="max-w-[90vw] w-full max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>{image?.name}</DialogTitle>
+            <DialogTitle>Edit Image: {image?.name}</DialogTitle>
           </DialogHeader>
-          <div className="flex-grow relative" style={{ height: 'calc(90vh - 200px)' }}>
-            {imageUrl && (
-              <Image
-                src={imageUrl}
-                alt={image?.name || 'Image'}
-                fill
-                style={{ objectFit: 'contain', transform: `rotate(${rotation}deg)` }}
-                className="transition-transform duration-300"
-              />
+          <div className="flex-grow relative flex items-center justify-center" style={{ height: 'calc(90vh - 200px)' }}>
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-t-4 border-gray-200 rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              imageUrl && (
+                <Image
+                  src={imageUrl}
+                  alt={image?.name || 'Image'}
+                  fill
+                  style={{ objectFit: 'contain', transform: `rotate(${rotation}deg)` }}
+                  className="transition-transform duration-300"
+                />
+              )
             )}
           </div>
           <div className="flex justify-between mt-4">
