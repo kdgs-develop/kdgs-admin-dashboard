@@ -1,29 +1,19 @@
 import { Home, Image, Package2, PanelLeft, Settings } from 'lucide-react';
 import Link from 'next/link';
-
 import { VercelLogo } from '@/components/icons';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator
-} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { currentUser, User } from '@clerk/nextjs/server';
 import { Analytics } from '@vercel/analytics/react';
-import { NavItem } from './nav-item';
-import { SearchInput } from './search';
-import { currentUser, User } from '@clerk/nextjs/server'
-import { redirect } from "next/navigation";
-import { UserClerkButton } from './user-clerk-button';
-import { TransitionWrapper } from './providers';
+import { redirect } from 'next/navigation';
 import { DashboardBreadcrumb } from './dashboard-breadcrumb';
+import { NavItem } from './nav-item';
+import { TransitionWrapper } from './providers';
+import { SearchInput } from './search';
+import { UserClerkButton } from './user-clerk-button';
 
 export default async function DashboardLayout({
-  children,
-  pathname
+  children
 }: {
   children: React.ReactNode;
   pathname: string;
@@ -31,11 +21,8 @@ export default async function DashboardLayout({
   const authUser: User | null = await currentUser();
 
   if (!authUser) {
-    redirect("/login");
+    redirect('/login');
   }
-
-  const isImagesRoute = pathname?.startsWith('/images');
-  const searchContext = isImagesRoute ? 'images' : 'obituaries';
 
   return (
     <div className="flex flex-col min-h-full">
@@ -44,13 +31,11 @@ export default async function DashboardLayout({
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
           <MobileNav />
           <DashboardBreadcrumb />
-          <SearchInput context={searchContext} />
+          <SearchInput />
           <UserClerkButton />
         </header>
         <main className="flex-grow grid items-start gap-2 p-4 sm:px-6 sm:py-0 md:gap-4 bg-muted/40">
-          <TransitionWrapper>
-            {children}
-          </TransitionWrapper>
+          <TransitionWrapper>{children}</TransitionWrapper>
         </main>
       </div>
       <Analytics />

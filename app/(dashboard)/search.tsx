@@ -3,12 +3,15 @@
 import { Spinner } from '@/components/icons';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 
-export function SearchInput({ context }: { context: 'obituaries' | 'images' }) {
+export function SearchInput() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+
+  const context = pathname.startsWith('/images') ? 'images' : 'obituaries';
 
   function searchAction(formData: FormData) {
     let value = formData.get('q') as string;
@@ -16,11 +19,8 @@ export function SearchInput({ context }: { context: 'obituaries' | 'images' }) {
     params.set('q', value);
     params.set('offset', '0');
     startTransition(() => {
-      if (context === 'obituaries') {
-        router.replace(`/?${params.toString()}`);
-      } else if (context === 'images') {
-        router.replace(`/images?${params.toString()}`);
-      }
+      const baseUrl = context === 'obituaries' ? '/' : '/images';
+      router.push(`${baseUrl}?${params.toString()}`);
     });
   }
 
