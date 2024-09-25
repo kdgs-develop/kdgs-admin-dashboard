@@ -22,6 +22,7 @@ import {
 } from './minio-actions';
 import { EditImageDialog } from './edit-image-dialog';
 import { RenameImageDialog } from './rename-image-dialog';
+import { useSearchParams } from 'next/navigation';
 
 export function ImageTable() {
   const [images, setImages] = useState<BucketItem[]>([]);
@@ -33,14 +34,16 @@ export function ImageTable() {
     useState<BucketItem | null>(null);
   const [selectedImageToRename, setSelectedImageToRename] =
     useState<BucketItem | null>(null);
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('q') || '';
 
   useEffect(() => {
     loadImages();
-  }, [page]);
+  }, [page, searchQuery]);
 
   async function loadImages() {
     try {
-      const { images, total } = await fetchImagesAction(page);
+      const { images, total } = await fetchImagesAction(page, 5, searchQuery);
       setImages(images);
       setTotal(total);
       setError(null);
@@ -97,11 +100,11 @@ export function ImageTable() {
                       <Button onClick={() => setSelectedImage(image)}>
                         View
                       </Button>
-                      <Button onClick={() => setSelectedImageToRename(image)}>
-                        Rename
-                      </Button>
                       <Button onClick={() => setSelectedImageToEdit(image)}>
                         Edit
+                      </Button>
+                      <Button onClick={() => setSelectedImageToRename(image)}>
+                        Rename
                       </Button>
                     </div>
                   </TableCell>

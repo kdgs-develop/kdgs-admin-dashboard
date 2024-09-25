@@ -20,9 +20,11 @@ import { redirect } from "next/navigation";
 import { UserClerkButton } from './user-clerk-button';
 
 export default async function DashboardLayout({
-  children
+  children,
+  pathname
 }: {
   children: React.ReactNode;
+  pathname: string;
 }) {
   const authUser: User | null = await currentUser();
 
@@ -30,14 +32,17 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const isImagesRoute = pathname?.startsWith('/images');
+  const searchContext = isImagesRoute ? 'images' : 'obituaries';
+
   return (
     <div className="flex flex-col min-h-full">
       <DesktopNav />
       <div className="flex-grow flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
           <MobileNav />
-          <DashboardBreadcrumb />
-          <SearchInput />
+          <DashboardBreadcrumb pathname={pathname} />
+          <SearchInput context={searchContext} />
           <UserClerkButton />
         </header>
         <main className="flex-grow grid items-start gap-2 p-4 sm:px-6 sm:py-0 md:gap-4 bg-muted/40">
@@ -122,7 +127,10 @@ function MobileNav() {
   );
 }
 
-function DashboardBreadcrumb() {
+function DashboardBreadcrumb({ pathname }: { pathname: string }) {
+  const isImagesRoute = pathname?.startsWith('/images');
+  const currentPage = isImagesRoute ? 'Obituary Images' : 'Obituaries';
+
   return (
     <Breadcrumb className="hidden md:flex">
       <BreadcrumbList>
@@ -133,7 +141,7 @@ function DashboardBreadcrumb() {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>Obituaries</BreadcrumbPage>
+          <BreadcrumbPage>{currentPage}</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>

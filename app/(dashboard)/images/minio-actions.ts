@@ -4,7 +4,7 @@ import minioClient from '@/lib/minio-client';
 import { BucketItem } from 'minio';
 import { revalidatePath } from 'next/cache';
 
-export async function fetchImagesAction(page: number = 1, limit: number = 5) {
+export async function fetchImagesAction(page: number = 1, limit: number = 5, searchQuery: string = '') {
   const bucketName = process.env.MINIO_BUCKET_NAME!;
   try {
     console.log('Attempting to connect to Minio:', process.env.MINIO_ENDPOINT);
@@ -27,13 +27,18 @@ export async function fetchImagesAction(page: number = 1, limit: number = 5) {
 
     console.log('Objects fetched:', objects.length);
 
+    // Filter objects based on the search query
+    const filteredObjects = objects.filter((obj) =>
+      obj.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
-    const paginatedObjects = objects.slice(startIndex, endIndex);
+    const paginatedObjects = filteredObjects.slice(startIndex, endIndex);
 
     return {
       images: paginatedObjects,
-      total: objects.length
+      total: filteredObjects.length
     };
   } catch (error) {
     console.error('Error connecting to Minio:', error);

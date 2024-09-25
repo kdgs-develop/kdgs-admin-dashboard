@@ -6,7 +6,7 @@ import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 
-export function SearchInput() {
+export function SearchInput({ context }: { context: 'obituaries' | 'images' }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -16,7 +16,11 @@ export function SearchInput() {
     params.set('q', value);
     params.set('offset', '0');
     startTransition(() => {
-      router.replace(`/?${params.toString()}`);
+      if (context === 'obituaries') {
+        router.replace(`/?${params.toString()}`);
+      } else if (context === 'images') {
+        router.replace(`/images?${params.toString()}`);
+      }
     });
   }
 
