@@ -88,3 +88,17 @@ export async function renameImageAction(oldName: string, newName: string) {
     throw new Error(`Failed to rename image: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
+
+export async function uploadImagesAction(files: File[]) {
+  const bucketName = process.env.MINIO_BUCKET_NAME!;
+  try {
+    for (const file of files) {
+      const buffer = await file.arrayBuffer();
+      await minioClient.putObject(bucketName, file.name, Buffer.from(buffer));
+    }
+    revalidatePath('/');
+  } catch (error) {
+    console.error('Error uploading images:', error);
+    throw new Error(`Failed to upload images: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
