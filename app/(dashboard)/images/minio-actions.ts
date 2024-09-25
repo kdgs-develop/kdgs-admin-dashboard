@@ -1,62 +1,65 @@
 'use server';
 
 import minioClient from '@/lib/minio-client';
-import { BucketItem } from 'minio';
+import { BucketItem, BucketStream } from 'minio';
 import { revalidatePath } from 'next/cache';
 
+
 export async function fetchImagesAction(
-  page: number = 1,
-  limit: number = 5,
+  cursor: string | null = null,
+  limit: number = 20,
   searchQuery: string = '',
   sortBy: 'name' | 'lastModified' = 'name'
 ) {
   const bucketName = process.env.MINIO_BUCKET_NAME!;
   try {
-    console.log('Attempting to connect to Minio:', process.env.MINIO_ENDPOINT);
-
     const bucketExists = await minioClient.bucketExists(bucketName);
-    console.log('Bucket exists:', bucketExists);
-
     if (!bucketExists) {
       throw new Error(`Bucket "${bucketName}" does not exist`);
     }
 
-    const allObjects: BucketItem[] = [];
-    const stream = minioClient.listObjects(bucketName, '', true);
+    const prefix = searchQuery.toLowerCase();
+    const objects: BucketItem[] = [];
+    let hasMore = false;
+    let nextCursor: string | undefined = undefined;
+    let totalInBucket = 0;
 
-    await new Promise((resolve, reject) => {
-      stream.on('data', (obj) => {
-        allObjects.push(obj);
-      });
-      stream.on('error', reject);
-      stream.on('end', resolve);
-    });
+    // Now, get the paginated results
+    const stream: BucketStream<BucketItem> = minioClient.listObjectsV2(bucketName, prefix, true, cursor ?? undefined);
 
-    const filteredObjects = allObjects.filter((obj) =>
-      obj.name?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    for await (const obj of stream) {
+      if (obj.name?.toLowerCase().includes(searchQuery.toLowerCase())) {
+        objects.push(obj);
+        if (objects.length >= limit + 1) {
+          hasMore = true;
+          nextCursor = obj.name;
+          break;
+        }
+      }
+    }
 
-    // Sort the filtered objects
-    filteredObjects.sort((a, b) => {
+    // Remove the extra item used to determine if there are more results
+    if (hasMore) {
+      objects.pop();
+    }
+
+    // Sort the objects
+    objects.sort((a, b) => {
       if (sortBy === 'name') {
         return (a.name ?? '').localeCompare(b.name ?? '');
       } else if (sortBy === 'lastModified') {
         const dateA = a.lastModified?.getTime() ?? 0;
         const dateB = b.lastModified?.getTime() ?? 0;
-        return dateB - dateA; // Sort in descending order (most recent first)
+        return dateB - dateA;
       }
       return 0;
     });
 
-    const startIndex = (page - 1) * limit;
-    const endIndex = page * limit;
-    const paginatedObjects = filteredObjects.slice(startIndex, endIndex);
-
     return {
-      images: paginatedObjects,
-      total: filteredObjects.length,
-      totalInBucket: allObjects.length,
-      hasMore: filteredObjects.length > endIndex
+      images: objects,
+      hasMore,
+      nextCursor,
+      totalInBucket
     };
   } catch (error) {
     console.error('Error connecting to Minio:', error);
