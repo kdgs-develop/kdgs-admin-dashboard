@@ -1,5 +1,6 @@
 'use client';
 
+import { Spinner } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import {
@@ -11,18 +12,18 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { BucketItem } from 'minio';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ViewImageDialog } from './view-image-dialog';
+import { EditImageDialog } from './edit-image-dialog';
 import {
   deleteImageAction,
   fetchImagesAction,
   getImageUrlAction,
-  rotateImageAction,
-  renameImageAction
+  renameImageAction,
+  rotateImageAction
 } from './minio-actions';
-import { EditImageDialog } from './edit-image-dialog';
 import { RenameImageDialog } from './rename-image-dialog';
-import { useSearchParams } from 'next/navigation';
+import { ViewImageDialog } from './view-image-dialog';
 
 export function ImageTable({ initialSearchQuery = '' }) {
   const [images, setImages] = useState<BucketItem[]>([]);
@@ -36,6 +37,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
     useState<BucketItem | null>(null);
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setSearchQuery(searchParams.get('q') || '');
@@ -46,6 +48,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
   }, [page, searchQuery]);
 
   async function loadImages() {
+    setIsLoading(true);
     try {
       const { images, total } = await fetchImagesAction(page, 5, searchQuery);
       setImages(images);
@@ -56,6 +59,8 @@ export function ImageTable({ initialSearchQuery = '' }) {
         err instanceof Error ? err.message : 'An unknown error occurred'
       );
       console.error('Error loading images:', err);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -76,55 +81,94 @@ export function ImageTable({ initialSearchQuery = '' }) {
 
   return (
     <Card>
-      <CardContent>
+      <CardContent className="p-0">
         {error ? (
-          <div className="text-red-500">{error}</div>
+          <div className="text-red-500 p-6">{error}</div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>File Name</TableHead>
-                <TableHead>Format</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {images.map((image) => (
-                <TableRow key={image.name}>
-                  <TableCell>{image.name ?? 'Unnamed'}</TableCell>
-                  <TableCell>
-                    {image.name?.split('.').pop() ?? 'Unknown'}
-                  </TableCell>
-                  <TableCell>
-                    {((image.size ?? 0) / 1024).toFixed(2)} KB
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button onClick={() => setSelectedImage(image)}>
-                        View
-                      </Button>
-                      <Button onClick={() => setSelectedImageToEdit(image)}>
-                        Edit
-                      </Button>
-                      <Button onClick={() => setSelectedImageToRename(image)}>
-                        Rename
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="min-h-[300px] w-full">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px]">
+                <Spinner className="h-8 w-8 mb-4" />
+                <p className="text-sm text-muted-foreground text-center">
+                  Fetching files...
+                </p>
+              </div>
+            ) : images.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>File Name</TableHead>
+                    <TableHead>Format</TableHead>
+                    <TableHead>Size</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {images.map((image) => (
+                    <TableRow key={image.name}>
+                      <TableCell>{image.name ?? 'Unnamed'}</TableCell>
+                      <TableCell>
+                        {image.name?.split('.').pop() ?? 'Unknown'}
+                      </TableCell>
+                      <TableCell>
+                        {((image.size ?? 0) / 1024).toFixed(2)} KB
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button onClick={() => setSelectedImage(image)}>
+                            View
+                          </Button>
+                          <Button onClick={() => setSelectedImageToEdit(image)}>
+                            Edit
+                          </Button>
+                          <Button
+                            onClick={() => setSelectedImageToRename(image)}
+                          >
+                            Rename
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="flex items-center justify-center w-full h-full min-h-[300px]">
+                <p className="text-sm text-muted-foreground text-center">
+                  No results
+                </p>
+              </div>
+            )}
+          </div>
         )}
       </CardContent>
-      <CardFooter className="flex justify-end gap-4">
-        <Button onClick={() => setPage(page - 1)} disabled={page === 1}>
-          Previous
-        </Button>
-        <Button onClick={() => setPage(page + 1)} disabled={page * 5 >= total}>
-          Next
-        </Button>
+      <CardFooter className="flex items-center justify-between">
+        {total > 0 ? (
+          <>
+            <div className="text-sm text-muted-foreground">
+              Showing {Math.min((page - 1) * 5 + 1, total)}-
+              {Math.min(page * 5, total)} of {total} image files
+            </div>
+            <div className="space-x-2">
+              <Button
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1 || isLoading}
+              >
+                Previous
+              </Button>
+              <Button
+                onClick={() => setPage(page + 1)}
+                disabled={page * 5 >= total || isLoading}
+              >
+                Next
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="text-sm text-muted-foreground">
+            No image files found
+          </div>
+        )}
       </CardFooter>
       {selectedImage && (
         <ViewImageDialog
