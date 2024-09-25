@@ -4,7 +4,12 @@ import minioClient from '@/lib/minio-client';
 import { BucketItem } from 'minio';
 import { revalidatePath } from 'next/cache';
 
-export async function fetchImagesAction(page: number = 1, limit: number = 5, searchQuery: string = '') {
+export async function fetchImagesAction(
+  page: number = 1,
+  limit: number = 5,
+  searchQuery: string = '',
+  sortBy: 'name' | 'lastModified' = 'name'
+) {
   const bucketName = process.env.MINIO_BUCKET_NAME!;
   try {
     console.log('Attempting to connect to Minio:', process.env.MINIO_ENDPOINT);
@@ -16,29 +21,42 @@ export async function fetchImagesAction(page: number = 1, limit: number = 5, sea
       throw new Error(`Bucket "${bucketName}" does not exist`);
     }
 
-    const objects: BucketItem[] = [];
+    const allObjects: BucketItem[] = [];
     const stream = minioClient.listObjects(bucketName, '', true);
 
     await new Promise((resolve, reject) => {
-      stream.on('data', (obj) => objects.push(obj));
+      stream.on('data', (obj) => {
+        allObjects.push(obj);
+      });
       stream.on('error', reject);
       stream.on('end', resolve);
     });
 
-    console.log('Objects fetched:', objects.length);
-
-    // Filter objects based on the search query
-    const filteredObjects = objects.filter((obj) =>
+    const filteredObjects = allObjects.filter((obj) =>
       obj.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    // Sort the filtered objects
+    filteredObjects.sort((a, b) => {
+      if (sortBy === 'name') {
+        return (a.name ?? '').localeCompare(b.name ?? '');
+      } else if (sortBy === 'lastModified') {
+        const dateA = a.lastModified?.getTime() ?? 0;
+        const dateB = b.lastModified?.getTime() ?? 0;
+        return dateB - dateA; // Sort in descending order (most recent first)
+      }
+      return 0;
+    });
+
     const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
+    const endIndex = page * limit;
     const paginatedObjects = filteredObjects.slice(startIndex, endIndex);
 
     return {
       images: paginatedObjects,
-      total: filteredObjects.length
+      total: filteredObjects.length,
+      totalInBucket: allObjects.length,
+      hasMore: filteredObjects.length > endIndex
     };
   } catch (error) {
     console.error('Error connecting to Minio:', error);
@@ -86,5 +104,19 @@ export async function renameImageAction(oldName: string, newName: string) {
   } catch (error) {
     console.error('Error renaming image:', error);
     throw new Error(`Failed to rename image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+export async function uploadImagesAction(files: File[]) {
+  const bucketName = process.env.MINIO_BUCKET_NAME!;
+  try {
+    for (const file of files) {
+      const buffer = await file.arrayBuffer();
+      await minioClient.putObject(bucketName, file.name, Buffer.from(buffer));
+    }
+    revalidatePath('/');
+  } catch (error) {
+    console.error('Error uploading images:', error);
+    throw new Error(`Failed to upload images: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
