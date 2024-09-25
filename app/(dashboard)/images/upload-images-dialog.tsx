@@ -1,16 +1,36 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+'use client';
+
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { uploadImagesAction } from './minio-actions';
+import { useEffect, useRef, useState } from 'react';
 
 interface UploadImagesDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function UploadImagesDialog({ isOpen, onClose }: UploadImagesDialogProps) {
+export function UploadImagesDialog({
+  isOpen,
+  onClose
+}: UploadImagesDialogProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedFiles([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [isOpen]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -19,13 +39,27 @@ export function UploadImagesDialog({ isOpen, onClose }: UploadImagesDialogProps)
 
   const handleUpload = async () => {
     if (selectedFiles.length > 0) {
+      setIsUploading(true);
       try {
-        await uploadImagesAction(selectedFiles);
+        const formData = new FormData();
+        selectedFiles.forEach((file) => formData.append('files', file));
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+
+        console.log('Upload completed successfully');
         onClose();
-        // You might want to refresh the image list here
       } catch (error) {
         console.error('Error uploading files:', error);
-        // Handle error (e.g., show an error message to the user)
+        // You might want to show an error message to the user here
+      } finally {
+        setIsUploading(false);
       }
     }
   };
@@ -42,12 +76,13 @@ export function UploadImagesDialog({ isOpen, onClose }: UploadImagesDialogProps)
             accept="image/*"
             multiple
             onChange={handleFileChange}
+            ref={fileInputRef}
           />
           <p className="text-sm text-muted-foreground">
             Selected files: {selectedFiles.length} (max 25)
           </p>
-          <Button onClick={handleUpload} disabled={selectedFiles.length === 0}>
-            Upload
+          <Button onClick={handleUpload} disabled={isUploading}>
+            {isUploading ? 'Uploading...' : 'Upload'}
           </Button>
         </div>
       </DialogContent>

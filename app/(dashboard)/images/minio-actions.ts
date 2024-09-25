@@ -95,12 +95,12 @@ export async function renameImageAction(oldName: string, newName: string) {
   }
 }
 
-export async function uploadImagesAction(files: File[]) {
+export async function uploadImagesAction(files: { name: string; type: string; arrayBuffer: ArrayBuffer }[]) {
+  console.log('Uploading images:', files);
   const bucketName = process.env.MINIO_BUCKET_NAME!;
   try {
     for (const file of files) {
-      const buffer = await file.arrayBuffer();
-      await minioClient.putObject(bucketName, file.name, Buffer.from(buffer));
+      await minioClient.putObject(bucketName, file.name, Buffer.from(file.arrayBuffer));
     }
     revalidatePath('/');
   } catch (error) {
