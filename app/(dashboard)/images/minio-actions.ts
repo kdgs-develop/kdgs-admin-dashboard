@@ -6,8 +6,8 @@ import { revalidatePath } from 'next/cache';
 
 
 export async function fetchImagesAction(
-  cursor: string | null = null,
-  limit: number = 20,
+  cursor: string | null,
+  limit: number,
   searchQuery: string = '',
   sortBy: 'name' | 'lastModified' = 'name'
 ) {
@@ -58,8 +58,7 @@ export async function fetchImagesAction(
     return {
       images: objects,
       hasMore,
-      nextCursor,
-      totalInBucket
+      nextCursor
     };
   } catch (error) {
     console.error('Error connecting to Minio:', error);
