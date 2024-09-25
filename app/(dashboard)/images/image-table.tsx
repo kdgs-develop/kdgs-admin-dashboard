@@ -87,7 +87,7 @@ export function ImageTable() {
         </Table>
         )}
       </CardContent>
-      <CardFooter>
+      <CardFooter className='flex justify-end gap-4'>
         <Button onClick={() => setPage(page - 1)} disabled={page === 1}>
           Previous
         </Button>
