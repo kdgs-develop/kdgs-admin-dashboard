@@ -43,7 +43,9 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 - **Image Management**: Upload, view, edit, and delete image files stored in MinIO.
 - **Image Rotation**: Ability to rotate images directly in the dashboard.
 - **Rename Images**: Feature to rename image files with confirmation.
-- **Pagination**: Efficient loading of images with pagination support.
+- **Pagination**: Efficient loading of images and other data with pagination support.
+- **Admin Genealogists Management**: Ability to add, edit, and manage admin genealogists.
+- **Case-Insensitive Search**: Improved search functionality for images and other data.
 
 ## Key Components
 
@@ -57,7 +59,7 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 
 5. **Add Obituary Dialog**: A modal form for adding new obituaries.
 
-6. **Server Actions**: Server-side functions for data operations (fetch, create, update, delete obituaries and images).
+6. **Server Actions**: Server-side functions for data operations (fetch, create, update, delete obituaries, images, and admin genealogists).
 
 7. **Authentication Middleware**: Ensures only authenticated users can access protected routes.
 
@@ -72,6 +74,10 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 12. **Rename Image Dialog**: Modal for renaming image files with a simple math verification.
 
 13. **Delete Image Confirmation Dialog**: Ensures user intent before deleting images.
+
+14. **Admin Genealogists Table**: Displays a list of admin genealogists with options to add, edit, or delete.
+
+15. **Add/Edit Admin Genealogist Dialog**: Modal for adding new or editing existing admin genealogists.
 
 ## Getting Started
 
