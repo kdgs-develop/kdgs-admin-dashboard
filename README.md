@@ -13,7 +13,7 @@
 </div>
 <br />
 <div align="center">
-  <a href="https://kdgs-admin-dashboard.vercel.app">https://kdgs-admin-dashboard.vercel.app</a>
+  <a href="https://kdgs-admin-dashboard.vercel.app">Access to KDGS Admin Dashboard</a>
 </div>
 
 ## Overview
