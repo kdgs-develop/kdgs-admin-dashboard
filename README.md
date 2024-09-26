@@ -135,13 +135,17 @@ This project is designed to be deployed on Vercel. Follow these steps:
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). See the [LICENSE](LICENSE.md) file for details.
+
 ## Copyright and Attribution
 
 © 2024 Javier Gongora. All rights reserved.
 
 The KDGS Admin Dashboard is open-source software developed and maintained by Javier Gongora.
 
-1. Open Source License: This software is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). You can find a copy of the license in the LICENSE file or at https://www.gnu.org/licenses/agpl-3.0.en.html
+1. Open Source License: This software is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). You can find a copy of the license in the [LICENSE](LICENSE.md) file or at https://www.gnu.org/licenses/agpl-3.0.en.html
 
 2. Proprietary License: For commercial use, a proprietary license is available. This license grants additional rights and support not provided under the AGPL-3.0.
 
