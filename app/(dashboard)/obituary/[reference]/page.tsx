@@ -90,7 +90,7 @@ export default function ObituaryPage() {
                 <span className="font-semibold">Full Name:</span> {fullName}
               </div>
             </div>
-            <Image src="/kdgs.jpg" alt="KDGS Logo" width={100} height={50} className="object-contain" />
+            <Image src="/kdgs.png" alt="KDGS Logo" width={100} height={50} className="object-contain" priority />
           </div>
         </CardHeader>
         <CardContent className="bg-white">
