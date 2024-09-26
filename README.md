@@ -32,6 +32,7 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 - **API**: Next.js API Routes
 - **Deployment**: [Vercel](https://vercel.com)
 - **File Storage**: [MinIO](https://min.io/)
+- **PDF Generation**: [pdf-lib](https://pdf-lib.js.org/)
 
 ## Key Features
 
@@ -46,6 +47,11 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 - **Pagination**: Efficient loading of images and other data with pagination support.
 - **Admin Genealogists Management**: Ability to add, edit, and manage admin genealogists.
 - **Case-Insensitive Search**: Improved search functionality for images and other data.
+- **PDF Generation**: Generate detailed PDF reports for obituaries.
+- **Detailed Obituary View**: Comprehensive display of obituary information.
+- **Consistent UI**: Matching design between web view and PDF output for obituaries.
+- **File Number and Full Name Display**: Prominent display of key identifiers.
+- **Flexible Data Handling**: Graceful handling of missing or null data fields.
 
 ## Key Components
 
@@ -78,6 +84,12 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 14. **Admin Genealogists Table**: Displays a list of admin genealogists with options to add, edit, or delete.
 
 15. **Add/Edit Admin Genealogist Dialog**: Modal for adding new or editing existing admin genealogists.
+
+16. **Obituary Detail Page**: Comprehensive view of a single obituary with all related information.
+
+17. **PDF Generation Component**: Generates detailed PDF reports for obituaries.
+
+18. **Obituary Images Section**: Displays images associated with an obituary.
 
 ## Getting Started
 
@@ -127,8 +139,18 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the [MIT License](LICENSE).
 
-## Copyright
+## Copyright and Attribution
 
 © 2024 Javier Gongora. All rights reserved.
 
-This software, the KDGS Admin Dashboard, was developed by Javier Gongora.
+The KDGS Admin Dashboard is open-source software developed and maintained by Javier Gongora.
+
+1. Open Source License: This software is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). You can find a copy of the license in the LICENSE file or at https://www.gnu.org/licenses/agpl-3.0.en.html
+
+2. Proprietary License: For commercial use, a proprietary license is available. This license grants additional rights and support not provided under the AGPL-3.0.
+
+This version of KDGS Admin Dashboard is the open-source version, freely available under the terms of the AGPL-3.0.
+
+Users are free to view, use, modify, and distribute this software in accordance with the terms of the AGPL-3.0 license. However, any modifications must also be released under the AGPL-3.0 license.
+
+For inquiries regarding commercial licensing or usage, please contact Javier Gongora (@javigong) on GitHub.
