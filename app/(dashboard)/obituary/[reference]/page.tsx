@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { fetchObituaryByReferenceAction, fetchImagesForObituaryAction } from './actions';
 import { Prisma } from '@prisma/client';
 import Image from 'next/image';
-import { Download, ArrowLeft } from 'lucide-react';
+import { Download, ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 type ObituaryWithAllRelations = Prisma.ObituaryGetPayload<{
@@ -29,6 +29,7 @@ export default function ObituaryPage() {
   const router = useRouter();
   const [obituary, setObituary] = useState<ObituaryWithAllRelations | null>(null);
   const [images, setImages] = useState<string[]>([]);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     if (reference) {
@@ -42,6 +43,7 @@ export default function ObituaryPage() {
   }, [reference]);
 
   const handleDownloadPDF = async () => {
+    setIsDownloading(true);
     try {
       const response = await fetch(`/api/generate-pdf/${reference}`);
       if (!response.ok) {
@@ -67,6 +69,8 @@ export default function ObituaryPage() {
         description: "Failed to download the obituary PDF. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -233,9 +237,19 @@ export default function ObituaryPage() {
         <Button
           variant="outline"
           onClick={handleDownloadPDF}
+          disabled={isDownloading}
           className="bg-green-600 text-white hover:bg-green-700"
         >
-          <Download className="mr-2 h-4 w-4" /> Download PDF
+          {isDownloading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Downloading...
+            </>
+          ) : (
+            <>
+              <Download className="mr-2 h-4 w-4" /> Download PDF
+            </>
+          )}
         </Button>
       </div>
       <footer className="mt-8 text-center text-sm text-gray-500">
