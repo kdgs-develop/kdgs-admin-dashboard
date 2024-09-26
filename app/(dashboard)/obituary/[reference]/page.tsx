@@ -49,12 +49,12 @@ export default function ObituaryPage() {
       }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `obituary_${reference}.pdf`;
-      document.body.appendChild(a);
-      a.click();
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `obituary_${reference}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       toast({
         title: "PDF Downloaded",
