@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/prisma';
-import fs from 'fs';
 import { NextResponse } from 'next/server';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
@@ -60,12 +59,18 @@ export async function GET(
     };
 
     // Helper function to draw a line
-    const drawLine = (startX: number, startY: number, endX: number, endY: number, color = black) => {
+    const drawLine = (
+      startX: number,
+      startY: number,
+      endX: number,
+      endY: number,
+      color = black
+    ) => {
       page.drawLine({
         start: { x: startX, y: height - startY },
         end: { x: endX, y: height - endY },
         thickness: 1,
-        color: color,
+        color: color
       });
     };
 
@@ -73,24 +78,26 @@ export async function GET(
     drawText('Obituary Index Report', 50, 50, 20, true, modernBlue);
     drawText('File Number:', 50, 75, 10, true);
     drawText(obituary.reference, 120, 75, 10);
-    
-    const fullName = `${obituary.title?.name || ''} ${obituary.givenNames || ''} ${obituary.surname || ''}`.trim();
+
+    const fullName =
+      `${obituary.title?.name || ''} ${obituary.givenNames || ''} ${obituary.surname || ''}`.trim();
     drawText('Full Name:', 50, 90, 10, true);
     drawText(fullName, 120, 90, 10);
-    
+
     drawLine(50, 100, width - 50, 100, modernBlue);
 
     // Draw KDGS logo
-    const logoImage = await pdfDoc.embedPng(
-      fs.readFileSync('./public/kdgs.png')
+    const logoUrl = 'https://kdgs-admin-dashboard.vercel.app/kdgs.png'; // Replace with the actual URL of your logo
+    const logoImageBytes = await fetch(logoUrl).then((res) =>
+      res.arrayBuffer()
     );
+    const logoImage = await pdfDoc.embedPng(logoImageBytes);
     page.drawImage(logoImage, {
       x: width - 150,
       y: height - 70,
       width: 100,
       height: 50
     });
-
     // Section headers
     const drawSectionHeader = (text: string, y: number) => {
       drawText(text, 50, y, 14, true, modernBlue);
@@ -116,9 +123,17 @@ export async function GET(
     currentY += 15;
     drawKeyValuePair('Maiden Name', obituary.maidenName || 'N/A', currentY);
     currentY += 15;
-    drawKeyValuePair('Birth Date', obituary.birthDate?.toDateString() || 'N/A', currentY);
+    drawKeyValuePair(
+      'Birth Date',
+      obituary.birthDate?.toDateString() || 'N/A',
+      currentY
+    );
     currentY += 15;
-    drawKeyValuePair('Death Date', obituary.deathDate?.toDateString() || 'N/A', currentY);
+    drawKeyValuePair(
+      'Death Date',
+      obituary.deathDate?.toDateString() || 'N/A',
+      currentY
+    );
     currentY += 15;
     drawKeyValuePair('Place of Death', obituary.place || 'N/A', currentY);
     currentY += 25;
@@ -128,7 +143,11 @@ export async function GET(
     currentY += 25;
     if (obituary.alsoKnownAs.length > 0) {
       obituary.alsoKnownAs.forEach((aka, index) => {
-        drawKeyValuePair(`AKA ${index + 1}`, `${aka.surname || ''} ${aka.otherNames || ''}`, currentY);
+        drawKeyValuePair(
+          `AKA ${index + 1}`,
+          `${aka.surname || ''} ${aka.otherNames || ''}`,
+          currentY
+        );
         currentY += 15;
       });
     } else {
@@ -158,9 +177,17 @@ export async function GET(
     // Publication Details
     drawSectionHeader('Publication Details', currentY);
     currentY += 25;
-    drawKeyValuePair('Periodical', obituary.periodical?.name || 'N/A', currentY);
+    drawKeyValuePair(
+      'Periodical',
+      obituary.periodical?.name || 'N/A',
+      currentY
+    );
     currentY += 15;
-    drawKeyValuePair('Publish Date', obituary.publishDate?.toDateString() || 'N/A', currentY);
+    drawKeyValuePair(
+      'Publish Date',
+      obituary.publishDate?.toDateString() || 'N/A',
+      currentY
+    );
     currentY += 15;
     drawKeyValuePair('Page', obituary.page || 'N/A', currentY);
     currentY += 15;
@@ -185,7 +212,8 @@ export async function GET(
     }
 
     // Footer
-    const footerText = 'Compiled by Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8';
+    const footerText =
+      'Compiled by Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8';
     const copyrightText = '© 2024 Javier Gongora';
     drawText(footerText, 50, height - 30, 8);
     drawText(copyrightText, 50, height - 15, 8);
