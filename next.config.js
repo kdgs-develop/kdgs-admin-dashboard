@@ -9,6 +9,16 @@ const nextConfig = {
         port: process.env.MINIO_PORT,
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'kdgs-admin-dashboard.vercel.app',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'kdgs-admin-dashboard-*.vercel.app',
+        pathname: '/**',
+      },
     ],
   },
 };
