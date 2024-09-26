@@ -2,23 +2,21 @@ import { useState } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
-import { Obituary as ObituaryType, updateObituary } from '@/lib/db';
+import { Obituary as ObituaryType } from '@/lib/db';
 import { EditObituaryDialog } from './edit-obituary-dialog';
 import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 import { getEditObituaryDialogData, updateObituaryAction, deleteObituary } from './actions';
+import { useRouter } from 'next/navigation';
 
 export function Obituary({ obituary, onUpdate }: { obituary: NonNullable<ObituaryType>; onUpdate: () => void }) {
+  const router = useRouter();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<Awaited<ReturnType<typeof getEditObituaryDialogData>> | null>(null);
+
+  const handleViewClick = () => {
+    router.push(`/obituary/${obituary.reference}`);
+  };
 
   const handleEditClick = async () => {
     if (!dialogData) {
@@ -27,19 +25,6 @@ export function Obituary({ obituary, onUpdate }: { obituary: NonNullable<Obituar
     }
     setIsEditDialogOpen(true);
   };
-
-  const handleDialogClose = () => {
-    setIsEditDialogOpen(false);
-  };
-
-  // const handleSave = async (updatedObituary: ObituaryType | Omit<ObituaryType, "id"> | null) => {
-  //   if (updatedObituary && 'id' in updatedObituary) {
-  //     await updateObituary(updatedObituary);
-  //     onUpdate();
-  //   } else {
-  //     console.error('Invalid obituary data');
-  //   }
-  // };
 
   const handleDeleteClick = () => {
     setIsDeleteDialogOpen(true);
@@ -66,27 +51,33 @@ export function Obituary({ obituary, onUpdate }: { obituary: NonNullable<Obituar
           </Badge>
         </TableCell>
         <TableCell>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button aria-haspopup="true" size="icon" variant="ghost">
-                <MoreHorizontal className="h-4 w-4" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onSelect={handleEditClick}>Edit</DropdownMenuItem>
-              <DropdownMenuItem onSelect={handleDeleteClick}>Delete</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex space-x-2">
+            <Button onClick={handleViewClick} variant="ghost" size="sm">
+              View
+            </Button>
+            <Button onClick={handleEditClick} variant="ghost" size="sm">
+              Edit
+            </Button>
+            <Button onClick={handleDeleteClick} variant="ghost" size="sm">
+              Delete
+            </Button>
+          </div>
         </TableCell>
       </TableRow>
       {dialogData && (
         <EditObituaryDialog
           obituary={obituary}
           isOpen={isEditDialogOpen}
-          onClose={handleDialogClose}
-          // onSave={handleSave}
+          onClose={() => setIsEditDialogOpen(false)}
+          onSave={async (updatedObituary) => {
+            if (updatedObituary && 'id' in updatedObituary) {
+              await updateObituaryAction(updatedObituary);
+              onUpdate();
+            } else {
+              console.error('Invalid obituary data');
+            }
+            setIsEditDialogOpen(false);
+          }}
           {...dialogData}
         />
       )}
