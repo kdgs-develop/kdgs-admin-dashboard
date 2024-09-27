@@ -8,14 +8,21 @@ export async function POST(req: Request) {
   const { to, name, password, isResend } = await req.json();
 
   try {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY is not set in environment variables');
+    }
+
     const { data, error } = await resend.emails.send({
       from: 'K&DGS Admin <onboarding@resend.dev>',
       to: [to],
       subject: isResend ? 'K&DGS Admin Dashboard - Password Reset' : 'Welcome to K&DGS Admin Dashboard',
       html: `
-        <h1>Welcome to K&DGS Admin Dashboard</h1>
+        <h1>${isResend ? 'Password Reset for K&DGS Admin Dashboard' : 'Welcome to K&DGS Admin Dashboard'}</h1>
         <p>Dear ${name},</p>
-        <p>Welcome to the Kelowna & District Genealogical Society Admin Dashboard. Your account has been created successfully.</p>
+        ${isResend 
+          ? '<p>Your password for the Kelowna & District Genealogical Society Admin Dashboard has been reset.</p>'
+          : '<p>Welcome to the Kelowna & District Genealogical Society Admin Dashboard. Your account has been created successfully.</p>'
+        }
         <p>Here are your login credentials:</p>
         <ul>
           <li>Email: ${to}</li>
@@ -30,12 +37,13 @@ export async function POST(req: Request) {
     });
 
     if (error) {
+      console.error('Resend API error:', error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     return NextResponse.json({ message: 'Email sent successfully', id: data?.id }, { status: 200 });
   } catch (error) {
     console.error('Error sending email:', error);
-    return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unknown error occurred' }, { status: 500 });
   }
 }
