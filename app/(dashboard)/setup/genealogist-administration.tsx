@@ -138,6 +138,7 @@ export function GeneaologistAdministration() {
           </SelectContent>
         </Select>
         <div className="flex space-x-2">
+        <Button variant={"outline"} onClick={generateSecurePassword}>Generate</Button>
           <div className="relative flex-grow">
             <Input 
               placeholder="Password" 
@@ -155,10 +156,12 @@ export function GeneaologistAdministration() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
           </div>
-          <Button onClick={generateSecurePassword}>Generate</Button>
+          
         </div>
       </div>
-      <Button onClick={handleCreateGenealogist} className="w-full md:w-auto">Create Genealogist</Button>
+      <div className="flex justify-end">
+      <Button onClick={handleCreateGenealogist} className="w-full md:w-auto" variant={"default"}>Create Genealogist</Button>
+      </div>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
