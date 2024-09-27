@@ -169,20 +169,25 @@ export function GeneaologistAdministration() {
           isResend: !!newPassword
         })
       });
-
+  
       if (!response.ok) {
-        throw new Error('Failed to send welcome email');
+        const errorData = await response.json();
+        console.error('Error response from server:', errorData);
+        throw new Error(`Failed to send welcome email: ${errorData.error || response.statusText}`);
       }
-
+  
       if (newPassword) {
-        // Update the password in Clerk
         await updateGenealogistPassword(genealogist.id, newPassword);
       }
-
+  
       toast({ title: 'Welcome email sent successfully' });
     } catch (error) {
       console.error('Error sending welcome email:', error);
-      toast({ title: 'Error sending welcome email', variant: 'destructive' });
+      toast({ 
+        title: 'Error sending welcome email', 
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive' 
+      });
     }
   };
 
