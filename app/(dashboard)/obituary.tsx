@@ -1,18 +1,30 @@
-import { useState } from 'react';
-import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { TableCell, TableRow } from '@/components/ui/table';
 import { Obituary as ObituaryType } from '@/lib/db';
-import { EditObituaryDialog } from './edit-obituary-dialog';
-import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
-import { getEditObituaryDialogData, updateObituaryAction, deleteObituary } from './actions';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import {
+  deleteObituary,
+  getEditObituaryDialogData,
+  updateObituaryAction
+} from './actions';
+import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
+import { EditObituaryDialog } from './edit-obituary-dialog';
 
-export function Obituary({ obituary, onUpdate }: { obituary: NonNullable<ObituaryType>; onUpdate: () => void }) {
+export function Obituary({
+  obituary,
+  onUpdate
+}: {
+  obituary: NonNullable<ObituaryType>;
+  onUpdate: () => void;
+}) {
   const router = useRouter();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [dialogData, setDialogData] = useState<Awaited<ReturnType<typeof getEditObituaryDialogData>> | null>(null);
+  const [dialogData, setDialogData] = useState<Awaited<
+    ReturnType<typeof getEditObituaryDialogData>
+  > | null>(null);
 
   const handleViewClick = () => {
     router.push(`/obituary/${obituary.reference}`);
@@ -44,10 +56,12 @@ export function Obituary({ obituary, onUpdate }: { obituary: NonNullable<Obituar
         <TableCell>{obituary.reference}</TableCell>
         <TableCell>{obituary.surname ?? 'N/A'}</TableCell>
         <TableCell>{obituary.givenNames ?? 'N/A'}</TableCell>
-        <TableCell>{obituary.deathDate?.toLocaleDateString() ?? 'N/A'}</TableCell>
         <TableCell>
-          <Badge variant={obituary.proofread ? "default" : "secondary"}>
-            {obituary.proofread ? "Proofread" : "Not Proofread"}
+          {obituary.deathDate?.toLocaleDateString() ?? 'N/A'}
+        </TableCell>
+        <TableCell>
+          <Badge variant={obituary.proofread ? 'default' : 'secondary'}>
+            {obituary.proofread ? 'Proofread' : 'Not Proofread'}
           </Badge>
         </TableCell>
         <TableCell>
@@ -70,12 +84,8 @@ export function Obituary({ obituary, onUpdate }: { obituary: NonNullable<Obituar
           isOpen={isEditDialogOpen}
           onClose={() => setIsEditDialogOpen(false)}
           onSave={async (updatedObituary) => {
-            if (updatedObituary && 'id' in updatedObituary) {
-              await updateObituaryAction(updatedObituary);
-              onUpdate();
-            } else {
-              console.error('Invalid obituary data');
-            }
+            await updateObituaryAction(updatedObituary);
+            onUpdate();
             setIsEditDialogOpen(false);
           }}
           {...dialogData}

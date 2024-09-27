@@ -27,6 +27,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/hooks/use-toast';
 import { Obituary } from '@/lib/db';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusCircle, Trash2 } from 'lucide-react';
@@ -34,8 +35,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { createObituaryAction, generateReference } from './actions';
-import { toast } from '@/hooks/use-toast';
-import { Prisma } from '@prisma/client';
 
 // Use the same formSchema as in EditObituaryDialog
 const formSchema = z.object({
@@ -44,25 +43,25 @@ const formSchema = z.object({
   titleId: z.number().optional(),
   givenNames: z.string().optional(),
   maidenName: z.string().optional(),
-  birthDate: z.date().optional(),
+  birthDate: z.coerce.date().optional(),
   birthCityId: z.number().optional(),
-  deathDate: z.date().optional(),
+  deathDate: z.coerce.date().optional(),
   deathCityId: z.number().optional(),
   burialCemetery: z.string().optional(),
   cemeteryId: z.number().optional(),
   place: z.string().optional(),
   periodicalId: z.number().optional(),
-  publishDate: z.date().optional(),
+  publishDate: z.coerce.date().optional(),
   page: z.string().max(8, 'Page must be 8 characters or less').optional(),
   column: z.string().max(8, 'Column must be 8 characters or less').optional(),
   notes: z.string().optional(),
   proofread: z.boolean(),
-  proofreadDate: z.date().optional(),
+  proofreadDate: z.coerce.date().optional(),
   proofreadBy: z.string().optional(),
   enteredBy: z.string().optional(),
-  enteredOn: z.date().optional(),
+  enteredOn: z.coerce.date().optional(),
   editedBy: z.string().optional(),
-  editedOn: z.date().optional(),
+  editedOn: z.coerce.date().optional(),
   fileBoxId: z.number().optional(),
   relatives: z
     .array(
@@ -128,11 +127,11 @@ export function AddObituaryDialog({
       proofreadDate: undefined,
       proofreadBy: '',
       enteredBy: '',
-      enteredOn: new Date(),
+      enteredOn: undefined,
       editedBy: '',
       editedOn: undefined,
       fileBoxId: undefined,
-      relatives: undefined
+      relatives: []
     }
   });
 
@@ -151,31 +150,32 @@ export function AddObituaryDialog({
     try {
       setIsLoading(true);
       const { relatives, ...rest } = values;
-  
-      const formattedRelatives = relatives?.map(relative => ({
+
+      const formattedRelatives = relatives?.map((relative) => ({
         surname: relative.surname,
         givenNames: relative.givenNames,
         relationship: relative.relationship,
         predeceased: relative.predeceased
       }));
-  
+
       const newObituary = await createObituaryAction({
         ...rest,
         relatives: formattedRelatives || []
       });
-  
+
       onSave(newObituary);
       onClose();
       toast({
-        title: "Obituary created",
-        description: "Your new obituary has been created successfully.",
+        title: 'Obituary created',
+        description: 'Your new obituary has been created successfully.'
       });
     } catch (error) {
       console.error('Error creating obituary:', error);
       toast({
-        title: "Error",
-        description: "There was a problem creating the obituary. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description:
+          'There was a problem creating the obituary. Please try again.',
+        variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
@@ -239,7 +239,7 @@ export function AddObituaryDialog({
                       <FormLabel className="text-xs">Title</FormLabel>
                       <Select
                         onValueChange={(value) => field.onChange(Number(value))}
-                        defaultValue={field.value?.toString()}
+                        defaultValue={field.value as unknown as string}
                       >
                         <FormControl>
                           <SelectTrigger className="h-8 text-sm">
@@ -310,7 +310,7 @@ export function AddObituaryDialog({
                       <FormLabel className="text-xs">Birth City</FormLabel>
                       <Select
                         onValueChange={(value) => field.onChange(Number(value))}
-                        defaultValue={field.value?.toString()}
+                        defaultValue={field.value as unknown as string}
                       >
                         <FormControl>
                           <SelectTrigger className="h-8 text-sm">

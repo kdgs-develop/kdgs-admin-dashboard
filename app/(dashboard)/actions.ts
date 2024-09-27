@@ -111,10 +111,9 @@ export async function createObituaryAction(
   // Destructure relatives from obituaryData, leaving the rest of the data in restObituaryData
   const { relatives, ...restObituaryData } = obituaryData;
 
-
   // Create a new obituary record in the database
   const newObituary = await prisma.obituary.create({
-    data: { ...restObituaryData },
+    data: { ...restObituaryData }
   });
 
   // Extract the generated id from the new obituary record
@@ -143,39 +142,43 @@ export async function createObituaryAction(
   return finalObituary!;
 }
 
-export async function updateObituaryAction(
-  obituaryData: Prisma.ObituaryUpdateInput & {
-    id: number;
-    relatives?: Omit<Prisma.RelativeCreateInput, 'Obituary'>[];
-  }
-): Promise<Obituary> {
+export async function updateObituaryAction(obituaryData: any): Promise<any> {
   const { id, relatives, ...updateData } = obituaryData;
 
-  await prisma.obituary.update({
-    where: { id },
-    data: {
-      ...updateData,
-      relatives: {
-        deleteMany: {}
+  await prisma.$transaction(async (prisma) => {
+    await prisma.obituary.update({
+      where: { id },
+      data: {
+        ...updateData,
+        relatives: {
+          deleteMany: {}
+        }
       }
-    },
-    include: { relatives: true }
+    });
+    console.log("Relatives deleted")
+
+    if (relatives && relatives.length > 0) {
+      await prisma.relative.createMany({
+        data: relatives.map((relative: any) => ({
+          obituaryId: id,
+          ...relative
+        }))
+      });
+    }
   });
 
-  if (relatives && relatives.length > 0) {
-    await prisma.relative.createMany({
-      data: relatives.map((relative) => ({
-        obituaryId: id,
-        ...relative
-      }))
-    });
-  }
-
-  const finalObituary: Obituary | null = await prisma.obituary.findUnique({
+  const finalObituary = await prisma.obituary.findUnique({
     where: { id },
     include: { relatives: true }
   });
 
   revalidatePath('/');
-  return finalObituary!;
+  return finalObituary;
+}
+
+export async function deleteRelativeAction(relativeId: number) {
+  await prisma.relative.delete({
+    where: { id: relativeId }
+  });
+  revalidatePath('/');
 }

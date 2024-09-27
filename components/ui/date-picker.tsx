@@ -34,14 +34,12 @@ export function DatePicker({ date, setDate }: DatePickerProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <div className="max-h-[300px] overflow-y-auto">
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={setDate}
-            initialFocus
-          />
-        </div>
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={setDate}
+          initialFocus
+        />
       </PopoverContent>
     </Popover>
   )
