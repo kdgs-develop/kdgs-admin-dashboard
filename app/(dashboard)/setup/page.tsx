@@ -15,8 +15,8 @@ export default async function SetupPage() {
   if (user?.role !== 'ADMIN') redirect('/dashboard');
 
   return (
-    <div className="container mx-auto px-4 max-w-4xl">
-      <Card>
+    <div className="container mx-auto px-4 max-w-[calc(4xl)]">
+      <Card className="w-[calc(100%)]">
         <CardHeader>
           <CardTitle>Setup</CardTitle>
           <CardDescription>Configure your obituary management system.</CardDescription>

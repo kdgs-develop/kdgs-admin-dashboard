@@ -22,7 +22,7 @@ interface UpdateGenealogistParams {
 export async function createGenealogist({ firstName, lastName, email, phone, role, password }: CreateGenealogistParams) {
   try {
     // Create user in Clerk (without phone number)
-    const clerkUser = await clerkClient.users.createUser({
+    const clerkUser = await clerkClient().users.createUser({
       firstName,
       lastName,
       emailAddress: [email],
@@ -52,7 +52,7 @@ export async function deleteGenealogist(id: number) {
     if (!genealogist) throw new Error('Genealogist not found');
 
     // Delete user from Clerk
-    await clerkClient.users.deleteUser(genealogist.clerkId);
+    await clerkClient().users.deleteUser(genealogist.clerkId);
 
     // Delete user from our database
     await prisma.genealogist.delete({ where: { id } });
@@ -76,7 +76,7 @@ export async function getGenealogists() {
 
     const genealogistsWithEmail = await Promise.all(
       genealogists.map(async (genealogist) => {
-        const clerkUser = await clerkClient.users.getUser(genealogist.clerkId);
+        const clerkUser = await clerkClient().users.getUser(genealogist.clerkId);
         return {
           ...genealogist,
           email: clerkUser.emailAddresses[0]?.emailAddress || '',
@@ -107,7 +107,7 @@ export async function updateGenealogist({ id, phone, role }: UpdateGenealogistPa
 
     // Update user role in Clerk if it has changed
     if (role) {
-      await clerkClient.users.updateUser(genealogist.clerkId, {
+      await clerkClient().users.updateUser(genealogist.clerkId, {
         publicMetadata: { role },
       });
     }
@@ -115,6 +115,22 @@ export async function updateGenealogist({ id, phone, role }: UpdateGenealogistPa
     return updatedGenealogist;
   } catch (error) {
     console.error('Error updating genealogist:', error);
+    throw error;
+  }
+}
+
+export async function updateGenealogistPassword(id: number, newPassword: string) {
+  try {
+    const genealogist = await prisma.genealogist.findUnique({ where: { id } });
+    if (!genealogist) throw new Error('Genealogist not found');
+
+    await clerkClient().users.updateUser(genealogist.clerkId, {
+      password: newPassword,
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error updating genealogist password:', error);
     throw error;
   }
 }
