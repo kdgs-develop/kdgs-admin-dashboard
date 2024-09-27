@@ -1,17 +1,11 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model Genealogist {
@@ -19,41 +13,35 @@ model Genealogist {
   fullName     String?
   phone        String?
   lastAccessAt DateTime?
-  accessTimes  AccessTime[]
   clerkId      String       @unique
-  role         Role?        @default(INDEXER)
   createdAt    DateTime     @default(now())
+  role         Role?        @default(INDEXER)
   updatedAt    DateTime?    @updatedAt
+  accessTimes  AccessTime[]
 }
 
 model AccessTime {
   id            Int          @id @default(autoincrement())
-  genealogist   Genealogist? @relation(fields: [genealogistId], references: [id])
   genealogistId Int?         @db.SmallInt
   loginAt       DateTime?
   logoutAt      DateTime?
+  genealogist   Genealogist? @relation(fields: [genealogistId], references: [id])
 }
 
 model Obituary {
   id             Int           @id @default(autoincrement())
   reference      String        @unique @db.Char(8)
   surname        String?
-  title          Title?        @relation(fields: [titleId], references: [id])
   titleId        Int?          @db.SmallInt
   givenNames     String?
   maidenName     String?
-  alsoKnownAs    AlsoKnownAs[]
   birthDate      DateTime?     @db.Date
-  birthCity      City?         @relation("birthCityId", fields: [birthCityId], references: [id])
   birthCityId    Int?          @db.SmallInt
   deathDate      DateTime?     @db.Date
-  deathCity      City?         @relation("deathCityId", fields: [deathCityId], references: [id])
   deathCityId    Int?          @db.SmallInt
   burialCemetery String?
-  cemetery       Cemetery?     @relation(fields: [cemeteryId], references: [id])
   cemeteryId     Int?          @db.SmallInt
   place          String?
-  periodical     Periodical?   @relation(fields: [periodicalId], references: [id])
   periodicalId   Int?          @db.SmallInt
   publishDate    DateTime?     @db.Date
   page           String?       @db.VarChar(8)
@@ -66,21 +54,25 @@ model Obituary {
   enteredOn      DateTime?     @default(now())
   editedBy       String?
   editedOn       DateTime?     @updatedAt
-  fileBox        FileBox?      @relation(fields: [fileBoxId], references: [id])
   fileBoxId      Int?          @db.SmallInt
+  alsoKnownAs    AlsoKnownAs[]
+  birthCity      City?         @relation("birthCityId", fields: [birthCityId], references: [id])
+  cemetery       Cemetery?     @relation(fields: [cemeteryId], references: [id])
+  deathCity      City?         @relation("deathCityId", fields: [deathCityId], references: [id])
+  fileBox        FileBox?      @relation(fields: [fileBoxId], references: [id])
+  periodical     Periodical?   @relation(fields: [periodicalId], references: [id])
+  title          Title?        @relation(fields: [titleId], references: [id])
   relatives      Relative[]
-
-  // @@index([surname, givenNames])
 }
 
 model Relative {
-  id           Int       @id @default(autoincrement())
-  Obituary     Obituary @relation(fields: [obituaryId], references: [id])
+  id           Int      @id @default(autoincrement())
   obituaryId   Int
   surname      String?
   givenNames   String?
   relationship String?
-  predeceased  Boolean   @default(false)
+  predeceased  Boolean  @default(false)
+  Obituary     Obituary @relation(fields: [obituaryId], references: [id])
 }
 
 model AlsoKnownAs {
@@ -95,11 +87,11 @@ model City {
   id                     Int        @id @default(autoincrement())
   name                   String?
   province               String?
-  country                Country?   @relation(fields: [countryId], references: [id])
   countryId              Int?
+  cemeteries             Cemetery[]
+  country                Country?   @relation(fields: [countryId], references: [id])
   obituaries_birthCityId Obituary[] @relation("birthCityId")
   obituaries_deathCityId Obituary[] @relation("deathCityId")
-  cemeteries             Cemetery[]
 }
 
 model Country {
@@ -111,8 +103,8 @@ model Country {
 model Cemetery {
   id         Int        @id @default(autoincrement())
   name       String?
-  city       City?      @relation(fields: [cityId], references: [id])
   cityId     Int?       @db.SmallInt
+  city       City?      @relation(fields: [cityId], references: [id])
   obituaries Obituary[]
 }
 
@@ -137,8 +129,8 @@ model FileBox {
 
 enum Role {
   VIEWER
-  SCANNER
   INDEXER
+  SCANNER
   PROOFREADER
   ADMIN
 }
