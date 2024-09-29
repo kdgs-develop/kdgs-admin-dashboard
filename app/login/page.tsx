@@ -6,7 +6,7 @@ export default function LoginPage() {
       <SignIn
         appearance={{
           elements: {
-            footerActionLink: "hidden",
+            footerAction: "hidden",
           },
         }}
         routing="hash"
