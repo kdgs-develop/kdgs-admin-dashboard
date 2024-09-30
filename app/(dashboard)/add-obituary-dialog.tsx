@@ -31,7 +31,7 @@ import { toast } from '@/hooks/use-toast';
 import { Obituary } from '@/lib/db';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PlusCircle, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { createObituaryAction, generateReference } from './actions';
@@ -102,6 +102,51 @@ export function AddObituaryDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [reference, setReference] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  // File upload
+  const [selectedFiles, setSelectedFiles] = useState<
+    Array<{ file: File; newName: string }>
+  >([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const generateNewFileName = (
+    reference: string,
+    index: number,
+    fileName: string
+  ) => {
+    const extension = fileName.split('.').pop();
+    if (index === 0) {
+      return `${reference}.${extension}`;
+    }
+    const letter = String.fromCharCode(97 + index - 1); // 'a' for the second file, 'b' for the third, etc.
+    return `${reference}${letter}.${extension}`;
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const newFiles = files.map((file, index) => ({
+      file,
+      newName: generateNewFileName(
+        reference,
+        selectedFiles.length + index,
+        file.name
+      )
+    }));
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateFileNames = (reference: string) => {
+    setSelectedFiles((prev) =>
+      prev.map((item, index) => ({
+        ...item,
+        newName: generateNewFileName(reference, index, item.file.name)
+      }))
+    );
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -141,6 +186,7 @@ export function AddObituaryDialog({
       const newReference = await generateReference(surname);
       form.setValue('reference', newReference);
       setReference(newReference);
+      updateFileNames(newReference);
     }
   };
 
@@ -158,23 +204,65 @@ export function AddObituaryDialog({
         predeceased: relative.predeceased
       }));
 
-      const newObituary = await createObituaryAction({
-        ...rest,
-        relatives: formattedRelatives || []
-      });
+      // Create the obituary
+      let newObituary;
+      try {
+        newObituary = await createObituaryAction({
+          ...rest,
+          relatives: formattedRelatives || []
+        });
+      } catch (error) {
+        console.error('Failed to create obituary:', error);
+        toast({
+          title: 'Obituary Creation Error',
+          description: 'Failed to create the obituary. Please try again.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Upload files
+      if (selectedFiles.length > 0) {
+        try {
+          const formData = new FormData();
+          selectedFiles.forEach((fileItem) => {
+            formData.append('files', fileItem.file, fileItem.newName);
+          });
+
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            throw new Error('File upload failed');
+          }
+        } catch (error) {
+          console.error('Failed to upload files:', error);
+          toast({
+            title: 'File Upload Error',
+            description:
+              'Obituary created successfully, but file upload failed. Please try uploading the files again.',
+            variant: 'destructive'
+          });
+          onSave(newObituary);
+          onClose();
+          return;
+        }
+      }
 
       onSave(newObituary);
       onClose();
       toast({
         title: 'Obituary created',
-        description: 'Your new obituary has been created successfully.'
+        description:
+          'Your new obituary has been created successfully with all files uploaded.'
       });
     } catch (error) {
-      console.error('Error creating obituary:', error);
+      console.error('Unexpected error:', error);
       toast({
         title: 'Error',
-        description:
-          'There was a problem creating the obituary. Please try again.',
+        description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive'
       });
     } finally {
@@ -386,6 +474,52 @@ export function AddObituaryDialog({
                     </FormItem>
                   )}
                 />
+              </div>
+            </div>
+
+            {/* Obituary Files */}
+            <div className="space-y-2">
+              <FormLabel className="text-xs">Obituary Files</FormLabel>
+              {selectedFiles.length > 0 && (
+                <div className="mb-2 space-y-2">
+                  {selectedFiles.map((fileItem, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <span>
+                        {fileItem.file.name} → {fileItem.newName}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveFile(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center space-x-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  ref={fileInputRef}
+                  disabled={!reference}
+                  multiple
+                  className="hidden"
+                  id="file-upload"
+                />
+                <Button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={!reference}
+                >
+                  Add New File
+                </Button>
               </div>
             </div>
 
