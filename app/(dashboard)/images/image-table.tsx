@@ -25,6 +25,8 @@ import {
 import { RenameImageDialog } from './rename-image-dialog';
 import { ViewImageDialog } from './view-image-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from '@clerk/nextjs';
+import { getUserRole } from '@/lib/db';
 
 const IMAGES_PER_PAGE = 5;
 
@@ -44,6 +46,16 @@ export function ImageTable({ initialSearchQuery = '' }) {
 
   const tableRef = useRef<HTMLDivElement>(null);
   const [tableHeight, setTableHeight] = useState('400px');
+
+  const [role, setRole] = useState<string | null>(null);
+  const { userId } = useAuth();
+  useEffect(() => {
+    async function fetchRole() {
+      const fetchedRole = await getUserRole(userId ?? '');
+      setRole(fetchedRole ?? '');
+    }
+    fetchRole();
+  }, []);
 
   useEffect(() => {
     setSearchQuery(searchParams.get('q') || '');
@@ -197,6 +209,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
                               onClick={() => setSelectedImageToEdit(image)}
                               variant="ghost"
                               size="sm"
+                              disabled={role !== 'ADMIN'}
                             >
                               Edit
                             </Button>
@@ -204,6 +217,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
                               onClick={() => setSelectedImageToRename(image)}
                               variant="ghost"
                               size="sm"
+                              disabled={role !== 'ADMIN'}
                             >
                               Rename
                             </Button>

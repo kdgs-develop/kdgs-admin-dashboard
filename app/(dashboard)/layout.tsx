@@ -1,10 +1,11 @@
-import { Home, Image, Package2, PanelLeft, Settings } from 'lucide-react';
-import Link from 'next/link';
 import { VercelLogo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { currentUser, User } from '@clerk/nextjs/server';
+import { prisma } from '@/lib/prisma';
+import { auth, currentUser, User } from '@clerk/nextjs/server';
 import { Analytics } from '@vercel/analytics/react';
+import { Home, Image, Package2, PanelLeft, Settings } from 'lucide-react';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { DashboardBreadcrumb } from './dashboard-breadcrumb';
 import { NavItem } from './nav-item';
@@ -43,7 +44,15 @@ export default async function DashboardLayout({
   );
 }
 
-function DesktopNav() {
+async function DesktopNav() {
+  const { userId } = auth();
+  if (!userId) redirect('/sign-in');
+
+  const user = await prisma.genealogist.findUnique({
+    where: { clerkId: userId },
+    select: { role: true }
+  });
+
   return (
     <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
       <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
@@ -62,10 +71,11 @@ function DesktopNav() {
         <NavItem href="/images" label="Obituary Images">
           <Image className="h-5 w-5" />
         </NavItem>
-
-        <NavItem href="/setup" label="Setup">
-          <Settings className="h-5 w-5" />
-        </NavItem>
+        {user?.role === 'ADMIN' && (
+          <NavItem href="/setup" label="Setup">
+            <Settings className="h-5 w-5" />
+          </NavItem>
+        )}
       </nav>
     </aside>
   );

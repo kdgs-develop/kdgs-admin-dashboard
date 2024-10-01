@@ -202,3 +202,14 @@ export async function getFileBoxes() {
     ],
   });
 }
+
+// Get user role
+export async function getUserRole(userId: string) {
+  const genealogist = await prisma.genealogist.findUnique({
+    where: { clerkId: userId },
+    select: { role: true },
+  });
+  const role = genealogist?.role;
+
+  return role;
+}
