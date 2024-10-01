@@ -69,9 +69,7 @@ export function GeneaologistAdministration() {
 
   const fetchGenealogists = async () => {
     try {
-      console.log('Fetching genealogists...');
       const fetchedGenealogists = await getGenealogists();
-      console.log('Fetched genealogists:', fetchedGenealogists);
       setGenealogists(fetchedGenealogists);
     } catch (error) {
       console.error('Error fetching genealogists:', error);
@@ -296,6 +294,7 @@ export function GeneaologistAdministration() {
                           variant="outline"
                           size="sm"
                           onClick={() => openEditDialog(genealogist)}
+                          disabled={genealogist.email === "kdgs.develop@gmail.com"}
                         >
                           <Edit2 className="h-4 w-4" />
                         </Button>
@@ -334,6 +333,7 @@ export function GeneaologistAdministration() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleResendPassword(genealogist)}
+                      disabled={genealogist.email === "kdgs.develop@gmail.com"}
                     >
                       Resend Password
                     </Button>
@@ -341,6 +341,7 @@ export function GeneaologistAdministration() {
                       variant="destructive"
                       size="sm"
                       onClick={() => handleDeleteGenealogist(genealogist.id)}
+                      disabled={genealogist.email === "kdgs.develop@gmail.com"}
                     >
                       Delete
                     </Button>
