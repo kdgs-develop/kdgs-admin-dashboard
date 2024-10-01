@@ -19,8 +19,9 @@ export default function ImagesPage() {
       <CardHeader>
         <CardTitle>Obituary Images</CardTitle>
         <CardDescription>
-        View and manage image files from our KDGS storage server.
-          <hr className="my-2 border-muted" />
+          View and manage image files from our KDGS storage server.
+          <br />
+          <br />
           <strong>Please note:</strong> manually renaming image files may
           severely impact database integrity and storage server functionality.
           Exercise caution when modifying file names.

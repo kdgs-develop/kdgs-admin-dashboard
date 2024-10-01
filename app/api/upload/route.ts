@@ -6,19 +6,14 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
 
-    const fileData = await Promise.all(
-      files.map(async (file) => {
-        const fileNameParts = file.name.split('.');
-        const extension = fileNameParts.pop();
-        const fileName = fileNameParts.join('.').toUpperCase();
-        const newFileName = `${fileName}.${extension}`;
+    console.log('Received files for upload:', files.map(f => f.name));
 
-        return {
-          name: newFileName,
-          type: file.type,
-          arrayBuffer: await file.arrayBuffer(),
-        };
-      })
+    const fileData = await Promise.all(
+      files.map(async (file) => ({
+        name: file.name,
+        type: file.type,
+        arrayBuffer: await file.arrayBuffer(),
+      }))
     );
 
     await uploadImagesAction(fileData);
@@ -26,6 +21,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error uploading files:', error);
-    return NextResponse.json({ error: 'Failed to upload files' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to upload files', 
+      details: error instanceof Error ? error.message : 'Unknown error' 
+    }, { status: 500 });
   }
 }

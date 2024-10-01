@@ -163,6 +163,10 @@ export async function createObituaryAction(
 export async function updateObituaryAction(obituaryData: any): Promise<any> {
   const { id, relatives, ...updateData } = obituaryData;
 
+  if (!id) {
+    throw new Error('Obituary ID is required for updating');
+  }
+
   await prisma.$transaction(async (prisma) => {
     await prisma.obituary.update({
       where: { id },

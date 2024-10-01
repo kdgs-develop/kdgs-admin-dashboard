@@ -96,15 +96,16 @@ export async function renameImageAction(oldName: string, newName: string) {
 }
 
 export async function uploadImagesAction(files: { name: string; type: string; arrayBuffer: ArrayBuffer }[]) {
-  console.log('Uploading images:', files);
+  console.log('Uploading images to Minio:', files.map(f => f.name));
   const bucketName = process.env.MINIO_BUCKET_NAME!;
   try {
     for (const file of files) {
       await minioClient.putObject(bucketName, file.name, Buffer.from(file.arrayBuffer));
+      console.log('Uploaded file:', file.name);
     }
     revalidatePath('/');
   } catch (error) {
-    console.error('Error uploading images:', error);
+    console.error('Error uploading images to Minio:', error);
     throw new Error(`Failed to upload images: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
