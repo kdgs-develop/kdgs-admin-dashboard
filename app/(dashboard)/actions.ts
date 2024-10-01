@@ -12,6 +12,8 @@ import {
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
+import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
+import { deleteImageAction } from './images/minio-actions';
 
 export async function fetchObituariesAction(
   offset: number = 0,
@@ -29,7 +31,23 @@ export async function fetchObituariesAction(
 
 export async function deleteObituary(formData: FormData) {
   const id = Number(formData.get('id'));
-  await deleteObituaryById(id);
+  
+  // Fetch the obituary to get the reference
+  const obituary = await prisma.obituary.findUnique({ where: { id } });
+  
+  if (obituary) {
+    // Fetch images associated with the obituary
+    const images = await fetchImagesForObituaryAction(obituary.reference);
+    
+    // Delete each image from Minio
+    for (const image of images) {
+      await deleteImageAction(image);
+    }
+    
+    // Delete the obituary from the database
+    await deleteObituaryById(id);
+  }
+  
   revalidatePath('/');
 }
 
