@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { useToast } from '@/hooks/use-toast';
+import { toast, useToast } from '@/hooks/use-toast';
 import { Edit2, Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
@@ -34,6 +34,7 @@ import {
   updateGenealogist,
   updateGenealogistPassword
 } from './actions';
+import { SendEmailComponent } from './send-email-component';
 
 interface Genealogist {
   id: number;
@@ -49,7 +50,7 @@ export function GeneaologistAdministration() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState('VIEWER');
   const [password, setPassword] = useState('');
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
@@ -58,6 +59,13 @@ export function GeneaologistAdministration() {
   const [editPhone, setEditPhone] = useState('');
   const [editRole, setEditRole] = useState('');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [emailDetails, setEmailDetails] = useState<{
+    to: string;
+    name: string;
+    password: string;
+    role: string;
+    isResend: boolean;
+  } | null>(null);
 
   const fetchGenealogists = async () => {
     try {
@@ -73,19 +81,31 @@ export function GeneaologistAdministration() {
 
   const handleCreateGenealogist = async () => {
     try {
+      const newPassword = generateSecurePassword();
+      const newGenealogist = {
+        email: email,
+        fullName: firstName + ' ' + lastName,
+        phone: phone,
+        role: role, // Use the selected role
+      };
       await createGenealogist({
         firstName,
         lastName,
         email,
         phone,
-        role,
-        password
+        role: role, // Use the selected role
+        password: newPassword,
       });
+      await sendWelcomeEmail(newGenealogist, newPassword);
       toast({ title: 'Genealogist created successfully' });
       fetchGenealogists();
       resetForm();
     } catch (error) {
-      toast({ title: 'Error creating genealogist', variant: 'destructive' });
+      toast({ 
+        title: 'Error creating genealogist', 
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive' 
+      });
     }
   };
 
@@ -107,7 +127,7 @@ export function GeneaologistAdministration() {
     for (let i = 0; i < length; i++) {
       password += charset.charAt(Math.floor(Math.random() * charset.length));
     }
-    setPassword(password);
+    return password;
   };
 
   const togglePasswordVisibility = () => {
@@ -119,7 +139,7 @@ export function GeneaologistAdministration() {
     setLastName('');
     setEmail('');
     setPhone('');
-    setRole('');
+    setRole('VIEWER'); // Reset to 'VIEWER'
     setPassword('');
   };
 
@@ -152,48 +172,26 @@ export function GeneaologistAdministration() {
   }, []);
 
   const sendWelcomeEmail = async (
-    genealogist: Genealogist,
-    newPassword?: string
+    genealogist:  Partial<Genealogist>,
+    password: string,
+    isResend: boolean = false
   ) => {
-    try {
-      const password = newPassword || (await generateSecurePassword());
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          to: genealogist.email,
-          name: genealogist.fullName,
-          password: password,
-          isResend: !!newPassword
-        })
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error response from server:', errorData);
-        throw new Error(`Failed to send welcome email: ${errorData.error || response.statusText}`);
-      }
-  
-      if (newPassword) {
-        await updateGenealogistPassword(genealogist.id, newPassword);
-      }
-  
-      toast({ title: 'Welcome email sent successfully' });
-    } catch (error) {
-      console.error('Error sending welcome email:', error);
-      toast({ 
-        title: 'Error sending welcome email', 
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive' 
-      });
+    setEmailDetails({
+      to: genealogist.email!,
+      name: genealogist.fullName!,
+      password,
+      role: genealogist.role!,
+      isResend
+    });
+
+    if (isResend) {
+      await updateGenealogistPassword(genealogist?.id!, password);
     }
   };
 
   const handleResendPassword = async (genealogist: Genealogist) => {
     const newPassword = generateSecurePassword();
-    await sendWelcomeEmail(genealogist, newPassword!);
+    await sendWelcomeEmail(genealogist, newPassword, true);
   };
 
   return (
@@ -221,7 +219,7 @@ export function GeneaologistAdministration() {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
-        <Select value={role} onValueChange={setRole}>
+        <Select value={role} onValueChange={setRole} defaultValue="VIEWER">
           <SelectTrigger>
             <SelectValue placeholder="Select Role" />
           </SelectTrigger>
@@ -353,6 +351,15 @@ export function GeneaologistAdministration() {
           </TableBody>
         </Table>
       </div>
+      {emailDetails && (
+        <SendEmailComponent
+          to={emailDetails.to}
+          name={emailDetails.name}
+          password={emailDetails.password}
+          role={emailDetails.role}
+          isResend={emailDetails.isResend}
+        />
+      )}
     </div>
   );
 }
