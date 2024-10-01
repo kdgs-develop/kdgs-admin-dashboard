@@ -38,11 +38,13 @@ import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { BucketItem } from 'minio';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { updateObituaryAction } from './actions';
-import { Obituary as ObituaryType } from '@prisma/client';
+import { deleteImageAction, getImageUrlAction, uploadImagesAction } from './images/minio-actions';
+import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
+import { ViewImageDialog } from './images/view-image-dialog';
 
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
@@ -108,6 +110,17 @@ export function EditObituaryDialog({
   fileBoxes
 }: EditObituaryDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
+
+  const [selectedFiles, setSelectedFiles] = useState<
+    Array<{ file: File; newName: string }>
+  >([]);
+  const [existingImages, setExistingImages] = useState<Array<{ originalName: string; newName: string }>>([]);
+  const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<string | null>(null);
+  const [sumChallenge, setSumChallenge] = useState({ a: 0, b: 0 });
+  const [sumAnswer, setSumAnswer] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -192,39 +205,132 @@ export function EditObituaryDialog({
     }
   }, [obituary, form]);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    try {
-      setIsLoading(true);
-      const { relatives, ...rest } = values;
+  useEffect(() => {
+    if (isOpen && obituary.reference) {
+      fetchImagesForObituaryAction(obituary.reference).then((images) => {
+        const formattedImages = images.map((image, index) => ({
+          originalName: image,
+          newName: generateNewFileName(obituary.reference, index, image)
+        }));
+        setExistingImages(formattedImages);
+      });
+    }
+  }, [isOpen, obituary.reference]);
 
-      if (!obituary?.id) {
-        throw new Error('Obituary ID is missing');
+  const generateNewFileName = (
+    reference: string,
+    index: number,
+    fileName: string
+  ) => {
+    const extension = fileName.split('.').pop();
+    if (index === 0) {
+      return `${reference}.${extension}`;
+    }
+    const letter = String.fromCharCode(97 + index - 1); // 'a' for the second file, 'b' for the third, etc.
+    return `${reference}${letter}.${extension}`;
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const newFiles = files.map((file, index) => ({
+      file,
+      newName: generateNewFileName(
+        obituary.reference,
+        existingImages.length + selectedFiles.length + index,
+        file.name
+      )
+    }));
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDeleteImage = (imageName: string) => {
+    setImageToDelete(imageName);
+    setSumChallenge({
+      a: Math.floor(Math.random() * 10),
+      b: Math.floor(Math.random() * 10)
+    });
+    setSumAnswer('');
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteImage = async () => {
+    if (
+      imageToDelete &&
+      parseInt(sumAnswer) === sumChallenge.a + sumChallenge.b
+    ) {
+      await deleteImageAction(imageToDelete);
+      setExistingImages((prev) => prev.filter((img) => img.newName !== imageToDelete));
+      setIsDeleteDialogOpen(false);
+      setImageToDelete(null);
+      setSumAnswer('');
+    }
+  };
+
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
+    try {
+      // First, save the obituary data
+      await onSave(data);
+
+      // Handle file deletions
+      const currentImageNames = new Set(existingImages.map(img => img.newName));
+      for (const image of existingImages) {
+        if (!currentImageNames.has(image.newName)) {
+          try {
+            await deleteImageAction(image.newName);
+          } catch (deleteError) {
+            console.error('Error deleting file:', deleteError);
+            toast({
+              title: 'File Deletion Error',
+              description: `Failed to delete ${image.originalName}. Please try again.`,
+              variant: 'destructive',
+            });
+          }
+        }
       }
 
-      const formattedRelatives = relatives?.map((relative) => ({
-        surname: relative.surname || null,
-        givenNames: relative.givenNames || null,
-        relationship: relative.relationship || null,
-        predeceased: relative.predeceased
-      }));
+      // Handle new file uploads
+      for (const fileItem of selectedFiles) {
+        try {
+          await uploadImagesAction([{
+            name: fileItem.newName,
+            type: fileItem.file.type,
+            arrayBuffer: await fileItem.file.arrayBuffer()
+          }]);
+        } catch (uploadError) {
+          console.error('Error uploading file:', uploadError);
+          toast({
+            title: 'File Upload Error',
+            description: `Failed to upload ${fileItem.file.name}. Please try again.`,
+            variant: 'destructive',
+          });
+        }
+      }
 
-      await updateObituaryAction({
-        id: obituary?.id!,
-        ...rest,
-        relatives: formattedRelatives || []
-      });
+      // Update existingImages state with new files and remove deleted ones
+      setExistingImages(prev => [
+        ...prev.filter(img => currentImageNames.has(img.newName)),
+        ...selectedFiles.map(file => ({ originalName: file.file.name, newName: file.newName }))
+      ]);
 
-      onClose();
+      // Clear the selected files after successful upload
+      setSelectedFiles([]);
+
       toast({
         title: 'Obituary updated',
-        description: 'The obituary has been successfully updated.'
+        description: 'The obituary has been successfully updated with file changes.',
       });
+      onClose();
     } catch (error) {
-      console.error('Failed to update obituary:', error);
+      console.error('Error updating obituary:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update obituary. Please try again.',
-        variant: 'destructive'
+        description: 'There was an error updating the obituary. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -499,6 +605,76 @@ export function EditObituaryDialog({
                     </FormItem>
                   )}
                 />
+              </div>
+            </div>
+
+            {/* Obituary Files */}
+            <div className="space-y-2">
+              <FormLabel className="text-xs">Obituary Files</FormLabel>
+              {existingImages.length > 0 && (
+                <div className="mb-2 space-y-2">
+                  {existingImages.map((image, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm">
+                      <span>
+                        {image.originalName} {image.originalName !== image.newName && `→ ${image.newName}`}
+                      </span>
+                      <div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedImage({ name: image.newName } as BucketItem)}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteImage(image.newName)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {selectedFiles.length > 0 && (
+                <div className="mb-2 space-y-2">
+                  {selectedFiles.map((fileItem, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm">
+                      <span>
+                        {fileItem.file.name} → {fileItem.newName}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveFile(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center space-x-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  ref={fileInputRef}
+                  multiple
+                  className="hidden"
+                  id="file-upload"
+                />
+                <Button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Add New File
+                </Button>
               </div>
             </div>
 
@@ -996,6 +1172,52 @@ export function EditObituaryDialog({
           </form>
         </Form>
       </DialogContent>
+
+      {/* ViewImageDialog */}
+      {selectedImage && (
+        <ViewImageDialog
+          image={selectedImage}
+          onClose={() => setSelectedImage(null)}
+          onRotate={(fileName: string, degrees: number) => {
+            // Implement the rotation logic here
+            // For example, you could call an API to rotate the image
+            console.log(`Rotating ${fileName} by ${degrees} degrees`);
+            // Return a promise to satisfy the type requirement
+            return Promise.resolve();
+          }}
+          getImageUrl={getImageUrlAction}
+        />
+      )}
+
+      {/* DeleteImageDialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Image</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this image? This action cannot be
+              undone. To confirm, please solve the following sum:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p>
+              {sumChallenge.a} + {sumChallenge.b} = ?
+            </p>
+            <Input
+              type="number"
+              value={sumAnswer}
+              onChange={(e) => setSumAnswer(e.target.value)}
+              placeholder="Enter the sum"
+            />
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+            <Button onClick={confirmDeleteImage} variant="destructive">
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
