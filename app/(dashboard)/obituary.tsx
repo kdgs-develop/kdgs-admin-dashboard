@@ -84,7 +84,7 @@ export function Obituary({
           isOpen={isEditDialogOpen}
           onClose={() => setIsEditDialogOpen(false)}
           onSave={async (updatedObituary) => {
-            await updateObituaryAction(updatedObituary);
+            await updateObituaryAction({ ...updatedObituary, id: obituary.id });
             onUpdate();
             setIsEditDialogOpen(false);
           }}
