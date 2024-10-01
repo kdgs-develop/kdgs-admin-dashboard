@@ -1,14 +1,39 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { createGenealogist, deleteGenealogist, getGenealogists, updateGenealogist } from './actions';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Edit2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Edit2, Eye, EyeOff } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  createGenealogist,
+  deleteGenealogist,
+  getGenealogists,
+  updateGenealogist,
+  updateGenealogistPassword
+} from './actions';
 
 interface Genealogist {
   id: number;
@@ -28,7 +53,8 @@ export function GeneaologistAdministration() {
   const [password, setPassword] = useState('');
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
-  const [editingGenealogist, setEditingGenealogist] = useState<Genealogist | null>(null);
+  const [editingGenealogist, setEditingGenealogist] =
+    useState<Genealogist | null>(null);
   const [editPhone, setEditPhone] = useState('');
   const [editRole, setEditRole] = useState('');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -47,7 +73,14 @@ export function GeneaologistAdministration() {
 
   const handleCreateGenealogist = async () => {
     try {
-      await createGenealogist({ firstName, lastName, email, phone, role, password });
+      await createGenealogist({
+        firstName,
+        lastName,
+        email,
+        phone,
+        role,
+        password
+      });
       toast({ title: 'Genealogist created successfully' });
       fetchGenealogists();
       resetForm();
@@ -68,7 +101,8 @@ export function GeneaologistAdministration() {
 
   const generateSecurePassword = () => {
     const length = 12;
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';
+    const charset =
+      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';
     let password = '';
     for (let i = 0; i < length; i++) {
       password += charset.charAt(Math.floor(Math.random() * charset.length));
@@ -95,7 +129,7 @@ export function GeneaologistAdministration() {
       await updateGenealogist({
         id: editingGenealogist.id,
         phone: editPhone,
-        role: editRole,
+        role: editRole
       });
       toast({ title: 'Genealogist updated successfully' });
       fetchGenealogists();
@@ -117,14 +151,76 @@ export function GeneaologistAdministration() {
     fetchGenealogists();
   }, []);
 
+  const sendWelcomeEmail = async (
+    genealogist: Genealogist,
+    newPassword?: string
+  ) => {
+    try {
+      const password = newPassword || (await generateSecurePassword());
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          to: genealogist.email,
+          name: genealogist.fullName,
+          password: password,
+          isResend: !!newPassword
+        })
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error response from server:', errorData);
+        throw new Error(`Failed to send welcome email: ${errorData.error || response.statusText}`);
+      }
+  
+      if (newPassword) {
+        await updateGenealogistPassword(genealogist.id, newPassword);
+      }
+  
+      toast({ title: 'Welcome email sent successfully' });
+    } catch (error) {
+      console.error('Error sending welcome email:', error);
+      toast({ 
+        title: 'Error sending welcome email', 
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive' 
+      });
+    }
+  };
+
+  const handleResendPassword = async (genealogist: Genealogist) => {
+    const newPassword = generateSecurePassword();
+    await sendWelcomeEmail(genealogist, newPassword!);
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Genealogist Administration</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-        <Input placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-        <Input placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Input placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        <Input
+          placeholder="First Name"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+        />
+        <Input
+          placeholder="Last Name"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+        />
+        <Input
+          placeholder="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Input
+          placeholder="Phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
         <Select value={role} onValueChange={setRole}>
           <SelectTrigger>
             <SelectValue placeholder="Select Role" />
@@ -138,29 +234,40 @@ export function GeneaologistAdministration() {
           </SelectContent>
         </Select>
         <div className="flex space-x-2">
-        <Button variant={"outline"} onClick={generateSecurePassword}>Generate</Button>
+          <Button variant={'outline'} onClick={generateSecurePassword}>
+            Generate
+          </Button>
           <div className="relative flex-grow">
-            <Input 
-              placeholder="Password" 
-              type={showPassword ? "text" : "password"} 
-              value={password} 
+            <Input
+              placeholder="Password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <Button 
+            <Button
               type="button"
-              variant="ghost" 
+              variant="ghost"
               size="icon"
               className="absolute right-0 top-0 h-full"
               onClick={togglePasswordVisibility}
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
             </Button>
           </div>
-          
         </div>
       </div>
       <div className="flex justify-end">
-      <Button onClick={handleCreateGenealogist} className="w-full md:w-auto" variant={"default"}>Create Genealogist</Button>
+        <Button
+          onClick={handleCreateGenealogist}
+          className="w-full md:w-auto"
+          variant={'default'}
+        >
+          Create Genealogist
+        </Button>
       </div>
       <div className="overflow-x-auto">
         <Table>
@@ -182,9 +289,16 @@ export function GeneaologistAdministration() {
                 <TableCell>{genealogist.role || 'N/A'}</TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
-                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                    <Dialog
+                      open={isEditDialogOpen}
+                      onOpenChange={setIsEditDialogOpen}
+                    >
                       <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" onClick={() => openEditDialog(genealogist)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditDialog(genealogist)}
+                        >
                           <Edit2 className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
@@ -206,15 +320,30 @@ export function GeneaologistAdministration() {
                               <SelectItem value="VIEWER">Viewer</SelectItem>
                               <SelectItem value="SCANNER">Scanner</SelectItem>
                               <SelectItem value="INDEXER">Indexer</SelectItem>
-                              <SelectItem value="PROOFREADER">Proofreader</SelectItem>
+                              <SelectItem value="PROOFREADER">
+                                Proofreader
+                              </SelectItem>
                               <SelectItem value="ADMIN">Admin</SelectItem>
                             </SelectContent>
                           </Select>
-                          <Button onClick={handleEditGenealogist}>Save Changes</Button>
+                          <Button onClick={handleEditGenealogist}>
+                            Save Changes
+                          </Button>
                         </div>
                       </DialogContent>
                     </Dialog>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteGenealogist(genealogist.id)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleResendPassword(genealogist)}
+                    >
+                      Resend Password
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteGenealogist(genealogist.id)}
+                    >
                       Delete
                     </Button>
                   </div>

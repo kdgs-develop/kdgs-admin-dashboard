@@ -55,7 +55,7 @@ function DesktopNav() {
           <span className="sr-only">Obituary Dashboard</span>
         </Link>
 
-        <NavItem href="/" label="Obituaries">
+        <NavItem href="/" label="Obituary Index">
           <Home className="h-5 w-5" />
         </NavItem>
 

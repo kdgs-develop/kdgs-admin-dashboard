@@ -8,8 +8,11 @@ import { Button } from '@/components/ui/button';
 import { fetchObituaryByReferenceAction, fetchImagesForObituaryAction } from './actions';
 import { Prisma } from '@prisma/client';
 import Image from 'next/image';
-import { Download, ArrowLeft, Loader2 } from 'lucide-react';
+import { Download, ArrowLeft, Loader2, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ViewImageDialog } from '../../images/view-image-dialog';
+import { getImageUrlAction } from '../../images/minio-actions';
+import { BucketItem } from 'minio';
 
 type ObituaryWithAllRelations = Prisma.ObituaryGetPayload<{
   include: {
@@ -30,6 +33,7 @@ export default function ObituaryPage() {
   const [obituary, setObituary] = useState<ObituaryWithAllRelations | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
 
   useEffect(() => {
     if (reference) {
@@ -79,6 +83,11 @@ export default function ObituaryPage() {
   }
 
   const fullName = `${obituary.title?.name || ''} ${obituary.givenNames || ''} ${obituary.surname || ''}`.trim();
+
+  const handleRotate = async (fileName: string, degrees: number) => {
+    // Implement rotation logic if needed
+    console.log(`Rotating ${fileName} by ${degrees} degrees`);
+  };
 
   return (
     <div className="bg-gray-100 min-h-screen py-8">
@@ -209,18 +218,23 @@ export default function ObituaryPage() {
             <section>
               <h2 className="text-xl font-semibold mb-4 text-blue-600 border-b pb-2">Obituary Images</h2>
               {images.length > 0 ? (
-                <div className="grid grid-cols-3 gap-4">
+                <ul className="space-y-2">
                   {images.map((image) => (
-                    <img
-                      key={image}
-                      src={`/api/images/${image}`}
-                      alt={image}
-                      className="w-full h-40 object-cover rounded"
-                    />
+                    <li key={image} className="flex items-center justify-between">
+                      <span className="text-sm">{image}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedImage({ name: image } as BucketItem)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Image
+                      </Button>
+                    </li>
                   ))}
-                </div>
+                </ul>
               ) : (
-                <p>N/A</p>
+                <p>No images available</p>
               )}
             </section>
           </div>
@@ -256,6 +270,14 @@ export default function ObituaryPage() {
         <p>Compiled by Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8</p>
         <p>© 2024 Javier Gongora</p>
       </footer>
+      {selectedImage && (
+        <ViewImageDialog
+          image={selectedImage}
+          onClose={() => setSelectedImage(null)}
+          onRotate={handleRotate}
+          getImageUrl={getImageUrlAction}
+        />
+      )}
     </div>
   );
 }
