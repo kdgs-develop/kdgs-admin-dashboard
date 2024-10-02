@@ -33,6 +33,7 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 - **Deployment**: [Vercel](https://vercel.com)
 - **File Storage**: [MinIO](https://min.io/)
 - **PDF Generation**: [pdf-lib](https://pdf-lib.js.org/)
+- **Email Service**: [EmailJS](https://www.emailjs.com/)
 
 ## Key Features
 
@@ -56,6 +57,14 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 - **Relative Management**: Add, edit, and delete relatives associated with obituaries.
 - **Bulk Image Upload**: Ability to upload multiple images at once.
 - **Image Preview**: Quick preview of images before full view or download.
+- **Secure Password Generation**: Automatic generation of secure passwords for new users.
+- **Password Visibility Toggle**: Option to show/hide passwords during input.
+- **Email Notifications**: Automated welcome emails and password reset notifications using EmailJS.
+- **Confirmation Dialogs**: Added confirmation steps with math challenges for sensitive operations like user deletion or password resets.
+- **User Role Management**: Ability to assign and modify user roles (Viewer, Scanner, Indexer, Proofreader, Admin).
+- **Protected Super Admin**: Special protection for the super admin account to prevent accidental deletion or modification.
+- **Automatic Data Population**: Pre-filling of certain fields like 'Entered By' and 'Entered On' when adding new obituaries.
+- **Reference Number Generation**: Automatic generation of unique reference numbers for obituaries based on surnames.
 
 ## Key Components
 
@@ -96,6 +105,12 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 18. **Obituary Images Section**: Displays images associated with an obituary.
 
 19. **Relatives Management Section**: Interface for managing relatives associated with an obituary.
+
+20. **Send Email Component**: Handles sending of welcome emails and password reset notifications.
+
+21. **Delete Confirmation Dialog**: Provides an extra layer of security for sensitive operations with a math challenge.
+
+22. **Generate File Name Dialog**: Assists in generating unique file names for obituaries and images.
 
 ## Getting Started
 
