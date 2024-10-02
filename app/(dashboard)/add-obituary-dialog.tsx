@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import ComboboxFormField from '@/components/ui/combo-form-field';
 import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
@@ -19,13 +20,6 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { Obituary } from '@/lib/db';
@@ -34,7 +28,13 @@ import { PlusCircle, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { createObituaryAction, generateReference } from './actions';
+import {
+  addCity,
+  addPeriodical,
+  addTitle,
+  createObituaryAction,
+  generateReference
+} from './actions';
 
 // Use the same formSchema as in EditObituaryDialog
 const formSchema = z.object({
@@ -112,6 +112,10 @@ export function AddObituaryDialog({
   >([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [localTitles, setLocalTitles] = useState(titles);
+  const [localCities, setLocalCities] = useState(cities);
+  const [localPeriodicals, setLocalPeriodicals] = useState(periodicals);
 
   const generateNewFileName = (
     reference: string,
@@ -321,35 +325,21 @@ export function AddObituaryDialog({
                     </FormItem>
                   )}
                 />
-                <FormField
+                <ComboboxFormField
                   control={form.control}
                   name="titleId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Title</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        defaultValue={field.value as unknown as string}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-8 text-sm">
-                            <SelectValue placeholder="Select a title" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {titles.map((title) => (
-                            <SelectItem
-                              key={title.id}
-                              value={title.id.toString()}
-                            >
-                              {title.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Title"
+                  placeholder="Select a title"
+                  emptyText="No title found."
+                  items={localTitles}
+                  onAddItem={async (name) => {
+                    const newTitle = await addTitle(name);
+                    setLocalTitles([
+                      ...localTitles,
+                      { id: newTitle.id, name: newTitle?.name! }
+                    ]);
+                    return { id: newTitle.id, name: newTitle?.name! };
+                  }}
                 />
                 <FormField
                   control={form.control}
@@ -392,35 +382,33 @@ export function AddObituaryDialog({
                     </FormItem>
                   )}
                 />
-                <FormField
+                <ComboboxFormField
                   control={form.control}
                   name="birthCityId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Birth City</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        defaultValue={field.value as unknown as string}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-8 text-sm">
-                            <SelectValue placeholder="Select a city" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {cities.map((city) => (
-                            <SelectItem
-                              key={city.id}
-                              value={city.id.toString()}
-                            >
-                              {city.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Birth City"
+                  placeholder="Select a city"
+                  emptyText="No city found."
+                  items={localCities}
+                  onAddItem={async (name) => {
+                    const newCity = await addCity(name);
+                    setLocalCities([
+                      ...localCities,
+                      {
+                        id: newCity?.id!,
+                        name: newCity?.name!,
+                        province: newCity?.province,
+                        country: newCity?.countryId! as unknown as {
+                          name: string;
+                        }
+                      }
+                    ]);
+                    return {
+                      id: newCity.id,
+                      name: newCity?.name!,
+                      province: newCity?.province,
+                      country: newCity?.countryId!
+                    };
+                  }}
                 />
                 <FormField
                   control={form.control}
@@ -433,35 +421,33 @@ export function AddObituaryDialog({
                     </FormItem>
                   )}
                 />
-                <FormField
+                <ComboboxFormField
                   control={form.control}
                   name="deathCityId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Death City</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        defaultValue={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-8 text-sm">
-                            <SelectValue placeholder="Select a city" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {cities.map((city) => (
-                            <SelectItem
-                              key={city.id}
-                              value={city.id.toString()}
-                            >
-                              {city.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Death City"
+                  placeholder="Select a city"
+                  emptyText="No city found."
+                  items={localCities}
+                  onAddItem={async (name) => {
+                    const newCity = await addCity(name);
+                    setLocalCities([
+                      ...localCities,
+                      {
+                        id: newCity?.id!,
+                        name: newCity?.name!,
+                        province: newCity?.province,
+                        country: newCity?.countryId! as unknown as {
+                          name: string;
+                        }
+                      }
+                    ]);
+                    return {
+                      id: newCity.id,
+                      name: newCity?.name!,
+                      province: newCity?.province,
+                      country: newCity?.countryId!
+                    };
+                  }}
                 />
                 <FormField
                   control={form.control}
@@ -528,35 +514,21 @@ export function AddObituaryDialog({
             {/* Publication Information */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <FormField
+                <ComboboxFormField
                   control={form.control}
                   name="periodicalId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Periodical</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        defaultValue={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-8 text-sm">
-                            <SelectValue placeholder="Select a periodical" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {periodicals.map((periodical) => (
-                            <SelectItem
-                              key={periodical.id}
-                              value={periodical.id.toString()}
-                            >
-                              {periodical.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Periodical"
+                  placeholder="Select a periodical"
+                  emptyText="No periodical found."
+                  items={localPeriodicals}
+                  onAddItem={async (name) => {
+                    const newPeriodical = await addPeriodical(name);
+                    setLocalPeriodicals([
+                      ...localPeriodicals,
+                      { id: newPeriodical.id, name: newPeriodical?.name! }
+                    ]);
+                    return { id: newPeriodical.id, name: newPeriodical?.name! };
+                  }}
                 />
                 <FormField
                   control={form.control}
@@ -857,36 +829,32 @@ export function AddObituaryDialog({
             </div>
 
             {/* File Box */}
-            <FormField
+
+            <ComboboxFormField
               control={form.control}
               name="fileBoxId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">File Box</FormLabel>
-                  <Select
-                    onValueChange={(value) => field.onChange(Number(value))}
-                    defaultValue={field.value?.toString()}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="Select a file box" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {fileBoxes.map((fileBox) => (
-                        <SelectItem
-                          key={fileBox.id}
-                          value={fileBox.id.toString()}
-                        >
-                          {`Year: ${fileBox.year}, Number: ${fileBox.number}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="File Box"
+              placeholder="Select a file box"
+              emptyText="No file box found."
+              items={fileBoxes.map((box) => ({
+                id: box.id,
+                name: `Year: ${box.year}, Number: ${box.number}`
+              }))}
+              onAddItem={async (name) => {
+                // Since file boxes are typically managed differently,
+                // we'll just return the existing items for now.
+                // You may want to implement a proper addFileBox function if needed.
+                toast({
+                  title: 'Cannot add new file box',
+                  description:
+                    'File boxes are managed separately. Please contact an administrator.',
+                  variant: 'destructive'
+                });
+                const tempId = Date.now();
+                return { id: tempId, name };
+              }}
             />
+
             <DialogFooter>
               <Button type="submit" disabled={isLoading || isSuccess}>
                 {isLoading ? (
