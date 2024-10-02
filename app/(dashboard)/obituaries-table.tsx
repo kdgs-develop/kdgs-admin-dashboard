@@ -16,7 +16,8 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Obituary as ObituaryType } from '@/lib/db';
+import { getUserData, getUserFullName, getUserRole, Obituary as ObituaryType } from '@/lib/db';
+import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { fetchObituariesAction, getEditObituaryDialogData } from './actions';
@@ -41,6 +42,18 @@ export function ObituariesTable({
   const [dialogData, setDialogData] = useState<Awaited<
     ReturnType<typeof getEditObituaryDialogData>
   > | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchUserData() {
+      const fetchedUserData = await getUserData();
+      setRole(fetchedUserData?.role!);
+      setCurrentUserFullName(fetchedUserData?.fullName!);
+    }
+
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     fetchObituariesAction(offset, limit, search).then(
@@ -73,6 +86,9 @@ export function ObituariesTable({
             </CardDescription>
           </div>
           <Button
+            disabled={
+              role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
+            }
             onClick={async () => {
               if (!dialogData) {
                 const data = await getEditObituaryDialogData();
@@ -113,6 +129,7 @@ export function ObituariesTable({
                           }
                         );
                       }}
+                      role={role}
                     />
                   )
               )}
@@ -154,6 +171,8 @@ export function ObituariesTable({
             setTotalObituaries(totalObituaries + 1);
           }}
           {...dialogData}
+          role={role}
+          currentUserFullName={currentUserFullName ?? ''}
         />
       )}
     </>

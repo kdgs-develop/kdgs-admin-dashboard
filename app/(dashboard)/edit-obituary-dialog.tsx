@@ -50,6 +50,7 @@ import {
 import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 import { updateObituaryAction } from './actions';
+import { getUserData } from '@/lib/db';
 
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
@@ -129,6 +130,8 @@ export function EditObituaryDialog({
   const [sumAnswer, setSumAnswer] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [updatedObituary, setUpdatedObituary] = useState<any>(obituary);
+  const [role, setRole] = useState<string | null>(null);
+  const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -155,14 +158,24 @@ export function EditObituaryDialog({
       proofreadBy: '',
       enteredBy: '',
       enteredOn: undefined,
-      editedBy: '',
-      editedOn: undefined,
+      editedBy: currentUserFullName!,
+      editedOn: new Date(),
       fileBoxId: undefined,
       relatives: []
     }
   });
 
   const isProofread = form.watch('proofread');
+
+  useEffect(() => {
+    async function fetchUserData() {
+      const fetchedUserData = await getUserData();
+      setRole(fetchedUserData?.role!);
+      setCurrentUserFullName(fetchedUserData?.fullName!);
+    }
+
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     if (obituary) {
@@ -1084,7 +1097,7 @@ export function EditObituaryDialog({
                     <FormItem>
                       <FormLabel className="text-xs">Edited By</FormLabel>
                       <FormControl>
-                        <Input {...field} className="h-8 text-sm" />
+                        <Input {...field} className="h-8 text-sm" defaultValue={currentUserFullName!} disabled={role !== 'ADMIN'} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

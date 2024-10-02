@@ -88,6 +88,8 @@ type AddObituaryDialogProps = {
   }[];
   periodicals: { id: number; name: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
+  role: string | null;
+  currentUserFullName: string;
 };
 
 export function AddObituaryDialog({
@@ -97,7 +99,9 @@ export function AddObituaryDialog({
   titles,
   cities,
   periodicals,
-  fileBoxes
+  fileBoxes,
+  role,
+  currentUserFullName
 }: AddObituaryDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [reference, setReference] = useState('');
@@ -171,8 +175,8 @@ export function AddObituaryDialog({
       proofread: false,
       proofreadDate: undefined,
       proofreadBy: '',
-      enteredBy: '',
-      enteredOn: undefined,
+      enteredBy: currentUserFullName,
+      enteredOn: new Date(), // Set current date as default
       editedBy: '',
       editedOn: undefined,
       fileBoxId: undefined,
@@ -269,8 +273,6 @@ export function AddObituaryDialog({
       setIsLoading(false);
     }
   };
-
-  // Render form fields similar to EditObituaryDialog
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -732,6 +734,7 @@ export function AddObituaryDialog({
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          disabled={role !== 'ADMIN' && role !== 'PROOFREADER'}
                         />
                       </FormControl>
                       <FormLabel className="text-xs">Proofread</FormLabel>
@@ -744,7 +747,14 @@ export function AddObituaryDialog({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Proofread Date</FormLabel>
-                      <DatePicker date={field.value} setDate={field.onChange} />
+                      {role === 'ADMIN' || role === 'PROOFREADER' ? (
+                        <DatePicker
+                          date={field.value}
+                          setDate={field.onChange}
+                        />
+                      ) : (
+                        <Input type="date" className="h-8 text-sm" disabled />
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -758,7 +768,11 @@ export function AddObituaryDialog({
                     <FormItem>
                       <FormLabel className="text-xs">Proofread By</FormLabel>
                       <FormControl>
-                        <Input {...field} className="h-8 text-sm" />
+                        <Input
+                          {...field}
+                          className="h-8 text-sm"
+                          disabled={role !== 'ADMIN' && role !== 'PROOFREADER'}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -777,7 +791,11 @@ export function AddObituaryDialog({
                     <FormItem>
                       <FormLabel className="text-xs">Entered By</FormLabel>
                       <FormControl>
-                        <Input {...field} className="h-8 text-sm" />
+                        <Input
+                          {...field}
+                          className="h-8 text-sm"
+                          defaultValue={currentUserFullName}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -789,7 +807,10 @@ export function AddObituaryDialog({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Entered On</FormLabel>
-                      <DatePicker date={field.value} setDate={field.onChange} />
+                      <DatePicker
+                        date={field.value}
+                        setDate={(date) => field.onChange(date)}
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -803,7 +824,11 @@ export function AddObituaryDialog({
                     <FormItem>
                       <FormLabel className="text-xs">Edited By</FormLabel>
                       <FormControl>
-                        <Input {...field} className="h-8 text-sm" />
+                        <Input
+                          {...field}
+                          className="h-8 text-sm"
+                          disabled={role !== 'ADMIN'}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -815,7 +840,15 @@ export function AddObituaryDialog({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Edited On</FormLabel>
-                      <DatePicker date={field.value} setDate={field.onChange} />
+                      {role === 'ADMIN' ? (
+                        <DatePicker
+                          date={field.value}
+                          setDate={field.onChange}
+                        />
+                      ) : (
+                        <Input type="date" className="h-8 text-sm" disabled />
+                      )}
+                      <FormMessage />
                       <FormMessage />
                     </FormItem>
                   )}
