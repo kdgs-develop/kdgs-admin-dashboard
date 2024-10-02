@@ -2,6 +2,7 @@
 
 import { prisma } from './prisma';
 import { Prisma } from '@prisma/client';
+import { auth } from '@clerk/nextjs/server';
 
 export type Obituary = Awaited<ReturnType<typeof prisma.obituary.findUnique>> & {
   relatives?: Awaited<ReturnType<typeof prisma.relative.findMany>>;
@@ -204,12 +205,36 @@ export async function getFileBoxes() {
 }
 
 // Get user role
-export async function getUserRole(userId: string) {
+export async function getUserRole() {
+  const { userId } = auth();
   const genealogist = await prisma.genealogist.findUnique({
-    where: { clerkId: userId },
+    where: { clerkId: userId! },
     select: { role: true },
   });
-  const role = genealogist?.role;
+  const role = genealogist?.role!;
 
   return role;
+}
+
+// Get current user full name
+export async function getUserFullName() {
+  const { userId } = auth();
+  const genealogist = await prisma.genealogist.findUnique({
+    where: { clerkId: userId! },
+    select: { fullName: true },
+  });
+  const fullName = genealogist?.fullName!;
+
+  return fullName;
+}
+
+// Get current user
+export async function getUserData() {
+  const { userId } = auth();
+  const userData = await prisma.genealogist.findUnique({
+    where: { clerkId: userId! },
+    select: { fullName: true, role: true },
+  });
+
+  return userData;
 }

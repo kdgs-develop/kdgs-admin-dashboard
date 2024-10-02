@@ -1,9 +1,9 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { getUserRole, Obituary as ObituaryType } from '@/lib/db';
+import { Obituary as ObituaryType } from '@/lib/db';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState,  } from 'react';
 import {
   deleteObituary,
   getEditObituaryDialogData,
@@ -11,14 +11,15 @@ import {
 } from './actions';
 import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 import { EditObituaryDialog } from './edit-obituary-dialog';
-import { useAuth } from '@clerk/nextjs';
 
 export function Obituary({
   obituary,
-  onUpdate
+  onUpdate,
+  role
 }: {
   obituary: NonNullable<ObituaryType>;
   onUpdate: () => void;
+  role: string | null;
 }) {
   const router = useRouter();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -26,15 +27,6 @@ export function Obituary({
   const [dialogData, setDialogData] = useState<Awaited<
     ReturnType<typeof getEditObituaryDialogData>
   > | null>(null);
-  const [role, setRole] = useState<string | null>(null);
-  const { userId } = useAuth();
-  useEffect(() => {
-    async function fetchRole() {
-      const fetchedRole = await getUserRole(userId ?? '');
-      setRole(fetchedRole ?? '');
-    }
-    fetchRole();
-  }, []);
 
   const handleViewClick = () => {
     router.push(`/obituary/${obituary.reference}`);
@@ -79,7 +71,7 @@ export function Obituary({
             <Button onClick={handleViewClick} variant="ghost" size="sm">
               View
             </Button>
-            <Button onClick={handleEditClick} variant="ghost" size="sm" disabled={role !== 'ADMIN'}>
+            <Button onClick={handleEditClick} variant="ghost" size="sm" disabled={role !== 'ADMIN' && role !== 'PROOFREADER'}>
               Edit
             </Button>
             <Button onClick={handleDeleteClick} variant="ghost" size="sm" disabled={role !== 'ADMIN'}>

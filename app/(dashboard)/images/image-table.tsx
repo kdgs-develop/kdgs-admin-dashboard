@@ -51,7 +51,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
   const { userId } = useAuth();
   useEffect(() => {
     async function fetchRole() {
-      const fetchedRole = await getUserRole(userId ?? '');
+      const fetchedRole = await getUserRole();
       setRole(fetchedRole ?? '');
     }
     fetchRole();

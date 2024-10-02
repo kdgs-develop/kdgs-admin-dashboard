@@ -52,6 +52,10 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 - **Consistent UI**: Matching design between web view and PDF output for obituaries.
 - **File Number and Full Name Display**: Prominent display of key identifiers.
 - **Flexible Data Handling**: Graceful handling of missing or null data fields.
+- **Role-Based Access Control**: Different access levels for admin and regular users.
+- **Relative Management**: Add, edit, and delete relatives associated with obituaries.
+- **Bulk Image Upload**: Ability to upload multiple images at once.
+- **Image Preview**: Quick preview of images before full view or download.
 
 ## Key Components
 
@@ -90,6 +94,8 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 17. **PDF Generation Component**: Generates detailed PDF reports for obituaries.
 
 18. **Obituary Images Section**: Displays images associated with an obituary.
+
+19. **Relatives Management Section**: Interface for managing relatives associated with an obituary.
 
 ## Getting Started
 

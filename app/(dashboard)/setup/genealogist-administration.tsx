@@ -35,6 +35,7 @@ import {
   updateGenealogistPassword
 } from './actions';
 import { SendEmailComponent } from './send-email-component';
+import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 
 interface Genealogist {
   id: number;
@@ -66,6 +67,9 @@ export function GeneaologistAdministration() {
     role: string;
     isResend: boolean;
   } | null>(null);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'delete' | 'newPassword' | null>(null);
+  const [selectedGenealogist, setSelectedGenealogist] = useState<Genealogist | null>(null);
 
   const fetchGenealogists = async () => {
     try {
@@ -79,22 +83,32 @@ export function GeneaologistAdministration() {
 
   const handleCreateGenealogist = async () => {
     try {
-      const newPassword = generateSecurePassword();
-      const newGenealogist = {
-        email: email,
-        fullName: firstName + ' ' + lastName,
-        phone: phone,
-        role: role, // Use the selected role
-      };
-      await createGenealogist({
+      if (!password) {
+        toast({ 
+          title: 'Error', 
+          description: 'Password is required',
+          variant: 'destructive' 
+        });
+        return;
+      }
+
+      const newGenealogist = await createGenealogist({
         firstName,
         lastName,
         email,
         phone,
-        role: role, // Use the selected role
-        password: newPassword,
+        role: role,
+        password: password, // Use the password from the form input
       });
-      await sendWelcomeEmail(newGenealogist, newPassword);
+
+      setEmailDetails({
+        to: email,
+        name: `${firstName} ${lastName}`,
+        password: password, // Use the password from the form input
+        role: role,
+        isResend: false
+      });
+
       toast({ title: 'Genealogist created successfully' });
       fetchGenealogists();
       resetForm();
@@ -107,14 +121,37 @@ export function GeneaologistAdministration() {
     }
   };
 
-  const handleDeleteGenealogist = async (id: number) => {
-    try {
-      await deleteGenealogist(id);
-      toast({ title: 'Genealogist deleted successfully' });
-      fetchGenealogists();
-    } catch (error) {
-      toast({ title: 'Error deleting genealogist', variant: 'destructive' });
+  const handleDeleteGenealogist = async (genealogist: Genealogist) => {
+    setSelectedGenealogist(genealogist);
+    setConfirmAction('delete');
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleSendNewPassword = async (genealogist: Genealogist) => {
+    setSelectedGenealogist(genealogist);
+    setConfirmAction('newPassword');
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!selectedGenealogist) return;
+
+    if (confirmAction === 'delete') {
+      try {
+        await deleteGenealogist(selectedGenealogist.id);
+        toast({ title: 'Genealogist deleted successfully' });
+        fetchGenealogists();
+      } catch (error) {
+        toast({ title: 'Error deleting genealogist', variant: 'destructive' });
+      }
+    } else if (confirmAction === 'newPassword') {
+      const newPassword = generateSecurePassword();
+      await sendWelcomeEmail(selectedGenealogist, newPassword, true);
     }
+
+    setIsConfirmDialogOpen(false);
+    setSelectedGenealogist(null);
+    setConfirmAction(null);
   };
 
   const generateSecurePassword = () => {
@@ -185,11 +222,6 @@ export function GeneaologistAdministration() {
     if (isResend) {
       await updateGenealogistPassword(genealogist?.id!, password);
     }
-  };
-
-  const handleResendPassword = async (genealogist: Genealogist) => {
-    const newPassword = generateSecurePassword();
-    await sendWelcomeEmail(genealogist, newPassword, true);
   };
 
   return (
@@ -332,15 +364,15 @@ export function GeneaologistAdministration() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleResendPassword(genealogist)}
+                      onClick={() => handleSendNewPassword(genealogist)}
                       disabled={genealogist.email === "kdgs.develop@gmail.com"}
                     >
-                      Resend Password
+                      Send New Password
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleDeleteGenealogist(genealogist.id)}
+                      onClick={() => handleDeleteGenealogist(genealogist)}
                       disabled={genealogist.email === "kdgs.develop@gmail.com"}
                     >
                       Delete
@@ -361,6 +393,12 @@ export function GeneaologistAdministration() {
           isResend={emailDetails.isResend}
         />
       )}
+      <DeleteConfirmationDialog
+        isOpen={isConfirmDialogOpen}
+        onClose={() => setIsConfirmDialogOpen(false)}
+        onConfirm={handleConfirmAction}
+        action={confirmAction as 'delete' | 'newPassword'}
+      />
     </div>
   );
 }

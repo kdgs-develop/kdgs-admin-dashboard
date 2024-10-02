@@ -19,10 +19,19 @@ interface DatePickerProps {
 }
 
 export function DatePicker({ date, setDate }: DatePickerProps) {
+  const inputRef = React.useRef<HTMLButtonElement>(null);
+
+  React.useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
   return (
-    <Popover>
+    <Popover >
       <PopoverTrigger asChild>
         <Button
+          ref={inputRef}
           variant={"outline"}
           className={cn(
             "w-full justify-start text-left font-normal",
@@ -38,9 +47,9 @@ export function DatePicker({ date, setDate }: DatePickerProps) {
           mode="single"
           selected={date}
           onSelect={setDate}
-          initialFocus
+          initialFocus={false}
         />
       </PopoverContent>
     </Popover>
-  )
+  );
 }
