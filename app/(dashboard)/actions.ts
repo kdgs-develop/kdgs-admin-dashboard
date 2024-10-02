@@ -204,3 +204,31 @@ export async function deleteRelativeAction(relativeId: number) {
   });
   revalidatePath('/');
 }
+
+export async function addTitle(name: string) {
+  const newTitle = await prisma.title.create({
+    data: { name },
+  });
+  return newTitle;
+}
+
+export async function addCity(name: string) {
+  const newCity = await prisma.city.create({
+    data: { name },
+  });
+  return newCity;
+}
+
+export async function addPeriodical(name: string) {
+  const newPeriodical = await prisma.periodical.create({
+    data: { name },
+  });
+  return newPeriodical;
+}
+
+export async function addFileBox(year: number, number: number) {
+  const newFileBox = await prisma.fileBox.create({
+    data: { year, number },
+  });
+  return newFileBox;
+}
