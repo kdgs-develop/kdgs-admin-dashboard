@@ -7,6 +7,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle
@@ -179,7 +180,7 @@ export function AddObituaryDialog({
       proofread: false,
       proofreadDate: undefined,
       proofreadBy: '',
-      enteredBy: currentUserFullName,
+      enteredBy: currentUserFullName || '',
       enteredOn: new Date(), // Set current date as default
       editedBy: '',
       editedOn: undefined,
@@ -283,6 +284,9 @@ export function AddObituaryDialog({
       <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Obituary</DialogTitle>
+          <DialogDescription>
+            Enter the details for the new obituary. Click save when you're done.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -766,7 +770,7 @@ export function AddObituaryDialog({
                         <Input
                           {...field}
                           className="h-8 text-sm"
-                          defaultValue={currentUserFullName}
+                          value={field.value || currentUserFullName || ''}
                         />
                       </FormControl>
                       <FormMessage />
