@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Obituary as ObituaryType } from '@/lib/db';
 import { useRouter } from 'next/navigation';
-import { useState,  } from 'react';
+import { useState } from 'react';
 import {
   deleteObituary,
   getEditObituaryDialogData,
@@ -71,10 +71,20 @@ export function Obituary({
             <Button onClick={handleViewClick} variant="ghost" size="sm">
               View
             </Button>
-            <Button onClick={handleEditClick} variant="ghost" size="sm" disabled={role !== 'ADMIN' && role !== 'PROOFREADER'}>
+            <Button
+              onClick={handleEditClick}
+              variant="ghost"
+              size="sm"
+              disabled={role !== 'ADMIN' && role !== 'PROOFREADER'}
+            >
               Edit
             </Button>
-            <Button onClick={handleDeleteClick} variant="ghost" size="sm" disabled={role !== 'ADMIN'}>
+            <Button
+              onClick={handleDeleteClick}
+              variant="ghost"
+              size="sm"
+              disabled={role !== 'ADMIN'}
+            >
               Delete
             </Button>
           </div>
@@ -86,7 +96,7 @@ export function Obituary({
           isOpen={isEditDialogOpen}
           onClose={() => setIsEditDialogOpen(false)}
           onSave={async (updatedObituary) => {
-            await updateObituaryAction({ ...updatedObituary, id: obituary.id });
+           
             onUpdate();
             setIsEditDialogOpen(false);
           }}

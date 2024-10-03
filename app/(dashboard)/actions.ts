@@ -12,8 +12,8 @@ import {
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
-import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 import { deleteImageAction } from './images/minio-actions';
+import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 
 export async function fetchObituariesAction(
   offset: number = 0,
@@ -31,23 +31,23 @@ export async function fetchObituariesAction(
 
 export async function deleteObituary(formData: FormData) {
   const id = Number(formData.get('id'));
-  
+
   // Fetch the obituary to get the reference
   const obituary = await prisma.obituary.findUnique({ where: { id } });
-  
+
   if (obituary) {
     // Fetch images associated with the obituary
     const images = await fetchImagesForObituaryAction(obituary.reference);
-    
+
     // Delete each image from Minio
     for (const image of images) {
       await deleteImageAction(image);
     }
-    
+
     // Delete the obituary from the database
     await deleteObituaryById(id);
   }
-  
+
   revalidatePath('/');
 }
 
@@ -126,76 +126,88 @@ export async function createObituaryAction(
     relatives?: Omit<Prisma.RelativeCreateInput, 'Obituary'>[];
   }
 ): Promise<Obituary> {
-  // Destructure relatives from obituaryData, leaving the rest of the data in restObituaryData
   const { relatives, ...restObituaryData } = obituaryData;
 
-  // Create a new obituary record in the database
-  const newObituary = await prisma.obituary.create({
-    data: { ...restObituaryData }
-  });
+  // Use a transaction to ensure all operations are performed atomically
+  return await prisma.$transaction(async (prisma) => {
+    // Reset the ID sequence to the maximum existing ID
+    await prisma.$executeRaw`SELECT setval('obituary_id_seq', COALESCE((SELECT MAX(id) FROM "Obituary"), 1));`;
 
-  // Extract the generated id from the new obituary record
-  const { id: newObituaryId } = newObituary;
-  console.log({ newObituaryId });
-  console.log({ relatives });
-  console.log({ newObituary });
-
-  // If there are relatives, create them and associate them with the new obituary
-  if (relatives && relatives.length > 0) {
-    await prisma.relative.createMany({
-      data: relatives.map((relative) => ({
-        obituaryId: newObituaryId,
-        ...relative
-      }))
+    // Create a new obituary record in the database
+    const newObituary = await prisma.obituary.create({
+      data: { ...restObituaryData }
     });
-  }
 
-  // Fetch the final obituary record with the associated relatives
-  const finalObituary: Obituary | null = await prisma.obituary.findUnique({
-    where: { id: newObituaryId }
-  });
+    // Extract the generated id from the new obituary record
+    const { id: newObituaryId } = newObituary;
 
-  // Revalidate the path to update the cache
-  revalidatePath('/');
-  return finalObituary!;
-}
-
-export async function updateObituaryAction(obituaryData: any): Promise<any> {
-  const { id, relatives, ...updateData } = obituaryData;
-
-  if (!id) {
-    throw new Error('Obituary ID is required for updating');
-  }
-
-  await prisma.$transaction(async (prisma) => {
-    await prisma.obituary.update({
-      where: { id },
-      data: {
-        ...updateData,
-        relatives: {
-          deleteMany: {}
-        }
-      }
-    });
-    console.log("Relatives deleted")
-
+    // If there are relatives, create them and associate them with the new obituary
     if (relatives && relatives.length > 0) {
       await prisma.relative.createMany({
-        data: relatives.map((relative: any) => ({
-          obituaryId: id,
+        data: relatives.map((relative) => ({
+          obituaryId: newObituaryId,
           ...relative
         }))
       });
     }
-  });
 
-  const finalObituary = await prisma.obituary.findUnique({
-    where: { id },
-    include: { relatives: true }
+    // Fetch the final obituary record with the associated relatives
+    const finalObituary = await prisma.obituary.findUnique({
+      where: { id: newObituaryId },
+      include: { relatives: true }
+    });
+
+    // Revalidate the path to update the cache
+    revalidatePath('/');
+    return finalObituary!;
   });
+}
+
+type ObituaryUpdateInput = Prisma.ObituaryUpdateInput & {
+  relatives?: Prisma.RelativeCreateInput[];
+};
+
+export async function updateObituaryAction(
+  id: number,
+  obituaryData: Omit<ObituaryUpdateInput, 'relatives'>,
+  relatives: Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>
+): Promise<Prisma.ObituaryGetPayload<{ include: { relatives: true } }>> {
+  const updatedObituaryWithRelatives = await prisma.$transaction(
+    async (prisma) => {
+      // Update the obituary
+      const updatedObituary = await prisma.obituary.update({
+        where: { id },
+        data: obituaryData,
+        include: { relatives: true }
+      });
+
+      if (relatives.length > 0) {
+        // Delete existing relatives
+        const resetRelatives = await prisma.relative.deleteMany({
+          where: { obituaryId: id }
+        });
+
+        // Create new relatives
+        if (resetRelatives) {
+          await prisma.relative.createMany({
+            data: relatives.map((relative) => ({
+              ...relative,
+              obituaryId: id
+            }))
+          });
+        }
+      }
+
+      // Fetch the updated obituary with new relatives
+      return prisma.obituary.findUnique({
+        where: { id },
+        include: { relatives: true }
+      });
+    }
+  );
 
   revalidatePath('/');
-  return finalObituary;
+  return updatedObituaryWithRelatives!;
 }
 
 export async function deleteRelativeAction(relativeId: number) {
@@ -206,29 +218,45 @@ export async function deleteRelativeAction(relativeId: number) {
 }
 
 export async function addTitle(name: string) {
-  const newTitle = await prisma.title.create({
-    data: { name },
+  return prisma.$transaction(async (prisma) => {
+    await prisma.$executeRaw`SELECT setval('title_id_seq', COALESCE((SELECT MAX(id) FROM "Title"), 1));`;
+    const newTitle = await prisma.title.create({
+      data: { name }
+    });
+    revalidatePath('/');
+    return newTitle;
   });
-  return newTitle;
 }
 
 export async function addCity(name: string) {
-  const newCity = await prisma.city.create({
-    data: { name },
+  return prisma.$transaction(async (prisma) => {
+    await prisma.$executeRaw`SELECT setval('city_id_seq', COALESCE((SELECT MAX(id) FROM "City"), 1));`;
+    const newCity = await prisma.city.create({
+      data: { name }
+    });
+    revalidatePath('/');
+    return newCity;
   });
-  return newCity;
 }
 
 export async function addPeriodical(name: string) {
-  const newPeriodical = await prisma.periodical.create({
-    data: { name },
+  return prisma.$transaction(async (prisma) => {
+    await prisma.$executeRaw`SELECT setval('periodical_id_seq', COALESCE((SELECT MAX(id) FROM "Periodical"), 1));`;
+    const newPeriodical = await prisma.periodical.create({
+      data: { name }
+    });
+    revalidatePath('/');
+    return newPeriodical;
   });
-  return newPeriodical;
 }
 
 export async function addFileBox(year: number, number: number) {
-  const newFileBox = await prisma.fileBox.create({
-    data: { year, number },
+  return prisma.$transaction(async (prisma) => {
+    await prisma.$executeRaw`SELECT setval('filebox_id_seq', COALESCE((SELECT MAX(id) FROM "FileBox"), 1));`;
+    const newFileBox = await prisma.fileBox.create({
+      data: { year, number }
+    });
+    revalidatePath('/');
+    return newFileBox;
   });
-  return newFileBox;
 }

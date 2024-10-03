@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
+import { getUserData } from '@/lib/db';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
@@ -42,15 +43,11 @@ import { BucketItem } from 'minio';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import {
-  deleteImageAction,
-  getImageUrlAction,
-  uploadImagesAction
-} from './images/minio-actions';
+import { updateObituaryAction } from './actions';
+import { deleteImageAction, getImageUrlAction } from './images/minio-actions';
 import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
-import { updateObituaryAction } from './actions';
-import { getUserData } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
@@ -131,37 +128,49 @@ export function EditObituaryDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [updatedObituary, setUpdatedObituary] = useState<any>(obituary);
   const [role, setRole] = useState<string | null>(null);
-  const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
+  const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(
+    null
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      reference: '',
-      surname: '',
-      titleId: undefined,
-      givenNames: '',
-      maidenName: '',
-      birthDate: undefined,
-      birthCityId: undefined,
-      deathDate: undefined,
-      deathCityId: undefined,
-      burialCemetery: '',
-      cemeteryId: undefined,
-      place: '',
-      periodicalId: undefined,
-      publishDate: undefined,
-      page: '',
-      column: '',
-      notes: '',
-      proofread: false,
-      proofreadDate: undefined,
-      proofreadBy: '',
-      enteredBy: '',
-      enteredOn: undefined,
-      editedBy: currentUserFullName!,
-      editedOn: new Date(),
-      fileBoxId: undefined,
-      relatives: []
+      reference: obituary.reference || '',
+      surname: obituary.surname || '',
+      titleId: obituary.titleId || undefined,
+      givenNames: obituary.givenNames || '',
+      maidenName: obituary.maidenName || '',
+      birthDate: obituary.birthDate ? new Date(obituary.birthDate) : undefined,
+      birthCityId: obituary.birthCityId || undefined,
+      deathDate: obituary.deathDate ? new Date(obituary.deathDate) : undefined,
+      deathCityId: obituary.deathCityId || undefined,
+      burialCemetery: obituary.burialCemetery || '',
+      cemeteryId: obituary.cemeteryId || undefined,
+      place: obituary.place || '',
+      periodicalId: obituary.periodicalId || undefined,
+      publishDate: obituary.publishDate
+        ? new Date(obituary.publishDate)
+        : undefined,
+      page: obituary.page || '',
+      column: obituary.column || '',
+      notes: obituary.notes || '',
+      proofread: obituary.proofread || false,
+      proofreadDate: obituary.proofreadDate
+        ? new Date(obituary.proofreadDate)
+        : undefined,
+      proofreadBy: obituary.proofreadBy || '',
+      enteredBy: obituary.enteredBy || '',
+      enteredOn: obituary.enteredOn ? new Date(obituary.enteredOn) : undefined,
+      editedBy: obituary.editedBy || currentUserFullName || '',
+      editedOn: obituary.editedOn ? new Date(obituary.editedOn) : new Date(),
+      fileBoxId: obituary.fileBoxId || undefined,
+      relatives:
+        obituary.relatives?.map((relative: any) => ({
+          surname: relative.surname || '',
+          givenNames: relative.givenNames || '',
+          relationship: relative.relationship || '',
+          predeceased: relative.predeceased || false
+        })) || []
     }
   });
 
@@ -176,55 +185,6 @@ export function EditObituaryDialog({
 
     fetchUserData();
   }, []);
-
-  useEffect(() => {
-    if (obituary) {
-      form.reset({
-        reference: obituary.reference || '',
-        surname: obituary.surname || '',
-        titleId: obituary.titleId || undefined,
-        givenNames: obituary.givenNames || '',
-        maidenName: obituary.maidenName || '',
-        birthDate: obituary.birthDate
-          ? new Date(obituary.birthDate)
-          : undefined,
-        birthCityId: obituary.birthCityId || undefined,
-        deathDate: obituary.deathDate
-          ? new Date(obituary.deathDate)
-          : undefined,
-        deathCityId: obituary.deathCityId || undefined,
-        burialCemetery: obituary.burialCemetery || '',
-        cemeteryId: obituary.cemeteryId || undefined,
-        place: obituary.place || '',
-        periodicalId: obituary.periodicalId || undefined,
-        publishDate: obituary.publishDate
-          ? new Date(obituary.publishDate)
-          : undefined,
-        page: obituary.page || '',
-        column: obituary.column || '',
-        notes: obituary.notes || '',
-        proofread: obituary.proofread || false,
-        proofreadDate: obituary.proofreadDate
-          ? new Date(obituary.proofreadDate)
-          : undefined,
-        proofreadBy: obituary.proofreadBy || '',
-        enteredBy: obituary.enteredBy || '',
-        enteredOn: obituary.enteredOn
-          ? new Date(obituary.enteredOn)
-          : undefined,
-        editedBy: obituary.editedBy || '',
-        editedOn: obituary.editedOn ? new Date(obituary.editedOn) : undefined,
-        fileBoxId: obituary.fileBoxId || undefined,
-        relatives:
-          obituary.relatives?.map((relative: any) => ({
-            surname: relative.surname || null,
-            givenNames: relative.givenNames || null,
-            relationship: relative.relationship || null,
-            predeceased: relative.predeceased
-          })) || []
-      });
-    }
-  }, [obituary, form]);
 
   useEffect(() => {
     if (isOpen && obituary.reference) {
@@ -296,11 +256,19 @@ export function EditObituaryDialog({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      // ... existing code for updating obituary data ...
+      const { relatives, ...obituaryData } = values;
+
+      // Prepare relatives data
+      const relativesData =
+        relatives?.map((relative) => ({
+          surname: relative.surname || '',
+          givenNames: relative.givenNames || '',
+          relationship: relative.relationship || '',
+          predeceased: relative.predeceased
+        })) || [];
 
       // Handle new image uploads
       if (selectedFiles.length > 0) {
-        console.log('Uploading new images:', selectedFiles);
         const formData = new FormData();
         selectedFiles.forEach((file) => {
           formData.append('files', file.file, file.newName);
@@ -308,49 +276,39 @@ export function EditObituaryDialog({
 
         const response = await fetch('/api/upload', {
           method: 'POST',
-          body: formData,
+          body: formData
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`Failed to upload new images: ${errorData.error}`);
-        }
-
-        console.log('Images uploaded successfully');
-      }
-
-      // Assuming deletedImages is passed as a parameter or declared earlier
-      const deletedImages: string[] = []; // or however you're getting this array
-
-      // Handle deleted images
-      for (const deletedImage of deletedImages) {
-        console.log('Deleting image:', deletedImage);
-        try {
-          await deleteImageAction(deletedImage);
-          console.log('Image deleted successfully:', deletedImage);
-        } catch (deleteError) {
-          console.error('Error deleting image:', deletedImage, deleteError);
-          // Consider whether to throw an error here or just log it
+          throw new Error('Failed to upload new images');
         }
       }
+
+      // Update the obituary and relatives
+      const updatedObituary = await updateObituaryAction(
+        obituary.id,
+        obituaryData,
+        relativesData as Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>
+      );
 
       onSave(updatedObituary);
       onClose();
       toast({
         title: 'Obituary updated',
-        description: 'The obituary has been updated successfully.',
+        description: 'The obituary has been updated successfully.'
       });
     } catch (error) {
       console.error('Error updating obituary:', error);
       toast({
         title: 'Error',
         description: `Failed to update the obituary: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        variant: 'destructive',
+        variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
     }
   };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
@@ -1097,7 +1055,12 @@ export function EditObituaryDialog({
                     <FormItem>
                       <FormLabel className="text-xs">Edited By</FormLabel>
                       <FormControl>
-                        <Input {...field} className="h-8 text-sm" defaultValue={currentUserFullName!} disabled={role !== 'ADMIN'} />
+                        <Input
+                          {...field}
+                          className="h-8 text-sm"
+                          value={field.value || currentUserFullName || ''}
+                          disabled={role !== 'ADMIN'}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
