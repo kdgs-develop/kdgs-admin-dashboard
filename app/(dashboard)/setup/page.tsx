@@ -23,47 +23,74 @@ export default async function SetupPage() {
 
   return (
     <div className="container mx-auto px-4 max-w-[calc(4xl)]">
-      <Card className="w-[calc(100%)]">
-        <CardHeader>
-          <CardTitle>Setup</CardTitle>
-          <CardDescription>
-            Configure your obituary management system.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <GeneaologistAdministration />
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Card className="w-[calc(100%)]">
+          <CardHeader>
+            <CardTitle>Setup</CardTitle>
+            <CardDescription>
+              Configure your obituary management system.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <GeneaologistAdministration />
+          </CardContent>
+        </Card>
 
-      <Card className="w-[calc(100%)]">
-        <CardHeader>
-          <CardTitle>Database Backup</CardTitle>
-          <CardDescription>
-            Download a backup of your database in PostgreSQL custom format
-            (.dump file). This file contains a complete snapshot of your
-            database and can be used to restore the database in case of data
-            loss or when migrating to a new server.
-            <br />
-            <br />
-            To restore the database using this dump file, use the following
-            command:
-            <br />
-            <code className="bg-gray-100 p-1 rounded">
-              pg_restore -d [DATABASE_URL] -c -v [PATH_TO_DUMP_FILE]
-            </code>
-            <br />
-            <br />
-            Replace [DATABASE_URL] with your database connection string and
-            [PATH_TO_DUMP_FILE] with the path to the downloaded dump file.
-            <br />
-            <br />
-            It's recommended to perform regular backups and store them securely.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DatabaseBackup />
-        </CardContent>
-      </Card>
+        <Card className="w-[calc(100%)]">
+          <CardHeader>
+            <CardTitle>Database Backup</CardTitle>
+            <CardDescription>
+              Download a backup of your database content and learn how to create manual backups.
+              <br /><br />
+              <strong>Automated Backup:</strong>
+              <ol className="list-decimal list-inside">
+                <li>Click "Download Database Backup" to get a JSON file with all database records.</li>
+                <li>To restore, use a custom script to read the JSON and insert data using Prisma.</li>
+                <li>Run the restoration process in a controlled environment, ideally in a staging setup first.</li>
+              </ol>
+              <br />
+              <strong>Manual Backup using pg_dump:</strong>
+              <p>For a more comprehensive backup, you can use pg_dump from your local machine:</p>
+              <br />
+              <strong>For Windows:</strong>
+              <ol className="list-decimal list-inside">
+                <li>Open Command Prompt or PowerShell</li>
+                <li>Ensure you have PostgreSQL tools installed and in your PATH</li>
+                <li>Run the following command (replace placeholders with your actual database details):
+                  <pre className="bg-gray-100 p-2 mt-2 rounded overflow-x-auto">
+                    pg_dump -h rds.kdgs.canhost.ca -U postgres -d kdgs_dashboard -F c -f kdgs_dashboard_backup.dump
+                  </pre>
+                </li>
+                <li>Enter your password when prompted</li>
+              </ol>
+              <br />
+              <strong>For Mac/Linux:</strong>
+              <ol className="list-decimal list-inside">
+                <li>Open Terminal</li>
+                <li>Ensure you have PostgreSQL tools installed</li>
+                <li>Run the following command (replace placeholders with your actual database details):
+                  <pre className="bg-gray-100 p-2 mt-2 rounded overflow-x-auto">
+                    pg_dump -h rds.kdgs.canhost.ca -U postgres -d kdgs_dashboard -F c -f kdgs_dashboard_backup.dump
+                  </pre>
+                </li>
+                <li>Enter your password when prompted</li>
+              </ol>
+              <br />
+              <p>To restore from a pg_dump backup, use the following command:</p>
+              <pre className="bg-gray-100 p-2 mt-2 rounded overflow-x-auto">
+                pg_restore -h rds.kdgs.canhost.ca -U postgres -d kdgs_dashboard -c kdgs_dashboard_backup.dump
+              </pre>
+              <br />
+              <p><strong>Note:</strong> The hostname, username, and database name are pre-filled based on your current configuration. Ensure you have the necessary permissions to perform these operations.</p>
+              <br />
+              <p>It's recommended to perform regular backups and store them securely. Always test your backup and restoration process in a non-production environment first.</p>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DatabaseBackup />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
