@@ -22,7 +22,7 @@ export default function ImagesPage() {
           View and manage image files from our KDGS storage server.
           <br />
           <br />
-          <strong>Please note:</strong> manually renaming image files may
+          <strong>Please note:</strong> Manually renaming image files may
           severely impact database integrity and storage server functionality.
           Exercise caution when modifying file names.
         </CardDescription>
