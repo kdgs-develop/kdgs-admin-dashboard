@@ -77,12 +77,15 @@ export function ObituariesTable({
   return (
     <>
       <Card className="w-full">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div>
             <CardTitle>Obituary Index</CardTitle>
             <CardDescription>
+              <div className="h-1"/>
               Manage obituaries, view their details, and add associated image
-              files.{' '}
+              files. 
+              <div className="h-1"/>
+              <strong>Please note:</strong> Before adding a new obituary, we strongly recommend using the search bar to look for any matching records in our existing index to avoid duplicates.
             </CardDescription>
           </div>
           <Button
