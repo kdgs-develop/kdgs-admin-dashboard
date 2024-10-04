@@ -582,7 +582,7 @@ export function EditObituaryDialog({
 
             {/* Obituary Files */}
             <div className="space-y-2">
-              <FormLabel className="text-xs">Obituary Files</FormLabel>
+              <FormLabel className="text-xs">Obituary Images</FormLabel>
               {existingImages.length > 0 && (
                 <div className="mb-2 space-y-2">
                   {existingImages.map((image, index) => (
@@ -657,7 +657,7 @@ export function EditObituaryDialog({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  Add New File
+                  Add New Image File
                 </Button>
               </div>
             </div>
