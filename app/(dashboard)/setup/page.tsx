@@ -56,32 +56,32 @@ export default async function SetupPage() {
               <ol className="list-decimal list-inside">
                 <li>Open Command Prompt or PowerShell</li>
                 <li>Ensure you have PostgreSQL tools installed and in your PATH</li>
-                <li>Run the following command (replace placeholders with your actual database details):
+                <li>Run the following command:
                   <pre className="bg-gray-100 p-2 mt-2 rounded overflow-x-auto">
-                    pg_dump -h rds.kdgs.canhost.ca -U postgres -d kdgs_dashboard -F c -f kdgs_dashboard_backup.dump
+                    pg_dump "{process.env.DATABASE_URL}" -Fc -v -f kdgs_dashboard_backup.dump
                   </pre>
                 </li>
-                <li>Enter your password when prompted</li>
+                <li>Enter your password if prompted</li>
               </ol>
               <br />
               <strong>For Mac/Linux:</strong>
               <ol className="list-decimal list-inside">
                 <li>Open Terminal</li>
                 <li>Ensure you have PostgreSQL tools installed</li>
-                <li>Run the following command (replace placeholders with your actual database details):
+                <li>Run the following command:
                   <pre className="bg-gray-100 p-2 mt-2 rounded overflow-x-auto">
-                    pg_dump -h rds.kdgs.canhost.ca -U postgres -d kdgs_dashboard -F c -f kdgs_dashboard_backup.dump
+                    pg_dump '{process.env.DATABASE_URL}' -Fc -v -f kdgs_dashboard_backup.dump
                   </pre>
                 </li>
-                <li>Enter your password when prompted</li>
+                <li>Enter your password if prompted</li>
               </ol>
               <br />
               <p>To restore from a pg_dump backup, use the following command:</p>
               <pre className="bg-gray-100 p-2 mt-2 rounded overflow-x-auto">
-                pg_restore -h rds.kdgs.canhost.ca -U postgres -d kdgs_dashboard -c kdgs_dashboard_backup.dump
+                pg_restore -d "{process.env.DATABASE_URL}" -c -v kdgs_dashboard_backup.dump
               </pre>
               <br />
-              <p><strong>Note:</strong> The hostname, username, and database name are pre-filled based on your current configuration. Ensure you have the necessary permissions to perform these operations.</p>
+              <p><strong>Note:</strong> The database URL is pre-filled based on your current configuration. Ensure you have the necessary permissions to perform these operations.</p>
               <br />
               <p>It's recommended to perform regular backups and store them securely. Always test your backup and restoration process in a non-production environment first.</p>
             </CardDescription>
