@@ -52,10 +52,13 @@ export default async function SetupPage() {
                   <li>To restore, use a custom script to read the JSON and insert data using Prisma.</li>
                   <li>Run the restoration process in a controlled environment, ideally in a staging setup first.</li>
                 </ol>
+                <div className="mt-4">
+                  <DatabaseBackup />
+                </div>
               </div>
 
               <div>
-                <h3 className="font-semibold text-sm">Manual Backup using pg_dump:</h3>
+                <h3 className="font-semibold text-sm">Manual Backup using pg_dump: (Recommended option)</h3>
                 <div className="mt-2">For a more comprehensive backup, you can use pg_dump from your local machine:</div>
 
                 <h4 className="font-semibold text-sm mt-2">For Windows:</h4>
@@ -94,9 +97,6 @@ export default async function SetupPage() {
 
                 <div className="mt-4">It's recommended to perform regular backups and store them securely. Always test your backup and restoration process in a non-production environment first.</div>
               </div>
-            </div>
-            <div className="mt-6">
-              <DatabaseBackup />
             </div>
           </CardContent>
         </Card>
