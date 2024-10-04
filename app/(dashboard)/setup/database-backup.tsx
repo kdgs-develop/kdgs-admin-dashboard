@@ -21,13 +21,13 @@ export function DatabaseBackup() {
         a.style.display = 'none';
         a.href = url;
         const currentDate = new Date().toISOString().split('T')[0];
-        a.download = `kdgs_database_${currentDate}_dump`;
+        a.download = `kdgs_database_${currentDate}_backup.json`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         toast({
           title: 'Backup Successful',
-          description: 'Your database backup has been downloaded.',
+          description: 'Your database backup has been downloaded as a JSON file.',
         });
       } else {
         throw new Error('Backup failed');
