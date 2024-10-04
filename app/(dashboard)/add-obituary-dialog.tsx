@@ -285,7 +285,9 @@ export function AddObituaryDialog({
         <DialogHeader>
           <DialogTitle>Add New Obituary</DialogTitle>
           <DialogDescription>
-            Enter the details for the new obituary. Click save when you're done.
+            Enter the surname and click the Generate button to get a File Number. Then, fill out the rest of the details and upload any related images. We will automatically rename and upload these images for you.
+            <div className="h-1"/>
+            <strong>Please note:</strong> Before you continue, we strongly recommend using the search bar to look for any matching records in our existing index to avoid duplicates.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -471,7 +473,7 @@ export function AddObituaryDialog({
 
             {/* Obituary Files */}
             <div className="space-y-2">
-              <FormLabel className="text-xs">Obituary Files</FormLabel>
+              <FormLabel className="text-xs">Obituary Images</FormLabel>
               {selectedFiles.length > 0 && (
                 <div className="mb-2 space-y-2">
                   {selectedFiles.map((fileItem, index) => (
@@ -510,7 +512,7 @@ export function AddObituaryDialog({
                   onClick={() => fileInputRef.current?.click()}
                   disabled={!reference}
                 >
-                  Add New File
+                  Add New Image File
                 </Button>
               </div>
             </div>
@@ -608,7 +610,7 @@ export function AddObituaryDialog({
 
             {/* Relatives */}
             <div className="space-y-2">
-              <FormLabel className="text-xs">Relatives</FormLabel>
+              <FormLabel className="text-xs flex">Relatives</FormLabel>
               {form.watch('relatives')?.map((_, index) => (
                 <div key={index} className="flex items-end space-x-2">
                   <FormField
