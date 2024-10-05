@@ -199,17 +199,9 @@ export async function GET(
     currentY += 25;
     drawKeyValuePair('Proofread', obituary.proofread ? 'Yes' : 'No', currentY);
     currentY += 15;
-    if (obituary.notes) {
-      drawKeyValuePair('Notes', '', currentY);
-      currentY += 15;
-      const wrappedNotes = wrapText(obituary.notes, 70);
-      wrappedNotes.forEach((line) => {
-        drawText(line, 150, currentY, 10);
-        currentY += 15;
-      });
-    } else {
-      drawKeyValuePair('Notes', 'N/A', currentY);
-    }
+    drawKeyValuePair('Notes', obituary?.notes || 'N/A', currentY);
+    currentY += 25;
+   
 
     // Footer
     const footerText =

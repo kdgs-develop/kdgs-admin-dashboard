@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { ToastAction } from '@/components/ui/toast';
 import { toast } from '@/hooks/use-toast';
 import { Obituary } from '@/lib/db';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,7 +38,6 @@ import {
   generateReference,
   obituaryExists
 } from './actions';
-import { ToastAction } from '@/components/ui/toast';
 
 // Use the same formSchema as in EditObituaryDialog
 const formSchema = z.object({
@@ -210,7 +210,7 @@ export function AddObituaryDialog({
             'An obituary with the same surname, given names, and death date already exists.',
           variant: 'destructive',
           duration: Infinity,
-          action: <ToastAction altText="Close">Close</ToastAction>,
+          action: <ToastAction altText="Close">Close</ToastAction>
         });
         return;
       } else {
@@ -308,14 +308,10 @@ export function AddObituaryDialog({
         <DialogHeader>
           <DialogTitle>Add New Obituary</DialogTitle>
           <DialogDescription>
-            Enter the surname and click the Generate button to get a File
-            Number. Then, fill out the rest of the details and upload any
-            related images. We will automatically rename and upload these images
-            for you.
+            To generate a new File Number the surname, given names, and death date are needed.
             <div className="h-1" />
-            <strong>Please note:</strong> Before you continue, we strongly
-            recommend using the search bar to look for any matching records in
-            our existing index to avoid duplicates.
+            <strong>Please note:</strong> We recommend using the search bar to look for any matching records in
+            our existing index before creating a new obituary.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -894,7 +890,12 @@ export function AddObituaryDialog({
             />
 
             <DialogFooter>
-              <Button type="submit" disabled={isLoading || isSuccess || !form.getValues('reference')}>
+              <Button
+                type="submit"
+                disabled={
+                  isLoading || isSuccess || !form.getValues('reference')
+                }
+              >
                 {isLoading ? (
                   <>
                     <span className="loading loading-spinner"></span>
