@@ -34,8 +34,10 @@ import {
   addPeriodical,
   addTitle,
   createObituaryAction,
-  generateReference
+  generateReference,
+  obituaryExists
 } from './actions';
+import { ToastAction } from '@/components/ui/toast';
 
 // Use the same formSchema as in EditObituaryDialog
 const formSchema = z.object({
@@ -191,11 +193,32 @@ export function AddObituaryDialog({
 
   const handleGenerateReference = async () => {
     const surname = form.getValues('surname');
-    if (surname) {
-      const newReference = await generateReference(surname);
-      form.setValue('reference', newReference);
-      setReference(newReference);
-      updateFileNames(newReference);
+    const givenNames = form.getValues('givenNames');
+    const deathDate = form.getValues('deathDate');
+
+    if (surname && givenNames && deathDate) {
+      const obituaryAlreadyExists = await obituaryExists(
+        surname,
+        givenNames,
+        deathDate
+      );
+
+      if (obituaryAlreadyExists) {
+        toast({
+          title: 'Obituary Exists',
+          description:
+            'An obituary with the same surname, given names, and death date already exists.',
+          variant: 'destructive',
+          duration: Infinity,
+          action: <ToastAction altText="Close">Close</ToastAction>,
+        });
+        return;
+      } else {
+        const newReference = await generateReference(surname);
+        form.setValue('reference', newReference);
+        setReference(newReference);
+        updateFileNames(newReference);
+      }
     }
   };
 
@@ -285,9 +308,14 @@ export function AddObituaryDialog({
         <DialogHeader>
           <DialogTitle>Add New Obituary</DialogTitle>
           <DialogDescription>
-            Enter the surname and click the Generate button to get a File Number. Then, fill out the rest of the details and upload any related images. We will automatically rename and upload these images for you.
-            <div className="h-1"/>
-            <strong>Please note:</strong> Before you continue, we strongly recommend using the search bar to look for any matching records in our existing index to avoid duplicates.
+            Enter the surname and click the Generate button to get a File
+            Number. Then, fill out the rest of the details and upload any
+            related images. We will automatically rename and upload these images
+            for you.
+            <div className="h-1" />
+            <strong>Please note:</strong> Before you continue, we strongly
+            recommend using the search bar to look for any matching records in
+            our existing index to avoid duplicates.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -309,7 +337,11 @@ export function AddObituaryDialog({
                         <Button
                           type="button"
                           onClick={handleGenerateReference}
-                          disabled={!form.getValues('surname')}
+                          disabled={
+                            !form.getValues('surname') ||
+                            !form.getValues('givenNames') ||
+                            !form.getValues('deathDate')
+                          }
                         >
                           Generate
                         </Button>
@@ -862,7 +894,7 @@ export function AddObituaryDialog({
             />
 
             <DialogFooter>
-              <Button type="submit" disabled={isLoading || isSuccess}>
+              <Button type="submit" disabled={isLoading || isSuccess || !form.getValues('reference')}>
                 {isLoading ? (
                   <>
                     <span className="loading loading-spinner"></span>
