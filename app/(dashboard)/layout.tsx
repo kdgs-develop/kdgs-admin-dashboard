@@ -1,10 +1,11 @@
+import Image from 'next/image';
 import { VercelLogo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser, User } from '@clerk/nextjs/server';
 import { Analytics } from '@vercel/analytics/react';
-import { Home, Image, Package2, PanelLeft, Settings } from 'lucide-react';
+import { Home, Image as LucideImage, Package2, PanelLeft, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { DashboardBreadcrumb } from './dashboard-breadcrumb';
@@ -60,7 +61,9 @@ async function DesktopNav() {
           href="/"
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
-          <VercelLogo className="h-3 w-3 transition-all group-hover:scale-110" />
+          
+          <Image className="h-4 w-4 transition-all group-hover:scale-110" src={"/icon.png"} alt='Logo' width={64} height={64} />
+          
           <span className="sr-only">Obituary Dashboard</span>
         </Link>
 
@@ -69,7 +72,7 @@ async function DesktopNav() {
         </NavItem>
 
         <NavItem href="/images" label="Obituary Images">
-          <Image className="h-5 w-5" />
+          <LucideImage className="h-5 w-5" />
         </NavItem>
         {user?.role === 'ADMIN' && (
           <NavItem href="/setup" label="Setup">
@@ -110,7 +113,7 @@ function MobileNav() {
             href="/images"
             className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
           >
-            <Image className="h-5 w-5" />
+            <LucideImage className="h-5 w-5" />
             Obituary Images
           </Link>
           <Link

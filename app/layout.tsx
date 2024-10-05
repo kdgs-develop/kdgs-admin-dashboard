@@ -10,12 +10,6 @@ export const metadata = {
     'Secure administrative interface for the Kelowna and District Genealogical Society. Manage obituaries, member records, and genealogical resources efficiently with this Next.js-powered dashboard, featuring Clerk authentication, Postgres database, and a responsive Tailwind CSS design.',
   copyright: '© 2024 Javier Gongora. All rights reserved.',
   creator: 'Javier Gongora',
-  icons: [
-    {
-      rel: 'icon',
-      url: '/favicon.ico'
-    }
-  ]
 };
 
 export default function RootLayout({
@@ -27,6 +21,7 @@ export default function RootLayout({
     <Providers>
       <html lang="en" className="h-full">
         <body className="flex flex-col min-h-full">
+        <link rel="icon" href="/icon.png" sizes="any" />
           <div className="flex-grow">{children}</div>
           <Toaster />
           <Footer />
