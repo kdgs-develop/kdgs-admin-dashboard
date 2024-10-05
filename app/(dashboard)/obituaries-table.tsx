@@ -79,9 +79,8 @@ export function ObituariesTable({
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div>
-            <CardTitle>Obituary Index</CardTitle>
+            <CardTitle className='mb-1'>Obituary Index</CardTitle>
             <CardDescription>
-              <div className="h-1"/>
               Manage obituaries, view their details, and add associated image
               files. 
               <br/>
