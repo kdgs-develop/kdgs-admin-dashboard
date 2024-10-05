@@ -65,6 +65,8 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 - **Protected Super Admin**: Special protection for the super admin account to prevent accidental deletion or modification.
 - **Automatic Data Population**: Pre-filling of certain fields like 'Entered By' and 'Entered On' when adding new obituaries.
 - **Reference Number Generation**: Automatic generation of unique reference numbers for obituaries based on surnames.
+- **Infinite Toast Duration**: Option to keep toast notifications open until user interaction.
+- **Duplicate Obituary Check**: Verification system to check for existing obituaries with similar details when creating a new entry.
 
 ## Key Components
 
@@ -76,7 +78,7 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 
 4. **Edit Obituary Dialog**: A modal form for editing existing obituaries.
 
-5. **Add Obituary Dialog**: A modal form for adding new obituaries.
+5. **Add Obituary Dialog**: A modal form for adding new obituaries with duplicate checking.
 
 6. **Server Actions**: Server-side functions for data operations (fetch, create, update, delete obituaries, images, and admin genealogists).
 
@@ -111,6 +113,12 @@ This is an advanced admin dashboard for the Kelowna and District Genealogical So
 21. **Delete Confirmation Dialog**: Provides an extra layer of security for sensitive operations with a math challenge.
 
 22. **Generate File Name Dialog**: Assists in generating unique file names for obituaries and images.
+
+23. **Toast Component**: Customizable toast notifications with optional infinite duration.
+
+24. **Use Toast Hook**: Custom hook for managing toast state and actions.
+
+25. **Obituary Existence Check**: Server action to verify if an obituary with similar details already exists in the database.
 
 ## Getting Started
 
