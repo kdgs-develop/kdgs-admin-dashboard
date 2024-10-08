@@ -79,7 +79,6 @@ export function CreateFileNumberDialog({
       );
 
       setObituaryExists(existingObituary);
-      console.log('existingObituary', existingObituary);
 
       if (existingObituary) {
         const newFileNumber = await generateNewFileNumber(surname, givenNames, deathDate);
@@ -104,9 +103,7 @@ export function CreateFileNumberDialog({
           deathDate: deathDate,
         });
       }
-      console.log('fileNumber', fileNumber);
-      const newImageFile = await createImageFileAction(fileNumber);
-      console.log('newImageFile', newImageFile);
+      await createImageFileAction(fileNumber);
 
       onClose();
       toast({
