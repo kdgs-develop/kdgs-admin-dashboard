@@ -46,7 +46,7 @@ export function DatabaseBackup() {
 
   return (
     <div>
-      <Button onClick={handleBackup} disabled={isLoading}>
+      <Button onClick={handleBackup} disabled={isLoading} variant="secondary">
         {isLoading ? 'Creating Backup...' : 'Download Database Backup'}
       </Button>
     </div>
