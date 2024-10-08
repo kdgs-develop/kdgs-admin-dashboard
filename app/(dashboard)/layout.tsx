@@ -1,16 +1,15 @@
-import Image from 'next/image';
-import { VercelLogo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser, User } from '@clerk/nextjs/server';
 import { Analytics } from '@vercel/analytics/react';
 import { Home, Image as LucideImage, Package2, PanelLeft, Settings } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { TransitionWrapper } from '../providers';
 import { DashboardBreadcrumb } from './dashboard-breadcrumb';
 import { NavItem } from './nav-item';
-import { TransitionWrapper } from './providers';
 import { SearchInput } from './search';
 import { UserClerkButton } from './user-clerk-button';
 

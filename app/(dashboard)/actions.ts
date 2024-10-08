@@ -26,6 +26,8 @@ export async function fetchObituariesAction(
     offset,
     limit
   );
+
+  revalidatePath('/');
   return { obituaries, total: totalObituaries };
 }
 
@@ -275,4 +277,58 @@ export async function addFileBox(year: number, number: number) {
     revalidatePath('/');
     return newFileBox;
   });
+}
+
+// If obituary exists, generate new file number adding a letter at the end
+export async function generateNewFileNumber(surname: string, givenNames: string, deathDate: Date): Promise<string> {
+  const existingObituary = await prisma.obituary.findFirst({
+    where: {
+      surname: surname.toUpperCase(),
+      givenNames: givenNames.toLowerCase().split(' ').map(name => name.charAt(0).toUpperCase() + name.slice(1)).join(' '),
+      deathDate,
+    },
+  });
+
+  if (!existingObituary) {
+    throw new Error('Obituary not found');
+  }
+
+  const baseReference = existingObituary.reference.slice(0, 8); // Ensure we only use the first 8 characters
+  
+  const imageFiles = await prisma.imageFile.findMany({
+    where: {
+      name: {
+        startsWith: baseReference,
+      },
+    },
+  });
+
+  const imageFileExists = imageFiles.length > 0;
+
+  if (!imageFileExists) {
+    return `${baseReference}`;
+  }
+
+  if (imageFiles.length === 1 && imageFiles[0].name.length === 8) {
+    return `${baseReference}a`;
+  }
+
+  const suffixes = imageFiles
+    .map(file => file.name.slice(8))
+    .filter(suffix => suffix.match(/^[a-z]$/));
+
+  const lastSuffix = suffixes.sort().pop()!;
+  const nextSuffix = String.fromCharCode(lastSuffix.charCodeAt(0) + 1);
+
+  return `${baseReference}${nextSuffix}`;
+}
+
+// Create new image file
+export async function createImageFileAction(name: string) {
+  const newImageFile = await prisma.imageFile.create({
+    data: { name }
+  });
+
+  revalidatePath('/');
+  return newImageFile.name;
 }

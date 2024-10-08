@@ -16,12 +16,12 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { getUserData, getUserFullName, getUserRole, Obituary as ObituaryType } from '@/lib/db';
-import { useUser } from '@clerk/nextjs';
+import { getUserData, Obituary as ObituaryType } from '@/lib/db';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { fetchObituariesAction, getEditObituaryDialogData } from './actions';
+import { createImageFileAction, createObituaryAction, fetchObituariesAction, getEditObituaryDialogData } from './actions';
 import { AddObituaryDialog } from './add-obituary-dialog';
+import { CreateFileNumberDialog } from './create-file-number-dialog';
 import { Obituary } from './obituary';
 
 export function ObituariesTable({
@@ -44,6 +44,7 @@ export function ObituariesTable({
   > | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
+  const [isCreateFileNumberDialogOpen, setIsCreateFileNumberDialogOpen] = useState(false);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -88,6 +89,15 @@ export function ObituariesTable({
               <strong>Please note:</strong> Before adding a new obituary, we strongly recommend using the search bar to look for any matching records in our existing index to avoid duplicates.
             </CardDescription>
           </div>
+          <div className='flex gap-2'>
+          <Button
+    disabled={
+      role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
+    }
+    onClick={() => setIsCreateFileNumberDialogOpen(true)}
+    >
+    Create File Number
+  </Button>
           <Button
             disabled={
               role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
@@ -99,9 +109,11 @@ export function ObituariesTable({
               }
               setIsAddDialogOpen(true);
             }}
-          >
+            variant='destructive'
+            >
             Add Obituary
           </Button>
+    </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -178,6 +190,10 @@ export function ObituariesTable({
           currentUserFullName={currentUserFullName ?? ''}
         />
       )}
+      <CreateFileNumberDialog
+        isOpen={isCreateFileNumberDialogOpen}
+        onClose={() => setIsCreateFileNumberDialogOpen(false)}
+      />
     </>
   );
 }
