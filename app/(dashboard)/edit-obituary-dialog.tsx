@@ -1,8 +1,9 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
+import ComboboxFormField from '@/components/ui/combo-form-field';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Dialog,
   DialogContent,
@@ -20,34 +21,25 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { getUserData } from '@/lib/db';
-import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon, PlusCircle, Trash2 } from 'lucide-react';
+import { Prisma } from '@prisma/client';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { BucketItem } from 'minio';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { updateObituaryAction } from './actions';
+import {
+  addCity,
+  addPeriodical,
+  addTitle,
+  updateObituaryAction
+} from './actions';
 import { deleteImageAction, getImageUrlAction } from './images/minio-actions';
 import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
-import { Prisma } from '@prisma/client';
 
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
@@ -113,7 +105,6 @@ export function EditObituaryDialog({
   fileBoxes
 }: EditObituaryDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
-
   const [selectedFiles, setSelectedFiles] = useState<
     Array<{ file: File; newName: string }>
   >([]);
@@ -131,6 +122,10 @@ export function EditObituaryDialog({
   const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(
     null
   );
+
+  const [localTitles, setLocalTitles] = useState(titles);
+  const [localCities, setLocalCities] = useState(cities);
+  const [localPeriodicals, setLocalPeriodicals] = useState(periodicals);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -165,11 +160,12 @@ export function EditObituaryDialog({
       editedOn: obituary.editedOn ? new Date(obituary.editedOn) : new Date(),
       fileBoxId: obituary.fileBoxId || undefined,
       relatives:
-        obituary.relatives?.map((relative: any) => ({
-          surname: relative.surname || '',
-          givenNames: relative.givenNames || '',
-          relationship: relative.relationship || '',
-          predeceased: relative.predeceased || false
+        obituary.relatives?.map((relative: Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>) => ({
+          ...relative,
+          // surname: relative.surname || '',
+          // givenNames: relative.givenNames || '',
+          // relationship: relative.relationship || '',
+          // predeceased: relative.predeceased || false
         })) || []
     }
   });
@@ -258,14 +254,15 @@ export function EditObituaryDialog({
     try {
       const { relatives, ...obituaryData } = values;
 
+      // Log the relatives data
+
       // Prepare relatives data
-      const relativesData =
-        relatives?.map((relative) => ({
-          surname: relative.surname || '',
-          givenNames: relative.givenNames || '',
-          relationship: relative.relationship || '',
-          predeceased: relative.predeceased
-        })) || [];
+      const relativesData = relatives?.map((relative) => ({
+        surname: relative.surname || '',
+        givenNames: relative.givenNames || '',
+        relationship: relative.relationship || '',
+        predeceased: relative.predeceased
+      })) || [];
 
       // Handle new image uploads
       if (selectedFiles.length > 0) {
@@ -316,9 +313,7 @@ export function EditObituaryDialog({
         autoFocus={false}
       >
         <DialogHeader>
-          <DialogTitle>
-            {obituary ? 'Edit Obituary' : 'Add Obituary'}
-          </DialogTitle>
+          <DialogTitle>Edit Obituary</DialogTitle>
           <DialogDescription>
             Make changes to the obituary details here. Click save when you're
             done.
@@ -360,35 +355,21 @@ export function EditObituaryDialog({
                     </FormItem>
                   )}
                 />
-                <FormField
+                <ComboboxFormField
                   control={form.control}
                   name="titleId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Title</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        defaultValue={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-8 text-sm">
-                            <SelectValue placeholder="Select a title" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {titles.map((title) => (
-                            <SelectItem
-                              key={title.id}
-                              value={title.id.toString()}
-                            >
-                              {title.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Title"
+                  placeholder="Select a title"
+                  emptyText="No title found."
+                  items={localTitles}
+                  onAddItem={async (name) => {
+                    const newTitle = await addTitle(name);
+                    setLocalTitles([
+                      ...localTitles,
+                      { id: newTitle.id, name: newTitle?.name! }
+                    ]);
+                    return { id: newTitle.id, name: newTitle?.name! };
+                  }}
                 />
                 <FormField
                   control={form.control}
@@ -426,71 +407,38 @@ export function EditObituaryDialog({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Birth Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, 'PPP')
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-auto p-0"
-                          align="start"
-                          side="bottom"
-                          sideOffset={4}
-                        >
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <DatePicker date={field.value} setDate={field.onChange} />
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
+                <ComboboxFormField
                   control={form.control}
                   name="birthCityId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Birth City</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        defaultValue={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-8 text-sm">
-                            <SelectValue placeholder="Select a city" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {cities.map((city) => (
-                            <SelectItem
-                              key={city.id}
-                              value={city.id.toString()}
-                            >
-                              {city.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Birth City"
+                  placeholder="Select a city"
+                  emptyText="No city found."
+                  items={localCities}
+                  onAddItem={async (name) => {
+                    const newCity = await addCity(name);
+                    setLocalCities([
+                      ...localCities,
+                      {
+                        id: newCity?.id!,
+                        name: newCity?.name!
+                        // province: newCity?.province,
+                        // country: newCity?.countryId! as unknown as {
+                        //   name: string;
+                        // }
+                      }
+                    ]);
+                    return {
+                      id: newCity.id,
+                      name: newCity?.name!
+                      // province: newCity?.province,
+                      // country: newCity?.countryId!
+                    };
+                  }}
                 />
                 <FormField
                   control={form.control}
@@ -498,71 +446,38 @@ export function EditObituaryDialog({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Death Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, 'PPP')
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-auto p-0"
-                          align="start"
-                          side="bottom"
-                          sideOffset={4}
-                        >
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <DatePicker date={field.value} setDate={field.onChange} />
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
+                <ComboboxFormField
                   control={form.control}
                   name="deathCityId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Death City</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        defaultValue={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-8 text-sm">
-                            <SelectValue placeholder="Select a city" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {cities.map((city) => (
-                            <SelectItem
-                              key={city.id}
-                              value={city.id.toString()}
-                            >
-                              {city.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Death City"
+                  placeholder="Select a city"
+                  emptyText="No city found."
+                  items={localCities}
+                  onAddItem={async (name) => {
+                    const newCity = await addCity(name);
+                    setLocalCities([
+                      ...localCities,
+                      {
+                        id: newCity?.id!,
+                        name: newCity?.name!
+                        // province: newCity?.province,
+                        // country: newCity?.countryId! as unknown as {
+                        //   name: string;
+                        // }
+                      }
+                    ]);
+                    return {
+                      id: newCity.id,
+                      name: newCity?.name!
+                      // province: newCity?.province,
+                      // country: newCity?.countryId!
+                    };
+                  }}
                 />
                 <FormField
                   control={form.control}
@@ -665,35 +580,21 @@ export function EditObituaryDialog({
             {/* Publication Information */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <FormField
+                <ComboboxFormField
                   control={form.control}
                   name="periodicalId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Periodical</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(Number(value))}
-                        defaultValue={field.value?.toString()}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-8 text-sm">
-                            <SelectValue placeholder="Select a periodical" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {periodicals.map((periodical) => (
-                            <SelectItem
-                              key={periodical.id}
-                              value={periodical.id.toString()}
-                            >
-                              {periodical.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Periodical"
+                  placeholder="Select a periodical"
+                  emptyText="No periodical found."
+                  items={localPeriodicals}
+                  onAddItem={async (name) => {
+                    const newPeriodical = await addPeriodical(name);
+                    setLocalPeriodicals([
+                      ...localPeriodicals,
+                      { id: newPeriodical.id, name: newPeriodical?.name! }
+                    ]);
+                    return { id: newPeriodical.id, name: newPeriodical?.name! };
+                  }}
                 />
                 <FormField
                   control={form.control}
@@ -701,38 +602,7 @@ export function EditObituaryDialog({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Publish Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, 'PPP')
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-auto p-0"
-                          align="start"
-                          side="bottom"
-                          sideOffset={4}
-                        >
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <DatePicker date={field.value} setDate={field.onChange} />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -800,96 +670,84 @@ export function EditObituaryDialog({
 
             {/* Relatives */}
             <div className="space-y-4">
-              <div className="space-y-2">
-                <FormLabel className="text-xs">Relatives</FormLabel>
-                {form.watch('relatives')?.map((_, index) => (
-                  <div key={index} className="flex items-end space-x-2">
-                    <FormField
-                      control={form.control}
-                      name={`relatives.${index}.surname`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Surname</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              value={field.value || ''}
-                              className="h-8 text-sm"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`relatives.${index}.givenNames`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Given Names</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              value={field.value || ''}
-                              className="h-8 text-sm"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`relatives.${index}.relationship`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">
-                            Relationship
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              value={field.value || ''}
-                              className="h-8 text-sm"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`relatives.${index}.predeceased`}
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="text-xs">Predeceased</FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        const relatives = form.getValues('relatives');
-                        relatives?.splice(index, 1);
-                        form.setValue('relatives', relatives || []);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              <h3 className="text-lg font-semibold">Relatives</h3>
+              {form.watch('relatives')?.map((_, index) => (
+                <div key={index} className="flex space-x-2">
+                  <FormField
+                    control={form.control}
+                    name={`relatives.${index}.surname`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Surname</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="h-8 text-sm" value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`relatives.${index}.givenNames`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Given Names</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="h-8 text-sm" value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`relatives.${index}.relationship`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Relationship</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="h-8 text-sm" value={field.value || ''} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`relatives.${index}.predeceased`}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className="text-xs">Predeceased</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const relatives = form.getValues('relatives');
+                      relatives?.splice(index, 1);
+                      form.setValue('relatives', relatives || []);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => {
+                  const relatives = form.getValues('relatives') || [];
                   form.setValue('relatives', [
+                    ...relatives,
                     {
                       surname: '',
                       givenNames: '',
@@ -905,69 +763,44 @@ export function EditObituaryDialog({
             </div>
 
             {/* Proofread Information */}
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="proofread"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="text-xs">Proofread</FormLabel>
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="proofread"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={role !== 'ADMIN' && role !== 'PROOFREADER'}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-xs">Proofread</FormLabel>
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="proofreadDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Proofread Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                              disabled={!isProofread}
-                            >
-                              {field.value ? (
-                                format(field.value, 'PPP')
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-auto p-0"
-                          align="start"
-                          side="bottom"
-                          sideOffset={4}
-                        >
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={!isProofread}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      {role === 'ADMIN' || role === 'PROOFREADER' ? (
+                        <DatePicker
+                          date={field.value}
+                          setDate={field.onChange}
+                        />
+                      ) : (
+                        <Input type="date" className="h-8 text-sm" disabled />
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
+              </div>
+              <div className="space-y-2">
                 <FormField
                   control={form.control}
                   name="proofreadBy"
@@ -978,7 +811,7 @@ export function EditObituaryDialog({
                         <Input
                           {...field}
                           className="h-8 text-sm"
-                          disabled={!isProofread}
+                          disabled={role !== 'ADMIN' && role !== 'PROOFREADER'}
                         />
                       </FormControl>
                       <FormMessage />
@@ -998,7 +831,11 @@ export function EditObituaryDialog({
                     <FormItem>
                       <FormLabel className="text-xs">Entered By</FormLabel>
                       <FormControl>
-                        <Input {...field} className="h-8 text-sm" />
+                        <Input
+                          {...field}
+                          className="h-8 text-sm"
+                          disabled={role !== 'ADMIN'}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1010,38 +847,14 @@ export function EditObituaryDialog({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Entered On</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, 'PPP')
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-auto p-0"
-                          align="start"
-                          side="bottom"
-                          sideOffset={4}
-                        >
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      {role === 'ADMIN' ? (
+                        <DatePicker
+                          date={field.value}
+                          setDate={field.onChange}
+                        />
+                      ) : (
+                        <Input type="date" className="h-8 text-sm" disabled />
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1058,7 +871,6 @@ export function EditObituaryDialog({
                         <Input
                           {...field}
                           className="h-8 text-sm"
-                          value={field.value || currentUserFullName || ''}
                           disabled={role !== 'ADMIN'}
                         />
                       </FormControl>
@@ -1072,38 +884,14 @@ export function EditObituaryDialog({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Edited On</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={'outline'}
-                              className={cn(
-                                'w-full pl-3 text-left font-normal',
-                                !field.value && 'text-muted-foreground'
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, 'PPP')
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-auto p-0"
-                          align="start"
-                          side="bottom"
-                          sideOffset={4}
-                        >
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      {role === 'ADMIN' ? (
+                        <DatePicker
+                          date={field.value}
+                          setDate={field.onChange}
+                        />
+                      ) : (
+                        <Input type="date" className="h-8 text-sm" disabled />
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1112,50 +900,31 @@ export function EditObituaryDialog({
             </div>
 
             {/* File Box */}
-            <FormField
+            <ComboboxFormField
               control={form.control}
               name="fileBoxId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">File Box</FormLabel>
-                  <Select
-                    onValueChange={(value) => field.onChange(Number(value))}
-                    defaultValue={field.value?.toString()}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="Select a file box" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {fileBoxes.map((fileBox) => (
-                        <SelectItem
-                          key={fileBox.id}
-                          value={fileBox.id.toString()}
-                        >
-                          {`Year: ${fileBox.year}, Number: ${fileBox.number}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="File Box"
+              placeholder="Select a file box"
+              emptyText="No file box found."
+              items={fileBoxes.map((box) => ({
+                id: box.id,
+                name: `Year: ${box.year}, Number: ${box.number}`
+              }))}
+              onAddItem={async (name) => {
+                toast({
+                  title: 'Cannot add new file box',
+                  description:
+                    'File boxes are managed separately. Please contact an administrator.',
+                  variant: 'destructive'
+                });
+                const tempId = Date.now();
+                return { id: tempId, name };
+              }}
             />
 
             <DialogFooter>
-              <Button
-                type="submit"
-                disabled={isLoading || !form.getValues('reference')}
-              >
-                {isLoading ? (
-                  <>
-                    <span className="loading loading-spinner"></span>
-                    Saving...
-                  </>
-                ) : (
-                  'Save changes'
-                )}
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>
             </DialogFooter>
           </form>
@@ -1167,14 +936,13 @@ export function EditObituaryDialog({
         <ViewImageDialog
           image={selectedImage}
           onClose={() => setSelectedImage(null)}
-          onRotate={(fileName: string, degrees: number) => {
-            // Implement the rotation logic here
-            // For example, you could call an API to rotate the image
-            console.log(`Rotating ${fileName} by ${degrees} degrees`);
-            // Return a promise to satisfy the type requirement
-            return Promise.resolve();
-          }}
           getImageUrl={getImageUrlAction}
+          // onRotate={function (
+          //   fileName: string,
+          //   degrees: number
+          // ): Promise<void> {
+          //   throw new Error('Function not implemented.');
+          // }}
         />
       )}
 

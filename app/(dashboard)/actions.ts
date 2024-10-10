@@ -190,6 +190,7 @@ export async function updateObituaryAction(
   obituaryData: Omit<ObituaryUpdateInput, 'relatives'>,
   relatives: Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>
 ): Promise<Prisma.ObituaryGetPayload<{ include: { relatives: true } }>> {
+
   const updatedObituaryWithRelatives = await prisma.$transaction(
     async (prisma) => {
       // Update the obituary
@@ -199,28 +200,28 @@ export async function updateObituaryAction(
         include: { relatives: true }
       });
 
-      if (relatives.length > 0) {
-        // Delete existing relatives
-        const resetRelatives = await prisma.relative.deleteMany({
-          where: { obituaryId: id }
-        });
+      // Always delete existing relatives
+      await prisma.relative.deleteMany({
+        where: { obituaryId: id }
+      });
 
-        // Create new relatives
-        if (resetRelatives) {
-          await prisma.relative.createMany({
-            data: relatives.map((relative) => ({
-              ...relative,
-              obituaryId: id
-            }))
-          });
-        }
+      // Create new relatives if any
+      if (relatives && relatives.length > 0) {
+        const createdRelatives = await prisma.relative.createMany({
+          data: relatives.map((relative) => ({
+            ...relative,
+            obituaryId: id
+          }))
+        });
       }
 
       // Fetch the updated obituary with new relatives
-      return prisma.obituary.findUnique({
+      const finalObituary = await prisma.obituary.findUnique({
         where: { id },
         include: { relatives: true }
       });
+
+      return finalObituary;
     }
   );
 

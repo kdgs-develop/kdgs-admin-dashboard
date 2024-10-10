@@ -128,11 +128,11 @@ model FileBox {
 }
 
 enum Role {
-  VIEWER
-  INDEXER
-  SCANNER
-  PROOFREADER
-  ADMIN
+  VIEWER // view obituaries, images, etc.
+  INDEXER // create file number, edit obituaries
+  SCANNER // scan obituaries
+  PROOFREADER // edit obituaries
+  ADMIN // create, edit, delete obituaries, genealogists, etc.
 }
 
 model ImageFile {

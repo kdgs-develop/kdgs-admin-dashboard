@@ -33,7 +33,7 @@ export function SearchInput() {
       <Input
         name="q"
         type="search"
-        placeholder="Search..."
+        placeholder={`Search ${context}...`}
         className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
       />
       {isPending && <Spinner />}
