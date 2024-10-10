@@ -262,7 +262,7 @@ export function GeneaologistAdministration() {
           </SelectContent>
         </Select>
         <div className="flex space-x-2">
-          <Button variant={'outline'} onClick={generateSecurePassword}>
+          <Button variant={'outline'} onClick={() =>setPassword(generateSecurePassword())}>
             Generate
           </Button>
           <div className="relative flex-grow">
