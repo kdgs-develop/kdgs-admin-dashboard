@@ -89,7 +89,7 @@ interface EditObituaryDialogProps {
   onClose: () => void;
   onSave: (updatedObituary: any) => Promise<void>;
   titles: { id: number; name: string }[];
-  cities: { id: number; name: string }[];
+  cities: { id: number; name: string, province?: string, country?: { name: string } }[];
   periodicals: { id: number; name: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
 }
@@ -160,13 +160,15 @@ export function EditObituaryDialog({
       editedOn: obituary.editedOn ? new Date(obituary.editedOn) : new Date(),
       fileBoxId: obituary.fileBoxId || undefined,
       relatives:
-        obituary.relatives?.map((relative: Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>) => ({
-          ...relative,
-          // surname: relative.surname || '',
-          // givenNames: relative.givenNames || '',
-          // relationship: relative.relationship || '',
-          // predeceased: relative.predeceased || false
-        })) || []
+        obituary.relatives?.map(
+          (relative: Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>) => ({
+            ...relative
+            // surname: relative.surname || '',
+            // givenNames: relative.givenNames || '',
+            // relationship: relative.relationship || '',
+            // predeceased: relative.predeceased || false
+          })
+        ) || []
     }
   });
 
@@ -249,6 +251,17 @@ export function EditObituaryDialog({
     }
   };
 
+  const handleProofreadChange = (checked: boolean) => {
+    form.setValue('proofread', checked);
+    if (checked) {
+      form.setValue('proofreadDate', new Date());
+      form.setValue('proofreadBy', currentUserFullName || '');
+    } else {
+      form.setValue('proofreadDate', undefined);
+      form.setValue('proofreadBy', '');
+    }
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
@@ -257,12 +270,13 @@ export function EditObituaryDialog({
       // Log the relatives data
 
       // Prepare relatives data
-      const relativesData = relatives?.map((relative) => ({
-        surname: relative.surname || '',
-        givenNames: relative.givenNames || '',
-        relationship: relative.relationship || '',
-        predeceased: relative.predeceased
-      })) || [];
+      const relativesData =
+        relatives?.map((relative) => ({
+          surname: relative.surname || '',
+          givenNames: relative.givenNames || '',
+          relationship: relative.relationship || '',
+          predeceased: relative.predeceased
+        })) || [];
 
       // Handle new image uploads
       if (selectedFiles.length > 0) {
@@ -415,30 +429,30 @@ export function EditObituaryDialog({
                 <ComboboxFormField
                   control={form.control}
                   name="birthCityId"
-                  label="Birth City"
-                  placeholder="Select a city"
-                  emptyText="No city found."
+                  label="Birth Place"
+                  placeholder="Select a Place"
+                  emptyText="No location found."
                   items={localCities}
-                  onAddItem={async (name) => {
-                    const newCity = await addCity(name);
-                    setLocalCities([
-                      ...localCities,
-                      {
-                        id: newCity?.id!,
-                        name: newCity?.name!
-                        // province: newCity?.province,
-                        // country: newCity?.countryId! as unknown as {
-                        //   name: string;
-                        // }
-                      }
-                    ]);
-                    return {
-                      id: newCity.id,
-                      name: newCity?.name!
-                      // province: newCity?.province,
-                      // country: newCity?.countryId!
-                    };
-                  }}
+                  // onAddItem={async (name) => {
+                  //   const newCity = await addCity();
+                  //   setLocalCities([
+                  //     ...localCities,
+                  //     // {
+                  //     //   id: newCity?.id ?? 0,
+                  //     //   name: newCity?.name ?? '',
+                  //     //   province: newCity?.province ?? undefined,
+                  //     //   country: newCity?.countryId! as unknown as {
+                  //     //     name: string;
+                  //     //   }
+                  //     // }
+                  //   ]);
+                  //   return {
+                  //     id: newCity.id,
+                  //     name: newCity?.name!,
+                  //     province: newCity?.province,
+                  //     country: newCity?.countryId!
+                  //   };
+                  // }}
                 />
                 <FormField
                   control={form.control}
@@ -454,30 +468,30 @@ export function EditObituaryDialog({
                 <ComboboxFormField
                   control={form.control}
                   name="deathCityId"
-                  label="Death City"
-                  placeholder="Select a city"
-                  emptyText="No city found."
+                  label="Death Place"
+                  placeholder="Select a place"
+                  emptyText="No place found."
                   items={localCities}
-                  onAddItem={async (name) => {
-                    const newCity = await addCity(name);
-                    setLocalCities([
-                      ...localCities,
-                      {
-                        id: newCity?.id!,
-                        name: newCity?.name!
-                        // province: newCity?.province,
-                        // country: newCity?.countryId! as unknown as {
-                        //   name: string;
-                        // }
-                      }
-                    ]);
-                    return {
-                      id: newCity.id,
-                      name: newCity?.name!
-                      // province: newCity?.province,
-                      // country: newCity?.countryId!
-                    };
-                  }}
+                  // onAddItem={async (name) => {
+                  //   const newCity = await addCity();
+                  //   setLocalCities([
+                  //     ...localCities,
+                  //     // {
+                  //     //   id: newCity?.id!,
+                  //     //   name: newCity?.name!,
+                  //     //   province: newCity?.province ?? undefined,
+                  //     //   country: newCity?.countryId! as unknown as {
+                  //     //     name: string;
+                  //     //   }
+                  //     // }
+                  //   ]);
+                  //   return {
+                  //     id: newCity.id,
+                  //     name: newCity?.name!,
+                  //     province: newCity?.province,
+                  //     country: newCity?.countryId!
+                  //   };
+                  // }}
                 />
                 <FormField
                   control={form.control}
@@ -680,7 +694,11 @@ export function EditObituaryDialog({
                       <FormItem>
                         <FormLabel className="text-xs">Surname</FormLabel>
                         <FormControl>
-                          <Input {...field} className="h-8 text-sm" value={field.value || ''} />
+                          <Input
+                            {...field}
+                            className="h-8 text-sm"
+                            value={field.value || ''}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -693,7 +711,11 @@ export function EditObituaryDialog({
                       <FormItem>
                         <FormLabel className="text-xs">Given Names</FormLabel>
                         <FormControl>
-                          <Input {...field} className="h-8 text-sm" value={field.value || ''} />
+                          <Input
+                            {...field}
+                            className="h-8 text-sm"
+                            value={field.value || ''}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -706,7 +728,11 @@ export function EditObituaryDialog({
                       <FormItem>
                         <FormLabel className="text-xs">Relationship</FormLabel>
                         <FormControl>
-                          <Input {...field} className="h-8 text-sm" value={field.value || ''} />
+                          <Input
+                            {...field}
+                            className="h-8 text-sm"
+                            value={field.value || ''}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -773,7 +799,10 @@ export function EditObituaryDialog({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            handleProofreadChange(checked as boolean);
+                          }}
                           disabled={role !== 'ADMIN' && role !== 'PROOFREADER'}
                         />
                       </FormControl>

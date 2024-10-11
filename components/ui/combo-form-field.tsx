@@ -25,7 +25,7 @@ type ComboboxFormFieldProps = {
   placeholder: string;
   emptyText: string;
   items: { id: number; name: string; province?: string; country?: { name: string } }[];
-  onAddItem: (name: string) => Promise<{ id: number; name: string }>;
+  onAddItem?: (name: string) => Promise<{ id: number; name: string, province?: string, country?: { name: string } }>;
 };
 
 function ComboboxFormField({
@@ -50,22 +50,22 @@ function ComboboxFormField({
     }
   }, []);
 
-  const handleAddItem = async () => {
-    if (inputValue.trim()) {
-      try {
-        const newItem = await onAddItem(inputValue.trim());
-        setInputValue("");
-        return newItem;
-      } catch (error) {
-        console.error('Error adding item:', error);
-        toast({
-          title: "Error",
-          description: "Failed to add new item. Please try again.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
+  // const handleAddItem = async () => {
+  //   if (inputValue.trim()) {
+  //     try {
+  //       const newItem = await onAddItem(inputValue.trim());
+  //       setInputValue("");
+  //       return newItem;
+  //     } catch (error) {
+  //       console.error('Error adding item:', error);
+  //       toast({
+  //         title: "Error",
+  //         description: "Failed to add new item. Please try again.",
+  //         variant: "destructive",
+  //       });
+  //     }
+  //   }
+  // };
 
   return (
     <FormField
@@ -110,7 +110,7 @@ function ComboboxFormField({
                 <CommandList>
                   <CommandEmpty className="flex flex-col items-left">
                     {emptyText}
-                    <Button
+                    {/* <Button
                       type="button"
                       size="sm"
                       className="m-5"
@@ -123,8 +123,8 @@ function ComboboxFormField({
                       }}
                     >
                       <Plus className="mr-2 h-4 w-4" />
-                      Add "{inputValue}"
-                    </Button>
+                      Create a new location
+                    </Button> */}
                   </CommandEmpty>
                   <CommandGroup>
                     {items.map((item) => (

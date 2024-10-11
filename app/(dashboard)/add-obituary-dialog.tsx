@@ -83,12 +83,7 @@ type AddObituaryDialogProps = {
   onClose: () => void;
   onSave: (obituary: Obituary) => void;
   titles: { id: number; name: string }[];
-  cities: {
-    id: number;
-    name: string;
-    province: string | null;
-    country: { name: string } | null;
-  }[];
+  cities: { id: number; name: string, province?: string, country?: { name: string } }[];
   periodicals: { id: number; name: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
   role: string | null;
@@ -309,7 +304,7 @@ export function AddObituaryDialog({
           <DialogTitle>Add New Obituary</DialogTitle>
           <DialogDescription>
             To generate a new File Number the surname, given names, and death date are needed.
-            <div className="h-1" />
+            <span className="block mt-2" />
             <strong>Please note:</strong> We recommend using the search bar to look for any matching records in
             our existing index before creating a new obituary.
           </DialogDescription>
@@ -419,30 +414,30 @@ export function AddObituaryDialog({
                 <ComboboxFormField
                   control={form.control}
                   name="birthCityId"
-                  label="Birth City"
-                  placeholder="Select a city"
-                  emptyText="No city found."
+                  label="Birth Place"
+                  placeholder="Select a place"
+                  emptyText="No place found."
                   items={localCities}
-                  onAddItem={async (name) => {
-                    const newCity = await addCity(name);
-                    setLocalCities([
-                      ...localCities,
-                      {
-                        id: newCity?.id!,
-                        name: newCity?.name!,
-                        province: newCity?.province,
-                        country: newCity?.countryId! as unknown as {
-                          name: string;
-                        }
-                      }
-                    ]);
-                    return {
-                      id: newCity.id,
-                      name: newCity?.name!,
-                      province: newCity?.province,
-                      country: newCity?.countryId!
-                    };
-                  }}
+                  // onAddItem={async (name) => {
+                  //   const newCity = await addCity();
+                  //   setLocalCities([
+                  //     ...localCities,
+                  //     // {
+                  //     //   id: newCity?.id!,
+                  //     //   name: newCity?.name!,
+                  //     //   province: newCity?.province,
+                  //     //   country: newCity?.countryId! as unknown as {
+                  //     //     name: string;
+                  //     //   }
+                  //     // }
+                  //   ]);
+                  //   return {
+                  //     id: newCity.id,
+                  //     name: newCity?.name!,
+                  //     province: newCity?.province,
+                  //     country: newCity?.countryId!
+                  //   };
+                  // }}
                 />
                 <FormField
                   control={form.control}
@@ -458,30 +453,30 @@ export function AddObituaryDialog({
                 <ComboboxFormField
                   control={form.control}
                   name="deathCityId"
-                  label="Death City"
-                  placeholder="Select a city"
-                  emptyText="No city found."
+                  label="Death Place"
+                  placeholder="Select a place"
+                  emptyText="No place found."
                   items={localCities}
-                  onAddItem={async (name) => {
-                    const newCity = await addCity(name);
-                    setLocalCities([
-                      ...localCities,
-                      {
-                        id: newCity?.id!,
-                        name: newCity?.name!,
-                        province: newCity?.province,
-                        country: newCity?.countryId! as unknown as {
-                          name: string;
-                        }
-                      }
-                    ]);
-                    return {
-                      id: newCity.id,
-                      name: newCity?.name!,
-                      province: newCity?.province,
-                      country: newCity?.countryId!
-                    };
-                  }}
+                  // onAddItem={async (name) => {
+                  //   const newCity = await addCity();
+                  //   setLocalCities([
+                  //     ...localCities,
+                  //     // {
+                  //     //   id: newCity?.id!,
+                  //     //   name: newCity?.name!,
+                  //     //   province: newCity?.province,
+                  //     //   country: newCity?.countryId! as unknown as {
+                  //     //     name: string;
+                  //     //   }
+                  //     // }
+                  //   ]);
+                  //   return {
+                  //     id: newCity.id,
+                  //     name: newCity?.name!,
+                  //     province: newCity?.province,
+                  //     country: newCity?.countryId!
+                  //   };
+                  // }}
                 />
                 <FormField
                   control={form.control}
