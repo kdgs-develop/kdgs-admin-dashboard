@@ -27,7 +27,7 @@ export default async function SetupPage() {
       <div className="space-y-6">
         <Card className="w-[calc(100%)]">
           <CardHeader>
-            <CardTitle>Setup</CardTitle>
+            <CardTitle>Admin Setup</CardTitle>
             <CardDescription>
               Configure your obituary management system.
             </CardDescription>

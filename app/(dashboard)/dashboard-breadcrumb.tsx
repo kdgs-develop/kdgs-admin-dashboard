@@ -15,7 +15,7 @@ export function DashboardBreadcrumb() {
   const pathname = usePathname();
   const isImagesRoute = pathname?.startsWith('/images');
   const isSetupRoute = pathname?.startsWith('/setup');
-  const currentPage = isImagesRoute ? 'Obituary Images' : isSetupRoute ? 'Setup' : 'Obituary Index';
+  const currentPage = isImagesRoute ? 'Obituary Images' : isSetupRoute ? 'Admin Setup' : 'Obituary Index';
 
   return (
     <Breadcrumb className="hidden md:flex">

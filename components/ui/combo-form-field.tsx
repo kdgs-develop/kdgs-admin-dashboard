@@ -24,7 +24,7 @@ type ComboboxFormFieldProps = {
   label: string;
   placeholder: string;
   emptyText: string;
-  items: { id: number; name: string }[];
+  items: { id: number; name: string; province?: string; country?: { name: string } }[];
   onAddItem: (name: string) => Promise<{ id: number; name: string }>;
 };
 
@@ -108,12 +108,12 @@ function ComboboxFormField({
                   onValueChange={setInputValue}
                 />
                 <CommandList>
-                  <CommandEmpty>
+                  <CommandEmpty className="flex flex-col items-left">
                     {emptyText}
                     <Button
                       type="button"
                       size="sm"
-                      className="mt-2"
+                      className="m-5"
                       onClick={async () => {
                         const newItem = await handleAddItem();
                         if (newItem) {
@@ -144,7 +144,7 @@ function ComboboxFormField({
                               : "opacity-0"
                           )}
                         />
-                        {item.name}
+                        {item.name}, {item?.province}, {item?.country?.name}
                       </CommandItem>
                     ))}
                   </CommandGroup>

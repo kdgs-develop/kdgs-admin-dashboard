@@ -74,7 +74,7 @@ async function DesktopNav() {
           <LucideImage className="h-5 w-5" />
         </NavItem>
         {user?.role === 'ADMIN' && (
-          <NavItem href="/setup" label="Setup">
+          <NavItem href="/setup" label="Admin Setup">
             <Settings className="h-5 w-5" />
           </NavItem>
         )}
@@ -98,7 +98,8 @@ function MobileNav() {
             href="/"
             className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
           >
-            <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
+            <Image className="h-4 w-4 transition-all group-hover:scale-110" src={"/icon.png"} alt='Logo' width={64} height={64} />
+
             <span className="sr-only">Obituary Dashboard</span>
           </Link>
           <Link
@@ -113,14 +114,14 @@ function MobileNav() {
             className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
           >
             <LucideImage className="h-5 w-5" />
-            Obituary Images
+            Images
           </Link>
           <Link
             href="/setup"
             className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
           >
             <Settings className="h-5 w-5" />
-            Setup
+            Admin Setup
           </Link>
         </nav>
       </SheetContent>
