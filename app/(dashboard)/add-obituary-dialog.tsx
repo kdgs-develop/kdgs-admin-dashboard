@@ -423,7 +423,8 @@ export function AddObituaryDialog({
                   placeholder="Select a place"
                   emptyText="No place found."
                   items={localCities.map(city => ({
-                    ...city,
+                    id: city.id,
+                    name: city.name,
                     province: city.province ?? undefined,
                     country: city.country ? { name: city.country.name } : undefined
                   }))}
@@ -466,7 +467,8 @@ export function AddObituaryDialog({
                   placeholder="Select a place"
                   emptyText="No place found."
                   items={localCities.map(city => ({
-                    ...city,
+                    id: city.id,
+                    name: city.name,
                     province: city.province ?? undefined,
                     country: city.country ? { name: city.country.name } : undefined
                   }))}
