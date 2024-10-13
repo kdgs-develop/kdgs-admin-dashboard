@@ -155,7 +155,7 @@ export async function getCities(): Promise<Prisma.CityGetPayload<{ include: { co
 }
 
 export async function addCity(name: string, province: string, countryId: number ) {
-  console.log("addCity function called with data:", { name, province, countryId });
+  
   try {
     // Check for existing city
     const existingCity = await prisma.city.findFirst({
@@ -185,7 +185,7 @@ export async function addCity(name: string, province: string, countryId: number 
     // Revalidate the path to update the UI
     revalidatePath('/');
 
-    console.log("New city created:", newCity);
+    
     return {
       id: newCity.id,
       name: newCity.name,
