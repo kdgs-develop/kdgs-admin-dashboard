@@ -47,6 +47,9 @@ export async function getObituaries(
       take: limit,
       skip: offset,
       orderBy: { reference: 'asc' },
+      include: {
+        relatives: true,
+      },
     }),
     prisma.obituary.count({ where }),
   ]);

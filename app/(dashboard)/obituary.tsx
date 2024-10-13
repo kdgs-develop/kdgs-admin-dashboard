@@ -4,11 +4,7 @@ import { TableCell, TableRow } from '@/components/ui/table';
 import { Obituary as ObituaryType } from '@/lib/db';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import {
-  deleteObituary,
-  getEditObituaryDialogData,
-  updateObituaryAction
-} from './actions';
+import { deleteObituary, getEditObituaryDialogData } from './actions';
 import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 import { EditObituaryDialog } from './edit-obituary-dialog';
 
@@ -62,31 +58,35 @@ export function Obituary({
           {obituary.deathDate?.toLocaleDateString() ?? 'N/A'}
         </TableCell>
         <TableCell>
-          <Badge variant={obituary.proofread ? 'default' : 'secondary'}>
+          <Badge variant={obituary.proofread ? 'outline' : 'destructive'}>
             {obituary.proofread ? 'Proofread' : 'Not Proofread'}
           </Badge>
         </TableCell>
         <TableCell>
           <div className="flex space-x-2">
-            <Button onClick={handleViewClick} variant="ghost" size="sm">
+            <Button onClick={handleViewClick} variant="outline" size="sm">
               View
             </Button>
+            {(role === 'ADMIN' || role === 'PROOFREADER') && (
             <Button
               onClick={handleEditClick}
-              variant="ghost"
+              variant="default"
               size="sm"
               disabled={role !== 'ADMIN' && role !== 'PROOFREADER'}
             >
               Edit
             </Button>
-            <Button
-              onClick={handleDeleteClick}
-              variant="ghost"
-              size="sm"
-              disabled={role !== 'ADMIN'}
-            >
-              Delete
-            </Button>
+            )}
+            {role === 'ADMIN' && (
+              <Button
+                onClick={handleDeleteClick}
+                variant="destructive"
+                size="sm"
+                disabled={role !== 'ADMIN'}
+              >
+                Delete
+              </Button>
+            )}
           </div>
         </TableCell>
       </TableRow>
@@ -96,7 +96,6 @@ export function Obituary({
           isOpen={isEditDialogOpen}
           onClose={() => setIsEditDialogOpen(false)}
           onSave={async (updatedObituary) => {
-           
             onUpdate();
             setIsEditDialogOpen(false);
           }}

@@ -11,8 +11,8 @@ import { useEffect, useState } from 'react';
 
 interface ViewImageDialogProps {
   image: BucketItem | null;
-  onClose: () => void;
-  onRotate: (fileName: string, degrees: number) => Promise<void>;
+  onClose: (fileName: string) => void;
+  onRotate?: (fileName: string, degrees: number) => Promise<void>;
   getImageUrl: (fileName: string) => Promise<string>;
 }
 
@@ -44,14 +44,13 @@ export function ViewImageDialog({
     if (image && image.name) {
       const newRotation = (rotation + 90) % 360;
       setRotation(newRotation);
-      await onRotate(image.name, newRotation);
+      if (onRotate) await onRotate(image.name, newRotation);
       const newUrl = await getImageUrl(image.name);
       setImageUrl(newUrl);
     }
   };
-
   return (
-    <Dialog open={!!image} onOpenChange={onClose}>
+    <Dialog open={!!image} onOpenChange={() => onClose(image?.name || '')}>
       <DialogContent className="max-w-[90vw] w-full max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{image?.name}</DialogTitle>

@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation';
 import { AdminBackup } from './admin-backup';
 import { BulkUpload } from './bulk-upload';
 import { GeneaologistAdministration } from './genealogist-administration';
+import { LocationAdministration } from './location-administration';
 
 export default async function SetupPage() {
   const { userId } = auth();
@@ -27,35 +28,25 @@ export default async function SetupPage() {
       <div className="space-y-6">
         <Card className="w-[calc(100%)]">
           <CardHeader>
-            <CardTitle>Setup</CardTitle>
+            <CardTitle>Admin Setup</CardTitle>
             <CardDescription>
               Configure your obituary management system.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <GeneaologistAdministration />
-          </CardContent>
         </Card>
 
-        <Card className="w-[calc(100%)]">
-        <CardHeader>
-          <CardTitle>Bulk Upload</CardTitle>
-          <CardDescription>
-            Instructions to upload multiple image files at once.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          <div className="space-y-4">
-          <BulkUpload />
-        </div>
-      </CardContent>
-      </Card>
+        <LocationAdministration />
+
+        <GeneaologistAdministration />
+
+        <BulkUpload />
 
         <Card className="w-[calc(100%)]">
           <CardHeader>
             <CardTitle>Database Backup</CardTitle>
             <CardDescription>
-              Download a backup of your database content and learn how to create manual backups.
+              Download a backup of your database content and learn how to create
+              manual backups.
             </CardDescription>
           </CardHeader>
 
@@ -65,7 +56,6 @@ export default async function SetupPage() {
             </div>
           </CardContent>
         </Card>
-
       </div>
     </div>
   );

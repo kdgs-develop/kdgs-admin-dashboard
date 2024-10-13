@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useRef, useCallback } from "react";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import {
@@ -17,6 +19,8 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "./form
 import { Button } from "./button";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import AddCityDialog from "@/app/(dashboard)/setup/add-city-dialog";
+import { addCity } from "@/app/(dashboard)/setup/actions";
 
 type ComboboxFormFieldProps = {
   control: any;
@@ -25,20 +29,22 @@ type ComboboxFormFieldProps = {
   placeholder: string;
   emptyText: string;
   items: { id: number; name: string; province?: string; country?: { name: string } }[];
-  onAddItem?: (name: string) => Promise<{ id: number; name: string, province?: string, country?: { name: string } }>;
+  onAddItem?: (name: string, province: string, countryId: number) => Promise<{ id: number; name: string, province?: string, country?: { name: string } }>;
+  countries: { id: number; name: string }[]; // Add this prop for country options
 };
 
-function ComboboxFormField({
+function ComboboxFormFieldAdmin({
   control,
   name,
   label,
   placeholder,
   emptyText,
   items,
-  onAddItem,
+  countries,
 }: ComboboxFormFieldProps) {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
@@ -50,22 +56,25 @@ function ComboboxFormField({
     }
   }, []);
 
-  // const handleAddItem = async () => {
-  //   if (inputValue.trim()) {
-  //     try {
-  //       const newItem = await onAddItem(inputValue.trim());
-  //       setInputValue("");
-  //       return newItem;
-  //     } catch (error) {
-  //       console.error('Error adding item:', error);
-  //       toast({
-  //         title: "Error",
-  //         description: "Failed to add new item. Please try again.",
-  //         variant: "destructive",
-  //       });
-  //     }
-  //   }
-  // };
+  const handleAddItem = async (name: string, province: string, countryId: number) => {
+    
+    if (name.trim()) {
+      try {
+        const newItem = await addCity(name.trim(), province, countryId);
+        
+        setInputValue("");
+        return newItem;
+      } catch (error) {
+        console.error('Error adding item:', error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to add new item. Please try again.",
+          variant: "destructive",
+        });
+        throw error;
+      }
+    }
+  };
 
   return (
     <FormField
@@ -110,21 +119,15 @@ function ComboboxFormField({
                 <CommandList>
                   <CommandEmpty className="flex flex-col items-left">
                     {emptyText}
-                    {/* <Button
+                    <Button
                       type="button"
                       size="sm"
                       className="m-5"
-                      onClick={async () => {
-                        const newItem = await handleAddItem();
-                        if (newItem) {
-                          field.onChange(newItem.id);
-                          setOpen(false);
-                        }
-                      }}
+                      onClick={() => setIsDialogOpen(true)}
                     >
                       <Plus className="mr-2 h-4 w-4" />
-                      Create a new location
-                    </Button> */}
+                      Add new city
+                    </Button>
                   </CommandEmpty>
                   <CommandGroup>
                     {items.map((item) => (
@@ -153,10 +156,28 @@ function ComboboxFormField({
             </PopoverContent>
           </Popover>
           <FormMessage />
+          <AddCityDialog
+            isOpen={isDialogOpen}
+            onClose={() => setIsDialogOpen(false)}
+            onAddCity={async (name, province, countryId) => {
+              
+              try {
+                const newItem = await handleAddItem(name, province, countryId);
+                if (newItem) {
+                  field.onChange(newItem.id);
+                  setOpen(false);
+                  setIsDialogOpen(false);
+                }
+              } catch (error) {
+                console.error('Error in onAddCity:', error);
+              }
+            }}
+            countries={countries}
+          />
         </FormItem>
       )}
     />
   );
 }
 
-export default ComboboxFormField;
+export default ComboboxFormFieldAdmin;

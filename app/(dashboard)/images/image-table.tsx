@@ -200,14 +200,14 @@ export function ImageTable({ initialSearchQuery = '' }) {
                           <div className="flex space-x-2">
                             <Button
                               onClick={() => setSelectedImage(image)}
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
                             >
                               View
                             </Button>
                             <Button
                               onClick={() => setSelectedImageToEdit(image)}
-                              variant="ghost"
+                              variant="default"
                               size="sm"
                               disabled={role !== 'ADMIN'}
                             >
@@ -215,7 +215,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
                             </Button>
                             <Button
                               onClick={() => setSelectedImageToRename(image)}
-                              variant="ghost"
+                              variant="destructive"
                               size="sm"
                               disabled={role !== 'ADMIN'}
                             >

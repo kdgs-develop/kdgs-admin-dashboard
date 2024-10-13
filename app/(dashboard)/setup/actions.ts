@@ -2,7 +2,8 @@
 
 import { prisma } from '@/lib/prisma';
 import { clerkClient } from '@clerk/nextjs/server';
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 
 interface CreateGenealogistParams {
   firstName: string;
@@ -132,5 +133,83 @@ export async function updateGenealogistPassword(id: number, newPassword: string)
   } catch (error) {
     console.error('Error updating genealogist password:', error);
     throw error;
+  }
+}
+
+export async function getCities(): Promise<Prisma.CityGetPayload<{ include: { country: true } }>[]> {
+  try {
+    const cities = await prisma.city.findMany({
+      include: {
+        country: true
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+
+    return cities as Prisma.CityGetPayload<{ include: { country: true } }>[];
+  } catch (error) {
+    console.error('Error fetching cities:', error);
+    throw new Error('Failed to fetch cities');
+  }
+}
+
+export async function addCity(name: string, province: string, countryId: number ) {
+  
+  try {
+    // Check for existing city
+    const existingCity = await prisma.city.findFirst({
+      where: {
+        name: name,
+        province: province,
+        countryId: countryId,
+      },
+    });
+
+    if (existingCity) {
+      throw new Error('A city with this name, province, and country already exists');
+    }
+
+    // Create the new city
+    const newCity = await prisma.city.create({
+      data: {
+        name: name,
+        province: province,
+        countryId: countryId,
+      },
+      include: {
+        country: true
+      }
+    });
+
+    // Revalidate the path to update the UI
+    revalidatePath('/');
+
+    
+    return {
+      id: newCity.id,
+      name: newCity.name,
+      province: newCity.province,
+      country: { name: newCity.country?.name ?? '' }
+    };
+  } catch (error) {
+    console.error('Error adding new city:', error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // The .code property can be accessed in a type-safe manner
+      if (error.code === 'P2002') {
+        throw new Error('A city with this name already exists in this country and province');
+      }
+    }
+    throw new Error(error instanceof Error ? error.message : 'Failed to add new city');
+  }
+}
+
+export async function getCountries(): Promise<{ id: number; name: string }[]> {
+  try {
+    const countries = await prisma.country.findMany();
+    return countries;
+  } catch (error) {
+    console.error('Error fetching countries:', error);
+    throw new Error('Failed to fetch countries');
   }
 }

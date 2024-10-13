@@ -84,8 +84,7 @@ export function ObituariesTable({
             <CardDescription>
               Manage obituaries, view their details, and add associated image
               files. 
-              <br/>
-              <br/>
+              <span className='block mt-4' />
               <strong>Please note:</strong> Before adding a new obituary, we strongly recommend using the search bar to look for any matching records in our existing index to avoid duplicates.
             </CardDescription>
           </div>
