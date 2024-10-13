@@ -87,7 +87,7 @@ export function LocationAdministration() {
     <Card>
       <CardHeader>
         <CardTitle>Add New Locations</CardTitle>
-        <CardDescription>Search for existing locations or add new ones.</CardDescription>
+        <CardDescription>Search for existing locations and add a new one if it is not found.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -95,8 +95,8 @@ export function LocationAdministration() {
             <ComboboxFormFieldAdmin
               control={form.control}
               name="cityId"
-              label="Locations available"
-              placeholder="Select a location"
+              label="Locations"
+              placeholder="Search and add a location"
               emptyText="No location found."
               items={cities.map(city => ({
                 id: city.id,
