@@ -2,6 +2,13 @@
 
 import { Button } from '@/components/ui/button';
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -24,7 +31,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { toast, useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Edit2, Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
@@ -34,8 +41,8 @@ import {
   updateGenealogist,
   updateGenealogistPassword
 } from './actions';
-import { SendEmailComponent } from './send-email-component';
 import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
+import { SendEmailComponent } from './send-email-component';
 
 interface Genealogist {
   id: number;
@@ -68,8 +75,11 @@ export function GeneaologistAdministration() {
     isResend: boolean;
   } | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<'delete' | 'newPassword' | null>(null);
-  const [selectedGenealogist, setSelectedGenealogist] = useState<Genealogist | null>(null);
+  const [confirmAction, setConfirmAction] = useState<
+    'delete' | 'newPassword' | null
+  >(null);
+  const [selectedGenealogist, setSelectedGenealogist] =
+    useState<Genealogist | null>(null);
 
   const fetchGenealogists = async () => {
     try {
@@ -84,10 +94,10 @@ export function GeneaologistAdministration() {
   const handleCreateGenealogist = async () => {
     try {
       if (!password) {
-        toast({ 
-          title: 'Error', 
+        toast({
+          title: 'Error',
           description: 'Password is required',
-          variant: 'destructive' 
+          variant: 'destructive'
         });
         return;
       }
@@ -98,7 +108,7 @@ export function GeneaologistAdministration() {
         email,
         phone,
         role: role,
-        password: password, // Use the password from the form input
+        password: password // Use the password from the form input
       });
 
       setEmailDetails({
@@ -113,10 +123,10 @@ export function GeneaologistAdministration() {
       fetchGenealogists();
       resetForm();
     } catch (error) {
-      toast({ 
-        title: 'Error creating genealogist', 
+      toast({
+        title: 'Error creating genealogist',
         description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   };
@@ -207,7 +217,7 @@ export function GeneaologistAdministration() {
   }, []);
 
   const sendWelcomeEmail = async (
-    genealogist:  Partial<Genealogist>,
+    genealogist: Partial<Genealogist>,
     password: string,
     isResend: boolean = false
   ) => {
@@ -225,180 +235,198 @@ export function GeneaologistAdministration() {
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Genealogist Administration</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          placeholder="First Name"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
-        <Input
-          placeholder="Last Name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-        />
-        <Input
-          placeholder="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <Input
-          placeholder="Phone"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-        />
-        <Select value={role} onValueChange={setRole} defaultValue="VIEWER">
-          <SelectTrigger>
-            <SelectValue placeholder="Select Role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="VIEWER">Viewer</SelectItem>
-            <SelectItem value="SCANNER">Scanner</SelectItem>
-            <SelectItem value="INDEXER">Indexer</SelectItem>
-            <SelectItem value="PROOFREADER">Proofreader</SelectItem>
-            <SelectItem value="ADMIN">Admin</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex space-x-2">
-          <Button variant={'outline'} onClick={() =>setPassword(generateSecurePassword())}>
-            Generate
-          </Button>
-          <div className="relative flex-grow">
-            <Input
-              placeholder="Password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+    <Card>
+      <CardHeader>
+        <CardTitle>Genealogist Administration</CardTitle>
+        <CardDescription>Manage your genealogists.</CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            placeholder="First Name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+          <Input
+            placeholder="Last Name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+          <Input
+            placeholder="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <Input
+            placeholder="Phone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+          <Select value={role} onValueChange={setRole} defaultValue="VIEWER">
+            <SelectTrigger>
+              <SelectValue placeholder="Select Role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="VIEWER">Viewer</SelectItem>
+              <SelectItem value="SCANNER">Scanner</SelectItem>
+              <SelectItem value="INDEXER">Indexer</SelectItem>
+              <SelectItem value="PROOFREADER">Proofreader</SelectItem>
+              <SelectItem value="ADMIN">Admin</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex space-x-2">
             <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 top-0 h-full"
-              onClick={togglePasswordVisibility}
+              variant={'outline'}
+              onClick={() => setPassword(generateSecurePassword())}
             >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              Generate
             </Button>
+            <div className="relative flex-grow">
+              <Input
+                placeholder="Password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-full"
+                onClick={togglePasswordVisibility}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="flex justify-end">
-        <Button
-          onClick={handleCreateGenealogist}
-          className="w-full md:w-auto"
-          variant={'default'}
-        >
-          Create Genealogist
-        </Button>
-      </div>
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {genealogists.map((genealogist) => (
-              <TableRow key={genealogist.id}>
-                <TableCell>{genealogist.fullName || 'N/A'}</TableCell>
-                <TableCell>{genealogist.email}</TableCell>
-                <TableCell>{genealogist.phone || 'N/A'}</TableCell>
-                <TableCell>{genealogist.role || 'N/A'}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Dialog
-                      open={isEditDialogOpen}
-                      onOpenChange={setIsEditDialogOpen}
-                    >
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(genealogist)}
-                          disabled={genealogist.email === "kdgs.develop@gmail.com"}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Edit Genealogist</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <Input
-                            placeholder="Phone"
-                            value={editPhone}
-                            onChange={(e) => setEditPhone(e.target.value)}
-                          />
-                          <Select value={editRole} onValueChange={setEditRole}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select Role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="VIEWER">Viewer</SelectItem>
-                              <SelectItem value="SCANNER">Scanner</SelectItem>
-                              <SelectItem value="INDEXER">Indexer</SelectItem>
-                              <SelectItem value="PROOFREADER">
-                                Proofreader
-                              </SelectItem>
-                              <SelectItem value="ADMIN">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Button onClick={handleEditGenealogist}>
-                            Save Changes
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSendNewPassword(genealogist)}
-                      disabled={genealogist.email === "kdgs.develop@gmail.com"}
-                    >
-                      Send New Password
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteGenealogist(genealogist)}
-                      disabled={genealogist.email === "kdgs.develop@gmail.com"}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </TableCell>
+        <div className="flex justify-end">
+          <Button
+            onClick={handleCreateGenealogist}
+            className="w-full md:w-auto"
+            variant={'default'}
+          >
+            Create Genealogist
+          </Button>
+        </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      {emailDetails && (
-        <SendEmailComponent
-          to={emailDetails.to}
-          name={emailDetails.name}
-          password={emailDetails.password}
-          role={emailDetails.role}
-          isResend={emailDetails.isResend}
+            </TableHeader>
+            <TableBody>
+              {genealogists.map((genealogist) => (
+                <TableRow key={genealogist.id}>
+                  <TableCell>{genealogist.fullName || 'N/A'}</TableCell>
+                  <TableCell>{genealogist.email}</TableCell>
+                  <TableCell>{genealogist.phone || 'N/A'}</TableCell>
+                  <TableCell>{genealogist.role || 'N/A'}</TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Dialog
+                        open={isEditDialogOpen}
+                        onOpenChange={setIsEditDialogOpen}
+                      >
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDialog(genealogist)}
+                            disabled={
+                              genealogist.email === 'kdgs.develop@gmail.com'
+                            }
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Edit Genealogist</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <Input
+                              placeholder="Phone"
+                              value={editPhone}
+                              onChange={(e) => setEditPhone(e.target.value)}
+                            />
+                            <Select
+                              value={editRole}
+                              onValueChange={setEditRole}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select Role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="VIEWER">Viewer</SelectItem>
+                                <SelectItem value="SCANNER">Scanner</SelectItem>
+                                <SelectItem value="INDEXER">Indexer</SelectItem>
+                                <SelectItem value="PROOFREADER">
+                                  Proofreader
+                                </SelectItem>
+                                <SelectItem value="ADMIN">Admin</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button onClick={handleEditGenealogist}>
+                              Save Changes
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSendNewPassword(genealogist)}
+                        disabled={
+                          genealogist.email === 'kdgs.develop@gmail.com'
+                        }
+                      >
+                        Send New Password
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteGenealogist(genealogist)}
+                        disabled={
+                          genealogist.email === 'kdgs.develop@gmail.com'
+                        }
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        {emailDetails && (
+          <SendEmailComponent
+            to={emailDetails.to}
+            name={emailDetails.name}
+            password={emailDetails.password}
+            role={emailDetails.role}
+            isResend={emailDetails.isResend}
+          />
+        )}
+        <DeleteConfirmationDialog
+          isOpen={isConfirmDialogOpen}
+          onClose={() => setIsConfirmDialogOpen(false)}
+          onConfirm={handleConfirmAction}
+          action={confirmAction as 'delete' | 'newPassword'}
         />
-      )}
-      <DeleteConfirmationDialog
-        isOpen={isConfirmDialogOpen}
-        onClose={() => setIsConfirmDialogOpen(false)}
-        onConfirm={handleConfirmAction}
-        action={confirmAction as 'delete' | 'newPassword'}
-      />
-    </div>
+      </CardContent>
+    </Card>
   );
 }
