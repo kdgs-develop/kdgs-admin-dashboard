@@ -89,7 +89,12 @@ interface EditObituaryDialogProps {
   onClose: () => void;
   onSave: (updatedObituary: any) => Promise<void>;
   titles: { id: number; name: string }[];
-  cities: { id: number; name: string, province?: string, country?: { name: string } }[];
+  cities: { 
+    id: number; 
+    name: string; 
+    province: string | null; 
+    country: { name: string } | null 
+  }[];
   periodicals: { id: number; name: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
 }
