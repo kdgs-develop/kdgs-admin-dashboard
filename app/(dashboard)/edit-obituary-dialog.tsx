@@ -437,7 +437,11 @@ export function EditObituaryDialog({
                   label="Birth Place"
                   placeholder="Select a Place"
                   emptyText="No location found."
-                  items={localCities}
+                  items={localCities.map(city => ({
+                    ...city,
+                    province: city.province ?? undefined,
+                    country: city.country ? { name: city.country.name } : undefined
+                  }))}
                   // onAddItem={async (name) => {
                   //   const newCity = await addCity();
                   //   setLocalCities([
@@ -476,7 +480,11 @@ export function EditObituaryDialog({
                   label="Death Place"
                   placeholder="Select a place"
                   emptyText="No place found."
-                  items={localCities}
+                  items={localCities.map(city => ({
+                    ...city,
+                    province: city.province ?? undefined,
+                    country: city.country ? { name: city.country.name } : undefined
+                  }))}
                   // onAddItem={async (name) => {
                   //   const newCity = await addCity();
                   //   setLocalCities([
