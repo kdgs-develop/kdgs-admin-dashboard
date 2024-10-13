@@ -83,7 +83,12 @@ type AddObituaryDialogProps = {
   onClose: () => void;
   onSave: (obituary: Obituary) => void;
   titles: { id: number; name: string }[];
-  cities: { id: number; name: string, province?: string, country?: { name: string } }[];
+  cities: { 
+    id: number; 
+    name: string; 
+    province?: string | null; 
+    country?: { name: string; } | null; 
+  }[];
   periodicals: { id: number; name: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
   role: string | null;
@@ -417,7 +422,11 @@ export function AddObituaryDialog({
                   label="Birth Place"
                   placeholder="Select a place"
                   emptyText="No place found."
-                  items={localCities}
+                  items={localCities.map(city => ({
+                    ...city,
+                    province: city.province ?? undefined,
+                    country: city.country ? { name: city.country.name } : undefined
+                  }))}
                   // onAddItem={async (name) => {
                   //   const newCity = await addCity();
                   //   setLocalCities([
@@ -456,7 +465,11 @@ export function AddObituaryDialog({
                   label="Death Place"
                   placeholder="Select a place"
                   emptyText="No place found."
-                  items={localCities}
+                  items={localCities.map(city => ({
+                    ...city,
+                    province: city.province ?? undefined,
+                    country: city.country ? { name: city.country.name } : undefined
+                  }))}
                   // onAddItem={async (name) => {
                   //   const newCity = await addCity();
                   //   setLocalCities([
