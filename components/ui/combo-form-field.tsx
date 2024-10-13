@@ -82,7 +82,7 @@ function ComboboxFormField({
                   role="combobox"
                   aria-expanded={open}
                   className={cn(
-                    "w-full justify-between h-8 text-sm",
+                    "max-w-md justify-between h-8 text-sm",
                     !field.value && "text-muted-foreground"
                   )}
                 >
@@ -94,7 +94,7 @@ function ComboboxFormField({
               </FormControl>
             </PopoverTrigger>
             <PopoverContent 
-              className="w-full p-0 z-50" 
+              className="w-min-fit p-0 z-50" 
               style={{ pointerEvents: 'auto' }}
               onInteractOutside={(e) => {
                 e.preventDefault();
