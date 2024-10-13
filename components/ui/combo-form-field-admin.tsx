@@ -57,11 +57,11 @@ function ComboboxFormFieldAdmin({
   }, []);
 
   const handleAddItem = async (name: string, province: string, countryId: number) => {
-    console.log("handleAddItem called with:", { name, province, countryId });
+    
     if (name.trim()) {
       try {
         const newItem = await addCity(name.trim(), province, countryId);
-        console.log("New item added:", newItem);
+        
         setInputValue("");
         return newItem;
       } catch (error) {
@@ -160,7 +160,7 @@ function ComboboxFormFieldAdmin({
             isOpen={isDialogOpen}
             onClose={() => setIsDialogOpen(false)}
             onAddCity={async (name, province, countryId) => {
-              console.log("onAddCity called in ComboboxFormFieldAdmin");
+              
               try {
                 const newItem = await handleAddItem(name, province, countryId);
                 if (newItem) {
