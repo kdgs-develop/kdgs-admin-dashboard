@@ -32,10 +32,10 @@ function AddCityDialog({ isOpen, onClose, onAddCity, countries }: AddCityDialogP
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log("Submitting form with values:", values);
+    
     try {
       await onAddCity(values.name, values.province, values.countryId);
-      console.log("City added successfully");
+      
       form.reset();
       onClose();
     } catch (error) {
