@@ -5,16 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
-import { UnproofreadObituariesReport } from './unproofread-obituaries-report';
+import { ObituariesReport } from './obituaries-report';
 import { useToast } from '@/hooks/use-toast';
 
 const reportTypes = [
   { value: 'unproofread', label: 'Unproofread Obituaries' },
-  // Add more report types here in the future
+  { value: 'proofread', label: 'Proofread Obituaries' },
 ];
 
 export default function ReportsPage() {
-  const [selectedReport, setSelectedReport] = useState<string | undefined>();
+  const [selectedReport, setSelectedReport] = useState<'unproofread' | 'proofread' | undefined>();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const { toast } = useToast();
 
@@ -77,7 +77,7 @@ export default function ReportsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <Select onValueChange={setSelectedReport}>
+            <Select onValueChange={(value: 'unproofread' | 'proofread') => setSelectedReport(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a report type" />
               </SelectTrigger>
@@ -90,7 +90,7 @@ export default function ReportsPage() {
               </SelectContent>
             </Select>
 
-            {selectedReport === 'unproofread' && <UnproofreadObituariesReport />}
+            {selectedReport && <ObituariesReport reportType={selectedReport} />}
 
             <Button
               onClick={handleGeneratePDF}

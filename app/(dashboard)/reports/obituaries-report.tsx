@@ -10,13 +10,17 @@ import {
 } from '@/components/ui/table';
 import { Obituary } from '@/lib/db';
 import { useEffect, useState } from 'react';
-import { fetchUnproofreadObituariesAction } from './actions';
+import { fetchObituariesAction } from './actions';
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const ITEMS_PER_PAGE = 25;
 
-export function UnproofreadObituariesReport() {
+interface ObituariesReportProps {
+  reportType: 'proofread' | 'unproofread';
+}
+
+export function ObituariesReport({ reportType }: ObituariesReportProps) {
   const [obituaries, setObituaries] = useState<Obituary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,13 +28,13 @@ export function UnproofreadObituariesReport() {
 
   useEffect(() => {
     setIsLoading(true);
-    fetchUnproofreadObituariesAction(currentPage, ITEMS_PER_PAGE)
+    fetchObituariesAction(reportType, currentPage, ITEMS_PER_PAGE)
       .then(({ obituaries, total }) => {
         setObituaries(obituaries);
         setTotalObituaries(total);
       })
       .finally(() => setIsLoading(false));
-  }, [currentPage]);
+  }, [reportType, currentPage]);
 
   const totalPages = Math.ceil(totalObituaries / ITEMS_PER_PAGE);
 
@@ -42,11 +46,13 @@ export function UnproofreadObituariesReport() {
     );
   }
 
+  const reportTitle = reportType === 'proofread' ? 'Proofread Obituaries Report' : 'Unproofread Obituaries Report';
+
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Unproofread Obituaries Report</h2>
+      <h2 className="text-2xl font-bold">{reportTitle}</h2>
       {obituaries.length === 0 ? (
-        <p className="text-center text-muted-foreground">No unproofread obituaries found.</p>
+        <p className="text-center text-muted-foreground">No {reportType} obituaries found.</p>
       ) : (
         <>
           <Table>

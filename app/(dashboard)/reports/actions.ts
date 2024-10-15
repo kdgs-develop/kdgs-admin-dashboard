@@ -2,13 +2,17 @@
 
 import { prisma } from '@/lib/prisma';
 
-export async function fetchUnproofreadObituariesAction(page: number, itemsPerPage: number) {
+export async function fetchObituariesAction(
+  reportType: 'proofread' | 'unproofread',
+  page: number,
+  itemsPerPage: number
+) {
   const skip = (page - 1) * itemsPerPage;
 
   const [obituaries, total] = await Promise.all([
     prisma.obituary.findMany({
       where: {
-        proofread: false
+        proofread: reportType === 'proofread'
       },
       orderBy: {
         reference: 'asc'
@@ -18,7 +22,7 @@ export async function fetchUnproofreadObituariesAction(page: number, itemsPerPag
     }),
     prisma.obituary.count({
       where: {
-        proofread: false
+        proofread: reportType === 'proofread'
       }
     })
   ]);
