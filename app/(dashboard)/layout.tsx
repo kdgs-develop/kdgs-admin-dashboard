@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser, User } from '@clerk/nextjs/server';
 import { Analytics } from '@vercel/analytics/react';
-import { Home, Image as LucideImage, Package2, PanelLeft, Settings } from 'lucide-react';
+import { Home, Image as LucideImage, FileText, PanelLeft, Settings } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -73,6 +73,11 @@ async function DesktopNav() {
         <NavItem href="/images" label="Obituary Images">
           <LucideImage className="h-5 w-5" />
         </NavItem>
+
+        <NavItem href="/reports" label="Reports">
+          <FileText className="h-5 w-5" />
+        </NavItem>
+
         {user?.role === 'ADMIN' && (
           <NavItem href="/setup" label="Admin Setup">
             <Settings className="h-5 w-5" />
@@ -115,6 +120,13 @@ function MobileNav() {
           >
             <LucideImage className="h-5 w-5" />
             Images
+          </Link>
+          <Link
+            href="/reports"
+            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+          >
+            <FileText className="h-5 w-5" />
+            Reports
           </Link>
           <Link
             href="/setup"
