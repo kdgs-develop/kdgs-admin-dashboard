@@ -31,12 +31,7 @@ import { BucketItem } from 'minio';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import {
-  addCity,
-  addPeriodical,
-  addTitle,
-  updateObituaryAction
-} from './actions';
+import { addPeriodical, addTitle, updateObituaryAction } from './actions';
 import { deleteImageAction, getImageUrlAction } from './images/minio-actions';
 import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
@@ -89,11 +84,11 @@ interface EditObituaryDialogProps {
   onClose: () => void;
   onSave: (updatedObituary: any) => Promise<void>;
   titles: { id: number; name: string }[];
-  cities: { 
-    id: number; 
-    name: string; 
-    province: string | null; 
-    country: { name: string } | null 
+  cities: {
+    id: number;
+    name: string;
+    province: string | null;
+    country: { name: string } | null;
   }[];
   periodicals: { id: number; name: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
@@ -177,6 +172,8 @@ export function EditObituaryDialog({
     }
   });
 
+  const hasImages = existingImages.length > 0 || selectedFiles.length > 0;
+
   const isProofread = form.watch('proofread');
 
   useEffect(() => {
@@ -257,6 +254,7 @@ export function EditObituaryDialog({
   };
 
   const handleProofreadChange = (checked: boolean) => {
+    if (!hasImages) return;
     form.setValue('proofread', checked);
     if (checked) {
       form.setValue('proofreadDate', new Date());
@@ -437,10 +435,12 @@ export function EditObituaryDialog({
                   label="Birth Place"
                   placeholder="Select a Place"
                   emptyText="No location found."
-                  items={localCities.map(city => ({
+                  items={localCities.map((city) => ({
                     ...city,
                     province: city.province ?? undefined,
-                    country: city.country ? { name: city.country.name } : undefined
+                    country: city.country
+                      ? { name: city.country.name }
+                      : undefined
                   }))}
                   // onAddItem={async (name) => {
                   //   const newCity = await addCity();
@@ -480,10 +480,12 @@ export function EditObituaryDialog({
                   label="Death Place"
                   placeholder="Select a place"
                   emptyText="No place found."
-                  items={localCities.map(city => ({
+                  items={localCities.map((city) => ({
                     ...city,
                     province: city.province ?? undefined,
-                    country: city.country ? { name: city.country.name } : undefined
+                    country: city.country
+                      ? { name: city.country.name }
+                      : undefined
                   }))}
                   // onAddItem={async (name) => {
                   //   const newCity = await addCity();
@@ -816,7 +818,10 @@ export function EditObituaryDialog({
                             field.onChange(checked);
                             handleProofreadChange(checked as boolean);
                           }}
-                          disabled={role !== 'ADMIN' && role !== 'PROOFREADER'}
+                          disabled={
+                            (role !== 'ADMIN' && role !== 'PROOFREADER') ||
+                            !hasImages
+                          }
                         />
                       </FormControl>
                       <FormLabel className="text-xs">Proofread</FormLabel>
