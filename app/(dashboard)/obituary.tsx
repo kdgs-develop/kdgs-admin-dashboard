@@ -55,7 +55,7 @@ export function Obituary({
         <TableCell>{obituary.surname ?? 'N/A'}</TableCell>
         <TableCell>{obituary.givenNames ?? 'N/A'}</TableCell>
         <TableCell>
-          {obituary.deathDate?.toLocaleDateString() ?? 'N/A'}
+          {obituary.deathDate ? obituary.deathDate.toISOString().split('T')[0] : 'N/A'}
         </TableCell>
         <TableCell>
           <Badge variant={obituary.proofread ? 'outline' : 'destructive'}>

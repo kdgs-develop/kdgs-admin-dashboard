@@ -129,11 +129,11 @@ export default function ObituaryPage() {
                 </div>
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">Birth Date:</dt>
-                  <dd className="w-2/3">{obituary.birthDate?.toDateString() || 'N/A'}</dd>
+                  <dd className="w-2/3">{obituary.birthDate?.toISOString().split('T')[0] || 'N/A'}</dd>
                 </div>
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">Death Date:</dt>
-                  <dd className="w-2/3">{obituary.deathDate?.toDateString() || 'N/A'}</dd>
+                  <dd className="w-2/3">{obituary.deathDate?.toISOString().split('T')[0] || 'N/A'}</dd>
                 </div>
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">Place of Death:</dt>
@@ -184,7 +184,7 @@ export default function ObituaryPage() {
                 </div>
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">Publish Date:</dt>
-                  <dd className="w-2/3">{obituary.publishDate?.toDateString() || 'N/A'}</dd>
+                  <dd className="w-2/3">{obituary.publishDate?.toISOString().split('T')[0] || 'N/A'}</dd>
                 </div>
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">Page:</dt>

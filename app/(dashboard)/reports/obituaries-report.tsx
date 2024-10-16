@@ -71,7 +71,7 @@ export function ObituariesReport({ reportType }: ObituariesReportProps) {
                   <TableCell>{obituary.reference}</TableCell>
                   <TableCell>{obituary.surname}</TableCell>
                   <TableCell>{obituary.givenNames}</TableCell>
-                  <TableCell>{obituary.deathDate?.toLocaleDateString()}</TableCell>
+                  <TableCell>{obituary.deathDate?.toISOString().split('T')[0] || 'N/A'}</TableCell>
                   <TableCell>{obituary.proofread ? 'Yes' : 'No'}</TableCell>
                 </TableRow>
               ))}

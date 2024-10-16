@@ -124,7 +124,7 @@ export async function generateReference(surname: string): Promise<string> {
 }
 
 // Function to check if a obituary with the same surname, given names, and death date exists, return true if it does, false if it doesn't
-export async function obituaryExists(surname: string, givenNames: string, deathDate: Date): Promise<boolean> {
+export async function obituaryExists(surname: string, givenNames: string, deathDate: Date): Promise<Obituary[]> {
   const formattedSurname = surname.toUpperCase();
   const formattedGivenNames = givenNames.toLowerCase().split(' ').map(name => name.charAt(0).toUpperCase() + name.slice(1)).join(' ');
 
@@ -136,7 +136,7 @@ export async function obituaryExists(surname: string, givenNames: string, deathD
     }
   });
 
-  return existingObituaries.length > 0;
+  return existingObituaries;
 }
 
 export async function createObituaryAction(
@@ -291,7 +291,7 @@ export async function generateNewFileNumber(surname: string, givenNames: string,
   });
 
   if (!existingObituary) {
-    throw new Error('Obituary not found');
+    return await generateReference(surname);
   }
 
   const baseReference = existingObituary.reference.slice(0, 8); // Ensure we only use the first 8 characters
