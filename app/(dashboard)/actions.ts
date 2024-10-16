@@ -291,7 +291,7 @@ export async function generateNewFileNumber(surname: string, givenNames: string,
   });
 
   if (!existingObituary) {
-    throw new Error('Obituary not found');
+    return await generateReference(surname);
   }
 
   const baseReference = existingObituary.reference.slice(0, 8); // Ensure we only use the first 8 characters

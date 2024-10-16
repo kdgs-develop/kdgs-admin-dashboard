@@ -21,6 +21,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye } from 'lucide-react';
+import { BucketItem } from 'minio';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -31,12 +33,9 @@ import {
   generateReference,
   obituaryExists as obituaryExistsCheck
 } from './actions';
-import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
-import Image from 'next/image';
-import { BucketItem } from 'minio';
-import { ViewImageDialog } from './images/view-image-dialog';
 import { getImageUrlAction } from './images/minio-actions';
-import { Eye } from 'lucide-react';
+import { ViewImageDialog } from './images/view-image-dialog';
+import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 
 const formSchema = z.object({
   surname: z.string().min(1, 'Surname is required'),
@@ -61,6 +60,7 @@ export function CreateFileNumberDialog({
   const [relatedImages, setRelatedImages] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
   const [isViewImageDialogOpen, setIsViewImageDialogOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -84,10 +84,19 @@ export function CreateFileNumberDialog({
   }, [isOpen, form]);
 
   const handleGenerateFileNumber = async () => {
-    const { surname, givenNames, deathDate } = form.getValues();
-    let newFileNumber: string;
+    setIsGenerating(true);
+    try {
+      const { surname, givenNames, deathDate } = form.getValues();
+      
+      if (!surname || !givenNames || !deathDate) {
+        toast({
+          title: 'Missing Information',
+          description: 'Please fill in all fields before generating a file number.',
+          variant: 'destructive'
+        });
+        return;
+      }
 
-    if (surname && givenNames && deathDate) {
       const existingObituary = await obituaryExistsCheck(
         surname,
         givenNames,
@@ -96,7 +105,8 @@ export function CreateFileNumberDialog({
 
       setObituaryExists(existingObituary.length > 0);
 
-      if (existingObituary) {
+      let newFileNumber: string;
+      if (existingObituary.length > 0) {
         newFileNumber = await generateNewFileNumber(
           surname,
           givenNames,
@@ -104,7 +114,7 @@ export function CreateFileNumberDialog({
         );
         // Fetch related images
         const images = await fetchImagesForObituaryAction(
-          existingObituary[0].reference
+          existingObituary[0]?.reference
         );
         setRelatedImages(images);
       } else {
@@ -112,6 +122,15 @@ export function CreateFileNumberDialog({
         setRelatedImages([]);
       }
       setFileNumber(newFileNumber);
+    } catch (error) {
+      console.error('Error generating file number:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate file number. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -140,7 +159,7 @@ export function CreateFileNumberDialog({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (isViewImageDialogOpen) return; // Prevent submission when ViewImageDialog is open
-    
+
     setIsLoading(true);
     const { surname, givenNames, deathDate } = values;
 
@@ -227,8 +246,12 @@ export function CreateFileNumberDialog({
                 readOnly
                 placeholder="Generated File Number"
               />
-              <Button type="button" onClick={handleGenerateFileNumber}>
-                Generate
+              <Button 
+                type="button" 
+                onClick={handleGenerateFileNumber}
+                disabled={isGenerating}
+              >
+                {isGenerating ? 'Generating...' : 'Generate'}
               </Button>
             </div>
             {obituaryExists && (
@@ -241,7 +264,10 @@ export function CreateFileNumberDialog({
                   {relatedImages.length > 0 ? (
                     <ul className="space-y-2 mt-2">
                       {relatedImages.map((image, index) => (
-                        <li key={index} className="flex items-center justify-between">
+                        <li
+                          key={index}
+                          className="flex items-center justify-between"
+                        >
                           <span className="truncate">{image}</span>
                           <Button
                             type="button"
@@ -262,7 +288,10 @@ export function CreateFileNumberDialog({
               </div>
             )}
             <DialogFooter>
-              <Button type="submit" disabled={isLoading || !fileNumber || isViewImageDialogOpen}>
+              <Button
+                type="submit"
+                disabled={isLoading || !fileNumber || isViewImageDialogOpen}
+              >
                 {isLoading ? 'Creating...' : 'Create File Number'}
               </Button>
             </DialogFooter>
