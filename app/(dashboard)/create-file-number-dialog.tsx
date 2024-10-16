@@ -60,6 +60,7 @@ export function CreateFileNumberDialog({
   const [obituaryExists, setObituaryExists] = useState(false);
   const [relatedImages, setRelatedImages] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
+  const [isViewImageDialogOpen, setIsViewImageDialogOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -114,12 +115,32 @@ export function CreateFileNumberDialog({
     }
   };
 
+  const handleDialogChange = (open: boolean) => {
+    if (!isViewImageDialogOpen) {
+      onClose();
+    }
+  };
+
+  const handleViewImage = (image: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelectedImage({ name: image } as BucketItem);
+    setIsViewImageDialogOpen(true);
+  };
+
+  const handleCloseViewImageDialog = () => {
+    setSelectedImage(null);
+    setIsViewImageDialogOpen(false);
+  };
+
   const handleRotate = async (fileName: string, degrees: number) => {
     // Implement rotation logic if needed
     console.log(`Rotating ${fileName} by ${degrees} degrees`);
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (isViewImageDialogOpen) return; // Prevent submission when ViewImageDialog is open
+    
     setIsLoading(true);
     const { surname, givenNames, deathDate } = values;
 
@@ -151,7 +172,7 @@ export function CreateFileNumberDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleDialogChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create File Number</DialogTitle>
@@ -223,9 +244,10 @@ export function CreateFileNumberDialog({
                         <li key={index} className="flex items-center justify-between">
                           <span className="truncate">{image}</span>
                           <Button
+                            type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => setSelectedImage({ name: image } as BucketItem)}
+                            onClick={(e) => handleViewImage(image, e)}
                           >
                             <Eye className="mr-2 h-4 w-4" />
                             View Image
@@ -240,16 +262,17 @@ export function CreateFileNumberDialog({
               </div>
             )}
             <DialogFooter>
-              <Button type="submit" disabled={isLoading || !fileNumber}>
+              <Button type="submit" disabled={isLoading || !fileNumber || isViewImageDialogOpen}>
                 {isLoading ? 'Creating...' : 'Create File Number'}
               </Button>
             </DialogFooter>
           </form>
         </Form>
-      </DialogContent>{selectedImage && (
+      </DialogContent>
+      {selectedImage && isViewImageDialogOpen && (
         <ViewImageDialog
           image={selectedImage}
-          onClose={() => setSelectedImage(null)}
+          onClose={handleCloseViewImageDialog}
           onRotate={handleRotate}
           getImageUrl={getImageUrlAction}
         />
