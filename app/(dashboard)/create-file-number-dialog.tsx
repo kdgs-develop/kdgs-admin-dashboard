@@ -24,14 +24,21 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { createImageFileAction, createObituaryAction, generateNewFileNumber, generateReference, obituaryExists as obituaryExistsCheck } from './actions';
+import {
+  createImageFileAction,
+  createObituaryAction,
+  generateNewFileNumber,
+  generateReference,
+  obituaryExists as obituaryExistsCheck
+} from './actions';
+import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 
 const formSchema = z.object({
   surname: z.string().min(1, 'Surname is required'),
   givenNames: z.string().min(1, 'Given names are required'),
   deathDate: z.date({
-    required_error: 'Death date is required',
-  }),
+    required_error: 'Death date is required'
+  })
 });
 
 type CreateFileNumberDialogProps = {
@@ -46,14 +53,15 @@ export function CreateFileNumberDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [fileNumber, setFileNumber] = useState('');
   const [obituaryExists, setObituaryExists] = useState(false);
+  const [relatedImages, setRelatedImages] = useState<string[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       surname: '',
       givenNames: '',
-      deathDate: undefined,
-    },
+      deathDate: undefined
+    }
   });
 
   useEffect(() => {
@@ -61,7 +69,7 @@ export function CreateFileNumberDialog({
       form.reset({
         surname: '',
         givenNames: '',
-        deathDate: undefined,
+        deathDate: undefined
       });
       setFileNumber('');
       setObituaryExists(false);
@@ -70,6 +78,7 @@ export function CreateFileNumberDialog({
 
   const handleGenerateFileNumber = async () => {
     const { surname, givenNames, deathDate } = form.getValues();
+    let newFileNumber: string;
 
     if (surname && givenNames && deathDate) {
       const existingObituary = await obituaryExistsCheck(
@@ -78,15 +87,24 @@ export function CreateFileNumberDialog({
         deathDate
       );
 
-      setObituaryExists(existingObituary);
+      setObituaryExists(existingObituary.length > 0);
 
       if (existingObituary) {
-        const newFileNumber = await generateNewFileNumber(surname, givenNames, deathDate);
-        setFileNumber(newFileNumber);
+        newFileNumber = await generateNewFileNumber(
+          surname,
+          givenNames,
+          deathDate
+        );
+        // Fetch related images
+        const images = await fetchImagesForObituaryAction(
+          existingObituary[0].reference
+        );
+        setRelatedImages(images);
       } else {
-        const newFileNumber = await generateReference(surname);
-        setFileNumber(newFileNumber);
+        newFileNumber = await generateReference(surname);
+        setRelatedImages([]);
       }
+      setFileNumber(newFileNumber);
     }
   };
 
@@ -100,7 +118,7 @@ export function CreateFileNumberDialog({
           reference: fileNumber,
           surname: surname,
           givenNames: givenNames,
-          deathDate: deathDate,
+          deathDate: deathDate
         });
       }
       await createImageFileAction(fileNumber);
@@ -108,13 +126,13 @@ export function CreateFileNumberDialog({
       onClose();
       toast({
         title: obituaryExists ? 'File Number Added' : 'File Number Created',
-        description: `New file number ${fileNumber} has been ${obituaryExists ? 'added to the existing obituary' : 'created'}.`,
+        description: `New file number ${fileNumber} has been ${obituaryExists ? 'added to the existing obituary' : 'created'}.`
       });
     } catch (error) {
       toast({
         title: 'Error',
         description: 'Failed to create file number. Please try again.',
-        variant: 'destructive',
+        variant: 'destructive'
       });
     } finally {
       setIsLoading(false);
@@ -182,9 +200,23 @@ export function CreateFileNumberDialog({
               </Button>
             </div>
             {obituaryExists && (
-              <p className="text-sm text-yellow-600">
-                The File Number will be added to the existing Obituary
-              </p>
+              <div className="space-y-2">
+                <p className="text-sm text-yellow-600">
+                  The File Number will be added to the existing Obituary
+                </p>
+                <div className="text-sm">
+                  <h4 className="font-semibold">Related Images:</h4>
+                  {relatedImages.length > 0 ? (
+                    <ul className="list-disc pl-5 max-h-40 overflow-y-auto">
+                      {relatedImages.map((image, index) => (
+                        <li key={index}>{image}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No images related to this obituary.</p>
+                  )}
+                </div>
+              </div>
             )}
             <DialogFooter>
               <Button type="submit" disabled={isLoading || !fileNumber}>
