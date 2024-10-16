@@ -32,6 +32,11 @@ import {
   obituaryExists as obituaryExistsCheck
 } from './actions';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
+import Image from 'next/image';
+import { BucketItem } from 'minio';
+import { ViewImageDialog } from './images/view-image-dialog';
+import { getImageUrlAction } from './images/minio-actions';
+import { Eye } from 'lucide-react';
 
 const formSchema = z.object({
   surname: z.string().min(1, 'Surname is required'),
@@ -54,6 +59,7 @@ export function CreateFileNumberDialog({
   const [fileNumber, setFileNumber] = useState('');
   const [obituaryExists, setObituaryExists] = useState(false);
   const [relatedImages, setRelatedImages] = useState<string[]>([]);
+  const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -106,6 +112,11 @@ export function CreateFileNumberDialog({
       }
       setFileNumber(newFileNumber);
     }
+  };
+
+  const handleRotate = async (fileName: string, degrees: number) => {
+    // Implement rotation logic if needed
+    console.log(`Rotating ${fileName} by ${degrees} degrees`);
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -207,9 +218,19 @@ export function CreateFileNumberDialog({
                 <div className="text-sm">
                   <h4 className="font-semibold">Related Images:</h4>
                   {relatedImages.length > 0 ? (
-                    <ul className="list-disc pl-5 max-h-40 overflow-y-auto">
+                    <ul className="space-y-2 mt-2">
                       {relatedImages.map((image, index) => (
-                        <li key={index}>{image}</li>
+                        <li key={index} className="flex items-center justify-between">
+                          <span className="truncate">{image}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedImage({ name: image } as BucketItem)}
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Image
+                          </Button>
+                        </li>
                       ))}
                     </ul>
                   ) : (
@@ -225,7 +246,14 @@ export function CreateFileNumberDialog({
             </DialogFooter>
           </form>
         </Form>
-      </DialogContent>
+      </DialogContent>{selectedImage && (
+        <ViewImageDialog
+          image={selectedImage}
+          onClose={() => setSelectedImage(null)}
+          onRotate={handleRotate}
+          getImageUrl={getImageUrlAction}
+        />
+      )}
     </Dialog>
   );
 }
