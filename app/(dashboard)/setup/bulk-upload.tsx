@@ -16,36 +16,11 @@ import { useState, useEffect } from 'react';
 import { OverwriteConfirmationDialog } from './overwrite-confirmation-dialog';
 
 export function BulkUpload() {
-  const [showInstructions, setShowInstructions] = useState(false);
   const [files, setFiles] = useState<FileList | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [overwriteDialogOpen, setOverwriteDialogOpen] = useState(false);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
-  const [remainingFiles, setRemainingFiles] = useState<File[]>([]);
-
-  useEffect(() => {
-    if (isUploading && remainingFiles.length > 0) {
-      uploadNextFile();
-    } else if (isUploading && remainingFiles.length === 0) {
-      setIsUploading(false);
-      setUploadProgress(100);
-      toast({
-        title: 'Upload Complete',
-        description: 'All files have been uploaded successfully.'
-      });
-    }
-  }, [isUploading, remainingFiles]);
-
-  const handleToggleInstructions = () => {
-    setShowInstructions(!showInstructions);
-    if (!showInstructions) {
-      toast({
-        title: 'Instructions Displayed',
-        description: 'Bulk upload instructions are now visible.'
-      });
-    }
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiles(e.target.files);
@@ -54,7 +29,7 @@ export function BulkUpload() {
   const handleUpload = () => {
     if (!files || files.length === 0) {
       toast({
-        title: 'No files selected',
+        title: 'No Files Selected',
         description: 'Please select files to upload.',
         variant: 'destructive'
       });
@@ -63,66 +38,28 @@ export function BulkUpload() {
 
     setIsUploading(true);
     setUploadProgress(0);
-    setRemainingFiles(Array.from(files));
+    processNextFile(Array.from(files), 0);
   };
 
-  const uploadNextFile = async () => {
-    if (remainingFiles.length === 0) {
+  const processNextFile = async (remainingFiles: File[], index: number) => {
+    if (index >= remainingFiles.length) {
+      setIsUploading(false);
+      setUploadProgress(100);
+      toast({
+        title: 'Upload Complete',
+        description: 'All files have been uploaded successfully.'
+      });
       return;
     }
 
-    const file = remainingFiles[0];
+    const file = remainingFiles[index];
     setCurrentFile(file);
 
     try {
       await uploadFile(file);
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast({
-        title: 'Upload Failed',
-        description: 'There was an error uploading the file.',
-        variant: 'destructive'
-      });
-    }
-    setRemainingFiles(prevFiles => prevFiles.slice(1));
-  };
-
-  const uploadFile = async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const filenameWithoutExt = path.parse(file.name).name;
-      const checkResponse = await fetch(
-        `/api/check-file-exists?filename=${encodeURIComponent(filenameWithoutExt)}`,
-        { method: 'GET' }
-      );
-
-      if (!checkResponse.ok) {
-        throw new Error('Failed to check file existence');
-      }
-
-      const { exists } = await checkResponse.json();
-
-      if (exists) {
-        setOverwriteDialogOpen(true);
-        return;
-      }
-
-      const uploadResponse = await fetch('/api/bulk-upload', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error(`Upload failed: ${uploadResponse.statusText}`);
-      }
-
-      const result = await uploadResponse.json();
-      console.log('Upload result:', result);
-
-      const progress = ((files!.length - remainingFiles.length + 1) / files!.length) * 100;
+      const progress = ((index + 1) / remainingFiles.length) * 100;
       setUploadProgress(progress);
+      processNextFile(remainingFiles, index + 1);
     } catch (error) {
       console.error('Upload error:', error);
       toast({
@@ -130,23 +67,67 @@ export function BulkUpload() {
         description: `Failed to upload ${file.name}. ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive'
       });
-      throw error;
+      processNextFile(remainingFiles, index + 1);
     }
   };
 
-  const handleOverwriteConfirm = () => {
-    setOverwriteDialogOpen(false);
-    if (currentFile) {
-      uploadFile(currentFile).then(() => {
-        setRemainingFiles(prevFiles => prevFiles.slice(1));
+  const uploadFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const filenameWithoutExt = path.parse(file.name).name;
+    const checkResponse = await fetch(
+      `/api/check-file-exists?filename=${encodeURIComponent(filenameWithoutExt)}`,
+      { method: 'GET' }
+    );
+
+    if (!checkResponse.ok) {
+      throw new Error('Failed to check file existence');
+    }
+
+    const { exists } = await checkResponse.json();
+
+    if (exists) {
+      return new Promise<void>((resolve, reject) => {
+        setOverwriteDialogOpen(true);
+        const handleConfirm = async () => {
+          setOverwriteDialogOpen(false);
+          try {
+            await performUpload(formData);
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        };
+        const handleCancel = () => {
+          setOverwriteDialogOpen(false);
+          resolve();
+        };
+        setOverwriteHandlers({ handleConfirm, handleCancel });
       });
+    } else {
+      return performUpload(formData);
     }
   };
 
-  const handleOverwriteCancel = () => {
-    setOverwriteDialogOpen(false);
-    setRemainingFiles(prevFiles => prevFiles.slice(1));
+  const performUpload = async (formData: FormData) => {
+    const uploadResponse = await fetch('/api/bulk-upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+    }
+
+    const result = await uploadResponse.json();
+    console.log('Upload result:', result);
   };
+
+  const [overwriteHandlers, setOverwriteHandlers] = useState<{
+    handleConfirm: () => void;
+    handleCancel: () => void;
+  }>({ handleConfirm: () => {}, handleCancel: () => {} });
 
   return (
     <Card className="w-[calc(100%)]">
@@ -156,7 +137,7 @@ export function BulkUpload() {
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground">
         <div className="space-y-4">
-          <Input type="file" multiple onChange={handleFileChange} />
+          <Input type="file" multiple onChange={handleFileChange} className='hover:cursor-pointer' />
           <Button onClick={handleUpload} disabled={isUploading}>
             {isUploading ? 'Uploading...' : 'Upload Files'}
           </Button>
@@ -167,8 +148,8 @@ export function BulkUpload() {
       </CardContent>
       <OverwriteConfirmationDialog
         isOpen={overwriteDialogOpen}
-        onConfirm={handleOverwriteConfirm}
-        onCancel={handleOverwriteCancel}
+        onConfirm={overwriteHandlers.handleConfirm}
+        onCancel={overwriteHandlers.handleCancel}
         fileName={currentFile?.name || ''}
       />
     </Card>
