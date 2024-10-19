@@ -1,153 +1,182 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import path from 'path';
+import { useCallback, useState } from 'react';
+import { OverwriteConfirmationDialog } from './overwrite-confirmation-dialog';
 
 export function BulkUpload() {
-  const [showInstructions, setShowInstructions] = useState(false);
+  const [files, setFiles] = useState<FileList | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [overwriteDialogOpen, setOverwriteDialogOpen] = useState(false);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [uploadResults, setUploadResults] = useState<
+    { fileName: string; status: 'uploaded' | 'skipped' | 'overwritten' | 'failed' }[]
+  >([]);
 
-  const handleToggleInstructions = () => {
-    setShowInstructions(!showInstructions);
-    if (!showInstructions) {
-      toast({
-        title: 'Instructions Displayed',
-        description: 'Bulk upload instructions are now visible.'
-      });
-    }
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFiles(e.target.files);
   };
+
+  const handleUpload = useCallback(() => {
+    if (!files || files.length === 0) {
+      toast({
+        title: 'No Files Selected',
+        description: 'Please select files to upload.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadResults([]);
+    processNextFile(Array.from(files), 0);
+  }, [files]);
+
+  const uploadFile = useCallback(async (file: File): Promise<'uploaded' | 'skipped' | 'overwritten'> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const filenameWithoutExt = path.parse(file.name).name;
+    const checkResponse = await fetch(
+      `/api/check-file-exists?filename=${encodeURIComponent(filenameWithoutExt)}`,
+      { method: 'GET' }
+    );
+
+    if (!checkResponse.ok) {
+      throw new Error('Failed to check file existence');
+    }
+
+    const { exists } = await checkResponse.json();
+
+    if (exists) {
+      return new Promise((resolve) => {
+        setOverwriteDialogOpen(true);
+        const handleConfirm = async () => {
+          setOverwriteDialogOpen(false);
+          await performUpload(formData);
+          resolve('overwritten');
+        };
+        const handleCancel = () => {
+          setOverwriteDialogOpen(false);
+          resolve('skipped');
+        };
+        setOverwriteHandlers({ handleConfirm, handleCancel });
+      });
+    } else {
+      await performUpload(formData);
+      return 'uploaded';
+    }
+  }, []);
+
+  const processNextFile = useCallback(
+    async (remainingFiles: File[], index: number) => {
+      if (index >= remainingFiles.length) {
+        setIsUploading(false);
+        setUploadProgress(100);
+        return;
+      }
+
+      const file = remainingFiles[index];
+      setCurrentFile(file);
+
+      try {
+        const status = await uploadFile(file);
+        setUploadResults((prev) => [
+          ...prev,
+          { fileName: file.name, status }
+        ]);
+      } catch (error) {
+        console.error('Upload error:', error);
+        setUploadResults((prev) => [
+          ...prev,
+          { fileName: file.name, status: 'failed' }
+        ]);
+        toast({
+          title: 'Upload Failed',
+          description: `Failed to upload ${file.name}. ${error instanceof Error ? error.message : 'Unknown error'}`,
+          variant: 'destructive'
+        });
+      }
+
+      const progress = ((index + 1) / remainingFiles.length) * 100;
+      setUploadProgress(progress);
+      processNextFile(remainingFiles, index + 1);
+    },
+    [uploadFile]
+  );
+
+  const performUpload = async (formData: FormData) => {
+    const uploadResponse = await fetch('/api/bulk-upload', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+    }
+
+    const result = await uploadResponse.json();
+    console.log('Upload result:', result);
+  };
+
+  const [overwriteHandlers, setOverwriteHandlers] = useState<{
+    handleConfirm: () => void;
+    handleCancel: () => void;
+  }>({ handleConfirm: () => {}, handleCancel: () => {} });
 
   return (
     <Card className="w-[calc(100%)]">
       <CardHeader>
         <CardTitle>Bulk Upload</CardTitle>
-        <CardDescription>
-          Instructions to upload multiple image files at once.
-        </CardDescription>
+        <CardDescription>Upload multiple image files at once.</CardDescription>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground">
         <div className="space-y-4">
-          <div className="space-y-4">
-            <Button onClick={handleToggleInstructions} variant="destructive">
-              {showInstructions
-                ? 'Hide Bulk Upload Instructions'
-                : 'Show Bulk Upload Instructions'}
-            </Button>
-
-            {showInstructions && (
-              <div className="text-sm text-muted-foreground space-y-4">
-                <h3 className="font-semibold text-sm">
-                  Bulk Upload using MinIO Client (mc):
-                </h3>
-                <p>
-                  Follow these steps to perform a bulk upload to your MinIO
-                  bucket:
-                </p>
-
-                <div>
-                  <h4 className="font-semibold text-sm">
-                    1. Install MinIO Client (mc):
-                  </h4>
-                  <h5 className="font-semibold text-xs mt-2">For Windows:</h5>
-                  <ol className="list-decimal list-inside mt-2">
-                    <li>
-                      Download mc.exe from the{' '}
-                      <a
-                        href="https://min.io/download#/windows"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
-                      >
-                        official MinIO website
-                      </a>
-                    </li>
-                    <li>
-                      Move mc.exe to a directory in your PATH (e.g.,
-                      C:\Windows\System32\)
-                    </li>
-                  </ol>
-
-                  <h5 className="font-semibold text-xs mt-2">
-                    For Mac/Linux (AMD64):
-                  </h5>
-                  <ol className="list-decimal list-inside mt-2">
-                    <li>Open Terminal</li>
-                    <li>
-                      Run the following command:
-                      <pre className="bg-gray-100 p-2 mt-2 rounded overflow-x-auto text-xs">
-                        wget https://dl.min.io/client/mc/release/linux-amd64/mc
-                        && chmod +x mc && sudo mv mc /usr/.local/bin/
-                      </pre>
-                    </li>
-                  </ol>
-
-                  <h5 className="font-semibold text-xs mt-2">
-                    For Mac/Linux (ARM64):
-                  </h5>
-                  <ol className="list-decimal list-inside mt-2">
-                    <li>Open Terminal</li>
-                    <li>
-                      Run the following command:
-                      <pre className="bg-gray-100 p-2 mt-2 rounded overflow-x-auto text-xs">
-                        wget https://dl.min.io/client/mc/release/linux-arm64/mc
-                        && chmod +x mc && sudo mv mc /usr/.local/bin/
-                      </pre>
-                    </li>
-                  </ol>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-sm">
-                    2. Configure MinIO Client:
-                  </h4>
-                  <p>
-                    Run the following command to configure mc with your MinIO
-                    server:
-                  </p>
-                  <pre className="bg-gray-100 p-2 mt-2 rounded overflow-x-auto text-xs">
-                    mc alias set myminio https://host:port kdgs-files
-                    "MINIO_ACCESS_KEY MINIO_SECRET_KEY
-                  </pre>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-sm">
-                    3. Perform Bulk Upload:
-                  </h4>
-                  <p>
-                    Navigate to the directory containing the files you want to
-                    upload, then run:
-                  </p>
-                  <pre className="bg-gray-100 p-2 mt-2 rounded overflow-x-auto text-xs">
-                    mc cp --recursive . myminio/kdgs-files
-                  </pre>
-                </div>
-
-                <p className="mt-4">
-                  <strong>Note:</strong> Ensure you have the necessary
-                  permissions to perform these operations. Always test the
-                  process with a small number of files before performing a large
-                  bulk upload.
-                </p>
-
-                <p className="mt-4">
-                  For more detailed information and advanced usage, refer to the{' '}
-                  <a
-                    href="https://min.io/docs/minio/linux/reference/minio-mc.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                  >
-                    official MinIO Client documentation
-                  </a>
-                  .
-                </p>
-              </div>
-            )}
-          </div>
+          <Input
+            type="file"
+            multiple
+            onChange={handleFileChange}
+            className="hover:cursor-pointer"
+          />
+          <Button onClick={handleUpload} disabled={isUploading}>
+            {isUploading ? 'Uploading...' : 'Upload Files'}
+          </Button>
+          {isUploading && (
+            <Progress value={uploadProgress} className="w-full" />
+          )}
+          {uploadResults.length > 0 && (
+            <div className="mt-4">
+              <h3 className="font-semibold mb-2">Upload Results:</h3>
+              <ul className="list-disc pl-5">
+                {uploadResults.map((result, index) => (
+                  <li key={index} className={`text-${result.status === 'failed' ? 'red' : 'green'}-600`}>
+                    {result.fileName} - {result.status}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </CardContent>
+      <OverwriteConfirmationDialog
+        isOpen={overwriteDialogOpen}
+        onConfirm={overwriteHandlers.handleConfirm}
+        onCancel={overwriteHandlers.handleCancel}
+        fileName={currentFile?.name || ''}
+      />
     </Card>
   );
 }

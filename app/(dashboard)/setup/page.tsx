@@ -35,11 +35,11 @@ export default async function SetupPage() {
           </CardHeader>
         </Card>
 
+        <BulkUpload />
+
         <LocationAdministration />
 
         <GeneaologistAdministration />
-
-        <BulkUpload />
 
         <Card className="w-[calc(100%)]">
           <CardHeader>
