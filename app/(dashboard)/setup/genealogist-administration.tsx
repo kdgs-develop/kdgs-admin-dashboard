@@ -306,7 +306,7 @@ export function GeneaologistAdministration() {
             </div>
           </div>
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-end mt-4 mb-8">
           <Button
             onClick={handleCreateGenealogist}
             className="w-full md:w-auto"
