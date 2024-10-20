@@ -14,6 +14,8 @@ import { toast } from '@/hooks/use-toast';
 import path from 'path';
 import { useCallback, useState } from 'react';
 import { OverwriteConfirmationDialog } from './overwrite-confirmation-dialog';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { format } from 'date-fns';
 
 export function BulkUpload() {
   const [files, setFiles] = useState<FileList | null>(null);
@@ -137,6 +139,100 @@ export function BulkUpload() {
     handleCancel: () => void;
   }>({ handleConfirm: () => {}, handleCancel: () => {} });
 
+  const generatePDF = useCallback(async () => {
+    const pdfDoc = await PDFDocument.create();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontSize = 12;
+    const lineHeight = fontSize * 1.2;
+    const itemsPerPage = 25; // Adjust this number as needed
+
+    // Add logo
+    const logoUrl = '/kdgs.png';
+    const logoImage = await fetch(logoUrl).then(res => res.arrayBuffer());
+    const logoImageEmbed = await pdfDoc.embedPng(logoImage);
+    const logoDims = logoImageEmbed.scale(0.08);
+
+    const addPage = () => {
+      const page = pdfDoc.addPage();
+      const { height, width } = page.getSize();
+
+      // Draw logo
+      page.drawImage(logoImageEmbed, {
+        x: 50,
+        y: height - logoDims.height - 50,
+        width: logoDims.width,
+        height: logoDims.height,
+      });
+
+      // Add current date and time
+      const currentDateTime = format(new Date(), 'MMMM d, yyyy HH:mm:ss');
+      page.drawText(currentDateTime, {
+        x: width - 200,
+        y: height - 4 * fontSize,
+        size: fontSize,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+
+      // Add title
+      page.drawText('Upload Results', {
+        x: 50,
+        y: height - logoDims.height - 80,
+        size: 16,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+
+      return { page, startY: height - logoDims.height - 130 };
+    };
+
+    let { page, startY } = addPage();
+    let currentY = startY;
+    let pageIndex = 1;
+
+    uploadResults.forEach((result, index) => {
+      if (index > 0 && index % itemsPerPage === 0) {
+        ({ page, startY } = addPage());
+        currentY = startY;
+        pageIndex++;
+      }
+
+      page.drawText(`${result.fileName} - ${result.status}`, {
+        x: 50,
+        y: currentY,
+        size: fontSize,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+
+      currentY -= lineHeight;
+    });
+
+    // Add page numbers
+    pdfDoc.getPages().forEach((page, index) => {
+      const { width, height } = page.getSize();
+      page.drawText(`Page ${index + 1} of ${pdfDoc.getPageCount()}`, {
+        x: width - 100,
+        y: 30,
+        size: 10,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `upload_results_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [uploadResults]);
+
   return (
     <Card className="w-[calc(100%)]">
       <CardHeader>
@@ -151,9 +247,16 @@ export function BulkUpload() {
             onChange={handleFileChange}
             className="hover:cursor-pointer"
           />
-          <Button onClick={handleUpload} disabled={isUploading}>
-            {isUploading ? 'Uploading...' : 'Upload Files'}
-          </Button>
+          <div className="flex space-x-2">
+            <Button onClick={handleUpload} disabled={isUploading}>
+              {isUploading ? 'Uploading...' : 'Upload Files'}
+            </Button>
+            {uploadResults.length > 0 && (
+              <Button onClick={generatePDF} variant="outline">
+                Download Results PDF
+              </Button>
+            )}
+          </div>
           {isUploading && (
             <Progress value={uploadProgress} className="w-full" />
           )}
