@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,6 +40,9 @@ export function RenameImageDialog({ image, onClose, onRename }: RenameImageDialo
       <DialogContent className="max-w-[90vw] w-full max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Rename Image: {image?.name}</DialogTitle>
+          <DialogDescription>
+            Rename the image to a new name.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <Label>New Name</Label>

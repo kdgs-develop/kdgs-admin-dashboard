@@ -1,20 +1,28 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2 } from 'lucide-react';
-import { ObituariesReport } from './obituaries-report';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { Download, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { ObituariesReport } from './obituaries-report';
 
 const reportTypes = [
   { value: 'unproofread', label: 'Unproofread Obituaries' },
-  { value: 'proofread', label: 'Proofread Obituaries' },
+  { value: 'proofread', label: 'Proofread Obituaries' }
 ];
 
 export default function ReportsPage() {
-  const [selectedReport, setSelectedReport] = useState<'unproofread' | 'proofread' | undefined>();
+  const [selectedReport, setSelectedReport] = useState<
+    'unproofread' | 'proofread' | undefined
+  >();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const { toast } = useToast();
 
@@ -25,16 +33,16 @@ export default function ReportsPage() {
     toast({
       title: 'Generating PDF',
       description: 'Please wait while we generate your report...',
-      duration: 3000,
+      duration: 3000
     });
 
     try {
       const response = await fetch('/api/generate-report', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ reportType: selectedReport }),
+        body: JSON.stringify({ reportType: selectedReport })
       });
 
       if (!response.ok) {
@@ -54,7 +62,7 @@ export default function ReportsPage() {
       toast({
         title: 'PDF Generated',
         description: 'Your report is ready and downloading now.',
-        duration: 5000,
+        duration: 5000
       });
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -62,7 +70,7 @@ export default function ReportsPage() {
         title: 'Error',
         description: 'Failed to generate PDF. Please try again.',
         variant: 'destructive',
-        duration: 5000,
+        duration: 5000
       });
     } finally {
       setIsGeneratingPDF(false);
@@ -77,7 +85,11 @@ export default function ReportsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <Select onValueChange={(value: 'unproofread' | 'proofread') => setSelectedReport(value)}>
+            <Select
+              onValueChange={(value: 'unproofread' | 'proofread') =>
+                setSelectedReport(value)
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a report type" />
               </SelectTrigger>
