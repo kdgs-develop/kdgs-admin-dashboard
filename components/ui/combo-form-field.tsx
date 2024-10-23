@@ -86,8 +86,14 @@ function ComboboxFormField({
                     !field.value && "text-muted-foreground"
                   )}
                 >
-                  {field.value
-                    ? items.find((item) => item.id === field.value)?.name
+                   {field.value
+                    ? items.find((item) => item.id === field.value)
+                      ? [
+                          items.find((item) => item.id === field.value)?.name,
+                          items.find((item) => item.id === field.value)?.province,
+                          items.find((item) => item.id === field.value)?.country?.name
+                        ].filter(Boolean).join(', ')
+                      : placeholder
                     : placeholder}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -144,7 +150,11 @@ function ComboboxFormField({
                               : "opacity-0"
                           )}
                         />
-                        {item.name}, {item?.province}, {item?.country?.name}
+                       { [
+                          item?.name,
+                          item?.province,
+                          item?.country?.name,
+                        ].filter(Boolean).join(', ')}
                       </CommandItem>
                     ))}
                   </CommandGroup>
