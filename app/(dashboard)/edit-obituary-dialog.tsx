@@ -442,26 +442,6 @@ export function EditObituaryDialog({
                       ? { name: city.country.name }
                       : undefined
                   }))}
-                  // onAddItem={async (name) => {
-                  //   const newCity = await addCity();
-                  //   setLocalCities([
-                  //     ...localCities,
-                  //     // {
-                  //     //   id: newCity?.id ?? 0,
-                  //     //   name: newCity?.name ?? '',
-                  //     //   province: newCity?.province ?? undefined,
-                  //     //   country: newCity?.countryId! as unknown as {
-                  //     //     name: string;
-                  //     //   }
-                  //     // }
-                  //   ]);
-                  //   return {
-                  //     id: newCity.id,
-                  //     name: newCity?.name!,
-                  //     province: newCity?.province,
-                  //     country: newCity?.countryId!
-                  //   };
-                  // }}
                 />
                 <FormField
                   control={form.control}
