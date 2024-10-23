@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
@@ -69,6 +70,9 @@ export function UploadImagesDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Upload Images</DialogTitle>
+          <DialogDescription>
+            Upload images to the obituary index.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <Input

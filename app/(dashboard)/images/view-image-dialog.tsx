@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
@@ -54,6 +55,9 @@ export function ViewImageDialog({
       <DialogContent className="max-w-[90vw] w-full max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{image?.name}</DialogTitle>
+          <DialogDescription>
+            View and rotate the image.
+          </DialogDescription>
         </DialogHeader>
         <div
           className="flex-grow relative flex items-center justify-center"

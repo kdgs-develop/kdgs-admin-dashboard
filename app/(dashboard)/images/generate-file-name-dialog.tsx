@@ -7,7 +7,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -53,6 +54,9 @@ export function GenerateFileNameDialog({ isOpen, onClose }: GenerateFileNameDial
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Generate New File Name</DialogTitle>
+          <DialogDescription>
+            Generate a new file name for the obituary index.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">

@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { Genealogist } from '@prisma/client';
 
 export async function fetchObituariesAction(
   reportType: 'proofread' | 'unproofread',
@@ -28,4 +29,10 @@ export async function fetchObituariesAction(
   ]);
 
   return { obituaries, total };
+}
+
+export async function fetchCurrentUserAction(userId: string): Promise<Genealogist | null> {
+  return prisma.genealogist.findUnique({
+    where: { clerkId: userId }
+  });
 }

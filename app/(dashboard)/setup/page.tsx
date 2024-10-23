@@ -25,7 +25,7 @@ export default async function SetupPage() {
 
   return (
     <div className="container mx-auto px-4 max-w-[calc(4xl)]">
-      <div className="space-y-6">
+      <div className="space-y-6 mt-4">
         <Card className="w-[calc(100%)]">
           <CardHeader>
             <CardTitle>Admin Setup</CardTitle>

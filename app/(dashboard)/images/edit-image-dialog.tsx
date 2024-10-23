@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { BucketItem } from 'minio';
@@ -61,6 +61,9 @@ export function EditImageDialog({ image, onClose, onDelete, onRotate, getImageUr
         <DialogContent className="max-w-[90vw] w-full max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Edit Image: {image?.name}</DialogTitle>
+            <DialogDescription>
+              Edit the image and save the changes.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex-grow relative flex items-center justify-center" style={{ height: 'calc(90vh - 200px)' }}>
             {isLoading ? (

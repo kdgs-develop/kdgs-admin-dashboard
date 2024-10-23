@@ -40,7 +40,7 @@ export async function createGenealogist({ firstName, lastName, email, phone, rol
       },
     });
 
-    return genealogist;
+    return {...genealogist, email};
   } catch (error) {
     console.error('Error creating genealogist:', error);
     throw error;

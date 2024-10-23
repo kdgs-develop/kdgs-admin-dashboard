@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle
@@ -44,17 +45,8 @@ export function DeleteConfirmationDialog({
       try {
         await onConfirm();
         onClose();
-        toast({
-          title: 'Deletion successful',
-          description: 'The item has been successfully deleted.'
-        });
       } catch (error) {
         console.error('Failed to delete:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to delete the item. Please try again.',
-          variant: 'destructive'
-        });
       } finally {
         setIsLoading(false);
       }
@@ -73,10 +65,14 @@ export function DeleteConfirmationDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Confirm Deletion</DialogTitle>
+          <DialogTitle>
+            {action === 'delete' ? 'Confirm Deletion' : 'Send New Password'}
+          </DialogTitle>
+          <DialogDescription>
+            {action === 'delete' ? 'To confirm deletion, please solve this simple math problem:' : 'To send a new password, please solve this simple math problem:'}
+          </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
-          <p>To confirm deletion, please solve this simple math problem:</p>
           <p>
             {num1} + {num2} = ?
           </p>
