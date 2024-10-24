@@ -38,8 +38,21 @@ import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 
 const formSchema = z.object({
-  surname: z.string().min(1, 'Surname is required'),
-  givenNames: z.string().min(1, 'Given names are required'),
+  surname: z
+    .string()
+    .min(1, 'Surname is required')
+    .transform((val) => val.toUpperCase()),
+  givenNames: z
+    .string()
+    .min(1, 'Given names are required')
+    .transform((val) =>
+      val
+        .split(' ')
+        .map(
+          (name) => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
+        )
+        .join(' ')
+    ),
   deathDate: z.date({
     required_error: 'Death date is required'
   })
@@ -87,11 +100,12 @@ export function CreateFileNumberDialog({
     setIsGenerating(true);
     try {
       const { surname, givenNames, deathDate } = form.getValues();
-      
+
       if (!surname || !givenNames || !deathDate) {
         toast({
           title: 'Missing Information',
-          description: 'Please fill in all fields before generating a file number.',
+          description:
+            'Please fill in all fields before generating a file number.',
           variant: 'destructive'
         });
         return;
@@ -208,7 +222,7 @@ export function CreateFileNumberDialog({
                 <FormItem>
                   <FormLabel>Surname</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input className='uppercase' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -221,7 +235,7 @@ export function CreateFileNumberDialog({
                 <FormItem>
                   <FormLabel>Given Names</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input className='capitalize' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -246,8 +260,8 @@ export function CreateFileNumberDialog({
                 readOnly
                 placeholder="Generated File Number"
               />
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 onClick={handleGenerateFileNumber}
                 disabled={isGenerating}
               >

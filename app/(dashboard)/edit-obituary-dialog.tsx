@@ -38,10 +38,26 @@ import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
-  surname: z.string().optional(),
+  surname: z
+    .string()
+    .optional()
+    .transform((val) => val?.toUpperCase()),
   titleId: z.number().optional(),
-  givenNames: z.string().optional(),
-  maidenName: z.string().optional(),
+  givenNames: z
+    .string()
+    .optional()
+    .transform((val) =>
+      val
+        ?.split(' ')
+        .map(
+          (name) => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
+        )
+        .join(' ')
+    ),
+  maidenName: z
+    .string()
+    .optional()
+    .transform((val) => val?.toUpperCase()),
   birthDate: z.coerce.date().optional(),
   birthCityId: z.number().optional(),
   deathDate: z.coerce.date().optional(),
@@ -65,9 +81,26 @@ const formSchema = z.object({
   relatives: z
     .array(
       z.object({
-        surname: z.string().nullable(),
-        givenNames: z.string().nullable(),
-        relationship: z.string().nullable(),
+        surname: z
+          .string()
+          .nullable()
+          .transform((val) => val?.toUpperCase()),
+        givenNames: z
+          .string()
+          .nullable()
+          .transform((val) =>
+            val
+              ?.split(' ')
+              .map(
+                (name) =>
+                  name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
+              )
+              .join(' ')
+          ),
+        relationship: z
+          .string()
+          .nullable()
+          .transform((val) => val?.toUpperCase()),
         predeceased: z.boolean()
       })
     )
@@ -340,6 +373,9 @@ export function EditObituaryDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               {/* Personal Information */}
+              <h3 className="text-lg font-semibold col-span-2">
+                Personal Information
+              </h3>
               <div className="space-y-2">
                 <FormField
                   control={form.control}
@@ -366,7 +402,7 @@ export function EditObituaryDialog({
                     <FormItem>
                       <FormLabel className="text-xs">Surname</FormLabel>
                       <FormControl>
-                        <Input {...field} className="h-8 text-sm" />
+                        <Input {...field} className="h-8 text-sm uppercase" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -395,7 +431,7 @@ export function EditObituaryDialog({
                     <FormItem>
                       <FormLabel className="text-xs">Given Names</FormLabel>
                       <FormControl>
-                        <Input {...field} className="h-8 text-sm" />
+                        <Input {...field} className="h-8 text-sm capitalize" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -408,7 +444,7 @@ export function EditObituaryDialog({
                     <FormItem>
                       <FormLabel className="text-xs">Maiden Name</FormLabel>
                       <FormControl>
-                        <Input {...field} className="h-8 text-sm" />
+                        <Input {...field} className="h-8 text-sm uppercase" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -467,26 +503,6 @@ export function EditObituaryDialog({
                       ? { name: city.country.name }
                       : undefined
                   }))}
-                  // onAddItem={async (name) => {
-                  //   const newCity = await addCity();
-                  //   setLocalCities([
-                  //     ...localCities,
-                  //     // {
-                  //     //   id: newCity?.id!,
-                  //     //   name: newCity?.name!,
-                  //     //   province: newCity?.province ?? undefined,
-                  //     //   country: newCity?.countryId! as unknown as {
-                  //     //     name: string;
-                  //     //   }
-                  //     // }
-                  //   ]);
-                  //   return {
-                  //     id: newCity.id,
-                  //     name: newCity?.name!,
-                  //     province: newCity?.province,
-                  //     country: newCity?.countryId!
-                  //   };
-                  // }}
                 />
                 <FormField
                   control={form.control}
@@ -506,6 +522,8 @@ export function EditObituaryDialog({
 
             {/* Obituary Files */}
             <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Files</h3>
+
               <FormLabel className="text-xs">Obituary Images</FormLabel>
               {existingImages.length > 0 && (
                 <div className="mb-2 space-y-2">
@@ -588,6 +606,9 @@ export function EditObituaryDialog({
 
             {/* Publication Information */}
             <div className="grid grid-cols-2 gap-4">
+              <h3 className="text-lg font-semibold col-span-2">
+                Publication Information
+              </h3>
               <div className="space-y-2">
                 <ComboboxFormField
                   control={form.control}
@@ -616,8 +637,21 @@ export function EditObituaryDialog({
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="place"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Place</FormLabel>
+                      <FormControl>
+                        <Input {...field} className="h-8 text-sm" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              <div className="space-y-2">
+              <div className="-mt-2">
                 <FormField
                   control={form.control}
                   name="page"
@@ -649,19 +683,7 @@ export function EditObituaryDialog({
 
             {/* Additional Information */}
             <div className="space-y-2">
-              <FormField
-                control={form.control}
-                name="place"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">Place</FormLabel>
-                    <FormControl>
-                      <Input {...field} className="h-8 text-sm" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <h3 className="text-lg font-semibold">Additional Information</h3>
               <FormField
                 control={form.control}
                 name="notes"
@@ -785,7 +807,10 @@ export function EditObituaryDialog({
 
             {/* Proofread Information */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <h3 className="text-lg font-semibold col-span-2">
+                Proofread Information
+              </h3>
+              <div className="col-span-2">
                 <FormField
                   control={form.control}
                   name="proofread"
@@ -808,6 +833,8 @@ export function EditObituaryDialog({
                     </FormItem>
                   )}
                 />
+              </div>
+              <div className="space-y-2">
                 <FormField
                   control={form.control}
                   name="proofreadDate"
@@ -850,6 +877,7 @@ export function EditObituaryDialog({
 
             {/* Metadata */}
             <div className="grid grid-cols-2 gap-4">
+              <h3 className="text-lg font-semibold col-span-2">Metadata</h3>
               <div className="space-y-2">
                 <FormField
                   control={form.control}
@@ -927,6 +955,7 @@ export function EditObituaryDialog({
             </div>
 
             {/* File Box */}
+            <h3 className="text-lg font-semibold col-span-2">Document Storage</h3>
             <ComboboxFormField
               control={form.control}
               name="fileBoxId"
@@ -935,7 +964,7 @@ export function EditObituaryDialog({
               emptyText="No file box found."
               items={fileBoxes.map((box) => ({
                 id: box.id,
-                name: `Year: ${box.year}, Number: ${box.number}`
+                name: `${box.year} : ${box.number}`
               }))}
               onAddItem={async (name) => {
                 toast({
@@ -949,7 +978,8 @@ export function EditObituaryDialog({
               }}
             />
 
-            <DialogFooter>
+            <DialogFooter className='flex justify-end space-x-2 pt-4'>
+              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>
