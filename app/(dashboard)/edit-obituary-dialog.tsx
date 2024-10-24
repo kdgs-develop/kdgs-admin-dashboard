@@ -509,7 +509,7 @@ export function EditObituaryDialog({
                   name="burialCemetery"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs">Burial Cemetery</FormLabel>
+                      <FormLabel className="text-xs">Interment Place</FormLabel>
                       <FormControl>
                         <Input {...field} className="h-8 text-sm" />
                       </FormControl>
