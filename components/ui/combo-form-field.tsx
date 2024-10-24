@@ -24,8 +24,8 @@ type ComboboxFormFieldProps = {
   label: string;
   placeholder: string;
   emptyText: string;
-  items: { id: number; name: string; province?: string; country?: { name: string } }[];
-  onAddItem?: (name: string) => Promise<{ id: number; name: string, province?: string, country?: { name: string } }>;
+  items: { id: number; name: string; province?: string; country?: { name: string }; city?: { name: string ; province?: string, country?: { name: string } } }[];
+  onAddItem?: (name: string) => Promise<{ id: number; name: string, province?: string, country?: { name: string }, city?: { name: string } }>;
 };
 
 function ComboboxFormField({
@@ -91,7 +91,10 @@ function ComboboxFormField({
                       ? [
                           items.find((item) => item.id === field.value)?.name,
                           items.find((item) => item.id === field.value)?.province,
-                          items.find((item) => item.id === field.value)?.country?.name
+                          items.find((item) => item.id === field.value)?.country?.name,
+                          items.find((item) => item.id === field.value)?.city?.name,
+                          items.find((item) => item.id === field.value)?.city?.province,
+                          items.find((item) => item.id === field.value)?.city?.country?.name,
                         ].filter(Boolean).join(', ')
                       : placeholder
                     : placeholder}
@@ -154,6 +157,9 @@ function ComboboxFormField({
                           item?.name,
                           item?.province,
                           item?.country?.name,
+                          item?.city?.name,
+                          item?.city?.province,
+                          item?.city?.country?.name
                         ].filter(Boolean).join(', ')}
                       </CommandItem>
                     ))}

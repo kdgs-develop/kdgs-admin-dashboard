@@ -2,6 +2,7 @@
 revalidatePath('/');
 import {
   deleteObituaryById,
+  getCemeteries,
   getCities,
   getFileBoxes,
   getObituaries,
@@ -71,17 +72,28 @@ interface EditObituaryDialogData {
     province: string | null;
     country: { name: string } | null;
   }[];
+  cemeteries: {
+    id: number;
+    name: string;
+    city: {
+      name: string;
+      province: string | null;
+      country: { name: string } | null;
+    };
+  }[];
   periodicals: { id: number; name: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
 }
 
 export async function getEditObituaryDialogData(): Promise<EditObituaryDialogData> {
-  const [rawTitles, rawCities, rawPeriodicals, fileBoxes] = await Promise.all([
-    getTitles(),
-    getCities(),
-    getPeriodicals(),
-    getFileBoxes()
-  ]);
+  const [rawTitles, rawCities, rawCemeteries, rawPeriodicals, rawFileBoxes] =
+    await Promise.all([
+      getTitles(),
+      getCities(),
+      getCemeteries(),
+      getPeriodicals(),
+      getFileBoxes()
+    ]);
 
   const titles = rawTitles.filter(
     (title): title is { id: number; name: string } => title.name !== null
@@ -98,14 +110,34 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
     } => city.name !== null
   );
 
+  const cemeteries = rawCemeteries.filter(
+    (
+      cemetery
+    ): cemetery is {
+      id: number;
+      name: string;
+      city: {
+        name: string;
+        province: string | null;
+        country: { name: string } | null;
+      };
+    } => cemetery.name !== null
+  );
+
   const periodicals = rawPeriodicals.filter(
     (periodical): periodical is { id: number; name: string } =>
       periodical.name !== null
   );
 
+  const fileBoxes = rawFileBoxes.filter(
+    (fileBox): fileBox is { id: number; year: number; number: number } =>
+      fileBox.year !== null && fileBox.number !== null
+  );
+
   return {
     titles,
     cities,
+    cemeteries,
     periodicals,
     fileBoxes
   };
@@ -134,9 +166,17 @@ export async function generateReference(surname: string): Promise<string> {
 }
 
 // Function to check if a obituary with the same surname, given names, and death date exists, return true if it does, false if it doesn't
-export async function obituaryExists(surname: string, givenNames: string, deathDate: Date): Promise<Obituary[]> {
+export async function obituaryExists(
+  surname: string,
+  givenNames: string,
+  deathDate: Date
+): Promise<Obituary[]> {
   const formattedSurname = surname.toUpperCase();
-  const formattedGivenNames = givenNames.toLowerCase().split(' ').map(name => name.charAt(0).toUpperCase() + name.slice(1)).join(' ');
+  const formattedGivenNames = givenNames
+    .toLowerCase()
+    .split(' ')
+    .map((name) => name.charAt(0).toUpperCase() + name.slice(1))
+    .join(' ');
 
   const existingObituaries = await prisma.obituary.findMany({
     where: {
@@ -200,7 +240,6 @@ export async function updateObituaryAction(
   obituaryData: Omit<ObituaryUpdateInput, 'relatives'>,
   relatives: Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>
 ): Promise<Prisma.ObituaryGetPayload<{ include: { relatives: true } }>> {
-
   const updatedObituaryWithRelatives = await prisma.$transaction(
     async (prisma) => {
       // Update the obituary
@@ -291,13 +330,21 @@ export async function addFileBox(year: number, number: number) {
 }
 
 // If obituary exists, generate new file number adding a letter at the end
-export async function generateNewFileNumber(surname: string, givenNames: string, deathDate: Date): Promise<string> {
+export async function generateNewFileNumber(
+  surname: string,
+  givenNames: string,
+  deathDate: Date
+): Promise<string> {
   const existingObituary = await prisma.obituary.findFirst({
     where: {
       surname: surname.toUpperCase(),
-      givenNames: givenNames.toLowerCase().split(' ').map(name => name.charAt(0).toUpperCase() + name.slice(1)).join(' '),
-      deathDate,
-    },
+      givenNames: givenNames
+        .toLowerCase()
+        .split(' ')
+        .map((name) => name.charAt(0).toUpperCase() + name.slice(1))
+        .join(' '),
+      deathDate
+    }
   });
 
   if (!existingObituary) {
@@ -305,13 +352,13 @@ export async function generateNewFileNumber(surname: string, givenNames: string,
   }
 
   const baseReference = existingObituary.reference.slice(0, 8); // Ensure we only use the first 8 characters
-  
+
   const imageFiles = await prisma.imageFile.findMany({
     where: {
       name: {
-        startsWith: baseReference,
-      },
-    },
+        startsWith: baseReference
+      }
+    }
   });
 
   const imageFileExists = imageFiles.length > 0;
@@ -325,8 +372,8 @@ export async function generateNewFileNumber(surname: string, givenNames: string,
   }
 
   const suffixes = imageFiles
-    .map(file => file.name.slice(8))
-    .filter(suffix => suffix.match(/^[a-z]$/));
+    .map((file) => file.name.slice(8))
+    .filter((suffix) => suffix.match(/^[a-z]$/));
 
   const lastSuffix = suffixes.sort().pop()!;
   const nextSuffix = String.fromCharCode(lastSuffix.charCodeAt(0) + 1);
