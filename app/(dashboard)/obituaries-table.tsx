@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { getUserData, Obituary as ObituaryType } from '@/lib/db';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { createImageFileAction, createObituaryAction, fetchObituariesAction, getEditObituaryDialogData } from './actions';
 import { AddObituaryDialog } from './add-obituary-dialog';
 import { CreateFileNumberDialog } from './create-file-number-dialog';
@@ -192,6 +192,11 @@ export function ObituariesTable({
       <CreateFileNumberDialog
         isOpen={isCreateFileNumberDialogOpen}
         onClose={() => setIsCreateFileNumberDialogOpen(false)}
+        onSave={(newObituary) => {
+          startTransition(() => {
+            router.push(`/?q=${newObituary?.reference!}`);
+          });
+        }}
       />
     </>
   );
