@@ -46,6 +46,16 @@ export async function deleteObituary(formData: FormData) {
       await deleteImageAction(image);
     }
 
+    // Delete the relatives
+    await prisma.relative.deleteMany({
+      where: { obituaryId: id }
+    });
+
+    // Delete the image files from the database
+    await prisma.imageFile.deleteMany({
+      where: { name: { startsWith: obituary.reference } }
+    });
+
     // Delete the obituary from the database
     await deleteObituaryById(id);
   }
