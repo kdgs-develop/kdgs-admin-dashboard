@@ -36,6 +36,8 @@ import {
 import { getImageUrlAction } from './images/minio-actions';
 import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
+import { Obituary } from '@prisma/client';
+import { Obituary as ObituaryType } from '@/lib/db';
 
 const formSchema = z.object({
   surname: z
@@ -60,12 +62,12 @@ const formSchema = z.object({
 
 type CreateFileNumberDialogProps = {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (obituary?: ObituaryType) => Promise<void>;
 };
 
 export function CreateFileNumberDialog({
   isOpen,
-  onClose
+  onClose,
 }: CreateFileNumberDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [fileNumber, setFileNumber] = useState('');
@@ -74,6 +76,7 @@ export function CreateFileNumberDialog({
   const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
   const [isViewImageDialogOpen, setIsViewImageDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [createdObituary, setCreatedObituary] = useState<Obituary | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -179,16 +182,17 @@ export function CreateFileNumberDialog({
 
     try {
       if (!obituaryExists) {
-        await createObituaryAction({
+        const newObituary = await createObituaryAction({
           reference: fileNumber,
           surname: surname,
           givenNames: givenNames,
           deathDate: deathDate
         });
+        setCreatedObituary(newObituary);
       }
       await createImageFileAction(fileNumber);
-
-      onClose();
+      // onSave(createdObituary as NonNullable<Obituary>);
+      onClose(createdObituary as NonNullable<Obituary>);
       toast({
         title: obituaryExists ? 'File Number Added' : 'File Number Created',
         description: `New file number ${fileNumber} has been ${obituaryExists ? 'added to the existing obituary' : 'created'}.`
