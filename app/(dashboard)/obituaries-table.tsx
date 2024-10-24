@@ -19,7 +19,7 @@ import {
 import { getUserData, Obituary as ObituaryType } from '@/lib/db';
 import { useRouter } from 'next/navigation';
 import { startTransition, useEffect, useState } from 'react';
-import { createImageFileAction, createObituaryAction, fetchObituariesAction, getEditObituaryDialogData } from './actions';
+import { fetchObituariesAction, getEditObituaryDialogData } from './actions';
 import { AddObituaryDialog } from './add-obituary-dialog';
 import { CreateFileNumberDialog } from './create-file-number-dialog';
 import { Obituary } from './obituary';
@@ -43,8 +43,11 @@ export function ObituariesTable({
     ReturnType<typeof getEditObituaryDialogData>
   > | null>(null);
   const [role, setRole] = useState<string | null>(null);
-  const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
-  const [isCreateFileNumberDialogOpen, setIsCreateFileNumberDialogOpen] = useState(false);
+  const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(
+    null
+  );
+  const [isCreateFileNumberDialogOpen, setIsCreateFileNumberDialogOpen] =
+    useState(false);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -80,39 +83,41 @@ export function ObituariesTable({
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div>
-            <CardTitle className='mb-1'>Obituary Index</CardTitle>
+            <CardTitle className="mb-1">Obituary Index</CardTitle>
             <CardDescription>
               Manage obituaries, view their details, and add associated image
-              files. 
-              <span className='block mt-4' />
-              <strong>Please note:</strong> Before adding a new obituary, we strongly recommend using the search bar to look for any matching records in our existing index to avoid duplicates.
+              files.
+              <span className="block mt-4" />
+              <strong>Please note:</strong> Before adding a new obituary, we
+              strongly recommend using the search bar to look for any matching
+              records in our existing index to avoid duplicates.
             </CardDescription>
           </div>
-          <div className='flex gap-2'>
-          <Button
-    disabled={
-      role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
-    }
-    onClick={() => setIsCreateFileNumberDialogOpen(true)}
-    >
-    Create File Number
-  </Button>
-          <Button
-            disabled={
-              role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
-            }
-            onClick={async () => {
-              if (!dialogData) {
-                const data = await getEditObituaryDialogData();
-                setDialogData(data);
+          <div className="flex gap-2">
+            <Button
+              disabled={
+                role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
               }
-              setIsAddDialogOpen(true);
-            }}
-            variant='destructive'
+              onClick={() => setIsCreateFileNumberDialogOpen(true)}
             >
-            Add Obituary
-          </Button>
-    </div>
+              Create File Number
+            </Button>
+            {/* <Button
+              disabled={
+                role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
+              }
+              onClick={async () => {
+                if (!dialogData) {
+                  const data = await getEditObituaryDialogData();
+                  setDialogData(data);
+                }
+                setIsAddDialogOpen(true);
+              }}
+              variant="destructive"
+            >
+              Add Obituary
+            </Button> */}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
