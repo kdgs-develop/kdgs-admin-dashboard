@@ -123,6 +123,15 @@ interface EditObituaryDialogProps {
     province: string | null;
     country: { name: string } | null;
   }[];
+  cemeteries: {
+    id: number;
+    name: string;
+    city: {
+      name: string;
+      province: string | null;
+      country: { name: string } | null;
+    };
+  }[];
   periodicals: { id: number; name: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
 }
@@ -134,6 +143,7 @@ export function EditObituaryDialog({
   onSave,
   titles,
   cities,
+  cemeteries,
   periodicals,
   fileBoxes
 }: EditObituaryDialogProps) {
@@ -504,18 +514,25 @@ export function EditObituaryDialog({
                       : undefined
                   }))}
                 />
-                <FormField
+                <ComboboxFormField
                   control={form.control}
-                  name="burialCemetery"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Interment Place</FormLabel>
-                      <FormControl>
-                        <Input {...field} className="h-8 text-sm" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  name="cemeteryId"
+                  label="Burial Cemetery"
+                  placeholder="Select a cemetery"
+                  emptyText="No cemetery found."
+                  items={cemeteries.map((cemetery) => ({
+                    id: cemetery.id,
+                    name: cemetery.name,
+                    city: cemetery.city
+                      ? {
+                          name: cemetery.city.name,
+                          province: cemetery.city.province ?? undefined,
+                          country: cemetery.city.country
+                            ? { name: cemetery.city.country.name }
+                            : undefined
+                        }
+                      : undefined
+                  }))}
                 />
               </div>
             </div>
@@ -642,7 +659,9 @@ export function EditObituaryDialog({
                   name="place"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs">Place</FormLabel>
+                      <FormLabel className="text-xs">
+                        Place of Publication
+                      </FormLabel>
                       <FormControl>
                         <Input {...field} className="h-8 text-sm" />
                       </FormControl>
@@ -955,7 +974,9 @@ export function EditObituaryDialog({
             </div>
 
             {/* File Box */}
-            <h3 className="text-lg font-semibold col-span-2">Document Storage</h3>
+            <h3 className="text-lg font-semibold col-span-2">
+              Document Storage
+            </h3>
             <ComboboxFormField
               control={form.control}
               name="fileBoxId"
@@ -978,8 +999,10 @@ export function EditObituaryDialog({
               }}
             />
 
-            <DialogFooter className='flex justify-end space-x-2 pt-4'>
-              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <DialogFooter className="flex justify-end space-x-2 pt-4">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>

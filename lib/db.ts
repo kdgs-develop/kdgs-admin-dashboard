@@ -177,6 +177,29 @@ export async function getCities() {
   });
 }
 
+export async function getCemeteries() {
+  return prisma.cemetery.findMany({
+    select: {
+      id: true,
+      name: true,
+      city: {
+        select: {
+          name: true,
+          province: true,
+          country: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      name: 'asc',
+    },
+  });
+}
+
 export async function getPeriodicals() {
   return prisma.periodical.findMany({
     select: {
