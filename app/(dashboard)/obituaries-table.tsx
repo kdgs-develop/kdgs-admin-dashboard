@@ -19,9 +19,10 @@ import {
 import { getUserData, Obituary as ObituaryType } from '@/lib/db';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { createImageFileAction, createObituaryAction, fetchObituariesAction, getEditObituaryDialogData } from './actions';
+import { fetchObituariesAction, getEditObituaryDialogData } from './actions';
 import { AddObituaryDialog } from './add-obituary-dialog';
 import { CreateFileNumberDialog } from './create-file-number-dialog';
+import { EditObituaryDialog } from './edit-obituary-dialog';
 import { Obituary } from './obituary';
 
 export function ObituariesTable({
@@ -43,8 +44,15 @@ export function ObituariesTable({
     ReturnType<typeof getEditObituaryDialogData>
   > | null>(null);
   const [role, setRole] = useState<string | null>(null);
-  const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
-  const [isCreateFileNumberDialogOpen, setIsCreateFileNumberDialogOpen] = useState(false);
+  const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(
+    null
+  );
+  const [isCreateFileNumberDialogOpen, setIsCreateFileNumberDialogOpen] =
+    useState(false);
+  const [obituaryToEdit, setObituaryToEdit] = useState<ObituaryType | null>(
+    null
+  );
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -75,44 +83,58 @@ export function ObituariesTable({
     router.push(`/?offset=${newOffset}&q=${search}`, { scroll: false });
   }
 
+  const handleEditClick = async (createdObituary: ObituaryType) => {
+    console.log('handle edit');
+    const data = await getEditObituaryDialogData();
+    setDialogData(data);
+    console.log('set dialog data');
+
+    setIsEditDialogOpen(true);
+    setIsCreateFileNumberDialogOpen(false);
+    setObituaryToEdit(createdObituary);
+    console.log('set is edit dialog open');
+  };
+
   return (
     <>
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div>
-            <CardTitle className='mb-1'>Obituary Index</CardTitle>
+            <CardTitle className="mb-1">Obituary Index</CardTitle>
             <CardDescription>
               Manage obituaries, view their details, and add associated image
-              files. 
-              <span className='block mt-4' />
-              <strong>Please note:</strong> Before adding a new obituary, we strongly recommend using the search bar to look for any matching records in our existing index to avoid duplicates.
+              files.
+              <span className="block mt-4" />
+              <strong>Please note:</strong> Before adding a new obituary, we
+              strongly recommend using the search bar to look for any matching
+              records in our existing index to avoid duplicates.
             </CardDescription>
           </div>
-          <div className='flex gap-2'>
-          <Button
-    disabled={
-      role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
-    }
-    onClick={() => setIsCreateFileNumberDialogOpen(true)}
-    >
-    Create File Number
-  </Button>
-          <Button
-            disabled={
-              role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
-            }
-            onClick={async () => {
-              if (!dialogData) {
-                const data = await getEditObituaryDialogData();
-                setDialogData(data);
+          <div className="flex gap-2">
+            <Button
+              disabled={
+                role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
               }
-              setIsAddDialogOpen(true);
-            }}
-            variant='destructive'
+              onClick={() => setIsCreateFileNumberDialogOpen(true)}
             >
-            Add Obituary
-          </Button>
-    </div>
+              Create File Number
+            </Button>
+            <Button
+              disabled={
+                role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
+              }
+              onClick={async () => {
+                if (!dialogData) {
+                  const data = await getEditObituaryDialogData();
+                  setDialogData(data);
+                }
+                setIsAddDialogOpen(true);
+              }}
+              variant="destructive"
+            >
+              Add Obituary
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -177,21 +199,43 @@ export function ObituariesTable({
         </CardFooter>
       </Card>
       {dialogData && (
-        <AddObituaryDialog
-          isOpen={isAddDialogOpen}
-          onClose={() => setIsAddDialogOpen(false)}
-          onSave={(newObituary) => {
-            setObituaries([...obituaries, newObituary]);
-            setTotalObituaries(totalObituaries + 1);
-          }}
-          {...dialogData}
-          role={role}
-          currentUserFullName={currentUserFullName ?? ''}
-        />
+        <>
+          <AddObituaryDialog
+            isOpen={isAddDialogOpen}
+            onClose={() => setIsAddDialogOpen(false)}
+            onSave={(newObituary) => {
+              setObituaries([...obituaries, newObituary]);
+              setTotalObituaries(totalObituaries + 1);
+            }}
+            {...dialogData}
+            role={role}
+            currentUserFullName={currentUserFullName ?? ''}
+          />
+          <EditObituaryDialog
+            obituary={obituaryToEdit!}
+            isOpen={isEditDialogOpen}
+            onClose={() => {
+              setIsEditDialogOpen(false);
+              setObituaryToEdit(null);
+            }}
+            onSave={async (updatedObituary) => {
+              const updatedObituaries = obituaries.map((obit) =>
+                obit.id === updatedObituary.id ? updatedObituary : obit
+              );
+              setObituaries(updatedObituaries);
+              setIsEditDialogOpen(false);
+              setObituaryToEdit(null);
+            }}
+            {...dialogData}
+          />
+        </>
       )}
       <CreateFileNumberDialog
         isOpen={isCreateFileNumberDialogOpen}
         onClose={() => setIsCreateFileNumberDialogOpen(false)}
+        onCreateSuccess={(createdObituary) => {
+          handleEditClick(createdObituary);
+        }}
       />
     </>
   );

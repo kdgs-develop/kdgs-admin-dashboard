@@ -35,7 +35,7 @@ import {
 } from './actions';
 import { getImageUrlAction } from './images/minio-actions';
 import { ViewImageDialog } from './images/view-image-dialog';
-import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
+import { fetchImagesForObituaryAction, fetchObituaryByReferenceAction } from './obituary/[reference]/actions';
 
 const formSchema = z.object({
   surname: z
@@ -61,11 +61,13 @@ const formSchema = z.object({
 type CreateFileNumberDialogProps = {
   isOpen: boolean;
   onClose: () => void;
+  onCreateSuccess: (obituary: any) => void;
 };
 
 export function CreateFileNumberDialog({
   isOpen,
-  onClose
+  onClose,
+  onCreateSuccess
 }: CreateFileNumberDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [fileNumber, setFileNumber] = useState('');
@@ -178,21 +180,28 @@ export function CreateFileNumberDialog({
     const { surname, givenNames, deathDate } = values;
 
     try {
+      let createdObituary = null;
       if (!obituaryExists) {
-        await createObituaryAction({
+        createdObituary = await createObituaryAction({
           reference: fileNumber,
           surname: surname,
           givenNames: givenNames,
           deathDate: deathDate
         });
+      } else {
+        createdObituary = await fetchObituaryByReferenceAction(fileNumber);
       }
+      
       await createImageFileAction(fileNumber);
+
+      if (onCreateSuccess) onCreateSuccess(createdObituary);
 
       onClose();
       toast({
         title: obituaryExists ? 'File Number Added' : 'File Number Created',
-        description: `New file number ${fileNumber} has been ${obituaryExists ? 'added to the existing obituary' : 'created'}.`
+        description: `New file number ${fileNumber} has been ${obituaryExists ? 'added to the existing obituary' : 'created'}.` 
       });
+
     } catch (error) {
       toast({
         title: 'Error',
