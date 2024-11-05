@@ -630,7 +630,7 @@ export function EditObituaryDialog({
                 <ComboboxFormField
                   control={form.control}
                   name="periodicalId"
-                  label="Periodical"
+                  label="Publication"
                   placeholder="Select a periodical"
                   emptyText="No periodical found."
                   items={localPeriodicals}
