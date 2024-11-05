@@ -26,17 +26,22 @@ export function NavItem({
         <Link
           href={href}
           className={clsx(
-            'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
+            'flex h-9 items-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8',
+            'group-hover:w-full group-hover:justify-start group-hover:px-3 group-hover:gap-3',
+            'w-9 justify-center md:w-8',
             {
-              'bg-accent text-black': pathname === href
+              'font-semibold': pathname === href
             }
           )}
         >
-          {children}
+          <span className="shrink-0">{children}</span>
+          <span className="hidden group-hover:inline whitespace-nowrap">{label}</span>
           <span className="sr-only">{label}</span>
         </Link>
       </TooltipTrigger>
-      <TooltipContent side="right">{label}</TooltipContent>
+      <TooltipContent side="right" className="group-hover:hidden">
+        {label}
+      </TooltipContent>
     </Tooltip>
   );
 }
