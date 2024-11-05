@@ -67,12 +67,12 @@ export function Obituary({
             <Button onClick={handleViewClick} variant="outline" size="sm">
               View
             </Button>
-            {(role === 'ADMIN' || role === 'PROOFREADER') && (
+            {(role === 'ADMIN' || role === 'PROOFREADER' || role === 'INDEXER') && (
             <Button
               onClick={handleEditClick}
               variant="default"
               size="sm"
-              disabled={role !== 'ADMIN' && role !== 'PROOFREADER'}
+              disabled={role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'}
             >
               Edit
             </Button>
