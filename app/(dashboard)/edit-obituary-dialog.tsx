@@ -199,8 +199,8 @@ export function EditObituaryDialog({
       proofreadBy: obituary.proofreadBy || '',
       enteredBy: obituary.enteredBy || '',
       enteredOn: obituary.enteredOn ? new Date(obituary.enteredOn) : undefined,
-      editedBy: obituary.editedBy || currentUserFullName || '',
-      editedOn: obituary.editedOn ? new Date(obituary.editedOn) : new Date(),
+      editedBy: currentUserFullName || '',
+      editedOn: new Date(),
       fileBoxId: obituary.fileBoxId || undefined,
       relatives:
         obituary.relatives?.map(
@@ -927,7 +927,12 @@ export function EditObituaryDialog({
                           setDate={field.onChange}
                         />
                       ) : (
-                        <Input type="date" className="h-8 text-sm" disabled />
+                        <Input 
+                          type="date" 
+                          className="h-8 text-sm" 
+                          disabled 
+                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                        />
                       )}
                       <FormMessage />
                     </FormItem>
@@ -945,7 +950,8 @@ export function EditObituaryDialog({
                         <Input
                           {...field}
                           className="h-8 text-sm"
-                          disabled={role !== 'ADMIN'}
+                          disabled
+                          value={currentUserFullName || ''}
                         />
                       </FormControl>
                       <FormMessage />
@@ -964,7 +970,12 @@ export function EditObituaryDialog({
                           setDate={field.onChange}
                         />
                       ) : (
-                        <Input type="date" className="h-8 text-sm" disabled />
+                        <Input 
+                          type="date" 
+                          className="h-8 text-sm" 
+                          disabled 
+                          value={new Date().toISOString().split('T')[0]}
+                        />
                       )}
                       <FormMessage />
                     </FormItem>
