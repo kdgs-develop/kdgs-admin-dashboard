@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
+import { Obituary } from '@/lib/db';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye } from 'lucide-react';
 import { BucketItem } from 'minio';
@@ -36,7 +37,7 @@ import {
 import { getImageUrlAction } from './images/minio-actions';
 import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
-import { Obituary } from '@/lib/db';
+import { getUserData } from '@/lib/db';
 
 const formSchema = z.object({
   surname: z
@@ -56,7 +57,9 @@ const formSchema = z.object({
     ),
   deathDate: z.date({
     required_error: 'Death date is required'
-  })
+    }),
+  enteredBy: z.string().optional(),
+  enteredOn: z.date().optional()
 });
 
 type CreateFileNumberDialogProps = {
@@ -77,13 +80,16 @@ export function CreateFileNumberDialog({
   const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
   const [isViewImageDialogOpen, setIsViewImageDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       surname: '',
       givenNames: '',
-      deathDate: undefined
+      deathDate: undefined,
+      enteredBy: currentUserFullName || '',
+      enteredOn: new Date()
     }
   });
 
@@ -98,6 +104,15 @@ export function CreateFileNumberDialog({
       setObituaryExists(false);
     }
   }, [isOpen, form]);
+
+  useEffect(() => {
+    async function fetchUserData() {
+      const fetchedUserData = await getUserData();
+      setCurrentUserFullName(fetchedUserData?.fullName!);
+    }
+
+    fetchUserData();
+  }, []);
 
   const handleGenerateFileNumber = async () => {
     setIsGenerating(true);
@@ -178,7 +193,7 @@ export function CreateFileNumberDialog({
     if (isViewImageDialogOpen) return; // Prevent submission when ViewImageDialog is open
 
     setIsLoading(true);
-    const { surname, givenNames, deathDate } = values;
+    const { surname, givenNames, deathDate, enteredBy, enteredOn } = values;
     let newObituary;
     try {
       if (!obituaryExists) {
@@ -186,7 +201,9 @@ export function CreateFileNumberDialog({
           reference: fileNumber,
           surname: surname,
           givenNames: givenNames,
-          deathDate: deathDate
+          deathDate: deathDate,
+          enteredBy: currentUserFullName || '',
+          enteredOn: new Date()
         });
       }
       await createImageFileAction(fileNumber);
@@ -211,7 +228,7 @@ export function CreateFileNumberDialog({
     <Dialog open={isOpen} onOpenChange={handleDialogChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create File Number</DialogTitle>
+          <DialogTitle></DialogTitle>
           <DialogDescription>
             Enter the required information to generate a new file number.
           </DialogDescription>
@@ -225,7 +242,7 @@ export function CreateFileNumberDialog({
                 <FormItem>
                   <FormLabel>Surname</FormLabel>
                   <FormControl>
-                    <Input className='uppercase' {...field} />
+                    <Input className="uppercase" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -238,7 +255,7 @@ export function CreateFileNumberDialog({
                 <FormItem>
                   <FormLabel>Given Names</FormLabel>
                   <FormControl>
-                    <Input className='capitalize' {...field} />
+                    <Input className="capitalize" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -257,6 +274,47 @@ export function CreateFileNumberDialog({
                 </FormItem>
               )}
             />
+            {/* Metadata */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="enteredBy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Entered By</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="h-8 text-sm"
+                          disabled
+                          value={currentUserFullName || ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="enteredOn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Entered On</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          className="h-8 text-sm"
+                          disabled
+                          value={new Date().toISOString().split('T')[0]}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
             <div className="flex items-center space-x-2">
               <Input
                 value={fileNumber}
@@ -304,6 +362,7 @@ export function CreateFileNumberDialog({
                 </div>
               </div>
             )}
+            
             <DialogFooter>
               <Button
                 type="submit"
