@@ -517,7 +517,7 @@ export function EditObituaryDialog({
                 <ComboboxFormField
                   control={form.control}
                   name="cemeteryId"
-                  label="Burial Cemetery"
+                  label="Interment Place"
                   placeholder="Select a cemetery"
                   emptyText="No cemetery found."
                   items={cemeteries.map((cemetery) => ({
@@ -985,7 +985,7 @@ export function EditObituaryDialog({
               emptyText="No file box found."
               items={fileBoxes.map((box) => ({
                 id: box.id,
-                name: `${box.year} : ${box.number}`
+                name: box.id === 0 ? 'No available' : `${box.year} : ${box.number}`
               }))}
               onAddItem={async (name) => {
                 toast({
