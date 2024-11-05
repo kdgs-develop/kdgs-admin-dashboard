@@ -4,19 +4,16 @@
 
 // async function updateFileBoxForObituary2023() {
 //   try {
-//     const startDate = new Date('2023-01-01T00:00:00Z');
-//     const endDate = new Date('2023-12-31T23:59:59Z');
-
 //     const result = await prisma_.obituary.updateMany({
 //       where: {
 //         enteredOn: {
-//           gte: startDate,
-//           lte: endDate,
-//         },
+//           gte: new Date(Date.UTC(2023, 0, 1)), // January 1, 2023
+//           lt: new Date(Date.UTC(2024, 0, 1)) // January 1, 2024
+//         }
 //       },
 //       data: {
-//         fileBoxId: 1,
-//       },
+//         fileBoxId: 1
+//       }
 //     });
 
 //     console.log(`Updated ${result.count} obituaries.`);
