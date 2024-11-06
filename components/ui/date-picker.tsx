@@ -3,7 +3,7 @@
 import { FC } from 'react';
 
 interface DatePickerProps {
-  date: Date | undefined;
+  date: Date | null | undefined;
   setDate: (date: Date | null) => void;
 }
 
