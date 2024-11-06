@@ -299,7 +299,7 @@ export function EditObituaryDialog({
   };
 
   const handleProofreadChange = (checked: boolean) => {
-    if (!!hasImages) return;
+    if (!hasImages) return;
     form.setValue('proofread', checked);
     if (checked) {
       form.setValue('proofreadDate', new Date());
@@ -846,7 +846,7 @@ export function EditObituaryDialog({
                           }}
                           disabled={
                             (role !== 'ADMIN' && role !== 'PROOFREADER') ||
-                            !!hasImages
+                            !hasImages
                           }
                         />
                       </FormControl>
