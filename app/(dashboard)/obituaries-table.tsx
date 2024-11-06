@@ -81,16 +81,15 @@ export function ObituariesTable({
   return (
     <>
       <Card className="w-full">
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <CardHeader className="flex flex-row items-start justify-between gap-2">
           <div>
             <CardTitle className="mb-1">Obituary Index</CardTitle>
             <CardDescription>
+            <span className="block mt-2" />
               Manage obituaries, view their details, and add associated image
               files.
               <span className="block mt-4" />
-              <strong>Please note:</strong> Before adding a new obituary, we
-              strongly recommend using the search bar to look for any matching
-              records in our existing index to avoid duplicates.
+              <strong>Please note:</strong> Search by typing a person's Fullname, Given Names, Surname, Maiden Name, File Number, Batch Number, Death or Birth Date (YYYY-MM-DD). 
             </CardDescription>
           </div>
           <div className="flex gap-2">

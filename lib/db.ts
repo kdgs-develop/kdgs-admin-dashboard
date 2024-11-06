@@ -16,6 +16,10 @@ export async function getObituaries(
   obituaries: Obituary[];
   totalObituaries: number;
 }> {
+  // Extract name and surname from search string
+  const [name, surname] = search.split(' ').map(s => s.trim());
+  const [firstName, secondName, thirdName, fourthName] = search.split(' ').map(s => s.trim());
+
   const where: Prisma.ObituaryWhereInput = search
     ? {
         OR: [
@@ -35,6 +39,128 @@ export async function getObituaries(
             reference: {
               contains: search,
               mode: Prisma.QueryMode.insensitive,
+            },
+          },
+          {
+            maidenName: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          },
+          {
+            batch: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          },
+          {
+            AND: [
+              {
+                givenNames: {
+                  contains: name,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+              {
+                surname: {
+                  contains: surname,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+            ],
+          },
+          {
+            AND: [
+              {
+                givenNames: {
+                  contains: name,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+              {
+                maidenName: {
+                  contains: surname,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+            ],
+          },
+          {
+            AND: [
+              {
+                givenNames: {
+                  contains: `${firstName} ${secondName}`,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+              {
+                surname: {
+                  contains: `${thirdName}`,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+            ],
+          },
+          {
+            AND: [
+              {
+                givenNames: {
+                  contains: `${firstName} ${secondName}`,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+              {
+                maidenName: {
+                  contains: `${thirdName}`,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+            ],
+          },
+          {
+            AND: [
+              {
+                givenNames: {
+                  contains: `${firstName}`,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+              {
+                surname: {
+                  contains: `${secondName} ${thirdName}`,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+            ],
+          },
+          {
+            AND: [
+              {
+                givenNames: {
+                  contains: `${firstName} ${secondName}`,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+              {
+                surname: {
+                  contains: `${thirdName} ${fourthName} `,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+            ],
+          },
+          // search by death date, converting search string to date
+          {
+            deathDate: {
+              gte: new Date(search),
+              lte: new Date(search),
+            },
+          },
+          // search by birth date, converting search string to date
+          {
+            birthDate: {
+              gte: new Date(search),
+              lte: new Date(search),
             },
           },
         ],
