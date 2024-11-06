@@ -71,7 +71,7 @@ const formSchema = z.object({
   column: z.string().max(8, 'Column must be 8 characters or less').optional(),
   notes: z.string().optional(),
   proofread: z.boolean(),
-  proofreadDate: z.coerce.date().optional(),
+  proofreadDate: z.coerce.date().nullable(),
   proofreadBy: z.string().optional(),
   enteredBy: z.string().optional(),
   enteredOn: z.coerce.date().optional(),
@@ -104,7 +104,8 @@ const formSchema = z.object({
         predeceased: z.boolean()
       })
     )
-    .optional()
+    .optional(),
+  batch: z.string().optional(),
 });
 
 interface EditObituaryDialogProps {
@@ -195,7 +196,7 @@ export function EditObituaryDialog({
       proofread: obituary.proofread || false,
       proofreadDate: obituary.proofreadDate
         ? new Date(obituary.proofreadDate)
-        : undefined,
+        : null,
       proofreadBy: obituary.proofreadBy || '',
       enteredBy: obituary.enteredBy || '',
       enteredOn: obituary.enteredOn ? new Date(obituary.enteredOn) : undefined,
@@ -211,7 +212,8 @@ export function EditObituaryDialog({
             // relationship: relative.relationship || '',
             // predeceased: relative.predeceased || false
           })
-        ) || []
+        ) || [],
+      batch: obituary.batch || '',
     }
   });
 
@@ -297,13 +299,13 @@ export function EditObituaryDialog({
   };
 
   const handleProofreadChange = (checked: boolean) => {
-    if (!hasImages) return;
+    if (!!hasImages) return;
     form.setValue('proofread', checked);
     if (checked) {
       form.setValue('proofreadDate', new Date());
       form.setValue('proofreadBy', currentUserFullName || '');
     } else {
-      form.setValue('proofreadDate', undefined);
+      form.setValue('proofreadDate', null);
       form.setValue('proofreadBy', '');
     }
   };
@@ -844,7 +846,7 @@ export function EditObituaryDialog({
                           }}
                           disabled={
                             (role !== 'ADMIN' && role !== 'PROOFREADER') ||
-                            !hasImages
+                            !!hasImages
                           }
                         />
                       </FormControl>
@@ -866,7 +868,11 @@ export function EditObituaryDialog({
                           setDate={field.onChange}
                         />
                       ) : (
-                        <Input type="date" className="h-8 text-sm" disabled />
+                        <Input
+                          type="date"
+                          className="h-8 text-sm"
+                          disabled
+                        />
                       )}
                       <FormMessage />
                     </FormItem>
@@ -898,6 +904,7 @@ export function EditObituaryDialog({
             <div className="grid grid-cols-2 gap-4">
               <h3 className="text-lg font-semibold col-span-2">Metadata</h3>
               <div className="space-y-2">
+                
                 <FormField
                   control={form.control}
                   name="enteredBy"
@@ -982,6 +989,24 @@ export function EditObituaryDialog({
                   )}
                 />
               </div>
+              <FormField
+                  control={form.control}
+                  name="batch"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Batch</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="h-8 text-sm"
+                          disabled={role !== 'ADMIN'}
+                          value={field.value || ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </div>
 
             {/* File Box */}
