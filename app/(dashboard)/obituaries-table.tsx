@@ -89,7 +89,7 @@ export function ObituariesTable({
               Manage obituaries, view their details, and add associated image
               files.
               <span className="block mt-4" />
-              <strong>Please note:</strong> Search by typing a person's Fullname, Given Names, Surname, Maiden Name, File Number, Batch Number, Death or Birth Date (YYYY-MM-DD). 
+              <strong>Please note:</strong> Search by typing a person's Fullname, Given Names, Surname, Maiden Name, Also Known As Names, File Number, Batch Number, Death or Birth Date (YYYY-MM-DD). 
             </CardDescription>
           </div>
           <div className="flex gap-2">
