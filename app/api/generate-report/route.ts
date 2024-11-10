@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { PDFDocument, PDFPage, rgb, StandardFonts } from 'pdf-lib';
 import { format } from 'date-fns';
-import { fetchImagesForObituaryAction } from '../(dashboard)/obituary/[reference]/actions';
+
 import minioClient from '@/lib/minio-client';
+import { fetchImagesForObituaryAction } from '@/app/(dashboard)/obituary/[reference]/actions';
+
 
 const LETTER_WIDTH = 612; // 8.5 inches
 const LETTER_HEIGHT = 792; // 11 inches
