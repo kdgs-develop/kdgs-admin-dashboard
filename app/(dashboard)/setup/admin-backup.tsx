@@ -19,7 +19,7 @@ export function AdminBackup() {
   return (
     <div className="space-y-4">
        <Button onClick={handleToggleInstructions} variant="destructive">
-        {showInstructions ? 'Hide Bulk Upload Instructions' : 'Show Bulk Upload Instructions'}
+        {showInstructions ? 'Hide Backup Instructions' : 'Show Backup Instructions'}
       </Button>
       
       {showInstructions && (
