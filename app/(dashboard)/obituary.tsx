@@ -65,7 +65,7 @@ export function Obituary({
         <TableCell>
           <div className="flex space-x-2">
             <Button onClick={handleViewClick} variant="outline" size="sm">
-              View
+              View Report
             </Button>
             {(role === 'ADMIN' || role === 'PROOFREADER' || role === 'INDEXER') && (
             <Button

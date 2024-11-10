@@ -68,7 +68,7 @@ interface EditObituaryDialogData {
   titles: { id: number; name: string }[];
   cities: {
     id: number;
-    name: string;
+    name: string | null;
     province: string | null;
     country: { name: string } | null;
   }[];
@@ -104,10 +104,10 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
       city
     ): city is {
       id: number;
-      name: string;
+      name: string | null;
       province: string | null;
       country: { name: string } | null;
-    } => city.name !== null
+    } => true
   );
 
   const cemeteries = rawCemeteries.filter(

@@ -24,6 +24,23 @@ import { AddObituaryDialog } from './add-obituary-dialog';
 import { CreateFileNumberDialog } from './create-file-number-dialog';
 import { Obituary } from './obituary';
 
+interface AddObituaryDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (newObituary: ObituaryType) => void;
+  titles: { id: number; name: string }[];
+  cities: {
+    id: number;
+    name: string;
+    province?: string | null;
+    country?: { name: string } | null;
+  }[];
+  periodicals: { id: number; name: string }[];
+  fileBoxes: { id: number; year: number; number: number }[];
+  role: string | null;
+  currentUserFullName: string;
+}
+
 export function ObituariesTable({
   offset,
   limit,
@@ -89,7 +106,7 @@ export function ObituariesTable({
               Manage obituaries, view their details, and add associated image
               files.
               <span className="block mt-4" />
-              <strong>Please note:</strong> Search by typing a person's Fullname, Given Names, Surname, Maiden Name, File Number, Batch Number, Death or Birth Date (YYYY-MM-DD). 
+              <strong>Please note:</strong> Search by typing a person's Fullname, Given Names, Surname, Maiden Name, Also Known As Names, File Number, Batch Number, Death or Birth Date (YYYY-MM-DD). 
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -191,6 +208,12 @@ export function ObituariesTable({
           {...dialogData}
           role={role}
           currentUserFullName={currentUserFullName ?? ''}
+          cities={dialogData.cities.map(city => ({
+            id: city.id,
+            name: city.name || '',
+            province: city.province,
+            country: city.country
+          }))}
         />
       )}
       <CreateFileNumberDialog
