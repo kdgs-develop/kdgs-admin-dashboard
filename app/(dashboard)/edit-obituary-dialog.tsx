@@ -120,7 +120,7 @@ interface EditObituaryDialogProps {
   titles: { id: number; name: string }[];
   cities: {
     id: number;
-    name: string;
+    name: string | null;
     province: string | null;
     country: { name: string } | null;
   }[];
@@ -482,7 +482,7 @@ export function EditObituaryDialog({
                   name="birthCityId"
                   label="Birth Place"
                   placeholder="Select a Place"
-                  emptyText="No location found."
+                  emptyText="No place found."
                   items={localCities.map((city) => ({
                     ...city,
                     province: city.province ?? undefined,
@@ -1021,7 +1021,7 @@ export function EditObituaryDialog({
               emptyText="No file box found."
               items={fileBoxes.map((box) => ({
                 id: box.id,
-                name: box.id === 0 ? 'No available' : `${box.year} : ${box.number}`
+                name: box.id === 0 ? 'Not available' : `${box.year} : ${box.number}`
               }))}
               onAddItem={async (name) => {
                 toast({
