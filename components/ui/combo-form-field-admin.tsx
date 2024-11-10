@@ -57,22 +57,16 @@ function ComboboxFormFieldAdmin({
   }, []);
 
   const handleAddItem = async (name: string, province: string, countryId: number) => {
-    
-    if (name.trim()) {
-      try {
-        const newItem = await addCity(name.trim(), province, countryId);
-        
-        setInputValue("");
-        return newItem;
-      } catch (error) {
-        console.error('Error adding item:', error);
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to add new item. Please try again.",
-          variant: "destructive",
-        });
-        throw error;
-      }
+    try {
+      const newCity = await addCity(name, province, countryId);
+      return newCity;
+    } catch (error) {
+      toast({
+        title: 'Error adding city',
+        description: error instanceof Error ? error.message : 'Failed to add city',
+        variant: 'destructive'
+      });
+      throw error;
     }
   };
 
