@@ -36,3 +36,24 @@ export async function fetchCurrentUserAction(userId: string): Promise<Genealogis
     where: { clerkId: userId }
   });
 }
+
+export async function fetchObituaryByReferenceAction(reference: string) {
+  try {
+    return await prisma.obituary.findUnique({
+      where: { reference },
+      include: {
+        title: true,
+        alsoKnownAs: true,
+        birthCity: true,
+        deathCity: true,
+        cemetery: true,
+        periodical: true,
+        fileBox: true,
+        relatives: true
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching obituary:', error);
+    return null;
+  }
+}

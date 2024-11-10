@@ -49,28 +49,44 @@ export default function ObituaryPage() {
   const handleDownloadPDF = async () => {
     setIsDownloading(true);
     try {
-      const response = await fetch(`/api/generate-pdf/${reference}`);
-      if (!response.ok) {
+      // Download PDF
+      const pdfResponse = await fetch(`/api/generate-pdf/${reference}`);
+      if (!pdfResponse.ok) {
         throw new Error('Failed to generate PDF');
       }
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `obituary_${reference}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const pdfBlob = await pdfResponse.blob();
+      const pdfUrl = window.URL.createObjectURL(pdfBlob);
+      const pdfLink = document.createElement('a');
+      pdfLink.href = pdfUrl;
+      pdfLink.download = `obituary_${reference}.pdf`;
+      pdfLink.click();
+      window.URL.revokeObjectURL(pdfUrl);
+
+      // Download images
+      for (const imageName of images) {
+        const imageUrl = await getImageUrlAction(imageName);
+        const imageResponse = await fetch(imageUrl);
+        if (!imageResponse.ok) {
+          throw new Error(`Failed to download image: ${imageName}`);
+        }
+        const imageBlob = await imageResponse.blob();
+        const downloadUrl = window.URL.createObjectURL(imageBlob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = imageName;
+        link.click();
+        window.URL.revokeObjectURL(downloadUrl);
+      }
+
       toast({
-        title: "PDF Downloaded",
-        description: "The obituary PDF has been successfully downloaded.",
+        title: "Download Complete",
+        description: "The obituary PDF and images have been downloaded.",
       });
     } catch (error) {
-      console.error('Error downloading PDF:', error);
+      console.error('Error downloading files:', error);
       toast({
         title: "Error",
-        description: "Failed to download the obituary PDF. Please try again.",
+        description: "Failed to download files. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -261,7 +277,7 @@ export default function ObituaryPage() {
             </>
           ) : (
             <>
-              <Download className="mr-2 h-4 w-4" /> Download PDF
+              <Download className="mr-2 h-4 w-4" /> Download PDF & Images
             </>
           )}
         </Button>
