@@ -31,8 +31,8 @@ export default function ReportsPage() {
 
     setIsGeneratingPDF(true);
     toast({
-      title: 'Generating PDF',
-      description: 'Please wait while we generate your report...',
+      title: 'Generating Files',
+      description: 'Please wait while we generate your report and images...',
       duration: 3000
     });
 
@@ -46,29 +46,43 @@ export default function ReportsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate PDF');
+        throw new Error('Failed to generate files');
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${selectedReport}_report.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      const { pdf, images } = await response.json();
+
+      const pdfBlob = await fetch(pdf).then(res => res.blob());
+      const pdfUrl = window.URL.createObjectURL(pdfBlob);
+      const pdfLink = document.createElement('a');
+      pdfLink.href = pdfUrl;
+      pdfLink.download = `${selectedReport}_report.pdf`;
+      document.body.appendChild(pdfLink);
+      pdfLink.click();
+      document.body.removeChild(pdfLink);
+      window.URL.revokeObjectURL(pdfUrl);
+
+      for (const [index, imageUrl] of images.entries()) {
+        const imageBlob = await fetch(imageUrl).then(res => res.blob());
+        const imageDownloadUrl = window.URL.createObjectURL(imageBlob);
+        const imageLink = document.createElement('a');
+        imageLink.href = imageDownloadUrl;
+        imageLink.download = `${selectedReport}_image_${index + 1}.jpg`;
+        document.body.appendChild(imageLink);
+        imageLink.click();
+        document.body.removeChild(imageLink);
+        window.URL.revokeObjectURL(imageDownloadUrl);
+      }
 
       toast({
-        title: 'PDF Generated',
-        description: 'Your report is ready and downloading now.',
+        title: 'Files Generated',
+        description: 'Your report and images are downloading now.',
         duration: 5000
       });
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Error generating files:', error);
       toast({
         title: 'Error',
-        description: 'Failed to generate PDF. Please try again.',
+        description: 'Failed to generate files. Please try again.',
         variant: 'destructive',
         duration: 5000
       });
@@ -112,11 +126,11 @@ export default function ReportsPage() {
               {isGeneratingPDF ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating PDF...
+                  Generating Files...
                 </>
               ) : (
                 <>
-                  <Download className="mr-2 h-4 w-4" /> Download PDF
+                  <Download className="mr-2 h-4 w-4" /> Download Files
                 </>
               )}
             </Button>

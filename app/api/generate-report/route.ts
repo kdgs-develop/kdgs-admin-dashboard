@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { PDFDocument, PDFPage, rgb, StandardFonts } from 'pdf-lib';
 import { format } from 'date-fns';
+import { fetchImagesForObituaryAction } from '../(dashboard)/obituary/[reference]/actions';
+import minioClient from '@/lib/minio-client';
 
 const LETTER_WIDTH = 612; // 8.5 inches
 const LETTER_HEIGHT = 792; // 11 inches
@@ -161,15 +163,49 @@ export async function POST(request: Request) {
   const { reportType } = await request.json();
 
   if (reportType === 'unproofread' || reportType === 'proofread') {
-    const pdfBytes = await generateObituariesReport(reportType === 'proofread');
+    try {
+      const pdfBytes = await generateObituariesReport(reportType === 'proofread');
+      
+      // Get obituaries to fetch their images
+      const obituaries = await prisma.obituary.findMany({
+        where: { proofread: reportType === 'proofread' },
+        orderBy: { reference: 'asc' },
+      });
 
-    return new NextResponse(pdfBytes, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${reportType}_obituaries_report.pdf"`,
-      },
-    });
+      // Get all images for these obituaries
+      const imagePromises = obituaries.map(obituary => 
+        fetchImagesForObituaryAction(obituary.reference)
+      );
+      const imageArrays = await Promise.all(imagePromises);
+      const allImages = imageArrays.flat();
+
+      // Convert PDF to base64
+      const pdfBase64 = Buffer.from(pdfBytes).toString('base64');
+      const pdfUrl = `data:application/pdf;base64,${pdfBase64}`;
+
+      // Get presigned URLs for all images
+      const imageUrls = await Promise.all(
+        allImages.map(async (imageName: string) => {
+          const url = await minioClient.presignedGetObject(
+            process.env.MINIO_BUCKET_NAME!,
+            imageName,
+            60 * 60 // URL valid for 1 hour
+          );
+          return url;
+        })
+      );
+
+      return NextResponse.json({
+        pdf: pdfUrl,
+        images: imageUrls
+      });
+    } catch (error) {
+      console.error('Error generating report:', error);
+      return NextResponse.json(
+        { error: 'Failed to generate report' },
+        { status: 500 }
+      );
+    }
   }
 
   return NextResponse.json({ error: 'Invalid report type' }, { status: 400 });
