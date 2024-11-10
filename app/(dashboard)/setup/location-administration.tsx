@@ -31,7 +31,7 @@ export function LocationAdministration() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
