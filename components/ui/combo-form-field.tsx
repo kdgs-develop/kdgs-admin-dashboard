@@ -24,7 +24,7 @@ type ComboboxFormFieldProps = {
   label: string;
   placeholder: string;
   emptyText: string;
-  items: { id: number; name: string; province?: string; country?: { name: string }; city?: { name: string ; province?: string, country?: { name: string } } }[];
+  items: { id: number; name: string | null; province?: string; country?: { name: string }; city?: { name: string | null ; province?: string, country?: { name: string } } }[];
   onAddItem?: (name: string) => Promise<{ id: number; name: string, province?: string, country?: { name: string }, city?: { name: string } }>;
 };
 
@@ -138,7 +138,14 @@ function ComboboxFormField({
                   <CommandGroup>
                     {items.map((item) => (
                       <CommandItem
-                        value={item.name}
+                      value={[
+                        item?.name,
+                        item?.province,
+                        item?.country?.name,
+                        item?.city?.name,
+                        item?.city?.province,
+                        item?.city?.country?.name
+                      ].filter(Boolean).join(' ')}
                         key={item.id}
                         onSelect={() => {
                           field.onChange(item.id);
