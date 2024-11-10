@@ -24,6 +24,23 @@ import { AddObituaryDialog } from './add-obituary-dialog';
 import { CreateFileNumberDialog } from './create-file-number-dialog';
 import { Obituary } from './obituary';
 
+interface AddObituaryDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (newObituary: ObituaryType) => void;
+  titles: { id: number; name: string }[];
+  cities: {
+    id: number;
+    name: string;
+    province?: string | null;
+    country?: { name: string } | null;
+  }[];
+  periodicals: { id: number; name: string }[];
+  fileBoxes: { id: number; year: number; number: number }[];
+  role: string | null;
+  currentUserFullName: string;
+}
+
 export function ObituariesTable({
   offset,
   limit,
@@ -191,6 +208,12 @@ export function ObituariesTable({
           {...dialogData}
           role={role}
           currentUserFullName={currentUserFullName ?? ''}
+          cities={dialogData.cities.map(city => ({
+            id: city.id,
+            name: city.name || '',
+            province: city.province,
+            country: city.country
+          }))}
         />
       )}
       <CreateFileNumberDialog
