@@ -32,29 +32,31 @@ export default async function SetupPage() {
             <CardDescription>
               Configure your obituary management system.
             </CardDescription>
+            <CardContent className="space-y-4 pt-4 px-0">
+
+              <BulkUpload />
+
+              <LocationAdministration />
+
+              <GeneaologistAdministration />
+
+              <Card className="w-[calc(100%)]">
+                <CardHeader>
+                  <CardTitle>Database Backup</CardTitle>
+                  <CardDescription>
+                    Download a backup of your database content and learn how to
+                    create manual backups.
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent className="text-sm text-muted-foreground">
+                  <div className="space-y-4">
+                    <AdminBackup />
+                  </div>
+                </CardContent>
+              </Card>
+            </CardContent>
           </CardHeader>
-        </Card>
-
-        <BulkUpload />
-
-        <LocationAdministration />
-
-        <GeneaologistAdministration />
-
-        <Card className="w-[calc(100%)]">
-          <CardHeader>
-            <CardTitle>Database Backup</CardTitle>
-            <CardDescription>
-              Download a backup of your database content and learn how to create
-              manual backups.
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="text-sm text-muted-foreground">
-            <div className="space-y-4">
-              <AdminBackup />
-            </div>
-          </CardContent>
         </Card>
       </div>
     </div>
