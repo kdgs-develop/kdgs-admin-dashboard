@@ -233,30 +233,32 @@ export async function createObituaryAction(
 
 type ObituaryUpdateInput = Prisma.ObituaryUpdateInput & {
   relatives?: Prisma.RelativeCreateInput[];
+  alsoKnownAs?: Prisma.AlsoKnownAsCreateInput[];
 };
 
 export async function updateObituaryAction(
   id: number,
-  obituaryData: Omit<ObituaryUpdateInput, 'relatives'>,
-  relatives: Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>
-): Promise<Prisma.ObituaryGetPayload<{ include: { relatives: true } }>> {
-  const updatedObituaryWithRelatives = await prisma.$transaction(
+  obituaryData: Omit<ObituaryUpdateInput, 'relatives' | 'alsoKnownAs'>,
+  relatives: Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>,
+  alsoKnownAs: Omit<Prisma.AlsoKnownAsCreateManyInput[], 'obituaryId'>
+): Promise<Prisma.ObituaryGetPayload<{ include: { relatives: true; alsoKnownAs: true } }>> {
+  const updatedObituaryWithRelations = await prisma.$transaction(
     async (prisma) => {
       // Update the obituary
       const updatedObituary = await prisma.obituary.update({
         where: { id },
         data: obituaryData,
-        include: { relatives: true }
+        include: { relatives: true, alsoKnownAs: true }
       });
 
-      // Always delete existing relatives
+      // Delete existing relatives
       await prisma.relative.deleteMany({
         where: { obituaryId: id }
       });
 
       // Create new relatives if any
       if (relatives && relatives.length > 0) {
-        const createdRelatives = await prisma.relative.createMany({
+        await prisma.relative.createMany({
           data: relatives.map((relative) => ({
             ...relative,
             obituaryId: id
@@ -264,10 +266,25 @@ export async function updateObituaryAction(
         });
       }
 
-      // Fetch the updated obituary with new relatives
+      // Delete existing AKAs
+      await prisma.alsoKnownAs.deleteMany({
+        where: { obituaryId: id }
+      });
+
+      // Create new AKAs if any
+      if (alsoKnownAs && alsoKnownAs.length > 0) {
+        await prisma.alsoKnownAs.createMany({
+          data: alsoKnownAs.map((aka) => ({
+            ...aka,
+            obituaryId: id
+          }))
+        });
+      }
+
+      // Fetch the updated obituary with new relations
       const finalObituary = await prisma.obituary.findUnique({
         where: { id },
-        include: { relatives: true }
+        include: { relatives: true, alsoKnownAs: true }
       });
 
       return finalObituary;
@@ -275,7 +292,7 @@ export async function updateObituaryAction(
   );
 
   revalidatePath('/');
-  return updatedObituaryWithRelatives!;
+  return updatedObituaryWithRelations!;
 }
 
 export async function deleteRelativeAction(relativeId: number) {

@@ -106,6 +106,28 @@ const formSchema = z.object({
     )
     .optional(),
   batch: z.string().optional(),
+  alsoKnownAs: z
+    .array(
+      z.object({
+        surname: z
+          .string()
+          .nullable()
+          .transform((val) => val?.toUpperCase()),
+        otherNames: z
+          .string()
+          .nullable()
+          .transform((val) =>
+            val
+              ?.split(' ')
+              .map(
+                (name) =>
+                  name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
+              )
+              .join(' ')
+          )
+      })
+    )
+    .optional()
 });
 
 interface EditObituaryDialogProps {
@@ -213,7 +235,13 @@ export function EditObituaryDialog({
             // predeceased: relative.predeceased || false
           })
         ) || [],
-      batch: obituary.batch || '',
+      alsoKnownAs:
+        obituary.alsoKnownAs?.map(
+          (aka: Omit<Prisma.AlsoKnownAsCreateManyInput[], 'obituaryId'>) => ({
+            ...aka
+          })
+        ) || [],
+      batch: obituary.batch || ''
     }
   });
 
@@ -313,7 +341,7 @@ export function EditObituaryDialog({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      const { relatives, ...obituaryData } = values;
+      const { relatives, alsoKnownAs, ...obituaryData } = values;
 
       // Log the relatives data
 
@@ -324,6 +352,13 @@ export function EditObituaryDialog({
           givenNames: relative.givenNames || '',
           relationship: relative.relationship || '',
           predeceased: relative.predeceased
+        })) || [];
+
+      // Prepare alsoKnownAs data
+      const alsoKnownAsData =
+        alsoKnownAs?.map((aka) => ({
+          surname: aka.surname || '',
+          otherNames: aka.otherNames || ''
         })) || [];
 
       // Handle new image uploads
@@ -343,11 +378,15 @@ export function EditObituaryDialog({
         }
       }
 
-      // Update the obituary and relatives
+      // Update the obituary with both relatives and alsoKnownAs
       const updatedObituary = await updateObituaryAction(
         obituary.id,
         obituaryData,
-        relativesData as Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>
+        relativesData as Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>,
+        alsoKnownAsData as Omit<
+          Prisma.AlsoKnownAsCreateManyInput[],
+          'obituaryId'
+        >
       );
 
       onSave(updatedObituary);
@@ -537,6 +576,79 @@ export function EditObituaryDialog({
                   }))}
                 />
               </div>
+            </div>
+
+            {/* Also Known As */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Also Known As</h3>
+              {form.watch('alsoKnownAs')?.map((_, index) => (
+                <div key={index} className="flex space-x-2">
+                  <FormField
+                    control={form.control}
+                    name={`alsoKnownAs.${index}.surname`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Surname</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            className="h-8 text-sm"
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`alsoKnownAs.${index}.otherNames`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Other Names</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            className="h-8 text-sm"
+                            value={field.value || ''}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const akas = form.getValues('alsoKnownAs');
+                      akas?.splice(index, 1);
+                      form.setValue('alsoKnownAs', akas || []);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const akas = form.getValues('alsoKnownAs') || [];
+                  form.setValue('alsoKnownAs', [
+                    ...akas,
+                    {
+                      surname: '',
+                      otherNames: ''
+                    }
+                  ]);
+                }}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Also Known As
+              </Button>
             </div>
 
             {/* Obituary Files */}
@@ -868,11 +980,7 @@ export function EditObituaryDialog({
                           setDate={field.onChange}
                         />
                       ) : (
-                        <Input
-                          type="date"
-                          className="h-8 text-sm"
-                          disabled
-                        />
+                        <Input type="date" className="h-8 text-sm" disabled />
                       )}
                       <FormMessage />
                     </FormItem>
@@ -904,7 +1012,6 @@ export function EditObituaryDialog({
             <div className="grid grid-cols-2 gap-4">
               <h3 className="text-lg font-semibold col-span-2">Metadata</h3>
               <div className="space-y-2">
-                
                 <FormField
                   control={form.control}
                   name="enteredBy"
@@ -934,11 +1041,17 @@ export function EditObituaryDialog({
                           setDate={field.onChange}
                         />
                       ) : (
-                        <Input 
-                          type="date" 
-                          className="h-8 text-sm" 
-                          disabled 
-                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                        <Input
+                          type="date"
+                          className="h-8 text-sm"
+                          disabled
+                          value={
+                            field.value
+                              ? new Date(field.value)
+                                  .toISOString()
+                                  .split('T')[0]
+                              : ''
+                          }
                         />
                       )}
                       <FormMessage />
@@ -977,10 +1090,10 @@ export function EditObituaryDialog({
                           setDate={field.onChange}
                         />
                       ) : (
-                        <Input 
-                          type="date" 
-                          className="h-8 text-sm" 
-                          disabled 
+                        <Input
+                          type="date"
+                          className="h-8 text-sm"
+                          disabled
                           value={new Date().toISOString().split('T')[0]}
                         />
                       )}
@@ -990,23 +1103,23 @@ export function EditObituaryDialog({
                 />
               </div>
               <FormField
-                  control={form.control}
-                  name="batch"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Batch</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          className="h-8 text-sm"
-                          disabled={role !== 'ADMIN'}
-                          value={field.value || ''}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                control={form.control}
+                name="batch"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs">Batch</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        className="h-8 text-sm"
+                        disabled={role !== 'ADMIN'}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* File Box */}
@@ -1021,7 +1134,8 @@ export function EditObituaryDialog({
               emptyText="No file box found."
               items={fileBoxes.map((box) => ({
                 id: box.id,
-                name: box.id === 0 ? 'Not available' : `${box.year} : ${box.number}`
+                name:
+                  box.id === 0 ? 'Not available' : `${box.year} : ${box.number}`
               }))}
               onAddItem={async (name) => {
                 toast({
