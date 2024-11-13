@@ -144,3 +144,11 @@ model ImageFile {
   createdAt DateTime @default(now())
   editedAt  DateTime @updatedAt
 }
+
+// Add this new model to your schema
+model Settings {
+  id            String   @id
+  value         String
+  lastUpdatedAt DateTime @updatedAt
+  updatedBy     String?
+}
