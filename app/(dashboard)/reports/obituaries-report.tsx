@@ -61,6 +61,8 @@ export function ObituariesReport({ reportType }: ObituariesReportProps) {
                 <TableHead>File Number</TableHead>
                 <TableHead>Surname</TableHead>
                 <TableHead>Given Names</TableHead>
+                <TableHead>Maiden Name</TableHead>
+                <TableHead>Birth Date</TableHead>
                 <TableHead>Death Date</TableHead>
                 <TableHead>Proofread</TableHead>
               </TableRow>
@@ -71,6 +73,8 @@ export function ObituariesReport({ reportType }: ObituariesReportProps) {
                   <TableCell>{obituary.reference}</TableCell>
                   <TableCell>{obituary.surname}</TableCell>
                   <TableCell>{obituary.givenNames}</TableCell>
+                  <TableCell>{obituary.maidenName || 'N/A'}</TableCell>
+                  <TableCell>{obituary.birthDate?.toISOString().split('T')[0] || 'N/A'}</TableCell>
                   <TableCell>{obituary.deathDate?.toISOString().split('T')[0] || 'N/A'}</TableCell>
                   <TableCell>{obituary.proofread ? 'Yes' : 'No'}</TableCell>
                 </TableRow>

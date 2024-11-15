@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Download, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { ObituariesReport } from './obituaries-report';
+import { format } from 'date-fns';
 
 const reportTypes = [
   { value: 'unproofread', label: 'Unproofread Obituaries' },
@@ -30,12 +31,7 @@ export default function ReportsPage() {
     if (!selectedReport) return;
 
     setIsGeneratingPDF(true);
-    toast({
-      title: 'Generating Files',
-      description: 'Please wait while we generate your report and images...',
-      duration: 3000
-    });
-
+    
     try {
       const response = await fetch('/api/generate-report', {
         method: 'POST',
@@ -46,45 +42,33 @@ export default function ReportsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate files');
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate report');
       }
 
-      const { pdf, images } = await response.json();
+      const { pdf } = await response.json();
 
+      // Download PDF
       const pdfBlob = await fetch(pdf).then(res => res.blob());
       const pdfUrl = window.URL.createObjectURL(pdfBlob);
-      const pdfLink = document.createElement('a');
-      pdfLink.href = pdfUrl;
-      pdfLink.download = `${selectedReport}_report.pdf`;
-      document.body.appendChild(pdfLink);
-      pdfLink.click();
-      document.body.removeChild(pdfLink);
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = `obituaries-${selectedReport}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(pdfUrl);
 
-      for (const [index, imageUrl] of images.entries()) {
-        const imageBlob = await fetch(imageUrl).then(res => res.blob());
-        const imageDownloadUrl = window.URL.createObjectURL(imageBlob);
-        const imageLink = document.createElement('a');
-        imageLink.href = imageDownloadUrl;
-        imageLink.download = `${selectedReport}_image_${index + 1}.jpg`;
-        document.body.appendChild(imageLink);
-        imageLink.click();
-        document.body.removeChild(imageLink);
-        window.URL.revokeObjectURL(imageDownloadUrl);
-      }
-
       toast({
-        title: 'Files Generated',
-        description: 'Your report and images are downloading now.',
-        duration: 5000
+        title: "Success",
+        description: "Report generated successfully",
       });
     } catch (error) {
-      console.error('Error generating files:', error);
+      console.error('Error:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to generate files. Please try again.',
-        variant: 'destructive',
-        duration: 5000
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to generate report",
+        variant: "destructive",
       });
     } finally {
       setIsGeneratingPDF(false);
@@ -126,11 +110,11 @@ export default function ReportsPage() {
               {isGeneratingPDF ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating Files...
+                  Generating Report...
                 </>
               ) : (
                 <>
-                  <Download className="mr-2 h-4 w-4" /> Download Files
+                  <Download className="mr-2 h-4 w-4" /> Download Report
                 </>
               )}
             </Button>
