@@ -145,7 +145,6 @@ model ImageFile {
   editedAt  DateTime @updatedAt
 }
 
-// Add this new model to your schema
 model Settings {
   id            String   @id
   value         String
