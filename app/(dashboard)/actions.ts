@@ -196,14 +196,26 @@ export async function createObituaryAction(
 ): Promise<Obituary> {
   const { relatives, ...restObituaryData } = obituaryData;
 
+  // Get the open file box ID
+  const openFileBoxId = await getOpenFileBoxId();
+
   // Use a transaction to ensure all operations are performed atomically
   return await prisma.$transaction(async (prisma) => {
     // Reset the ID sequence to the maximum existing ID
     await prisma.$executeRaw`SELECT setval('obituary_id_seq', COALESCE((SELECT MAX(id) FROM "Obituary"), 1));`;
 
-    // Create a new obituary record in the database
+    // Create a new obituary record in the database with the open file box ID
     const newObituary = await prisma.obituary.create({
-      data: { ...restObituaryData }
+      data: {
+        ...restObituaryData,
+        fileBoxId: openFileBoxId || 0,
+        cemetery: undefined,
+        birthCity: undefined,
+        deathCity: undefined,
+        periodical: undefined,
+        title: undefined,
+        fileBox: undefined
+      }
     });
 
     // Extract the generated id from the new obituary record
@@ -241,7 +253,9 @@ export async function updateObituaryAction(
   obituaryData: Omit<ObituaryUpdateInput, 'relatives' | 'alsoKnownAs'>,
   relatives: Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>,
   alsoKnownAs: Omit<Prisma.AlsoKnownAsCreateManyInput[], 'obituaryId'>
-): Promise<Prisma.ObituaryGetPayload<{ include: { relatives: true; alsoKnownAs: true } }>> {
+): Promise<
+  Prisma.ObituaryGetPayload<{ include: { relatives: true; alsoKnownAs: true } }>
+> {
   const updatedObituaryWithRelations = await prisma.$transaction(
     async (prisma) => {
       // Update the obituary
@@ -406,4 +420,14 @@ export async function createImageFileAction(name: string) {
 
   revalidatePath('/');
   return newImageFile.name;
+}
+
+export async function getOpenFileBoxId(): Promise<number> {
+  const setting = await prisma.settings.findUnique({
+    where: {
+      id: 'open_filebox_id'
+    }
+  });
+
+  return setting ? parseInt(setting.value) : 0;
 }
