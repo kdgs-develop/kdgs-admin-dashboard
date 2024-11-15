@@ -407,3 +407,13 @@ export async function createImageFileAction(name: string) {
   revalidatePath('/');
   return newImageFile.name;
 }
+
+export async function getOpenFileBoxId(): Promise<number> {
+  const setting = await prisma.settings.findUnique({
+    where: {
+      id: "open_filebox_id"
+    }
+  });
+  
+  return setting ? parseInt(setting.value) : 0;
+}
