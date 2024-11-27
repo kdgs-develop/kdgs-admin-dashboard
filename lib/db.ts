@@ -60,6 +60,13 @@ export async function getObituaries(
               mode: Prisma.QueryMode.insensitive
             }
           },
+          // search by death date range only if first element of search string is "from" or the third element is "to"
+          {
+            deathDate: {
+              gte: firstName === 'from' ? new Date(secondName) : undefined,
+              lte: thirdName === 'to' ? new Date(fourthName) : undefined,
+            }
+          },
           // search by given names and surname
           {
             AND: [
