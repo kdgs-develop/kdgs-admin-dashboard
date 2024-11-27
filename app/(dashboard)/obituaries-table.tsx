@@ -116,7 +116,7 @@ export function ObituariesTable({
               }
               onClick={() => setIsCreateFileNumberDialogOpen(true)}
             >
-              Create File Number
+              Create a New File Entry
             </Button>
             {/* <Button
               disabled={
