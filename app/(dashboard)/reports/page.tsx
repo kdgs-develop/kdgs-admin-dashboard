@@ -1,44 +1,72 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { format } from 'date-fns';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { Download, Loader2 } from 'lucide-react';
-import { useState } from 'react';
 import { ObituariesReport } from './obituaries-report';
-import { format } from 'date-fns';
+import { Loader2 } from 'lucide-react';
+import { fetchFileBoxesAction } from './actions';
+import { useToast } from '@/hooks/use-toast';
 
 const reportTypes = [
   { value: 'unproofread', label: 'Unproofread Obituaries' },
-  { value: 'proofread', label: 'Proofread Obituaries' }
-];
+  { value: 'proofread', label: 'Proofread Obituaries' },
+  { value: 'filebox', label: 'File Box Report' }
+] as const;
+
+interface FileBox {
+  id: number;
+  year: number;
+  number: number;
+}
 
 export default function ReportsPage() {
-  const [selectedReport, setSelectedReport] = useState<
-    'unproofread' | 'proofread' | undefined
-  >();
+  const [selectedReport, setSelectedReport] = useState<typeof reportTypes[number]['value']>();
+  const [selectedFileBox, setSelectedFileBox] = useState<string>();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [fileBoxes, setFileBoxes] = useState<FileBox[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (selectedReport === 'filebox') {
+      fetchFileBoxesAction().then(setFileBoxes);
+    }
+  }, [selectedReport]);
 
   const handleGeneratePDF = async () => {
     if (!selectedReport) return;
+    if (selectedReport === 'filebox' && !selectedFileBox) {
+      toast({
+        title: "Error",
+        description: "Please select a file box",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsGeneratingPDF(true);
     
     try {
-      const response = await fetch('/api/generate-report', {
+      const endpoint = selectedReport === 'filebox' 
+        ? '/api/generate-filebox-report'
+        : '/api/generate-report';
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ reportType: selectedReport })
+        body: JSON.stringify({ 
+          reportType: selectedReport,
+          fileBoxId: selectedReport === 'filebox' ? parseInt(selectedFileBox!) : undefined
+        })
       });
 
       if (!response.ok) {
@@ -53,7 +81,12 @@ export default function ReportsPage() {
       const pdfUrl = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = pdfUrl;
-      link.download = `obituaries-${selectedReport}-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      
+      const fileBox = selectedFileBox ? 
+        `-box-${fileBoxes.find(b => b.id === parseInt(selectedFileBox))?.year}-${fileBoxes.find(b => b.id === parseInt(selectedFileBox))?.number}` : 
+        '';
+      link.download = `${selectedReport}${fileBox}-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -76,51 +109,66 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Generate Reports</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Select
-              onValueChange={(value: 'unproofread' | 'proofread') =>
-                setSelectedReport(value)
-              }
-            >
+    <div className="container mx-auto py-10 space-y-8">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0 items-end">
+        <div className="space-y-2 flex-1">
+          <label className="text-sm font-medium">Report Type</label>
+          <Select onValueChange={(value) => {
+            setSelectedReport(value as typeof reportTypes[number]['value']);
+            setSelectedFileBox(undefined);
+          }}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select report type" />
+            </SelectTrigger>
+            <SelectContent>
+              {reportTypes.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {selectedReport === 'filebox' && (
+          <div className="space-y-2 flex-1">
+            <label className="text-sm font-medium">File Box</label>
+            <Select onValueChange={setSelectedFileBox}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a report type" />
+                <SelectValue placeholder="Select file box" />
               </SelectTrigger>
               <SelectContent>
-                {reportTypes.map((report) => (
-                  <SelectItem key={report.value} value={report.value}>
-                    {report.label}
+                {fileBoxes.map((box) => (
+                  <SelectItem key={box.id} value={box.id.toString()}>
+                    { box.year === 0 ? "None" :
+
+                    `${box.year} : ${box.number}`
+                    }
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-
-            {selectedReport && <ObituariesReport reportType={selectedReport} />}
-
-            <Button
-              onClick={handleGeneratePDF}
-              disabled={!selectedReport || isGeneratingPDF}
-              className="w-full"
-            >
-              {isGeneratingPDF ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating Report...
-                </>
-              ) : (
-                <>
-                  <Download className="mr-2 h-4 w-4" /> Download Report
-                </>
-              )}
-            </Button>
           </div>
-        </CardContent>
-      </Card>
+        )}
+
+        <Button 
+          onClick={handleGeneratePDF} 
+          disabled={isGeneratingPDF || !selectedReport || (selectedReport === 'filebox' && !selectedFileBox)}
+        >
+          {isGeneratingPDF ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            'Generate PDF'
+          )}
+        </Button>
+      </div>
+
+      {selectedReport && selectedReport !== 'filebox' && (
+        <ObituariesReport reportType={selectedReport} />
+      )}
     </div>
   );
 }

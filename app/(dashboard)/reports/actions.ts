@@ -57,3 +57,22 @@ export async function fetchObituaryByReferenceAction(reference: string) {
     return null;
   }
 }
+
+export async function fetchFileBoxesAction() {
+  try {
+    return await prisma.fileBox.findMany({
+      orderBy: [
+        { year: 'desc' },
+        { number: 'asc' }
+      ],
+      select: {
+        id: true,
+        year: true,
+        number: true,
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching file boxes:', error);
+    return [];
+  }
+}

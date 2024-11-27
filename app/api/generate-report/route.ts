@@ -7,6 +7,7 @@ const LETTER_WIDTH = 612;
 const LETTER_HEIGHT = 792;
 const MARGIN = 50;
 const RECORDS_PER_PAGE = 25;
+const KDGS_LOGO_URL = 'https://kdgs-admin-dashboard.vercel.app/kdgs.png';
 
 export async function POST(request: Request) {
   try {
@@ -41,6 +42,10 @@ export async function POST(request: Request) {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+    // Fetch and embed the KDGS logo
+    const logoImageBytes = await fetch(KDGS_LOGO_URL).then((res) => res.arrayBuffer());
+    const logoImage = await pdfDoc.embedPng(logoImageBytes);
+
     const headers = ['File Number', 'Surname', 'Given Names', 'Maiden Name', 'Birth Date', 'Death Date', 'Proofread'];
     const columnWidths = [80, 80, 100, 80, 80, 80, 60];
 
@@ -60,12 +65,20 @@ export async function POST(request: Request) {
         font: boldFont,
       });
 
-      // Add page number
+      // Add page number on the left side
       page.drawText(`Page ${pageNumber} of ${totalPages}`, {
-        x: width - MARGIN - 100,
-        y: height - MARGIN,
+        x: MARGIN,
+        y: height - MARGIN - 20,
         size: 10,
         font: font,
+      });
+
+      // Draw KDGS logo on the right
+      page.drawImage(logoImage, {
+        x: width - 150,
+        y: height - 70,
+        width: 100,
+        height: 50
       });
 
       // Add table headers
@@ -73,14 +86,14 @@ export async function POST(request: Request) {
       headers.forEach((header, i) => {
         page.drawText(header, {
           x: xPos,
-          y: height - MARGIN - 40,
+          y: height - MARGIN - 80, // Adjusted to account for logo
           size: 10,
           font: boldFont,
         });
         xPos += columnWidths[i];
       });
 
-      return height - MARGIN - 60; // Return starting Y position for data
+      return height - MARGIN - 100; // Return starting Y position for data
     };
 
     // Process records page by page
@@ -118,9 +131,26 @@ export async function POST(request: Request) {
         yPos -= 20; // Move down for next row
       }
 
-      // Add footer
-      const footerText = `Generated on ${format(new Date(), 'yyyy-MM-dd')}`;
+      // Add footer with generation date
+      const footerText = 'Compiled by Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8';
+      const copyrightText = '© 2024 Javier Gongora';
+      const generationDate = `Generated on ${format(new Date(), 'yyyy-MM-dd')}`;
+      
       page.drawText(footerText, {
+        x: MARGIN,
+        y: MARGIN + 30,
+        size: 8,
+        font: font,
+      });
+
+      page.drawText(generationDate, {
+        x: MARGIN,
+        y: MARGIN + 15,
+        size: 8,
+        font: font,
+      });
+
+      page.drawText(copyrightText, {
         x: MARGIN,
         y: MARGIN,
         size: 8,
