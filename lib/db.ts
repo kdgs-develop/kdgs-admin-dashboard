@@ -60,6 +60,7 @@ export async function getObituaries(
               mode: Prisma.QueryMode.insensitive
             }
           },
+          // search by given names and surname
           {
             AND: [
               {
@@ -79,6 +80,23 @@ export async function getObituaries(
           {
             AND: [
               {
+                surname: {
+                  contains: name, // first element of search string
+                  mode: Prisma.QueryMode.insensitive
+                }
+              },
+              {
+                givenNames: {
+                  contains: surname, // second element of search string
+                  mode: Prisma.QueryMode.insensitive
+                }
+              }
+            ]
+          },
+          // search by one given names and one maiden name
+          {
+            AND: [
+              {
                 givenNames: {
                   contains: name,
                   mode: Prisma.QueryMode.insensitive
@@ -92,6 +110,23 @@ export async function getObituaries(
               }
             ]
           },
+          {
+            AND: [
+              {
+                maidenName: {
+                  contains: name, // first element of search string
+                  mode: Prisma.QueryMode.insensitive
+                }
+              },
+              {
+                givenNames: {
+                  contains: surname, // second element of search string
+                  mode: Prisma.QueryMode.insensitive
+                }
+              }
+            ]
+          },
+          // search by two given names and surname
           {
             AND: [
               {
@@ -111,6 +146,23 @@ export async function getObituaries(
           {
             AND: [
               {
+                surname: {
+                  contains: `${firstName}`,
+                  mode: Prisma.QueryMode.insensitive
+                }
+              },
+              {
+                givenNames: {
+                  contains: `${secondName} ${thirdName}`,
+                  mode: Prisma.QueryMode.insensitive
+                }
+              }
+            ]
+          },
+          // search by two given names and one maiden name
+          {
+            AND: [
+              {
                 givenNames: {
                   contains: `${firstName} ${secondName}`,
                   mode: Prisma.QueryMode.insensitive
@@ -124,6 +176,23 @@ export async function getObituaries(
               }
             ]
           },
+          {
+            AND: [
+              {
+                maidenName: {
+                  contains: `${firstName}`,
+                  mode: Prisma.QueryMode.insensitive
+                }
+              },
+              {
+                givenNames: {
+                  contains: `${secondName} ${thirdName}`,
+                  mode: Prisma.QueryMode.insensitive
+                }
+              }
+            ]
+          },
+          // search by one given name and two maiden names
           {
             AND: [
               {
@@ -140,6 +209,23 @@ export async function getObituaries(
               }
             ]
           },
+          {
+            AND: [
+              {
+                surname: {
+                  contains: `${firstName} ${secondName}`,
+                  mode: Prisma.QueryMode.insensitive
+                }
+              },
+              {
+                givenNames: {
+                  contains: `${thirdName}`,
+                  mode: Prisma.QueryMode.insensitive
+                }
+              }
+            ]
+          },
+          // search by two given names and two surnames
           {
             AND: [
               {
