@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { fetchObituaryByReferenceAction, fetchImagesForObituaryAction } from './actions';
+import { fetchObituaryByReferenceAction, fetchImagesForObituaryAction, generatePublicHashAction } from './actions';
 import { Prisma } from '@prisma/client';
 import Image from 'next/image';
 import { Download, ArrowLeft, Loader2, Eye, Share2 } from 'lucide-react';
@@ -98,21 +98,17 @@ export default function ObituaryPage() {
   const handleShare = async () => {
     setIsSharing(true);
     try {
-      // Generate a public URL using the current window location
-      const baseUrl = window.location.origin;
-      const publicUrl = `${baseUrl}/public/obituary/${reference}`;
-      
-      await navigator.clipboard.writeText(publicUrl);
-      
+      const hash = await generatePublicHashAction(obituary?.id!);
+      const publicLink = `${window.location.origin}/public/obituary/${hash}`;
+      await navigator.clipboard.writeText(publicLink);
       toast({
-        title: "Link Copied!",
-        description: "The public link has been copied to your clipboard.",
+        title: "Link Copied",
+        description: "Public link has been copied to clipboard.",
       });
     } catch (error) {
-      console.error('Error sharing:', error);
       toast({
         title: "Error",
-        description: "Failed to copy link. Please try again.",
+        description: "Failed to generate public link.",
         variant: "destructive",
       });
     } finally {
@@ -292,23 +288,6 @@ export default function ObituaryPage() {
         </Button>
         <Button
           variant="outline"
-          onClick={handleShare}
-          disabled={isSharing}
-          className="bg-purple-600 text-white hover:bg-purple-700"
-        >
-          {isSharing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Copying Link...
-            </>
-          ) : (
-            <>
-              <Share2 className="mr-2 h-4 w-4" /> Share Public Link
-            </>
-          )}
-        </Button>
-        <Button
-          variant="outline"
           onClick={handleDownloadPDF}
           disabled={isDownloading}
           className="bg-green-600 text-white hover:bg-green-700"
@@ -321,6 +300,23 @@ export default function ObituaryPage() {
           ) : (
             <>
               <Download className="mr-2 h-4 w-4" /> Download PDF & Images
+            </>
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleShare}
+          disabled={isSharing}
+          className="bg-purple-600 text-white hover:bg-purple-700"
+        >
+          {isSharing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Copying Link...
+            </>
+          ) : (
+            <>
+              <Share2 className="mr-2 h-4 w-4" /> Share Public Link
             </>
           )}
         </Button>
