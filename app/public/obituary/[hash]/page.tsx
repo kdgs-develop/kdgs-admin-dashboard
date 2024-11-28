@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { fetchObituaryByReferenceAction, fetchImagesForObituaryAction } from '@/app/(dashboard)/obituary/[reference]/actions';
+import { fetchObituaryByReferenceAction, fetchImagesForObituaryAction, getPublicObituaryByHash } from '@/app/(dashboard)/obituary/[reference]/actions';
 import { Prisma } from '@prisma/client';
 import Image from 'next/image';
 import { Download, Loader2, Eye } from 'lucide-react';
@@ -28,28 +28,29 @@ type ObituaryWithAllRelations = Prisma.ObituaryGetPayload<{
 }>;
 
 export default function PublicObituaryPage() {
-  const { reference } = useParams();
+  const { hash } = useParams();
   const [obituary, setObituary] = useState<ObituaryWithAllRelations | null>(null);
   const [images, setImages] = useState<string[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
 
   useEffect(() => {
-    if (reference) {
-      fetchObituaryByReferenceAction(reference as string).then((data) => {
-        if (data) {
-          setObituary(data as ObituaryWithAllRelations);
-        }
-      });
-      fetchImagesForObituaryAction(reference as string).then(setImages);
+    async function loadObituary() {
+      const data = await getPublicObituaryByHash(hash as string);
+      if (data) {
+        setObituary(data as ObituaryWithAllRelations);
+      }
     }
-  }, [reference]);
+    loadObituary().then(() => {
+      fetchImagesForObituaryAction(obituary?.reference as string).then(setImages);
+    });
+  }, [hash]);
 
   const handleDownloadPDF = async () => {
     setIsDownloading(true);
     try {
       // Download PDF
-      const pdfResponse = await fetch(`/api/generate-pdf/${reference}`);
+      const pdfResponse = await fetch(`/api/generate-pdf/${obituary?.reference}`);
       if (!pdfResponse.ok) {
         throw new Error('Failed to generate PDF');
       }
@@ -57,7 +58,7 @@ export default function PublicObituaryPage() {
       const pdfUrl = window.URL.createObjectURL(pdfBlob);
       const pdfLink = document.createElement('a');
       pdfLink.href = pdfUrl;
-      pdfLink.download = `obituary_${reference}.pdf`;
+      pdfLink.download = `obituary_${obituary?.reference}.pdf`;
       pdfLink.click();
       window.URL.revokeObjectURL(pdfUrl);
 
