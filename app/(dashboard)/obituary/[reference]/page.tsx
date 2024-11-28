@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { fetchObituaryByReferenceAction, fetchImagesForObituaryAction } from './actions';
 import { Prisma } from '@prisma/client';
 import Image from 'next/image';
-import { Download, ArrowLeft, Loader2, Eye } from 'lucide-react';
+import { Download, ArrowLeft, Loader2, Eye, Share2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ViewImageDialog } from '../../images/view-image-dialog';
 import { getImageUrlAction } from '../../images/minio-actions';
@@ -34,6 +34,7 @@ export default function ObituaryPage() {
   const [images, setImages] = useState<string[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     if (reference) {
@@ -91,6 +92,31 @@ export default function ObituaryPage() {
       });
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    setIsSharing(true);
+    try {
+      // Generate a public URL using the current window location
+      const baseUrl = window.location.origin;
+      const publicUrl = `${baseUrl}/public/obituary/${reference}`;
+      
+      await navigator.clipboard.writeText(publicUrl);
+      
+      toast({
+        title: "Link Copied!",
+        description: "The public link has been copied to your clipboard.",
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast({
+        title: "Error",
+        description: "Failed to copy link. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -263,6 +289,23 @@ export default function ObituaryPage() {
           className="bg-blue-600 text-white hover:bg-blue-700"
         >
           <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleShare}
+          disabled={isSharing}
+          className="bg-purple-600 text-white hover:bg-purple-700"
+        >
+          {isSharing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Copying Link...
+            </>
+          ) : (
+            <>
+              <Share2 className="mr-2 h-4 w-4" /> Share Public Link
+            </>
+          )}
         </Button>
         <Button
           variant="outline"

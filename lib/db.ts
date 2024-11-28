@@ -60,13 +60,6 @@ export async function getObituaries(
               mode: Prisma.QueryMode.insensitive
             }
           },
-          // search by death date range only if first element of search string is "from" or the third element is "to"
-          {
-            deathDate: {
-              gte: firstName === 'from' ? new Date(secondName) : undefined,
-              lte: thirdName === 'to' ? new Date(fourthName) : undefined,
-            }
-          },
           // search by given names and surname
           {
             AND: [
@@ -371,7 +364,6 @@ export async function getObituaries(
               }
             ]
           },
-          // Only include date conditions if search string is a valid date
           ...(isValidDate(search)
             ? [
                 // search by death date
@@ -389,7 +381,138 @@ export async function getObituaries(
                   }
                 }
               ]
-            : [])
+            : []
+          ),
+          // Special search keywords
+          ...(firstName === '@fileNumber'
+            ? [{
+                reference: {
+                  contains: secondName,
+                  mode: Prisma.QueryMode.insensitive
+                }
+              }]
+            : []),
+          ...(firstName === '@surname'
+            ? [{
+                surname: {
+                  equals: secondName,
+                  mode: Prisma.QueryMode.insensitive
+                }
+              }]
+            : []),
+          ...(firstName === '@givenNames'
+            ? [{
+                givenNames: {
+                  equals: secondName,
+                  mode: Prisma.QueryMode.insensitive
+                }
+              }]
+            : []),
+          ...(firstName === '@maidenName'
+            ? [{
+                maidenName: {
+                  equals: secondName,
+                  mode: Prisma.QueryMode.insensitive
+                }
+              }]
+            : []),
+          ...(firstName === '@birthDate' && isValidDate(secondName)
+            ? [{
+                birthDate: {
+                  equals: new Date(secondName)
+                }
+              }]
+            : []),
+          ...(firstName === '@birthDateFrom' && thirdName === '@birthDateTo'
+            ? [{
+                birthDate: {
+                  gte: new Date(secondName),
+                  lte: new Date(fourthName)
+                }
+              }]
+            : []),
+          ...(firstName === '@deathDate' && isValidDate(secondName)
+            ? [{
+                deathDate: {
+                  equals: new Date(secondName)
+                }
+              }]
+            : []),
+          ...(firstName === '@deathDateFrom' && thirdName === '@deathDateTo'
+            ? [{
+                deathDate: {
+                  gte: new Date(secondName),
+                  lte: new Date(fourthName)
+                }
+              }]
+            : []),
+          ...(firstName === '@proofread'
+            ? [{
+                proofread: secondName.toLowerCase() === 'true'
+              }]
+            : []),
+          ...(firstName === '@proofreadDate' && isValidDate(secondName)
+            ? [{
+                proofreadDate: {
+                  equals: new Date(secondName)
+                }
+              }]
+            : []),
+          ...(firstName === '@proofreadDateFrom' && thirdName === '@proofreadDateTo'
+            ? [{
+                proofreadDate: {
+                  gte: new Date(secondName),
+                  lte: new Date(fourthName)
+                }
+              }]
+            : []),
+          ...(firstName === '@enteredBy'
+            ? [{
+                enteredBy: {
+                  contains: secondName,
+                  mode: Prisma.QueryMode.insensitive
+                }
+              }]
+            : []),
+          ...(firstName === '@enteredOn' && isValidDate(secondName)
+            ? [{
+                enteredOn: {
+                  equals: new Date(secondName)
+                }
+              }]
+            : []),
+          ...(firstName === '@enteredOnFrom' && thirdName === '@enteredOnTo'
+            ? [{
+                enteredOn: {
+                  gte: new Date(secondName),
+                  lte: new Date(fourthName)
+                }
+              }]
+            : []),
+          ...(firstName === '@aka.surname'
+            ? [{
+                alsoKnownAs: {
+                  some: {
+                    surname: {
+                      contains: secondName,
+                      mode: Prisma.QueryMode.insensitive
+                    }
+                  }
+                }
+              }]
+            : []),
+          ...(firstName === '@aka.otherNames'
+            ? [{
+                alsoKnownAs: {
+                  some: {
+                    otherNames: {
+                      contains: secondName,
+                      mode: Prisma.QueryMode.insensitive
+                    }
+                  }
+                }
+              }]
+            : []),
         ]
       }
     : {};
