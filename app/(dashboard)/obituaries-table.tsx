@@ -102,11 +102,10 @@ export function ObituariesTable({
           <div>
             <CardTitle className="mb-1">Obituary Index</CardTitle>
             <CardDescription>
-            <span className="block mt-2" />
-              Manage obituaries, view their details, and add associated image
-              files.
+              <span className="block mt-2" />
+              Manage obituaries, view their details, and add associated image files.
               <span className="block mt-4" />
-              <strong>Please note:</strong> Search by typing a person's Fullname, Given Names, Surname, Maiden Name, Also Known As Names, File Number, Batch Number, Death or Birth Date (YYYY-MM-DD). 
+              <strong>Search:</strong> Type any name or file number for regular search. For specific searches, use the dropdown menu to select search types.
             </CardDescription>
           </div>
           <div className="flex gap-2">
