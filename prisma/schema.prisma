@@ -56,6 +56,7 @@ model Obituary {
   editedOn       DateTime?     @updatedAt
   fileBoxId      Int?          @db.SmallInt
   batch          String?
+  publicHash     String?       @unique
   alsoKnownAs    AlsoKnownAs[]
   birthCity      City?         @relation("birthCityId", fields: [birthCityId], references: [id])
   cemetery       Cemetery?     @relation(fields: [cemeteryId], references: [id])
