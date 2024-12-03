@@ -12,7 +12,9 @@ export async function GET(
       where: { reference },
       include: {
         title: true,
+        birthCountry: true,
         birthCity: { include: { country: true } },
+        deathCountry: true,
         deathCity: { include: { country: true } },
         cemetery: true,
         periodical: true,
@@ -130,12 +132,22 @@ export async function GET(
     );
     currentY += 15;
     drawKeyValuePair(
+      'Place of Birth',
+      `${obituary.birthCity?.name || 'N/A'}, ${obituary.birthCountry?.name || 'N/A'}`,
+      currentY
+    );
+    currentY += 15;
+    drawKeyValuePair(
       'Death Date',
       obituary.deathDate?.toDateString() || 'N/A',
       currentY
     );
     currentY += 15;
-    drawKeyValuePair('Place of Death', obituary.place || 'N/A', currentY);
+    drawKeyValuePair(
+      'Place of Death',
+      `${obituary.deathCity?.name || 'N/A'}, ${obituary.deathCountry?.name || 'N/A'}`,
+      currentY
+    );
     currentY += 25;
 
     // Also Known As
