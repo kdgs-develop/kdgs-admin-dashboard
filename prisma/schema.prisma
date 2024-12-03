@@ -36,8 +36,10 @@ model Obituary {
   givenNames     String?
   maidenName     String?
   birthDate      DateTime?     @db.Date
+  birthCountryId Int?          @db.SmallInt
   birthCityId    Int?          @db.SmallInt
   deathDate      DateTime?     @db.Date
+  deathCountryId Int?          @db.SmallInt
   deathCityId    Int?          @db.SmallInt
   burialCemetery String?
   cemeteryId     Int?          @db.SmallInt
@@ -58,8 +60,10 @@ model Obituary {
   batch          String?
   publicHash     String?       @unique
   alsoKnownAs    AlsoKnownAs[]
+  birthCountry   Country?      @relation("BirthCountry", fields: [birthCountryId], references: [id])
   birthCity      City?         @relation("birthCityId", fields: [birthCityId], references: [id])
   cemetery       Cemetery?     @relation(fields: [cemeteryId], references: [id])
+  deathCountry   Country?      @relation("DeathCountry", fields: [deathCountryId], references: [id])
   deathCity      City?         @relation("deathCityId", fields: [deathCityId], references: [id])
   fileBox        FileBox?      @relation(fields: [fileBoxId], references: [id])
   periodical     Periodical?   @relation(fields: [periodicalId], references: [id])
@@ -97,9 +101,11 @@ model City {
 }
 
 model Country {
-  id     Int    @id @default(autoincrement())
-  name   String
-  cities City[]
+  id          Int        @id @default(autoincrement())
+  name        String
+  cities      City[]
+  birthPlaces Obituary[] @relation("BirthCountry")
+  deathPlaces Obituary[] @relation("DeathCountry")
 }
 
 model Cemetery {
