@@ -637,6 +637,16 @@ export async function getTitles() {
   });
 }
 
+export async function getCountries() {
+  return prisma.country.findMany({
+    select: {
+      id: true,
+      name: true
+    },
+    orderBy: { name: 'asc' }
+  });
+}
+
 export async function getCities() {
   return prisma.city.findMany({
     select: {
