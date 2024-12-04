@@ -120,7 +120,7 @@ function ComboboxFormFieldAdmin({
                       onClick={() => setIsDialogOpen(true)}
                     >
                       <Plus className="mr-2 h-4 w-4" />
-                      Add new city
+                      Add New Location
                     </Button>
                   </CommandEmpty>
                   <CommandGroup>
