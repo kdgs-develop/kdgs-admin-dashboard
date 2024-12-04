@@ -75,7 +75,7 @@ export function SearchInput() {
 
       let newSearchValue = '';
       if (dateRangeOptions.includes(value)) {
-        newSearchValue = `${value} YYYY-MM-DD @${value.slice(1)}To YYYY-MM-DD`;
+        newSearchValue = `${value} YYYY-MM-DD @${value.slice(1, -4)}To YYYY-MM-DD`;
       } else if (value === '@proofread') {
         newSearchValue = `${value} true`;
       } else if (value.includes('Date')) {
