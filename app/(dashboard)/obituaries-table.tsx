@@ -142,6 +142,7 @@ export function ObituariesTable({
                 <TableHead>Surname</TableHead>
                 <TableHead>Given Names</TableHead>
                 <TableHead>Death Date</TableHead>
+                <TableHead>Images</TableHead>
                 <TableHead>Proofread</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
