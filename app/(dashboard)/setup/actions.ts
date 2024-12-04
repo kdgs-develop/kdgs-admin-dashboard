@@ -156,37 +156,36 @@ export async function getCities(): Promise<Prisma.CityGetPayload<{ include: { co
   }
 }
 
-export async function addCity(name: string, province: string, countryId: number ) {
-  
+export async function addCity(name: string | null, province: string | null, countryId: number) {
   try {
-    // Check for existing city
+    // Check for existing city with exact match including null values
     const existingCity = await prisma.city.findFirst({
       where: {
-        name: name,
-        province: province,
-        countryId: countryId,
+        AND: [
+          { name: name },  // This will match null with null
+          { province: province }, // This will match null with null
+          { countryId: countryId }
+        ]
       },
     });
 
     if (existingCity) {
-      throw new Error('A city with this name, province, and country already exists');
+      throw new Error('A location with these exact details already exists in the database');
     }
 
     // Create the new city
     const newCity = await prisma.city.create({
       data: {
-        name: name,
-        province: province,
-        countryId: countryId,
+        name,
+        province,
+        countryId,
       },
       include: {
         country: true
       }
     });
 
-    // Revalidate the path to update the UI
     revalidatePath('/');
-
     
     return {
       id: newCity.id,
@@ -197,12 +196,11 @@ export async function addCity(name: string, province: string, countryId: number 
   } catch (error) {
     console.error('Error adding new city:', error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // The .code property can be accessed in a type-safe manner
       if (error.code === 'P2002') {
-        throw new Error('A city with this name already exists in this country and province');
+        throw new Error('A location with these details already exists');
       }
     }
-    throw new Error(error instanceof Error ? error.message : 'Failed to add new city');
+    throw error;
   }
 }
 
