@@ -143,7 +143,9 @@ export async function getCities(): Promise<Prisma.CityGetPayload<{ include: { co
         country: true
       },
       orderBy: {
-        name: 'asc'
+        country: {
+          name: 'asc'
+        }
       }
     });
 
