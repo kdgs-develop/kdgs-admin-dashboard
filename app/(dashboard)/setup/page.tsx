@@ -12,6 +12,7 @@ import { AdminBackup } from './admin-backup';
 import { BulkUpload } from './bulk-upload';
 import { GeneaologistAdministration } from './genealogist-administration';
 import { LocationAdministration } from './location-administration';
+import { CountryAdministration } from './country-administration';
 
 export default async function SetupPage() {
   const { userId } = auth();
@@ -35,6 +36,8 @@ export default async function SetupPage() {
             <CardContent className="space-y-4 pt-4 px-0">
 
               <BulkUpload />
+
+              <CountryAdministration />
 
               <LocationAdministration />
 

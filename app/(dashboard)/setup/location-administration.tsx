@@ -7,22 +7,13 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Form } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-
-import ComboboxFormFieldAdmin from '@/components/ui/combo-form-field-admin';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import { Prisma } from '@prisma/client';
-import { getCities, getCountries } from './actions';
-
-const formSchema = z.object({
-  name: z.string().min(1, 'City name is required'),
-  province: z.string().min(1, 'Province is required'),
-  country: z.string().min(1, 'Country is required')
-});
+import { getCities, getCountries, addCity } from './actions';
+import AddCityDialog from './add-city-dialog';
 
 export function LocationAdministration() {
   const [cities, setCities] = useState<
@@ -30,15 +21,7 @@ export function LocationAdministration() {
   >([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: '',
-      province: '',
-      country: ''
-    }
-  });
+  const [countries, setCountries] = useState<{ id: number; name: string }[]>([]);
 
   useEffect(() => {
     async function fetchCities() {
@@ -63,11 +46,6 @@ export function LocationAdministration() {
     fetchCities();
   }, [toast]);
 
-  // Fetch countries
-  const [countries, setCountries] = useState<{ id: number; name: string }[]>(
-    []
-  );
-
   useEffect(() => {
     async function fetchCountries() {
       const fetchedCountries = await getCountries();
@@ -76,33 +54,47 @@ export function LocationAdministration() {
     fetchCountries();
   }, []);
 
+  const handleAddCity = async (name: string | null, province: string | null, countryId: number) => {
+    try {
+      const newCity = await addCity(name, province, countryId);
+      setCities(prev => [...prev, newCity as any]);
+      toast({
+        title: 'Success',
+        description: 'Location added successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error adding city',
+        description: error instanceof Error ? error.message : 'Failed to add city',
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add New Locations</CardTitle>
+        <CardTitle>Add New Location</CardTitle>
         <CardDescription>
-          Search for existing locations or add new ones.
+          Add a new location to the database, if the location already exists it will throw an error message to the user.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form>
-            <ComboboxFormFieldAdmin
-              control={form.control}
-              name="cityId"
-              label="Locations available"
-              placeholder="Select a location"
-              emptyText="No location found."
-              items={cities.map((city) => ({
-                id: city.id,
-                name: city.name || '',
-                province: city.province || undefined,
-                country: city.country ? { name: city.country.name } : undefined
-              }))}
-              countries={countries}
-            />
-          </form>
-        </Form>
+          <div className="flex justify-start">
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              variant="outline"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Location
+            </Button>
+          </div>
+        <AddCityDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          onAddCity={handleAddCity}
+          countries={countries}
+        />
       </CardContent>
     </Card>
   );

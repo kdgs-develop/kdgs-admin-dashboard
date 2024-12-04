@@ -12,9 +12,7 @@ export async function GET(
       where: { reference },
       include: {
         title: true,
-        birthCountry: true,
         birthCity: { include: { country: true } },
-        deathCountry: true,
         deathCity: { include: { country: true } },
         cemetery: true,
         periodical: true,
@@ -133,7 +131,7 @@ export async function GET(
     currentY += 15;
     drawKeyValuePair(
       'Place of Birth',
-      `${obituary.birthCity?.name || 'N/A'}, ${obituary.birthCountry?.name || 'N/A'}`,
+      `${obituary.birthCity?.name || 'N/A'}, ${obituary.birthCity?.province || 'N/A'}, ${obituary.birthCity?.country?.name || 'N/A'}`,
       currentY
     );
     currentY += 15;
@@ -145,7 +143,7 @@ export async function GET(
     currentY += 15;
     drawKeyValuePair(
       'Place of Death',
-      `${obituary.deathCity?.name || 'N/A'}, ${obituary.deathCountry?.name || 'N/A'}`,
+      `${obituary.deathCity?.name || 'N/A'}, ${obituary.deathCity?.province || 'N/A'}, ${obituary.deathCity?.country?.name || 'N/A'}`,
       currentY
     );
     currentY += 25;

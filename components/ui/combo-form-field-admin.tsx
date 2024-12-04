@@ -29,7 +29,7 @@ type ComboboxFormFieldProps = {
   placeholder: string;
   emptyText: string;
   items: { id: number; name: string; province?: string; country?: { name: string } }[];
-  onAddItem?: (name: string, province: string, countryId: number) => Promise<{ id: number; name: string, province?: string, country?: { name: string } }>;
+  onAddItem?: (name: string | null, province: string | null, countryId: number) => Promise<{ id: number; name: string, province?: string, country?: { name: string } }>;
   countries: { id: number; name: string }[]; // Add this prop for country options
 };
 
@@ -56,7 +56,7 @@ function ComboboxFormFieldAdmin({
     }
   }, []);
 
-  const handleAddItem = async (name: string, province: string, countryId: number) => {
+  const handleAddItem = async (name: string | null, province: string | null, countryId: number) => {
     try {
       const newCity = await addCity(name, province, countryId);
       return newCity;
@@ -120,7 +120,7 @@ function ComboboxFormFieldAdmin({
                       onClick={() => setIsDialogOpen(true)}
                     >
                       <Plus className="mr-2 h-4 w-4" />
-                      Add new city
+                      Add New Location
                     </Button>
                   </CommandEmpty>
                   <CommandGroup>
