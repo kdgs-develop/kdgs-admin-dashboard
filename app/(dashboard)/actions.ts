@@ -67,7 +67,6 @@ export async function deleteObituary(formData: FormData) {
 
 interface EditObituaryDialogData {
   titles: { id: number; name: string }[];
-  countries: { id: number; name: string }[];
   cities: {
     id: number;
     name: string | null;
@@ -88,10 +87,9 @@ interface EditObituaryDialogData {
 }
 
 export async function getEditObituaryDialogData(): Promise<EditObituaryDialogData> {
-  const [rawTitles, rawCountries, rawCities, rawCemeteries, rawPeriodicals, rawFileBoxes] =
+  const [rawTitles, rawCities, rawCemeteries, rawPeriodicals, rawFileBoxes] =
     await Promise.all([
       getTitles(),
-      getCountries(),
       getCities(),
       getCemeteries(),
       getPeriodicals(),
@@ -100,10 +98,6 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
 
   const titles = rawTitles.filter(
     (title): title is { id: number; name: string } => title.name !== null
-  );
-
-  const countries = rawCountries.filter(
-    (country): country is { id: number; name: string } => country.name !== null
   );
 
   const cities = rawCities.filter(
@@ -143,7 +137,6 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
 
   return {
     titles,
-    countries,
     cities,
     cemeteries,
     periodicals,
@@ -218,9 +211,7 @@ export async function createObituaryAction(
         ...restObituaryData,
         fileBoxId: openFileBoxId || 0,
         cemetery: undefined,
-        birthCountry: undefined,
         birthCity: undefined,
-        deathCountry: undefined,
         deathCity: undefined,
         periodical: undefined,
         title: undefined,
