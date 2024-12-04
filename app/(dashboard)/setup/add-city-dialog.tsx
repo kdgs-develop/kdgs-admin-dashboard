@@ -60,7 +60,7 @@ function AddCityDialog({ isOpen, onClose, onAddCity, countries }: AddCityDialogP
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>City Name</FormLabel>
+                  <FormLabel>Location or City Name</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -106,7 +106,7 @@ function AddCityDialog({ isOpen, onClose, onAddCity, countries }: AddCityDialogP
               )}
             />
             <DialogFooter>
-              <Button type="submit">Add City</Button>
+              <Button type="submit">Save New Location</Button>
             </DialogFooter>
           </form>
         </Form>
