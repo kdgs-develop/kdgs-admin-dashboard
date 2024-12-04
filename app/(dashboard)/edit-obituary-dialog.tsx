@@ -59,10 +59,8 @@ const formSchema = z.object({
     .optional()
     .transform((val) => val?.toUpperCase()),
   birthDate: z.coerce.date().optional(),
-  birthCountryId: z.number().optional(),
   birthCityId: z.number().optional(),
   deathDate: z.coerce.date().optional(),
-  deathCountryId: z.number().optional(),
   deathCityId: z.number().optional(),
   burialCemetery: z.string().optional(),
   cemeteryId: z.number().optional(),
@@ -142,7 +140,6 @@ interface EditObituaryDialogProps {
   onClose: () => void;
   onSave: (updatedObituary: any) => Promise<void>;
   titles: { id: number; name: string }[];
-  countries: { id: number; name: string }[];
   cities: {
     id: number;
     name: string | null;
@@ -153,7 +150,7 @@ interface EditObituaryDialogProps {
     id: number;
     name: string;
     city: {
-      name: string;
+      name: string | null;
       province: string | null;
       country: { name: string } | null;
     };
@@ -168,7 +165,6 @@ export function EditObituaryDialog({
   onClose,
   onSave,
   titles,
-  countries,
   cities,
   cemeteries,
   periodicals,
@@ -206,10 +202,8 @@ export function EditObituaryDialog({
       givenNames: obituary.givenNames || '',
       maidenName: obituary.maidenName || '',
       birthDate: obituary.birthDate ? new Date(obituary.birthDate) : undefined,
-      birthCountryId: obituary.birthCountryId || undefined,
       birthCityId: obituary.birthCityId || undefined,
       deathDate: obituary.deathDate ? new Date(obituary.deathDate) : undefined,
-      deathCountryId: obituary.deathCountryId || undefined,
       deathCityId: obituary.deathCityId || undefined,
       burialCemetery: obituary.burialCemetery || '',
       cemeteryId: obituary.cemeteryId || undefined,
@@ -524,17 +518,6 @@ export function EditObituaryDialog({
                 />
                 <ComboboxFormField
                   control={form.control}
-                  name="birthCountryId"
-                  label="Birth Country"
-                  placeholder="Select a country"
-                  emptyText="No country found."
-                  items={countries.map((country) => ({
-                    id: country.id,
-                    name: country.name
-                  }))}
-                />
-                <ComboboxFormField
-                  control={form.control}
                   name="birthCityId"
                   label="Birth Place"
                   placeholder="Select a Place"
@@ -560,23 +543,13 @@ export function EditObituaryDialog({
                 />
                 <ComboboxFormField
                   control={form.control}
-                  name="deathCountryId"
-                  label="Death Country"
-                  placeholder="Select a country"
-                  emptyText="No country found."
-                  items={countries.map((country) => ({
-                    id: country.id,
-                    name: country.name
-                  }))}
-                />
-                <ComboboxFormField
-                  control={form.control}
                   name="deathCityId"
                   label="Death Place"
                   placeholder="Select a place"
                   emptyText="No place found."
                   items={localCities.map((city) => ({
                     ...city,
+                    name: city.name ?? null,
                     province: city.province ?? undefined,
                     country: city.country
                       ? { name: city.country.name }
