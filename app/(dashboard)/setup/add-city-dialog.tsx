@@ -59,6 +59,8 @@ function AddCityDialog({ isOpen, onClose, onAddCity, countries }: AddCityDialogP
           <DialogTitle>Add New Location</DialogTitle>
           <DialogDescription>
             Add a new location to the database.
+            <span className="block mt-4" />
+            <strong>Note: </strong>If the location already exists it will throw an error message to the user.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

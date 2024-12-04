@@ -213,3 +213,21 @@ export async function getCountries(): Promise<{ id: number; name: string }[]> {
     throw new Error('Failed to fetch countries');
   }
 }
+
+export async function addCountry(name: string) {
+  try {
+    const country = await prisma.country.create({
+      data: {
+        name,
+      },
+    });
+    return country;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        throw new Error('A country with this name already exists');
+      }
+    }
+    throw error;
+  }
+}
