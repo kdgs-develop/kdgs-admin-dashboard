@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,40 +7,48 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Location name is required"),
-  province: z.string().min(1, "Province is required"),
+  name: z.string().nullable(),
+  province: z.string().nullable(),
   countryId: z.number().min(1, "Country is required"),
 });
 
 type AddCityDialogProps = {
   isOpen: boolean;
   onClose: () => void;
-  onAddCity: (name: string, province: string, countryId: number) => Promise<void>;
+  onAddCity: (name: string | null, province: string | null, countryId: number) => Promise<void>;
   countries: { id: number; name: string }[];
 };
 
 function AddCityDialog({ isOpen, onClose, onAddCity, countries }: AddCityDialogProps) {
+  const { toast } = useToast();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       province: "",
-      countryId: 0,
+      countryId: undefined as unknown as number,
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    
     try {
-      await onAddCity(values.name, values.province, values.countryId);
+      // Convert empty strings to null
+      const name = values.name?.trim() || null;
+      const province = values.province?.trim() || null;
       
+      await onAddCity(name, province, values.countryId);
       form.reset();
       onClose();
     } catch (error) {
-      console.error("Error adding city:", error);
-      // You might want to show an error message to the user here
+      toast({
+        title: 'Error adding location',
+        description: error instanceof Error ? error.message : 'Failed to add location',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -60,9 +68,9 @@ function AddCityDialog({ isOpen, onClose, onAddCity, countries }: AddCityDialogP
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location or City Name</FormLabel>
+                  <FormLabel>Location or City Name (Optional)</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} value={field.value || ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -73,9 +81,9 @@ function AddCityDialog({ isOpen, onClose, onAddCity, countries }: AddCityDialogP
               name="province"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Province</FormLabel>
+                  <FormLabel>Province (Optional)</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} value={field.value || ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -87,18 +95,22 @@ function AddCityDialog({ isOpen, onClose, onAddCity, countries }: AddCityDialogP
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Country</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(Number(value))} value={field.value.toString()}>
+                  <Select 
+                    onValueChange={(value) => field.onChange(Number(value))} 
+                    value={field.value?.toString() || ""}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a country" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {countries.map((country) => (
-                        <SelectItem key={country.id} value={country.id.toString()}>
-                          {country.name}
-                        </SelectItem>
-                      ))}
+                      {countries
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((country) => (
+                          <SelectItem key={country.id} value={country.id.toString()}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
