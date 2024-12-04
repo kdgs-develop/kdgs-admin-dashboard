@@ -39,13 +39,11 @@ export async function fetchObituaryByReferenceAction(
       fileBox: true,
       relatives: true,
       alsoKnownAs: true,
-      birthCountry: true,
       birthCity: {
         include: {
           country: true,
         },
       },
-      deathCountry: true,
       deathCity: {
         include: {
           country: true,
