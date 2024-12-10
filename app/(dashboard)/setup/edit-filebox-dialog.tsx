@@ -7,6 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 
 const formSchema = z.object({
   year: z.number().min(1800, "Year must be after 1800").max(new Date().getFullYear(), "Year cannot be in the future"),
@@ -17,10 +19,11 @@ type EditFileBoxDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   onEditFileBox: (year: number, number: number) => Promise<void>;
+  onDeleteFileBox: (id: number) => Promise<void>;
   fileBox: { id: number; year: number; number: number } | null;
 };
 
-function EditFileBoxDialog({ isOpen, onClose, onEditFileBox, fileBox }: EditFileBoxDialogProps) {
+function EditFileBoxDialog({ isOpen, onClose, onEditFileBox, onDeleteFileBox, fileBox }: EditFileBoxDialogProps) {
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -98,11 +101,38 @@ function EditFileBoxDialog({ isOpen, onClose, onEditFileBox, fileBox }: EditFile
                 </FormItem>
               )}
             />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit">Save Changes</Button>
+            <DialogFooter className="flex justify-between items-center">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="destructive" size="sm">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the file box.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => fileBox && onDeleteFileBox(fileBox.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <div className="flex space-x-2">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button type="submit">Save Changes</Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>
