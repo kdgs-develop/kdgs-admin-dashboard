@@ -10,8 +10,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, Edit } from 'lucide-react';
-import { getFileBoxes, addFileBox, searchFileBoxes, updateFileBox } from './actions';
+import { Plus, Search, Edit, ChevronDown, ChevronUp } from 'lucide-react';
+import { getFileBoxes, addFileBox, searchFileBoxes, updateFileBox, deleteFileBox } from './actions';
 import AddFileBoxDialog from './add-filebox-dialog';
 import { Input } from '@/components/ui/input';
 import EditFileBoxDialog from './edit-filebox-dialog';
@@ -24,6 +24,7 @@ export function FileBoxAdministration() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedFileBox, setSelectedFileBox] = useState<{ id: number; year: number; number: number } | null>(null);
   const { toast } = useToast();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     async function fetchFileBoxes() {
@@ -106,87 +107,125 @@ export function FileBoxAdministration() {
     }
   };
 
+  const handleDeleteFileBox = async (id: number) => {
+    if (!selectedFileBox) return;
+    
+    try {
+      await deleteFileBox(id);
+      setFileBoxes(prev => prev.filter(box => box.id !== id));
+      toast({
+        title: 'Success',
+        description: 'File box deleted successfully',
+      });
+      setIsEditDialogOpen(false);
+      setSelectedFileBox(null);
+    } catch (error) {
+      toast({
+        title: 'Error deleting file box',
+        description: error instanceof Error ? error.message : 'Failed to delete file box',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleOpenDialog = () => {
     setIsDialogOpen(true);
   };
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>File Box Management</CardTitle>
-        <CardDescription>
-          Search for existing file boxes or add a new one. Each file box is identified by a year and number combination.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex space-x-4">
-          <div className="flex-1">
-            <Input
-              placeholder="Search by year"
-              value={searchYear}
-              onChange={(e) => setSearchYear(e.target.value)}
-              type="number"
-            />
-          </div>
-          <div className="flex-1">
-            <Input
-              placeholder="Search by number"
-              value={searchNumber}
-              onChange={(e) => setSearchNumber(e.target.value)}
-              type="number"
-            />
-          </div>
-          <Button onClick={handleSearch} variant="secondary">
-            <Search className="mr-2 h-4 w-4" />
-            Search
-          </Button>
-          <Button onClick={handleOpenDialog} variant="outline">
-            <Plus className="mr-2 h-4 w-4" />
-            Add New
-          </Button>
+      <CardHeader 
+        className="cursor-pointer flex flex-row items-center justify-between"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div>
+          <CardTitle>File Box Management</CardTitle>
+          {!isExpanded && (
+            <CardDescription>
+              Click to manage file boxes and search records
+            </CardDescription>
+          )}
         </div>
-
-        {fileBoxes.length > 0 && (
-          <div className="mt-4">
-            <h3 className="text-sm font-medium mb-2">Found File Boxes:</h3>
-            <div className="grid grid-cols-3 gap-2">
-              {fileBoxes.map((box) => (
-                <div key={box.id} className="p-2 border rounded flex justify-between items-center">
-                  <span>Year: {box.year}, Number: {box.number}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedFileBox(box);
-                      setIsEditDialogOpen(true);
-                    }}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+        <Button variant="ghost" size="icon">
+          {isExpanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </Button>
+      </CardHeader>
+      {isExpanded && (
+        <CardContent className="space-y-4">
+          <div className="flex space-x-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Search by year"
+                value={searchYear}
+                onChange={(e) => setSearchYear(e.target.value)}
+                type="number"
+              />
             </div>
+            <div className="flex-1">
+              <Input
+                placeholder="Search by number"
+                value={searchNumber}
+                onChange={(e) => setSearchNumber(e.target.value)}
+                type="number"
+              />
+            </div>
+            <Button onClick={handleSearch} variant="secondary">
+              <Search className="mr-2 h-4 w-4" />
+              Search
+            </Button>
+            <Button onClick={handleOpenDialog} variant="outline">
+              <Plus className="mr-2 h-4 w-4" />
+              Add New
+            </Button>
           </div>
-        )}
 
-        <AddFileBoxDialog
-          isOpen={isDialogOpen}
-          onClose={() => setIsDialogOpen(false)}
-          onAddFileBox={handleAddFileBox}
-          initialYear={searchYear ? parseInt(searchYear) : undefined}
-          initialNumber={searchNumber ? parseInt(searchNumber) : undefined}
-        />
+          {fileBoxes.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium mb-2">Found File Boxes:</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {fileBoxes.map((box) => (
+                  <div key={box.id} className="p-2 border rounded flex justify-between items-center">
+                    <span>Year: {box.year}, Number: {box.number}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedFileBox(box);
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-        <EditFileBoxDialog
-          isOpen={isEditDialogOpen}
-          onClose={() => {
-            setIsEditDialogOpen(false);
-            setSelectedFileBox(null);
-          }}
-          onEditFileBox={handleEditFileBox}
-          fileBox={selectedFileBox}
-        />
-      </CardContent>
+          <AddFileBoxDialog
+            isOpen={isDialogOpen}
+            onClose={() => setIsDialogOpen(false)}
+            onAddFileBox={handleAddFileBox}
+            initialYear={searchYear ? parseInt(searchYear) : undefined}
+            initialNumber={searchNumber ? parseInt(searchNumber) : undefined}
+          />
+
+          <EditFileBoxDialog
+            isOpen={isEditDialogOpen}
+            onClose={() => {
+              setIsEditDialogOpen(false);
+              setSelectedFileBox(null);
+            }}
+            onEditFileBox={handleEditFileBox}
+            onDeleteFileBox={handleDeleteFileBox}
+            fileBox={selectedFileBox}
+          />
+        </CardContent>
+      )}
     </Card>
   );
 }
