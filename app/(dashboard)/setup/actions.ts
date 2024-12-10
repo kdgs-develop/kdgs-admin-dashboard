@@ -297,3 +297,38 @@ export async function addFileBox(year: number, number: number) {
     throw error;
   }
 }
+
+export async function updateFileBox(id: number, year: number, number: number) {
+  try {
+    // First check if another file box exists with the same year and number
+    const existing = await prisma.fileBox.findFirst({
+      where: {
+        AND: [
+          { year },
+          { number },
+          { NOT: { id } } // Exclude the current file box
+        ]
+      }
+    });
+
+    if (existing) {
+      throw new Error('A file box with this year and number combination already exists');
+    }
+
+    const fileBox = await prisma.fileBox.update({
+      where: { id },
+      data: {
+        year,
+        number,
+      },
+    });
+    return fileBox;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        throw new Error('A file box with this combination already exists');
+      }
+    }
+    throw error;
+  }
+}

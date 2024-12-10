@@ -10,16 +10,19 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Search } from 'lucide-react';
-import { getFileBoxes, addFileBox, searchFileBoxes } from './actions';
+import { Plus, Search, Edit } from 'lucide-react';
+import { getFileBoxes, addFileBox, searchFileBoxes, updateFileBox } from './actions';
 import AddFileBoxDialog from './add-filebox-dialog';
 import { Input } from '@/components/ui/input';
+import EditFileBoxDialog from './edit-filebox-dialog';
 
 export function FileBoxAdministration() {
   const [fileBoxes, setFileBoxes] = useState<{ id: number; year: number; number: number }[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchYear, setSearchYear] = useState('');
   const [searchNumber, setSearchNumber] = useState('');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedFileBox, setSelectedFileBox] = useState<{ id: number; year: number; number: number } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -80,6 +83,29 @@ export function FileBoxAdministration() {
     }
   };
 
+  const handleEditFileBox = async (year: number, number: number) => {
+    if (!selectedFileBox) return;
+    
+    try {
+      const updatedFileBox = await updateFileBox(selectedFileBox.id, year, number);
+      setFileBoxes(prev => prev.map(box => 
+        box.id === selectedFileBox.id ? updatedFileBox : box
+      ));
+      toast({
+        title: 'Success',
+        description: 'File box updated successfully',
+      });
+      setIsEditDialogOpen(false);
+      setSelectedFileBox(null);
+    } catch (error) {
+      toast({
+        title: 'Error updating file box',
+        description: error instanceof Error ? error.message : 'Failed to update file box',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleOpenDialog = () => {
     setIsDialogOpen(true);
   };
@@ -125,8 +151,18 @@ export function FileBoxAdministration() {
             <h3 className="text-sm font-medium mb-2">Found File Boxes:</h3>
             <div className="grid grid-cols-3 gap-2">
               {fileBoxes.map((box) => (
-                <div key={box.id} className="p-2 border rounded">
-                  Year: {box.year}, Number: {box.number}
+                <div key={box.id} className="p-2 border rounded flex justify-between items-center">
+                  <span>Year: {box.year}, Number: {box.number}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedFileBox(box);
+                      setIsEditDialogOpen(true);
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -139,6 +175,16 @@ export function FileBoxAdministration() {
           onAddFileBox={handleAddFileBox}
           initialYear={searchYear ? parseInt(searchYear) : undefined}
           initialNumber={searchNumber ? parseInt(searchNumber) : undefined}
+        />
+
+        <EditFileBoxDialog
+          isOpen={isEditDialogOpen}
+          onClose={() => {
+            setIsEditDialogOpen(false);
+            setSelectedFileBox(null);
+          }}
+          onEditFileBox={handleEditFileBox}
+          fileBox={selectedFileBox}
         />
       </CardContent>
     </Card>
