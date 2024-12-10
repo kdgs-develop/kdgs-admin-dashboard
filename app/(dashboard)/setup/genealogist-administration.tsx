@@ -45,7 +45,7 @@ import { useToast } from '@/hooks/use-toast';
 import emailjs from '@emailjs/browser';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Role } from '@prisma/client';
-import { Edit2, Eye, EyeOff } from 'lucide-react';
+import { Edit2, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -118,6 +118,8 @@ export function GeneaologistAdministration() {
       password: ''
     }
   });
+
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const fetchGenealogists = async () => {
     try {
@@ -326,272 +328,287 @@ export function GeneaologistAdministration() {
 
   return (
     <Card className="w-[calc(100%)]">
-      <CardHeader>
-        <CardTitle>Genealogist Administration</CardTitle>
-        <CardDescription>
-          Manage genealogists: create new accounts, edit existing ones, and
-          handle user roles.
-        </CardDescription>
+      <CardHeader 
+        className="cursor-pointer flex flex-row items-center justify-between"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div>
+          <CardTitle>Genealogist Administration</CardTitle>
+          {!isExpanded && (
+            <CardDescription>
+              Click to manage genealogists and user roles
+            </CardDescription>
+          )}
+        </div>
+        <Button variant="ghost" size="icon">
+          {isExpanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </Button>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-8">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="First Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Last Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Phone" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Role</FormLabel>
-                      <Controller
-                        name="role"
-                        control={form.control}
-                        render={({ field }) => (
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select Role" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="VIEWER">Viewer</SelectItem>
-                              <SelectItem value="SCANNER">Scanner</SelectItem>
-                              <SelectItem value="INDEXER">Indexer</SelectItem>
-                              <SelectItem value="PROOFREADER">
-                                Proofreader
-                              </SelectItem>
-                              <SelectItem value="ADMIN">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <div className="flex space-x-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={generateSecurePassword}
-                        >
-                          Generate
-                        </Button>
-                        <div className="relative flex-grow">
-                          <FormControl>
-                            <Input
-                              placeholder="Password"
-                              type={showPassword ? 'text' : 'password'}
-                              {...field}
-                            />
-                          </FormControl>
+      {isExpanded && (
+        <CardContent>
+          <div className="space-y-8">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="First Name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Last Name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Phone" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Role</FormLabel>
+                        <Controller
+                          name="role"
+                          control={form.control}
+                          render={({ field }) => (
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Role" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="VIEWER">Viewer</SelectItem>
+                                <SelectItem value="SCANNER">Scanner</SelectItem>
+                                <SelectItem value="INDEXER">Indexer</SelectItem>
+                                <SelectItem value="PROOFREADER">
+                                  Proofreader
+                                </SelectItem>
+                                <SelectItem value="ADMIN">Admin</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <div className="flex space-x-2">
                           <Button
                             type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full"
-                            onClick={togglePasswordVisibility}
+                            variant="outline"
+                            onClick={generateSecurePassword}
                           >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
+                            Generate
                           </Button>
+                          <div className="relative flex-grow">
+                            <FormControl>
+                              <Input
+                                placeholder="Password"
+                                type={showPassword ? 'text' : 'password'}
+                                {...field}
+                              />
+                            </FormControl>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-0 top-0 h-full"
+                              onClick={togglePasswordVisibility}
+                            >
+                              {showPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="flex justify-end mt-4">
-                <Button
-                  type="submit"
-                  className="w-full md:w-auto"
-                  variant="default"
-                >
-                  Create Genealogist
-                </Button>
-              </div>
-            </form>
-          </Form>
-
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {genealogists.map((genealogist) => (
-                  <TableRow key={genealogist.id}>
-                    <TableCell>{genealogist.fullName || 'N/A'}</TableCell>
-                    <TableCell>{genealogist.email}</TableCell>
-                    <TableCell>{genealogist.phone || 'N/A'}</TableCell>
-                    <TableCell>{genealogist.role || 'N/A'}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(genealogist)}
-                          disabled={
-                            genealogist.email === 'kdgs.develop@gmail.com'
-                          }
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSendNewPassword(genealogist)}
-                          disabled={
-                            genealogist.email === 'kdgs.develop@gmail.com'
-                          }
-                        >
-                          Send New Password
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteGenealogist(genealogist)}
-                          disabled={
-                            genealogist.email === 'kdgs.develop@gmail.com'
-                          }
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <DeleteConfirmationDialog
-            isOpen={isConfirmDialogOpen}
-            onClose={() => setIsConfirmDialogOpen(false)}
-            onConfirm={handleConfirmAction}
-            action={confirmAction as 'delete' | 'newPassword'}
-          />
-
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Genealogist</DialogTitle>
-                <DialogDescription>
-                  Update the phone number and role of the genealogist. Click
-                  save when you're done.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-phone" className="text-right">
-                    Phone
-                  </Label>
-                  <Input
-                    id="edit-phone"
-                    value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
-                    className="col-span-3"
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-role" className="text-right">
-                    Role
-                  </Label>
-                  <Select value={editRole} onValueChange={setEditRole}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="VIEWER">Viewer</SelectItem>
-                      <SelectItem value="SCANNER">Scanner</SelectItem>
-                      <SelectItem value="INDEXER">Indexer</SelectItem>
-                      <SelectItem value="PROOFREADER">Proofreader</SelectItem>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="flex justify-end mt-4">
+                  <Button
+                    type="submit"
+                    className="w-full md:w-auto"
+                    variant="default"
+                  >
+                    Create Genealogist
+                  </Button>
                 </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit" onClick={handleEditGenealogist}>
-                  Save changes
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </CardContent>
+              </form>
+            </Form>
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {genealogists.map((genealogist) => (
+                    <TableRow key={genealogist.id}>
+                      <TableCell>{genealogist.fullName || 'N/A'}</TableCell>
+                      <TableCell>{genealogist.email}</TableCell>
+                      <TableCell>{genealogist.phone || 'N/A'}</TableCell>
+                      <TableCell>{genealogist.role || 'N/A'}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDialog(genealogist)}
+                            disabled={
+                              genealogist.email === 'kdgs.develop@gmail.com'
+                            }
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSendNewPassword(genealogist)}
+                            disabled={
+                              genealogist.email === 'kdgs.develop@gmail.com'
+                            }
+                          >
+                            Send New Password
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteGenealogist(genealogist)}
+                            disabled={
+                              genealogist.email === 'kdgs.develop@gmail.com'
+                            }
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <DeleteConfirmationDialog
+              isOpen={isConfirmDialogOpen}
+              onClose={() => setIsConfirmDialogOpen(false)}
+              onConfirm={handleConfirmAction}
+              action={confirmAction as 'delete' | 'newPassword'}
+            />
+
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Genealogist</DialogTitle>
+                  <DialogDescription>
+                    Update the phone number and role of the genealogist. Click
+                    save when you're done.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-phone" className="text-right">
+                      Phone
+                    </Label>
+                    <Input
+                      id="edit-phone"
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-role" className="text-right">
+                      Role
+                    </Label>
+                    <Select value={editRole} onValueChange={setEditRole}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="VIEWER">Viewer</SelectItem>
+                        <SelectItem value="SCANNER">Scanner</SelectItem>
+                        <SelectItem value="INDEXER">Indexer</SelectItem>
+                        <SelectItem value="PROOFREADER">Proofreader</SelectItem>
+                        <SelectItem value="ADMIN">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" onClick={handleEditGenealogist}>
+                    Save changes
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardContent>
+      )}
     </Card>
   );
 }
