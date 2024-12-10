@@ -16,6 +16,7 @@ import { useCallback, useState } from 'react';
 import { OverwriteConfirmationDialog } from './overwrite-confirmation-dialog';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { format } from 'date-fns';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export function BulkUpload() {
   const [files, setFiles] = useState<FileList | null>(null);
@@ -26,6 +27,7 @@ export function BulkUpload() {
   const [uploadResults, setUploadResults] = useState<
     { fileName: string; status: 'uploaded' | 'skipped' | 'overwritten' | 'failed' }[]
   >([]);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiles(e.target.files);
@@ -235,45 +237,63 @@ export function BulkUpload() {
 
   return (
     <Card className="w-[calc(100%)]">
-      <CardHeader>
-        <CardTitle>Bulk Upload</CardTitle>
-        <CardDescription>Upload multiple image files at once.</CardDescription>
-      </CardHeader>
-      <CardContent className="text-sm text-muted-foreground">
-        <div className="space-y-4">
-          <Input
-            type="file"
-            multiple
-            onChange={handleFileChange}
-            className="hover:cursor-pointer"
-          />
-          <div className="flex space-x-2">
-            <Button onClick={handleUpload} disabled={isUploading}>
-              {isUploading ? 'Uploading...' : 'Upload Files'}
-            </Button>
-            {uploadResults.length > 0 && (
-              <Button onClick={generatePDF} variant="outline">
-                Download Results PDF
-              </Button>
-            )}
-          </div>
-          {isUploading && (
-            <Progress value={uploadProgress} className="w-full" />
-          )}
-          {uploadResults.length > 0 && (
-            <div className="mt-4">
-              <h3 className="font-semibold mb-2">Upload Results:</h3>
-              <ul className="list-disc pl-5">
-                {uploadResults.map((result, index) => (
-                  <li key={index} className={`text-${result.status === 'failed' ? 'red' : 'green'}-600`}>
-                    {result.fileName} - {result.status}
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <CardHeader 
+        className="cursor-pointer flex flex-row items-center justify-between"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div>
+          <CardTitle>Bulk Upload</CardTitle>
+          {!isExpanded && (
+            <CardDescription>
+              Click to manage bulk image uploads
+            </CardDescription>
           )}
         </div>
-      </CardContent>
+        <Button variant="ghost" size="icon">
+          {isExpanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </Button>
+      </CardHeader>
+      {isExpanded && (
+        <CardContent className="text-sm text-muted-foreground">
+          <div className="space-y-4">
+            <Input
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              className="hover:cursor-pointer"
+            />
+            <div className="flex space-x-2">
+              <Button onClick={handleUpload} disabled={isUploading}>
+                {isUploading ? 'Uploading...' : 'Upload Files'}
+              </Button>
+              {uploadResults.length > 0 && (
+                <Button onClick={generatePDF} variant="outline">
+                  Download Results PDF
+                </Button>
+              )}
+            </div>
+            {isUploading && (
+              <Progress value={uploadProgress} className="w-full" />
+            )}
+            {uploadResults.length > 0 && (
+              <div className="mt-4">
+                <h3 className="font-semibold mb-2">Upload Results:</h3>
+                <ul className="list-disc pl-5">
+                  {uploadResults.map((result, index) => (
+                    <li key={index} className={`text-${result.status === 'failed' ? 'red' : 'green'}-600`}>
+                      {result.fileName} - {result.status}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      )}
       <OverwriteConfirmationDialog
         isOpen={overwriteDialogOpen}
         onConfirm={overwriteHandlers.handleConfirm}
