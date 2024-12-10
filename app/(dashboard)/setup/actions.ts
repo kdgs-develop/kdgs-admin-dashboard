@@ -520,3 +520,56 @@ export async function deleteCity(id: number) {
     throw new Error('Failed to delete city');
   }
 }
+
+export async function searchCities(
+  name?: string,
+  province?: string,
+  countryId?: number,
+  page: number = 1,
+  pageSize: number = 5
+) {
+  try {
+    const where: any = {};
+    
+    if (name) {
+      where.name = {
+        contains: name,
+        mode: 'insensitive'
+      };
+    }
+    
+    if (province) {
+      where.province = {
+        contains: province,
+        mode: 'insensitive'
+      };
+    }
+    
+    if (countryId) {
+      where.countryId = countryId;
+    }
+
+    const totalCount = await prisma.city.count({ where });
+    
+    const cities = await prisma.city.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: {
+        name: 'asc'
+      },
+      include: {
+        country: true
+      }
+    });
+
+    return {
+      cities,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
+  } catch (error) {
+    console.error('Error searching cities:', error);
+    throw new Error('Failed to search cities');
+  }
+}
