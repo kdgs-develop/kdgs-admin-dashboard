@@ -80,6 +80,10 @@ export function FileBoxAdministration() {
     }
   };
 
+  const handleOpenDialog = () => {
+    setIsDialogOpen(true);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -110,7 +114,7 @@ export function FileBoxAdministration() {
             <Search className="mr-2 h-4 w-4" />
             Search
           </Button>
-          <Button onClick={() => setIsDialogOpen(true)} variant="outline">
+          <Button onClick={handleOpenDialog} variant="outline">
             <Plus className="mr-2 h-4 w-4" />
             Add New
           </Button>
@@ -133,6 +137,8 @@ export function FileBoxAdministration() {
           isOpen={isDialogOpen}
           onClose={() => setIsDialogOpen(false)}
           onAddFileBox={handleAddFileBox}
+          initialYear={searchYear ? parseInt(searchYear) : undefined}
+          initialNumber={searchNumber ? parseInt(searchNumber) : undefined}
         />
       </CardContent>
     </Card>
