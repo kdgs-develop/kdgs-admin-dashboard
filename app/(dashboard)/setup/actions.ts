@@ -332,3 +332,26 @@ export async function updateFileBox(id: number, year: number, number: number) {
     throw error;
   }
 }
+
+export async function deleteFileBox(id: number) {
+  try {
+    // Check if the file box is being used by any obituaries
+    const fileBox = await prisma.fileBox.findUnique({
+      where: { id },
+      include: { obituaries: { select: { id: true } } }
+    });
+
+    if (fileBox?.obituaries.length) {
+      throw new Error('Cannot delete file box that is being used by obituaries');
+    }
+
+    await prisma.fileBox.delete({
+      where: { id }
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to delete file box');
+  }
+}
