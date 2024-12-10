@@ -8,6 +8,7 @@ export type Obituary = Awaited<
   ReturnType<typeof prisma.obituary.findUnique>
 > & {
   relatives?: Awaited<ReturnType<typeof prisma.relative.findMany>>;
+  fileBox?: Awaited<ReturnType<typeof prisma.fileBox.findUnique>>;
 };
 
 export async function getObituaries(
@@ -30,497 +31,529 @@ export async function getObituaries(
   const where: Prisma.ObituaryWhereInput = search
     ? {
         OR: [
-          {
-            surname: {
-              contains: search,
-              mode: Prisma.QueryMode.insensitive
-            }
-          },
-          {
-            givenNames: {
-              contains: search,
-              mode: Prisma.QueryMode.insensitive
-            }
-          },
-          {
-            reference: {
-              contains: search,
-              mode: Prisma.QueryMode.insensitive
-            }
-          },
-          {
-            maidenName: {
-              contains: search,
-              mode: Prisma.QueryMode.insensitive
-            }
-          },
-          {
-            batch: {
-              contains: search,
-              mode: Prisma.QueryMode.insensitive
-            }
-          },
-          // search by given names and surname
-          {
-            AND: [
-              {
-                givenNames: {
-                  contains: name,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              },
-              {
-                surname: {
-                  contains: surname,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            ]
-          },
-          {
-            AND: [
-              {
-                surname: {
-                  contains: name, // first element of search string
-                  mode: Prisma.QueryMode.insensitive
-                }
-              },
-              {
-                givenNames: {
-                  contains: surname, // second element of search string
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            ]
-          },
-          // search by one given names and one maiden name
-          {
-            AND: [
-              {
-                givenNames: {
-                  contains: name,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              },
-              {
-                maidenName: {
-                  contains: surname,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            ]
-          },
-          {
-            AND: [
-              {
-                maidenName: {
-                  contains: name, // first element of search string
-                  mode: Prisma.QueryMode.insensitive
-                }
-              },
-              {
-                givenNames: {
-                  contains: surname, // second element of search string
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            ]
-          },
-          // search by two given names and surname
-          {
-            AND: [
-              {
-                givenNames: {
-                  contains: `${firstName} ${secondName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              },
-              {
-                surname: {
-                  contains: `${thirdName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            ]
-          },
-          {
-            AND: [
-              {
-                surname: {
-                  contains: `${firstName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              },
-              {
-                givenNames: {
-                  contains: `${secondName} ${thirdName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            ]
-          },
-          // search by two given names and one maiden name
-          {
-            AND: [
-              {
-                givenNames: {
-                  contains: `${firstName} ${secondName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              },
-              {
-                maidenName: {
-                  contains: `${thirdName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            ]
-          },
-          {
-            AND: [
-              {
-                maidenName: {
-                  contains: `${firstName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              },
-              {
-                givenNames: {
-                  contains: `${secondName} ${thirdName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            ]
-          },
-          // search by one given name and two maiden names
-          {
-            AND: [
-              {
-                givenNames: {
-                  contains: `${firstName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              },
-              {
-                surname: {
-                  contains: `${secondName} ${thirdName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            ]
-          },
-          {
-            AND: [
-              {
-                surname: {
-                  contains: `${firstName} ${secondName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              },
-              {
-                givenNames: {
-                  contains: `${thirdName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            ]
-          },
-          // search by two given names and two surnames
-          {
-            AND: [
-              {
-                givenNames: {
-                  contains: `${firstName} ${secondName}`,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              },
-              {
-                surname: {
-                  contains: `${thirdName} ${fourthName} `,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            ]
-          },
-          // search by alsoKnownAs name
-          {
-            alsoKnownAs: {
-              some: {
-                otherNames: {
-                  contains: search,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            }
-          },
-          // search by alsoKnownAs surname
-          {
-            alsoKnownAs: {
-              some: {
-                surname: {
-                  contains: search,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }
-            }
-          },
-          // search by alsoKnownAs name and surname
-          {
-            AND: [
-              {
-                alsoKnownAs: {
-                  some: {
-                    otherNames: {
-                      contains: name,
-                      mode: Prisma.QueryMode.insensitive
-                    }
-                  }
-                }
-              },
-              {
-                alsoKnownAs: {
-                  some: {
-                    surname: {
-                      contains: surname,
-                      mode: Prisma.QueryMode.insensitive
-                    }
-                  }
-                }
-              }
-            ]
-          },
-          // search by alsoKnownAs first name, second name, and thirdName as surname
-          {
-            AND: [
-              {
-                alsoKnownAs: {
-                  some: {
-                    otherNames: {
-                      contains: `${firstName} ${secondName}`,
-                      mode: Prisma.QueryMode.insensitive
-                    }
-                  }
-                }
-              },
-              {
-                alsoKnownAs: {
-                  some: {
-                    surname: {
-                      contains: `${thirdName}`,
-                      mode: Prisma.QueryMode.insensitive
-                    }
-                  }
-                }
-              }
-            ]
-          },
-          // search by alsoKnownAs first name as name, and secondName and thirdName as surname
-          {
-            AND: [
-              {
-                alsoKnownAs: {
-                  some: {
-                    otherNames: {
-                      contains: `${firstName}`,
-                      mode: Prisma.QueryMode.insensitive
-                    }
-                  }
-                }
-              },
-              {
-                alsoKnownAs: {
-                  some: {
-                    surname: {
-                      contains: `${secondName} ${thirdName}`,
-                      mode: Prisma.QueryMode.insensitive
-                    }
-                  }
-                }
-              }
-            ]
-          },
-          // search by alsoKnownAs first name as name, and secondName and thirdName and fourthName as surname
-          {
-            AND: [
-              {
-                alsoKnownAs: {
-                  some: {
-                    otherNames: {
-                      contains: `${firstName} ${secondName}`,
-                      mode: Prisma.QueryMode.insensitive
-                    }
-                  }
-                }
-              },
-              {
-                alsoKnownAs: {
-                  some: {
-                    surname: {
-                      contains: `${thirdName} ${fourthName}`,
-                      mode: Prisma.QueryMode.insensitive
-                    }
-                  }
-                }
-              }
-            ]
-          },
-          ...(isValidDate(search)
+          ...(!firstName.startsWith('@')
             ? [
-                // search by death date
                 {
-                  deathDate: {
-                    gte: new Date(search),
-                    lte: new Date(search)
+                  surname: {
+                    contains: search,
+                    mode: Prisma.QueryMode.insensitive
                   }
                 },
-                // search by birth date
                 {
-                  birthDate: {
-                    gte: new Date(search),
-                    lte: new Date(search)
+                  givenNames: {
+                    contains: search,
+                    mode: Prisma.QueryMode.insensitive
+                  }
+                },
+                {
+                  reference: {
+                    contains: search,
+                    mode: Prisma.QueryMode.insensitive
+                  }
+                },
+                {
+                  maidenName: {
+                    contains: search,
+                    mode: Prisma.QueryMode.insensitive
+                  }
+                },
+                {
+                  batch: {
+                    contains: search,
+                    mode: Prisma.QueryMode.insensitive
+                  }
+                },
+                // search by given names and surname
+                {
+                  AND: [
+                    {
+                      givenNames: {
+                        contains: name,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    },
+                    {
+                      surname: {
+                        contains: surname,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  ]
+                },
+                {
+                  AND: [
+                    {
+                      surname: {
+                        contains: name, // first element of search string
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    },
+                    {
+                      givenNames: {
+                        contains: surname, // second element of search string
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  ]
+                },
+                // search by one given names and one maiden name
+                {
+                  AND: [
+                    {
+                      givenNames: {
+                        contains: name,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    },
+                    {
+                      maidenName: {
+                        contains: surname,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  ]
+                },
+                {
+                  AND: [
+                    {
+                      maidenName: {
+                        contains: name, // first element of search string
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    },
+                    {
+                      givenNames: {
+                        contains: surname, // second element of search string
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  ]
+                },
+                // search by two given names and surname
+                {
+                  AND: [
+                    {
+                      givenNames: {
+                        contains: `${firstName} ${secondName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    },
+                    {
+                      surname: {
+                        contains: `${thirdName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  ]
+                },
+                {
+                  AND: [
+                    {
+                      surname: {
+                        contains: `${firstName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    },
+                    {
+                      givenNames: {
+                        contains: `${secondName} ${thirdName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  ]
+                },
+                // search by two given names and one maiden name
+                {
+                  AND: [
+                    {
+                      givenNames: {
+                        contains: `${firstName} ${secondName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    },
+                    {
+                      maidenName: {
+                        contains: `${thirdName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  ]
+                },
+                {
+                  AND: [
+                    {
+                      maidenName: {
+                        contains: `${firstName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    },
+                    {
+                      givenNames: {
+                        contains: `${secondName} ${thirdName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  ]
+                },
+                // search by one given name and two maiden names
+                {
+                  AND: [
+                    {
+                      givenNames: {
+                        contains: `${firstName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    },
+                    {
+                      surname: {
+                        contains: `${secondName} ${thirdName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  ]
+                },
+                {
+                  AND: [
+                    {
+                      surname: {
+                        contains: `${firstName} ${secondName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    },
+                    {
+                      givenNames: {
+                        contains: `${thirdName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  ]
+                },
+                // search by two given names and two surnames
+                {
+                  AND: [
+                    {
+                      givenNames: {
+                        contains: `${firstName} ${secondName}`,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    },
+                    {
+                      surname: {
+                        contains: `${thirdName} ${fourthName} `,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  ]
+                },
+                // search by alsoKnownAs name
+                {
+                  alsoKnownAs: {
+                    some: {
+                      otherNames: {
+                        contains: search,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  }
+                },
+                // search by alsoKnownAs surname
+                {
+                  alsoKnownAs: {
+                    some: {
+                      surname: {
+                        contains: search,
+                        mode: Prisma.QueryMode.insensitive
+                      }
+                    }
+                  }
+                },
+                // search by alsoKnownAs name and surname
+                {
+                  AND: [
+                    {
+                      alsoKnownAs: {
+                        some: {
+                          otherNames: {
+                            contains: name,
+                            mode: Prisma.QueryMode.insensitive
+                          }
+                        }
+                      }
+                    },
+                    {
+                      alsoKnownAs: {
+                        some: {
+                          surname: {
+                            contains: surname,
+                            mode: Prisma.QueryMode.insensitive
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                // search by alsoKnownAs first name, second name, and thirdName as surname
+                {
+                  AND: [
+                    {
+                      alsoKnownAs: {
+                        some: {
+                          otherNames: {
+                            contains: `${firstName} ${secondName}`,
+                            mode: Prisma.QueryMode.insensitive
+                          }
+                        }
+                      }
+                    },
+                    {
+                      alsoKnownAs: {
+                        some: {
+                          surname: {
+                            contains: `${thirdName}`,
+                            mode: Prisma.QueryMode.insensitive
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                // search by alsoKnownAs first name as name, and secondName and thirdName as surname
+                {
+                  AND: [
+                    {
+                      alsoKnownAs: {
+                        some: {
+                          otherNames: {
+                            contains: `${firstName}`,
+                            mode: Prisma.QueryMode.insensitive
+                          }
+                        }
+                      }
+                    },
+                    {
+                      alsoKnownAs: {
+                        some: {
+                          surname: {
+                            contains: `${secondName} ${thirdName}`,
+                            mode: Prisma.QueryMode.insensitive
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                // search by alsoKnownAs first name as name, and secondName and thirdName and fourthName as surname
+                {
+                  AND: [
+                    {
+                      alsoKnownAs: {
+                        some: {
+                          otherNames: {
+                            contains: `${firstName} ${secondName}`,
+                            mode: Prisma.QueryMode.insensitive
+                          }
+                        }
+                      }
+                    },
+                    {
+                      alsoKnownAs: {
+                        some: {
+                          surname: {
+                            contains: `${thirdName} ${fourthName}`,
+                            mode: Prisma.QueryMode.insensitive
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            : []),
+          // Special search keywords
+          ...(firstName === '@fileNumber'
+            ? [
+                {
+                  reference: {
+                    contains: secondName,
+                    mode: Prisma.QueryMode.insensitive
                   }
                 }
               ]
-            : []
-          ),
-          // Special search keywords
-          ...(firstName === '@fileNumber'
-            ? [{
-                reference: {
-                  contains: secondName,
-                  mode: Prisma.QueryMode.insensitive
-                }
-              }]
             : []),
           ...(firstName === '@surname'
-            ? [{
-                surname: {
-                  equals: secondName,
-                  mode: Prisma.QueryMode.insensitive
+            ? [
+                {
+                  surname: {
+                    equals: secondName,
+                    mode: Prisma.QueryMode.insensitive
+                  }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@givenNames'
-            ? [{
-                givenNames: {
-                  equals: secondName,
-                  mode: Prisma.QueryMode.insensitive
+            ? [
+                {
+                  givenNames: {
+                    equals: secondName,
+                    mode: Prisma.QueryMode.insensitive
+                  }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@maidenName'
-            ? [{
-                maidenName: {
-                  equals: secondName,
-                  mode: Prisma.QueryMode.insensitive
+            ? [
+                {
+                  maidenName: {
+                    equals: secondName,
+                    mode: Prisma.QueryMode.insensitive
+                  }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@birthDate' && isValidDate(secondName)
-            ? [{
-                birthDate: {
-                  equals: new Date(secondName)
+            ? [
+                {
+                  birthDate: {
+                    equals: new Date(secondName)
+                  }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@birthDateFrom' && thirdName === '@birthDateTo'
-            ? [{
-                birthDate: {
-                  gte: new Date(secondName),
-                  lte: new Date(fourthName)
+            ? [
+                {
+                  birthDate: {
+                    gte: new Date(secondName),
+                    lte: new Date(fourthName)
+                  }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@deathDate' && isValidDate(secondName)
-            ? [{
-                deathDate: {
-                  equals: new Date(secondName)
+            ? [
+                {
+                  deathDate: {
+                    equals: new Date(secondName)
+                  }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@deathDateFrom' && thirdName === '@deathDateTo'
-            ? [{
-                deathDate: {
-                  gte: new Date(secondName),
-                  lte: new Date(fourthName)
+            ? [
+                {
+                  deathDate: {
+                    gte: new Date(secondName),
+                    lte: new Date(fourthName)
+                  }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@proofread'
-            ? [{
-                proofread: secondName.toLowerCase() === 'true'
-              }]
+            ? [
+                {
+                  proofread: secondName.toLowerCase() === 'true'
+                }
+              ]
             : []),
           ...(firstName === '@proofreadDate' && isValidDate(secondName)
-            ? [{
-                proofreadDate: {
-                  equals: new Date(secondName)
+            ? [
+                {
+                  proofreadDate: {
+                    equals: new Date(secondName)
+                  }
                 }
-              }]
+              ]
             : []),
-          ...(firstName === '@proofreadDateFrom' && thirdName === '@proofreadDateTo'
-            ? [{
-                proofreadDate: {
-                  gte: new Date(secondName),
-                  lte: new Date(fourthName)
+          ...(firstName === '@proofreadDateFrom' &&
+          thirdName === '@proofreadDateTo'
+            ? [
+                {
+                  proofreadDate: {
+                    gte: new Date(secondName),
+                    lte: new Date(fourthName)
+                  }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@enteredBy'
-            ? [{
-                enteredBy: {
-                  contains: secondName,
-                  mode: Prisma.QueryMode.insensitive
+            ? [
+                {
+                  enteredBy: {
+                    contains: secondName,
+                    mode: Prisma.QueryMode.insensitive
+                  }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@enteredOn' && isValidDate(secondName)
-            ? [{
-                enteredOn: {
-                  equals: new Date(secondName)
+            ? [
+                {
+                  enteredOn: {
+                    equals: new Date(secondName)
+                  }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@enteredOnFrom' && thirdName === '@enteredOnTo'
-            ? [{
-                enteredOn: {
-                  gte: new Date(secondName),
-                  lte: new Date(fourthName)
+            ? [
+                {
+                  enteredOn: {
+                    gte: new Date(secondName),
+                    lte: new Date(fourthName)
+                  }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@aka.surname'
-            ? [{
-                alsoKnownAs: {
-                  some: {
-                    surname: {
-                      contains: secondName,
-                      mode: Prisma.QueryMode.insensitive
+            ? [
+                {
+                  alsoKnownAs: {
+                    some: {
+                      surname: {
+                        contains: secondName,
+                        mode: Prisma.QueryMode.insensitive
+                      }
                     }
                   }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@aka.otherNames'
-            ? [{
-                alsoKnownAs: {
-                  some: {
-                    otherNames: {
-                      contains: secondName,
-                      mode: Prisma.QueryMode.insensitive
+            ? [
+                {
+                  alsoKnownAs: {
+                    some: {
+                      otherNames: {
+                        contains: secondName,
+                        mode: Prisma.QueryMode.insensitive
+                      }
                     }
                   }
                 }
-              }]
+              ]
             : []),
           ...(firstName === '@fileBox'
-            ? [{
-                fileBox: {
-                  year: parseInt(secondName),
-                  number: parseInt(thirdName)
+            ? [
+                {
+                  AND: [
+                    {
+                      fileBox: {
+                        year: {
+                          equals: parseInt(secondName)
+                        }
+                      }
+                    },
+                    {
+                      fileBox: {
+                        number: {
+                          equals: parseInt(thirdName)
+                        }
+                      }
+                    }
+                  ]
                 }
-              }]
-            : []),
+              ]
+            : [])
         ]
       }
     : {};
@@ -532,7 +565,8 @@ export async function getObituaries(
       skip: offset,
       orderBy: { reference: 'asc' },
       include: {
-        relatives: true
+        relatives: true,
+        fileBox: true
       }
     }),
     prisma.obituary.count({ where })

@@ -231,3 +231,127 @@ export async function addCountry(name: string) {
     throw error;
   }
 }
+
+export async function getFileBoxes() {
+  try {
+    const fileBoxes = await prisma.fileBox.findMany({
+      orderBy: {
+        year: 'desc',
+      },
+    });
+    return fileBoxes;
+  } catch (error) {
+    throw new Error('Failed to fetch file boxes');
+  }
+}
+
+export async function searchFileBoxes(year?: number, number?: number) {
+  try {
+    const whereClause: any = {};
+    if (year) whereClause.year = year;
+    if (number) whereClause.number = number;
+
+    const fileBoxes = await prisma.fileBox.findMany({
+      where: whereClause,
+      orderBy: [
+        { year: 'desc' },
+        { number: 'asc' }
+      ]
+    });
+    return fileBoxes;
+  } catch (error) {
+    console.error('Error searching file boxes:', error);
+    throw new Error('Failed to search file boxes');
+  }
+}
+
+export async function addFileBox(year: number, number: number) {
+  try {
+    // First check if the file box already exists
+    const existing = await prisma.fileBox.findFirst({
+      where: {
+        AND: [
+          { year },
+          { number }
+        ]
+      }
+    });
+
+    if (existing) {
+      throw new Error('A file box with this year and number combination already exists');
+    }
+
+    const fileBox = await prisma.fileBox.create({
+      data: {
+        year,
+        number,
+      },
+    });
+    return fileBox;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        throw new Error('A file box with this combination already exists');
+      }
+    }
+    throw error;
+  }
+}
+
+export async function updateFileBox(id: number, year: number, number: number) {
+  try {
+    // First check if another file box exists with the same year and number
+    const existing = await prisma.fileBox.findFirst({
+      where: {
+        AND: [
+          { year },
+          { number },
+          { NOT: { id } } // Exclude the current file box
+        ]
+      }
+    });
+
+    if (existing) {
+      throw new Error('A file box with this year and number combination already exists');
+    }
+
+    const fileBox = await prisma.fileBox.update({
+      where: { id },
+      data: {
+        year,
+        number,
+      },
+    });
+    return fileBox;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        throw new Error('A file box with this combination already exists');
+      }
+    }
+    throw error;
+  }
+}
+
+export async function deleteFileBox(id: number) {
+  try {
+    // Check if the file box is being used by any obituaries
+    const fileBox = await prisma.fileBox.findUnique({
+      where: { id },
+      include: { obituaries: { select: { id: true } } }
+    });
+
+    if (fileBox?.obituaries.length) {
+      throw new Error('Cannot delete file box that is being used by obituaries');
+    }
+
+    await prisma.fileBox.delete({
+      where: { id }
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to delete file box');
+  }
+}
