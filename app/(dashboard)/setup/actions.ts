@@ -444,3 +444,132 @@ export async function updateCountry(id: number, name: string) {
     throw new Error('Failed to update country');
   }
 }
+
+export async function getCitiesWithPagination(page: number, pageSize: number = 5) {
+  try {
+    const totalCount = await prisma.city.count();
+    const cities = await prisma.city.findMany({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: {
+        name: 'asc'
+      },
+      include: {
+        country: true
+      }
+    });
+    
+    return {
+      cities,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
+  } catch (error) {
+    console.error('Error fetching cities:', error);
+    throw new Error('Failed to fetch cities');
+  }
+}
+
+export async function updateCity(id: number, name: string | null, province: string | null, countryId: number) {
+  try {
+    const city = await prisma.city.update({
+      where: { id },
+      data: {
+        name,
+        province,
+        countryId
+      },
+      include: {
+        country: true
+      }
+    });
+    return city;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to update city');
+  }
+}
+
+export async function deleteCity(id: number) {
+  try {
+    // Check if the city is being used by any obituaries or cemeteries
+    const city = await prisma.city.findUnique({
+      where: { id },
+      include: { 
+        obituaries_birthCityId: { select: { id: true } },
+        obituaries_deathCityId: { select: { id: true } },
+        cemeteries: { select: { id: true } }
+      }
+    });
+
+    if (city?.obituaries_birthCityId.length || 
+        city?.obituaries_deathCityId.length || 
+        city?.cemeteries.length) {
+      throw new Error('Cannot delete city that is being used by obituaries or cemeteries');
+    }
+
+    await prisma.city.delete({
+      where: { id }
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to delete city');
+  }
+}
+
+export async function searchCities(
+  name?: string,
+  province?: string,
+  countryId?: number,
+  page: number = 1,
+  pageSize: number = 5
+) {
+  try {
+    const where: any = {};
+    
+    if (name) {
+      where.name = {
+        contains: name,
+        mode: 'insensitive'
+      };
+    }
+    
+    if (province) {
+      where.province = {
+        contains: province,
+        mode: 'insensitive'
+      };
+    }
+    
+    if (countryId) {
+      where.countryId = countryId;
+    }
+
+    const totalCount = await prisma.city.count({ where });
+    
+    const cities = await prisma.city.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: {
+        name: 'asc'
+      },
+      include: {
+        country: true
+      }
+    });
+
+    return {
+      cities,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
+  } catch (error) {
+    console.error('Error searching cities:', error);
+    throw new Error('Failed to search cities');
+  }
+}
