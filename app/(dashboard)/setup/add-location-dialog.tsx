@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,17 +19,32 @@ type AddLocationDialogProps = {
   onClose: () => void;
   onAddCity: (name: string | null, province: string | null, countryId: number) => Promise<void>;
   countries: { id: number; name: string }[];
+  initialValues?: {
+    name?: string;
+    province?: string;
+    countryId?: string;
+  };
 };
 
-function AddLocationDialog({ isOpen, onClose, onAddCity, countries }: AddLocationDialogProps) {
+function AddLocationDialog({ isOpen, onClose, onAddCity, countries, initialValues }: AddLocationDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      province: "",
-      countryId: "",
+      name: initialValues?.name || "",
+      province: initialValues?.province || "",
+      countryId: initialValues?.countryId || "",
     },
   });
+
+  useEffect(() => {
+    if (initialValues) {
+      form.reset({
+        name: initialValues.name || "",
+        province: initialValues.province || "",
+        countryId: initialValues.countryId || "",
+      });
+    }
+  }, [initialValues, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     await onAddCity(
