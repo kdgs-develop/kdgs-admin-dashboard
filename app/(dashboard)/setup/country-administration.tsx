@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getCountriesWithPagination, addCountry, deleteCountry } from './actions';
+import { getCountriesWithPagination, addCountry, deleteCountry, updateCountry } from './actions';
 import AddCountryDialog from './add-country-dialog';
 import EditCountryDialog from './edit-country-dialog';
 
@@ -77,6 +77,27 @@ export function CountryAdministration() {
       toast({
         title: 'Error deleting country',
         description: error instanceof Error ? error.message : 'Failed to delete country',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleEditCountry = async (id: number, name: string) => {
+    try {
+      await updateCountry(id, name);
+      const result = await getCountriesWithPagination(currentPage);
+      setCountries(result.countries);
+      setTotalPages(result.totalPages);
+      toast({
+        title: 'Success',
+        description: 'Country updated successfully',
+      });
+      setIsEditDialogOpen(false);
+      setSelectedCountry(null);
+    } catch (error) {
+      toast({
+        title: 'Error updating country',
+        description: error instanceof Error ? error.message : 'Failed to update country',
         variant: 'destructive'
       });
     }
@@ -166,6 +187,7 @@ export function CountryAdministration() {
               setIsEditDialogOpen(false);
               setSelectedCountry(null);
             }}
+            onEditCountry={handleEditCountry}
             onDeleteCountry={handleDeleteCountry}
             country={selectedCountry}
           />

@@ -412,3 +412,35 @@ export async function deleteCountry(id: number) {
     throw new Error('Failed to delete country');
   }
 }
+
+export async function updateCountry(id: number, name: string) {
+  try {
+    // First check if another country exists with this name
+    const existingCountry = await prisma.country.findFirst({
+      where: {
+        name: {
+          equals: name,
+          mode: 'insensitive'
+        },
+        NOT: {
+          id: id
+        }
+      }
+    });
+
+    if (existingCountry) {
+      throw new Error('A country with this name already exists');
+    }
+
+    const country = await prisma.country.update({
+      where: { id },
+      data: { name },
+    });
+    return country;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to update country');
+  }
+}
