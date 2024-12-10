@@ -16,6 +16,7 @@ import { useEffect, useRef, useState, useTransition } from 'react';
 const SEARCH_OPTIONS = [
   { value: 'regular', label: 'Regular Search' },
   { value: '@reference', label: 'File Number' },
+  { value: '@fileBox', label: 'File Box (YYYY N)' },
   { value: '@surname', label: 'Surname' },
   { value: '@givenNames', label: 'Given Names' },
   { value: '@maidenName', label: 'Maiden Name' },
@@ -82,6 +83,8 @@ export function SearchInput() {
         newSearchValue = `${value} YYYY-MM-DD`;
       } else if (value === '@reference') {
         newSearchValue = `@fileNumber `;
+      } else if (value === '@fileBox') {
+        newSearchValue = `@fileBox YYYY N`;
       } else {
         newSearchValue = `${value} `;
       }

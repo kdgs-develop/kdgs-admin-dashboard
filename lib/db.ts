@@ -513,6 +513,14 @@ export async function getObituaries(
                 }
               }]
             : []),
+          ...(firstName === '@fileBox'
+            ? [{
+                fileBox: {
+                  year: parseInt(secondName),
+                  number: parseInt(thirdName)
+                }
+              }]
+            : []),
         ]
       }
     : {};
