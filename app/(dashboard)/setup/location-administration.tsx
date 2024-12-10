@@ -10,10 +10,12 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getCitiesWithPagination, addCity, updateCity, deleteCity, getCountries } from './actions';
+import { Plus, Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getCitiesWithPagination, addCity, updateCity, deleteCity, getCountries, searchCities } from './actions';
 import AddLocationDialog from './add-location-dialog';
 import EditLocationDialog from './edit-location-dialog';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function LocationAdministration() {
   const [cities, setCities] = useState<any[]>([]);
@@ -25,6 +27,11 @@ export function LocationAdministration() {
   const [totalPages, setTotalPages] = useState(1);
   const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
+
+  // Search states
+  const [searchName, setSearchName] = useState('');
+  const [searchProvince, setSearchProvince] = useState('');
+  const [searchCountryId, setSearchCountryId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     async function fetchData() {
@@ -108,9 +115,36 @@ export function LocationAdministration() {
     }
   };
 
+  const handleSearch = async () => {
+    try {
+      const result = await searchCities(
+        searchName || undefined,
+        searchProvince || undefined,
+        searchCountryId ? parseInt(searchCountryId) : undefined,
+        currentPage
+      );
+      setCities(result.cities);
+      setTotalPages(result.totalPages);
+    } catch (error) {
+      toast({
+        title: 'Error searching locations',
+        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleOpenAddDialog = () => {
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenAddDialogWithSearch = () => {
+    setIsDialogOpen(true);
+  };
+
   return (
     <Card>
-      <CardHeader 
+      <CardHeader
         className="cursor-pointer flex flex-row items-center justify-between"
         onClick={() => setIsExpanded(!isExpanded)}
       >
@@ -118,7 +152,7 @@ export function LocationAdministration() {
           <CardTitle>Location Management</CardTitle>
           {!isExpanded && (
             <CardDescription>
-              Click to manage locations
+              Click to manage locations and search records
             </CardDescription>
           )}
         </div>
@@ -132,6 +166,52 @@ export function LocationAdministration() {
       </CardHeader>
       {isExpanded && (
         <CardContent className="space-y-4">
+          <div className="flex space-x-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Search by name"
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+              />
+            </div>
+            <div className="flex-1">
+              <Input
+                placeholder="Search by province"
+                value={searchProvince}
+                onChange={(e) => setSearchProvince(e.target.value)}
+              />
+            </div>
+            <div className="flex-1">
+              <Select
+                value={searchCountryId}
+                onValueChange={setSearchCountryId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Countries</SelectItem>
+                  {countries.map((country) => (
+                    <SelectItem key={country.id} value={country.id.toString()}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleSearch} variant="secondary">
+              <Search className="mr-2 h-4 w-4" />
+              Search
+            </Button>
+            <Button 
+              onClick={() => handleOpenAddDialogWithSearch()} 
+              variant="outline"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add New
+            </Button>
+          </div>
+
           <div className="flex justify-between items-center">
             <Button onClick={() => setIsDialogOpen(true)} variant="outline">
               <Plus className="mr-2 h-4 w-4" />
@@ -193,6 +273,11 @@ export function LocationAdministration() {
             onClose={() => setIsDialogOpen(false)}
             onAddCity={handleAddCity}
             countries={countries}
+            initialValues={{
+              name: searchName,
+              province: searchProvince,
+              countryId: searchCountryId
+            }}
           />
 
           <EditLocationDialog
