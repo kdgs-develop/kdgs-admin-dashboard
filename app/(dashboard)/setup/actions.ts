@@ -244,21 +244,56 @@ export async function getFileBoxes() {
     throw new Error('Failed to fetch file boxes');
   }
 }
+
+export async function searchFileBoxes(year?: number, number?: number) {
+  try {
+    const whereClause: any = {};
+    if (year) whereClause.year = year;
+    if (number) whereClause.number = number;
+
+    const fileBoxes = await prisma.fileBox.findMany({
+      where: whereClause,
+      orderBy: [
+        { year: 'desc' },
+        { number: 'asc' }
+      ]
+    });
+    return fileBoxes;
+  } catch (error) {
+    console.error('Error searching file boxes:', error);
+    throw new Error('Failed to search file boxes');
+  }
+}
+
 export async function addFileBox(year: number, number: number) {
   try {
+    // First check if the file box already exists
+    const existing = await prisma.fileBox.findFirst({
+      where: {
+        AND: [
+          { year },
+          { number }
+        ]
+      }
+    });
+
+    if (existing) {
+      throw new Error('A file box with this year and number combination already exists');
+    }
+
     const fileBox = await prisma.fileBox.create({
       data: {
-        year: year,
-        number: number,
+        year,
+        number,
       },
     });
     return fileBox;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
-        throw new Error('A file box with this name already exists');
+        throw new Error('A file box with this combination already exists');
       }
     }
-    throw new Error('Failed to add file box');
+    throw error;
   }
 }
