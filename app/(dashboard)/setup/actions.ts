@@ -216,6 +216,20 @@ export async function getCountries(): Promise<{ id: number; name: string }[]> {
 
 export async function addCountry(name: string) {
   try {
+    // First check if country exists (case-insensitive)
+    const existingCountry = await prisma.country.findFirst({
+      where: {
+        name: {
+          equals: name,
+          mode: 'insensitive'
+        }
+      }
+    });
+
+    if (existingCountry) {
+      throw new Error('A country with this name already exists');
+    }
+
     const country = await prisma.country.create({
       data: {
         name,
@@ -223,12 +237,10 @@ export async function addCountry(name: string) {
     });
     return country;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') {
-        throw new Error('A country with this name already exists');
-      }
+    if (error instanceof Error) {
+      throw error;
     }
-    throw error;
+    throw new Error('Failed to add country');
   }
 }
 
@@ -353,5 +365,82 @@ export async function deleteFileBox(id: number) {
       throw error;
     }
     throw new Error('Failed to delete file box');
+  }
+}
+
+export async function getCountriesWithPagination(page: number, pageSize: number = 5) {
+  try {
+    const totalCount = await prisma.country.count();
+    const countries = await prisma.country.findMany({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: {
+        name: 'asc'
+      }
+    });
+    
+    return {
+      countries,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
+  } catch (error) {
+    console.error('Error fetching countries:', error);
+    throw new Error('Failed to fetch countries');
+  }
+}
+
+export async function deleteCountry(id: number) {
+  try {
+    // Check if the country is being used by any cities
+    const country = await prisma.country.findUnique({
+      where: { id },
+      include: { cities: { select: { id: true } } }
+    });
+
+    if (country?.cities.length) {
+      throw new Error('Cannot delete country that is being used by locations');
+    }
+
+    await prisma.country.delete({
+      where: { id }
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to delete country');
+  }
+}
+
+export async function updateCountry(id: number, name: string) {
+  try {
+    // First check if another country exists with this name
+    const existingCountry = await prisma.country.findFirst({
+      where: {
+        name: {
+          equals: name,
+          mode: 'insensitive'
+        },
+        NOT: {
+          id: id
+        }
+      }
+    });
+
+    if (existingCountry) {
+      throw new Error('A country with this name already exists');
+    }
+
+    const country = await prisma.country.update({
+      where: { id },
+      data: { name },
+    });
+    return country;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to update country');
   }
 }

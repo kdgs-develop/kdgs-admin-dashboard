@@ -10,21 +10,27 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { Prisma } from '@prisma/client';
-import { getCountries, addCountry } from './actions';
+import { Plus, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getCountriesWithPagination, addCountry, deleteCountry, updateCountry } from './actions';
 import AddCountryDialog from './add-country-dialog';
+import EditCountryDialog from './edit-country-dialog';
 
 export function CountryAdministration() {
   const [countries, setCountries] = useState<{ id: number; name: string }[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<{ id: number; name: string } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     async function fetchCountries() {
       try {
-        const fetchedCountries = await getCountries();
-        setCountries(fetchedCountries);
+        const result = await getCountriesWithPagination(currentPage);
+        setCountries(result.countries);
+        setTotalPages(result.totalPages);
       } catch (error) {
         toast({
           title: 'Error fetching countries',
@@ -34,12 +40,14 @@ export function CountryAdministration() {
       }
     }
     fetchCountries();
-  }, [toast]);
+  }, [currentPage, toast]);
 
   const handleAddCountry = async (name: string) => {
     try {
       const newCountry = await addCountry(name);
-      setCountries(prev => [...prev, newCountry]);
+      const result = await getCountriesWithPagination(currentPage);
+      setCountries(result.countries);
+      setTotalPages(result.totalPages);
       toast({
         title: 'Success',
         description: 'Country added successfully',
@@ -53,30 +61,138 @@ export function CountryAdministration() {
     }
   };
 
+  const handleDeleteCountry = async (id: number) => {
+    if (!selectedCountry) return;
+    
+    try {
+      await deleteCountry(id);
+      setCountries(prev => prev.filter(country => country.id !== id));
+      toast({
+        title: 'Success',
+        description: 'Country deleted successfully',
+      });
+      setIsEditDialogOpen(false);
+      setSelectedCountry(null);
+    } catch (error) {
+      toast({
+        title: 'Error deleting country',
+        description: error instanceof Error ? error.message : 'Failed to delete country',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleEditCountry = async (id: number, name: string) => {
+    try {
+      await updateCountry(id, name);
+      const result = await getCountriesWithPagination(currentPage);
+      setCountries(result.countries);
+      setTotalPages(result.totalPages);
+      toast({
+        title: 'Success',
+        description: 'Country updated successfully',
+      });
+      setIsEditDialogOpen(false);
+      setSelectedCountry(null);
+    } catch (error) {
+      toast({
+        title: 'Error updating country',
+        description: error instanceof Error ? error.message : 'Failed to update country',
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Add New Country</CardTitle>
-        <CardDescription>
-          Add a new country to the database, if the country already exists it will throw an error message to the user.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex justify-start">
-          <Button
-            onClick={() => setIsDialogOpen(true)}
-            variant="outline"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Country
-          </Button>
+      <CardHeader 
+        className="cursor-pointer flex flex-row items-center justify-between"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div>
+          <CardTitle>Country Management</CardTitle>
+          {!isExpanded && (
+            <CardDescription>
+              Click to manage countries
+            </CardDescription>
+          )}
         </div>
-        <AddCountryDialog
-          isOpen={isDialogOpen}
-          onClose={() => setIsDialogOpen(false)}
-          onAddCountry={handleAddCountry}
-        />
-      </CardContent>
+        <Button variant="ghost" size="icon">
+          {isExpanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </Button>
+      </CardHeader>
+      {isExpanded && (
+        <CardContent className="space-y-4">
+          <div className="flex justify-between items-center">
+            <Button onClick={() => setIsDialogOpen(true)} variant="outline">
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Country
+            </Button>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="py-2 px-3 text-sm">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {countries.length > 0 && (
+            <div className="grid gap-2">
+              {countries.map((country) => (
+                <div key={country.id} className="p-2 border rounded flex justify-between items-center">
+                  <span>{country.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedCountry(country);
+                      setIsEditDialogOpen(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <AddCountryDialog
+            isOpen={isDialogOpen}
+            onClose={() => setIsDialogOpen(false)}
+            onAddCountry={handleAddCountry}
+          />
+
+          <EditCountryDialog
+            isOpen={isEditDialogOpen}
+            onClose={() => {
+              setIsEditDialogOpen(false);
+              setSelectedCountry(null);
+            }}
+            onEditCountry={handleEditCountry}
+            onDeleteCountry={handleDeleteCountry}
+            country={selectedCountry}
+          />
+        </CardContent>
+      )}
     </Card>
   );
 } 

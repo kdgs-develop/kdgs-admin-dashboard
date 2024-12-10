@@ -98,7 +98,7 @@ model City {
 
 model Country {
   id          Int        @id @default(autoincrement())
-  name        String
+  name        String     @unique
   cities      City[]
 }
 
