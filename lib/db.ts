@@ -9,6 +9,7 @@ export type Obituary = Awaited<
 > & {
   relatives?: Awaited<ReturnType<typeof prisma.relative.findMany>>;
   fileBox?: Awaited<ReturnType<typeof prisma.fileBox.findUnique>>;
+  fileImages?: Awaited<ReturnType<typeof prisma.imageFile.findMany>>;
 };
 
 export async function getObituaries(
@@ -455,6 +456,57 @@ export async function getObituaries(
                 }
               ]
             : []),
+          ...(firstName === '@images'
+            ? [
+                // if secondName is true, search by fileImages with no empty array
+                ...(secondName.toLowerCase() === 'true'
+                  ? [
+                      {
+                        fileImages: {
+                          some: {}
+                        }
+                      }
+                    ]
+                  : []),
+                // if secondName is false, search by fileImages with empty array
+                ...(secondName.toLowerCase() === 'false'
+                  ? [
+                      {
+                        fileImages: {
+                          none: {}
+                        }
+                      }
+                    ]
+                  : [])
+              ]
+            : []),
+          ...(firstName === '@imagesProofread'
+            ? [
+                // if secondName is true, search by fileImages with no empty array, and proofread is true/false
+                ...(secondName.toLowerCase() === 'true'
+                  ? [
+                      {
+                        fileImages: {
+                          some: {}
+                        },
+                        proofread: thirdName.toLowerCase() === 'true'
+
+                      }
+                    ]
+                  : []),
+                // if secondName is false, search by fileImages with empty array and proofread is true/false
+                ...(secondName.toLowerCase() === 'false'
+                  ? [
+                      {
+                        fileImages: {
+                          none: {}
+                        },
+                        proofread: thirdName.toLowerCase() === 'true'
+                      }
+                    ]
+                  : [])
+              ]
+            : []),
           ...(firstName === '@proofreadDate' && isValidDate(secondName)
             ? [
                 {
@@ -793,4 +845,27 @@ export async function getUserData() {
   });
 
   return userData;
+}
+
+// Update the image file reference, extension, and size
+export async function updateImageFileReference(
+  fileName: string,
+  extension: string,
+  size: number
+) {
+  await prisma.imageFile.upsert({
+    where: { name: fileName.split('.')[0] },
+    update: { reference: fileName.slice(0, 8), extension, size },
+    create: {
+      name: fileName.split('.')[0],
+      reference: fileName.slice(0, 8),
+      extension,
+      size
+    }
+  });
+}
+
+// Delete the image file reference
+export async function deleteImageFileReference(fileName: string) {
+  await prisma.imageFile.delete({ where: { name: fileName.split('.')[0] } });
 }

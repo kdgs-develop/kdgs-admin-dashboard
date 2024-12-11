@@ -25,6 +25,8 @@ const SEARCH_OPTIONS = [
   { value: '@deathDate', label: 'Death Date (YYYY-MM-DD)' },
   { value: '@deathDateFrom', label: 'Death Date Range' },
   { value: '@proofread', label: 'Proofread Status (true/false)' },
+  { value: '@images', label: 'Images Status (true/false)' },
+  { value: '@imagesProofread', label: 'Images (true/false) Proofread (true/false)' },
   { value: '@proofreadDate', label: 'Proofread Date (YYYY-MM-DD)' },
   { value: '@proofreadDateFrom', label: 'Proofread Date Range' },
   { value: '@enteredBy', label: 'Entered By' },
@@ -77,8 +79,12 @@ export function SearchInput() {
       let newSearchValue = '';
       if (dateRangeOptions.includes(value)) {
         newSearchValue = `${value} YYYY-MM-DD @${value.slice(1, -4)}To YYYY-MM-DD`;
-      } else if (value === '@proofread') {
+        } else if (value === '@proofread') {
+          newSearchValue = `${value} true`;
+      } else if (value === '@images') {
         newSearchValue = `${value} true`;
+      } else if (value === '@imagesProofread') {
+        newSearchValue = `${value} true false`;
       } else if (value.includes('Date')) {
         newSearchValue = `${value} YYYY-MM-DD`;
       } else if (value === '@reference') {
