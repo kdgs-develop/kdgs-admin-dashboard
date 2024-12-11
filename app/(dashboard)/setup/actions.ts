@@ -573,3 +573,155 @@ export async function searchCities(
     throw new Error('Failed to search cities');
   }
 }
+
+export async function getCemeteriesWithPagination(page: number, pageSize: number = 5) {
+  try {
+    const totalCount = await prisma.cemetery.count();
+    const cemeteries = await prisma.cemetery.findMany({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: {
+        name: 'asc'
+      },
+      include: {
+        city: {
+          include: {
+            country: true
+          }
+        }
+      }
+    });
+    
+    return {
+      cemeteries,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
+  } catch (error) {
+    console.error('Error fetching cemeteries:', error);
+    throw new Error('Failed to fetch cemeteries');
+  }
+}
+
+export async function searchCemeteries(
+  name?: string,
+  cityId?: number,
+  page: number = 1,
+  pageSize: number = 5
+) {
+  try {
+    const where: any = {};
+    
+    if (name) {
+      where.name = {
+        contains: name,
+        mode: 'insensitive'
+      };
+    }
+    
+    if (cityId) {
+      where.cityId = cityId;
+    }
+
+    const totalCount = await prisma.cemetery.count({ where });
+    
+    const cemeteries = await prisma.cemetery.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: {
+        name: 'asc'
+      },
+      include: {
+        city: {
+          include: {
+            country: true
+          }
+        }
+      }
+    });
+
+    return {
+      cemeteries,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
+  } catch (error) {
+    console.error('Error searching cemeteries:', error);
+    throw new Error('Failed to search cemeteries');
+  }
+}
+
+export async function addCemetery(name: string | null, cityId: number | null) {
+  try {
+    const cemetery = await prisma.cemetery.create({
+      data: {
+        name,
+        cityId
+      },
+      include: {
+        city: {
+          include: {
+            country: true
+          }
+        }
+      }
+    });
+    return cemetery;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to add cemetery');
+  }
+}
+
+export async function updateCemetery(id: number, name: string | null, cityId: number | null) {
+  try {
+    const cemetery = await prisma.cemetery.update({
+      where: { id },
+      data: {
+        name,
+        cityId
+      },
+      include: {
+        city: {
+          include: {
+            country: true
+          }
+        }
+      }
+    });
+    return cemetery;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to update cemetery');
+  }
+}
+
+export async function deleteCemetery(id: number) {
+  try {
+    // Check if the cemetery is being used by any obituaries
+    const cemetery = await prisma.cemetery.findUnique({
+      where: { id },
+      include: { 
+        obituaries: { select: { id: true } }
+      }
+    });
+
+    if (cemetery?.obituaries.length) {
+      throw new Error('Cannot delete cemetery that is being used by obituaries');
+    }
+
+    await prisma.cemetery.delete({
+      where: { id }
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to delete cemetery');
+  }
+}
