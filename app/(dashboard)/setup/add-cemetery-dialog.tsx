@@ -1,29 +1,13 @@
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
@@ -43,13 +27,17 @@ type AddCemeteryDialogProps = {
   };
 };
 
-function AddCemeteryDialog({
-  isOpen,
-  onClose,
-  onAddCemetery,
-  cities,
-  initialValues
-}: AddCemeteryDialogProps) {
+type City = {
+  id?: number | null;
+  name?: string | null;
+  country?: { name: string } | null;
+} | null;
+
+export function AddCemeteryDialog({ isOpen, onClose, onAddCemetery, cities, initialValues }: AddCemeteryDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const [filteredCities, setFilteredCities] = useState<typeof cities>([]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -66,6 +54,29 @@ function AddCemeteryDialog({
       });
     }
   }, [initialValues, form]);
+
+  React.useEffect(() => {
+    if (!Array.isArray(cities)) {
+      setFilteredCities([]);
+      return;
+    }
+
+    if (search) {
+      setFilteredCities(
+        cities.filter((city) => {
+          if (!city) return false;
+          
+          const cityName = (city.name || '').toLowerCase();
+          const countryName = (city.country?.name || '').toLowerCase();
+          const searchTerm = search.toLowerCase();
+          
+          return cityName.includes(searchTerm) || countryName.includes(searchTerm);
+        })
+      );
+    } else {
+      setFilteredCities(cities);
+    }
+  }, [search, cities]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     await onAddCemetery(values.name, parseInt(values.cityId));
@@ -100,21 +111,64 @@ function AddCemeteryDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>City</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a city" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {cities.map((city) => (
-                        <SelectItem key={city.id} value={city.id.toString()}>
-                          {city.name}{' '}
-                          {city.country ? `(${city.country.name})` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={open}
+                          className="w-full justify-between"
+                        >
+                          {field.value
+                            ? cities.find((city) => city.id.toString() === field.value)?.name
+                            : "Select city..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0">
+                      <div className="flex flex-col">
+                        <div className="border-b p-2">
+                          <Input
+                            placeholder="Search city..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+                        </div>
+                        <Command shouldFilter={false}>
+                          <CommandList>
+                            <CommandEmpty>No city found.</CommandEmpty>
+                            <CommandGroup className="max-h-[300px] overflow-y-auto p-1">
+                              {(filteredCities || []).map((city) => {
+                                if (!city?.id) return null;
+                                return (
+                                  <CommandItem
+                                    key={city.id}
+                                    value={city.id.toString()}
+                                    onSelect={() => {
+                                      form.setValue("cityId", city.id.toString());
+                                      setSearch("");
+                                      setOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        form.getValues("cityId") === city.id.toString() ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {city.name ?? 'Unnamed'} {city.country?.name ? `(${city.country.name})` : ''}
+                                  </CommandItem>
+                                );
+                              })}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -128,5 +182,3 @@ function AddCemeteryDialog({
     </Dialog>
   );
 }
-
-export { AddCemeteryDialog };
