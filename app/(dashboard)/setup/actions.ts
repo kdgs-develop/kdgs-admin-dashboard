@@ -725,3 +725,139 @@ export async function deleteCemetery(id: number) {
     throw new Error('Failed to delete cemetery');
   }
 }
+
+export async function getPeriodicals(page: number = 1, pageSize: number = 5) {
+  try {
+    const totalCount = await prisma.periodical.count();
+    const periodicals = await prisma.periodical.findMany({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+      }
+    });
+
+    return {
+      periodicals,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
+  } catch (error) {
+    console.error('Error fetching periodicals:', error);
+    throw new Error('Failed to fetch periodicals');
+  }
+}
+
+export async function searchPeriodicals(
+  searchTerm: string,
+  page: number = 1,
+  pageSize: number = 5
+) {
+  try {
+    const where: Prisma.PeriodicalWhereInput = {
+      name: {
+        contains: searchTerm,
+        mode: Prisma.QueryMode.insensitive
+      }
+    };
+
+    const totalCount = await prisma.periodical.count({ where });
+    
+    const periodicals = await prisma.periodical.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+      }
+    });
+
+    return {
+      periodicals,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
+  } catch (error) {
+    console.error('Error searching periodicals:', error);
+    throw new Error('Failed to search periodicals');
+  }
+}
+
+export async function addPeriodical(name: string) {
+  return prisma.$transaction(async (prisma) => {
+    // Check if periodical already exists
+    const existing = await prisma.periodical.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } }
+    });
+
+    if (existing) {
+      throw new Error('A periodical with this name already exists');
+    }
+
+    await prisma.$executeRaw`SELECT setval('periodical_id_seq', COALESCE((SELECT MAX(id) FROM "Periodical"), 1));`;
+    const newPeriodical = await prisma.periodical.create({
+      data: { name }
+    });
+    revalidatePath('/');
+    return newPeriodical;
+  });
+}
+
+export async function updatePeriodical(id: number, name: string) {
+  try {
+    // Check if another periodical exists with the same name
+    const existing = await prisma.periodical.findFirst({
+      where: {
+        AND: [
+          { name: { equals: name, mode: 'insensitive' } },
+          { NOT: { id } }
+        ]
+      }
+    });
+
+    if (existing) {
+      throw new Error('A periodical with this name already exists');
+    }
+
+    const periodical = await prisma.periodical.update({
+      where: { id },
+      data: { name },
+    });
+    revalidatePath('/');
+    return periodical;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        throw new Error('A periodical with this name already exists');
+      }
+    }
+    throw error;
+  }
+}
+
+export async function deletePeriodical(id: number) {
+  try {
+    // Check if the periodical is being used by any obituaries
+    const obituariesUsingPeriodical = await prisma.obituary.count({
+      where: { periodicalId: id }
+    });
+
+    if (obituariesUsingPeriodical > 0) {
+      throw new Error('Cannot delete periodical as it is being used by obituaries');
+    }
+
+    await prisma.periodical.delete({
+      where: { id }
+    });
+    revalidatePath('/');
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to delete periodical');
+  }
+}
