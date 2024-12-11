@@ -132,8 +132,8 @@ export async function POST(request: Request) {
       }
 
       // Add footer with generation date
-      const footerText = 'Compiled by Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8';
-      const copyrightText = '© 2024 Javier Gongora';
+      const footerText = 'Compiled by © 2024 Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8';
+      const copyrightText = 'Developed by Javier Gongora o/a Vyoniq Technologies';
       const generationDate = `Generated on ${format(new Date(), 'yyyy-MM-dd')}`;
       
       page.drawText(footerText, {
@@ -156,6 +156,7 @@ export async function POST(request: Request) {
         size: 8,
         font: font,
       });
+      
     }
 
     const pdfBytes = await pdfDoc.save();

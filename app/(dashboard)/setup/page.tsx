@@ -42,7 +42,6 @@ export default async function SetupPage() {
 
               <FileBoxAdministration />
 
-
               <CountryAdministration />
 
               <LocationAdministration />
@@ -55,21 +54,8 @@ export default async function SetupPage() {
 
               <GeneaologistAdministration />
 
-              <Card className="w-[calc(100%)]">
-                <CardHeader>
-                  <CardTitle>Database Backup</CardTitle>
-                  <CardDescription>
-                    Download a backup of your database content and learn how to
-                    create manual backups.
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="text-sm text-muted-foreground">
-                  <div className="space-y-4">
-                    <AdminBackup />
-                  </div>
-                </CardContent>
-              </Card>
+              <AdminBackup />
+             
             </CardContent>
           </CardHeader>
         </Card>
