@@ -9,6 +9,10 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandItem, CommandEmpty, CommandGroup } from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   name: z.string().min(1, "Cemetery name is required"),
@@ -25,6 +29,23 @@ type EditCemeteryDialogProps = {
 };
 
 function EditCemeteryDialog({ isOpen, onClose, onEditCemetery, onDeleteCemetery, cemetery, cities }: EditCemeteryDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const [filteredCities, setFilteredCities] = React.useState(cities);
+
+  React.useEffect(() => {
+    if (search) {
+      setFilteredCities(
+        cities.filter((city) => 
+          city.name?.toLowerCase().includes(search.toLowerCase()) ||
+          city.country?.name.toLowerCase().includes(search.toLowerCase())
+        )
+      );
+    } else {
+      setFilteredCities(cities);
+    }
+  }, [search, cities]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -79,23 +100,56 @@ function EditCemeteryDialog({ isOpen, onClose, onEditCemetery, onDeleteCemetery,
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>City</FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a city" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {cities.map((city) => (
-                        <SelectItem key={city.id} value={city.id.toString()}>
-                          {city.name} {city.country ? `(${city.country.name})` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={open}
+                          className="w-full justify-between"
+                        >
+                          {field.value
+                            ? cities.find((city) => city.id.toString() === field.value)?.name
+                            : "Select city..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent 
+                      className="w-[400px] p-0" 
+                      align="start"
+                      side="bottom"
+                      sideOffset={4}
+                    >
+                      <Command>
+                        <CommandInput 
+                          placeholder="Search city..." 
+                          onValueChange={setSearch}
+                        />
+                        <CommandEmpty>No city found.</CommandEmpty>
+                        <CommandGroup>
+                          {filteredCities.map((city) => (
+                            <CommandItem
+                              key={city.id}
+                              onSelect={() => {
+                                form.setValue("cityId", city.id.toString());
+                                setOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  field.value === city.id.toString() ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {city.name || 'Unnamed'} {city.country ? `(${city.country.name})` : ''}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
