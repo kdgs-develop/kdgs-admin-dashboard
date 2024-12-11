@@ -15,6 +15,7 @@ import { LocationAdministration } from './location-administration';
 import { CemeteryAdministration } from './cemetery-administration';
 import { CountryAdministration } from './country-administration';
 import { FileBoxAdministration } from './filebox-administration';
+import { PeriodicalAdministration } from './periodical-administration';
 
 export default async function SetupPage() {
   const { userId } = auth();
@@ -36,14 +37,16 @@ export default async function SetupPage() {
               Configure your obituary management system.
             </CardDescription>
             <CardContent className="space-y-4 pt-4 px-0">
-
               <BulkUpload />
 
               <FileBoxAdministration />
 
+
               <CountryAdministration />
 
               <LocationAdministration />
+              
+              <PeriodicalAdministration />
 
               <CemeteryAdministration />
 
