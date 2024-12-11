@@ -65,6 +65,7 @@ model Obituary {
   periodical     Periodical?   @relation(fields: [periodicalId], references: [id])
   title          Title?        @relation(fields: [titleId], references: [id])
   relatives      Relative[]
+  fileImages     ImageFile[]
 }
 
 model Relative {
@@ -144,6 +145,8 @@ model ImageFile {
   size      Int?
   createdAt DateTime @default(now())
   editedAt  DateTime @updatedAt
+  reference String?
+  obituary  Obituary? @relation(fields: [reference], references: [reference])
 }
 
 model Settings {
