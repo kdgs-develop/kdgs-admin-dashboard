@@ -170,9 +170,10 @@ This project is licensed under the GNU Affero General Public License v3.0 (AGPL-
 
 ## Copyright and Attribution
 
-© 2024 Javier Gongora. All rights reserved.
+© 2024 Kelowna & District Genealogical Society | 
+Developed by Javier Gongora o/a Vyoniq Technologies
 
-The KDGS Admin Dashboard is open-source software developed and maintained by Javier Gongora.
+The KDGS Admin Dashboard is open-source software developed and maintained by Vyoniq Technologies.
 
 1. Open Source License: This software is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). You can find a copy of the license in the [LICENSE](LICENSE.md) file or at https://www.gnu.org/licenses/agpl-3.0.en.html
 
