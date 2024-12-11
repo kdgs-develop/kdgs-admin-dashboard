@@ -126,10 +126,10 @@ export function SearchInput() {
     <div className="relative ml-auto flex gap-2 flex-1 md:grow-0">
       {context === 'obituaries' && (
         <Select onValueChange={handleSearchOptionChange}>
-          <SelectTrigger className="w-[150px] lg:w-[180px]">
+          <SelectTrigger className="w-[250px] lg:w-[350px] xl:w-[400px]">
             <SelectValue placeholder="Search type..." />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="min-w-[250px] lg:min-w-[350px] xl:min-w-[400px]">
             {SEARCH_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
@@ -148,7 +148,7 @@ export function SearchInput() {
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder={`Search ${context}...`}
-          className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[485px]"
+          className="w-full rounded-lg bg-background pl-8 md:w-[300px] lg:w-[400px] xl:w-[500px]"
         />
         {isPending && <Spinner />}
       </form>
