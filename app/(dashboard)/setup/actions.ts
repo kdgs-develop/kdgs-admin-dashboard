@@ -861,3 +861,138 @@ export async function deletePeriodical(id: number) {
     throw new Error('Failed to delete periodical');
   }
 }
+
+export async function getTitles(page: number = 1, pageSize: number = 5) {
+  try {
+    const totalCount = await prisma.title.count();
+    const titles = await prisma.title.findMany({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+      }
+    });
+
+    return {
+      titles,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
+  } catch (error) {
+    console.error('Error fetching titles:', error);
+    throw new Error('Failed to fetch titles');
+  }
+}
+
+export async function searchTitles(
+  searchTerm: string,
+  page: number = 1,
+  pageSize: number = 5
+) {
+  try {
+    const where: Prisma.TitleWhereInput = {
+      name: {
+        contains: searchTerm,
+        mode: Prisma.QueryMode.insensitive
+      }
+    };
+
+    const totalCount = await prisma.title.count({ where });
+    
+    const titles = await prisma.title.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+      }
+    });
+
+    return {
+      titles,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
+  } catch (error) {
+    console.error('Error searching titles:', error);
+    throw new Error('Failed to search titles');
+  }
+}
+
+export async function addTitle(name: string) {
+  try {
+    const existing = await prisma.title.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } }
+    });
+
+    if (existing) {
+      throw new Error('A title with this name already exists');
+    }
+
+    const newTitle = await prisma.title.create({
+      data: { name }
+    });
+    revalidatePath('/');
+    return newTitle;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to add title');
+  }
+}
+
+export async function updateTitle(id: number, name: string) {
+  try {
+    const existing = await prisma.title.findFirst({
+      where: {
+        AND: [
+          { name: { equals: name, mode: 'insensitive' } },
+          { NOT: { id } }
+        ]
+      }
+    });
+
+    if (existing) {
+      throw new Error('A title with this name already exists');
+    }
+
+    const title = await prisma.title.update({
+      where: { id },
+      data: { name },
+    });
+    revalidatePath('/');
+    return title;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to update title');
+  }
+}
+
+export async function deleteTitle(id: number) {
+  try {
+    const obituariesUsingTitle = await prisma.obituary.count({
+      where: { titleId: id }
+    });
+
+    if (obituariesUsingTitle > 0) {
+      throw new Error('Cannot delete title as it is being used by obituaries');
+    }
+
+    await prisma.title.delete({
+      where: { id }
+    });
+    revalidatePath('/');
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to delete title');
+  }
+}

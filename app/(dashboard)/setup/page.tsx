@@ -16,6 +16,7 @@ import { CemeteryAdministration } from './cemetery-administration';
 import { CountryAdministration } from './country-administration';
 import { FileBoxAdministration } from './filebox-administration';
 import { PeriodicalAdministration } from './periodical-administration';
+import { TitleAdministration } from './title-administration';
 
 export default async function SetupPage() {
   const { userId } = auth();
@@ -49,6 +50,8 @@ export default async function SetupPage() {
               <PeriodicalAdministration />
 
               <CemeteryAdministration />
+
+              <TitleAdministration />
 
               <GeneaologistAdministration />
 
