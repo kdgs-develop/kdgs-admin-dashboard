@@ -23,7 +23,8 @@ import {
   ChevronRight,
   ChevronUp,
   Plus,
-  Search
+  Search,
+  ChevronsUpDown
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
@@ -36,6 +37,28 @@ import {
 } from './actions';
 import { AddCemeteryDialog } from './add-cemetery-dialog';
 import { EditCemeteryDialog } from './edit-cemetery-dialog';
+import {
+  Command,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandEmpty,
+  CommandGroup
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover';
+import { Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+// Add this type for better type safety
+type City = {
+  id?: number | null;
+  name?: string | null;
+  country?: { name: string } | null;
+} | null;
 
 export function CemeteryAdministration() {
   const [cemeteries, setCemeteries] = useState<any[]>([]);
@@ -53,6 +76,10 @@ export function CemeteryAdministration() {
   const [searchCityId, setSearchCityId] = useState<string | undefined>(
     undefined
   );
+
+  const [openCitySelect, setOpenCitySelect] = useState(false);
+  const [citySearch, setCitySearch] = useState("");
+  const [filteredCities, setFilteredCities] = useState<City[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -77,6 +104,28 @@ export function CemeteryAdministration() {
     }
     fetchData();
   }, [currentPage, toast]);
+
+  // Safe filtering effect
+  useEffect(() => {
+    if (!Array.isArray(cities)) {
+      setFilteredCities([]);
+      return;
+    }
+
+    if (citySearch) {
+      setFilteredCities(
+        cities.filter((city) => {
+          if (!city) return false;
+          const cityName = (city?.name ?? '').toLowerCase();
+          const countryName = (city?.country?.name ?? '').toLowerCase();
+          const searchTerm = citySearch.toLowerCase();
+          return cityName.includes(searchTerm) || countryName.includes(searchTerm);
+        })
+      );
+    } else {
+      setFilteredCities(cities);
+    }
+  }, [citySearch, cities]);
 
   const handleAddCemetery = async (name: string | null, cityId: number) => {
     try {
@@ -198,19 +247,78 @@ export function CemeteryAdministration() {
               />
             </div>
             <div className="flex-1">
-              <Select value={searchCityId} onValueChange={setSearchCityId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select city" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Cities</SelectItem>
-                  {cities.map((city) => (
-                    <SelectItem key={city.id} value={city.id.toString()}>
-                      {city.name} {city.country && `(${city.country.name})`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={openCitySelect} onOpenChange={setOpenCitySelect}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openCitySelect}
+                    className="w-full justify-between"
+                  >
+                    {searchCityId
+                      ? cities?.find((city) => city?.id?.toString() === searchCityId)?.name ?? 'Unnamed'
+                      : "All Cities"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0">
+                  <div className="flex flex-col">
+                    <div className="border-b p-2">
+                      <Input
+                        placeholder="Search city..."
+                        value={citySearch}
+                        onChange={(e) => setCitySearch(e.target.value)}
+                        className="border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                      />
+                    </div>
+                    <Command>
+                      <CommandList>
+                        <CommandEmpty>No city found.</CommandEmpty>
+                        <CommandGroup className="max-h-[300px] overflow-y-auto p-1">
+                          <CommandItem
+                            value="all-cities"
+                            onSelect={() => {
+                              setSearchCityId(undefined);
+                              setCitySearch("");
+                              setOpenCitySelect(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                !searchCityId ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            All Cities
+                          </CommandItem>
+                          {(filteredCities || []).map((city) => {
+                            if (!city?.id) return null;
+                            return (
+                              <CommandItem
+                                key={city.id}
+                                value={city.id.toString()}
+                                onSelect={() => {
+                                  setSearchCityId(city.id?.toString());
+                                  setCitySearch("");
+                                  setOpenCitySelect(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    searchCityId === city.id?.toString() ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {city.name ?? 'Unnamed'} {city.country?.name ? `(${city.country.name})` : ''}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             <Button onClick={handleSearch} variant="secondary">
               <Search className="mr-2 h-4 w-4" />
