@@ -204,38 +204,82 @@ export async function addCity(name: string | null, province: string | null, coun
   }
 }
 
-export async function getCountries(): Promise<{ id: number; name: string }[]> {
+export async function getCountries(page: number = 1, pageSize: number = 5) {
   try {
-    const countries = await prisma.country.findMany();
-    return countries;
+    const totalCount = await prisma.country.count();
+    const countries = await prisma.country.findMany({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+      }
+    });
+
+    return {
+      countries,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
   } catch (error) {
     console.error('Error fetching countries:', error);
     throw new Error('Failed to fetch countries');
   }
 }
 
-export async function addCountry(name: string) {
+export async function searchCountries(
+  searchTerm: string,
+  page: number = 1,
+  pageSize: number = 5
+) {
   try {
-    // First check if country exists (case-insensitive)
-    const existingCountry = await prisma.country.findFirst({
-      where: {
-        name: {
-          equals: name,
-          mode: 'insensitive'
-        }
+    const where: Prisma.CountryWhereInput = {
+      name: {
+        contains: searchTerm,
+        mode: Prisma.QueryMode.insensitive
+      }
+    };
+
+    const totalCount = await prisma.country.count({ where });
+    
+    const countries = await prisma.country.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
       }
     });
 
-    if (existingCountry) {
+    return {
+      countries,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
+  } catch (error) {
+    console.error('Error searching countries:', error);
+    throw new Error('Failed to search countries');
+  }
+}
+
+export async function addCountry(name: string) {
+  try {
+    const existing = await prisma.country.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } }
+    });
+
+    if (existing) {
       throw new Error('A country with this name already exists');
     }
 
-    const country = await prisma.country.create({
-      data: {
-        name,
-      },
+    const newCountry = await prisma.country.create({
+      data: { name }
     });
-    return country;
+    revalidatePath('/');
+    return newCountry;
   } catch (error) {
     if (error instanceof Error) {
       throw error;
@@ -393,18 +437,18 @@ export async function getCountriesWithPagination(page: number, pageSize: number 
 export async function deleteCountry(id: number) {
   try {
     // Check if the country is being used by any cities
-    const country = await prisma.country.findUnique({
-      where: { id },
-      include: { cities: { select: { id: true } } }
+    const citiesUsingCountry = await prisma.city.count({
+      where: { countryId: id }
     });
 
-    if (country?.cities.length) {
-      throw new Error('Cannot delete country that is being used by locations');
+    if (citiesUsingCountry > 0) {
+      throw new Error('Cannot delete country as it is being used by cities');
     }
 
     await prisma.country.delete({
       where: { id }
     });
+    revalidatePath('/');
   } catch (error) {
     if (error instanceof Error) {
       throw error;
@@ -415,20 +459,16 @@ export async function deleteCountry(id: number) {
 
 export async function updateCountry(id: number, name: string) {
   try {
-    // First check if another country exists with this name
-    const existingCountry = await prisma.country.findFirst({
+    const existing = await prisma.country.findFirst({
       where: {
-        name: {
-          equals: name,
-          mode: 'insensitive'
-        },
-        NOT: {
-          id: id
-        }
+        AND: [
+          { name: { equals: name, mode: 'insensitive' } },
+          { NOT: { id } }
+        ]
       }
     });
 
-    if (existingCountry) {
+    if (existing) {
       throw new Error('A country with this name already exists');
     }
 
@@ -436,6 +476,7 @@ export async function updateCountry(id: number, name: string) {
       where: { id },
       data: { name },
     });
+    revalidatePath('/');
     return country;
   } catch (error) {
     if (error instanceof Error) {
