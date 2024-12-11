@@ -1,5 +1,6 @@
 'use server';
 
+import { deleteImageFileReference, updateImageFileReference } from '@/lib/db';
 import minioClient from '@/lib/minio-client';
 import { BucketItem, BucketStream } from 'minio';
 import { revalidatePath } from 'next/cache';
@@ -56,6 +57,7 @@ export async function deleteImageAction(fileName: string) {
   const bucketName = process.env.MINIO_BUCKET_NAME!;
   try {
     await minioClient.removeObject(bucketName, fileName);
+    await deleteImageFileReference(fileName);
     revalidatePath('/');
   } catch (error) {
     console.error('Error deleting image:', error);
@@ -95,6 +97,7 @@ export async function renameImageAction(oldName: string, newName: string) {
   }
 }
 
+// After uploading images, update the image file references
 export async function uploadImagesAction(files: { name: string; type: string; arrayBuffer: ArrayBuffer }[]) {
   console.log('Uploading images to Minio:', files.map(f => f.name));
   const bucketName = process.env.MINIO_BUCKET_NAME!;
@@ -102,6 +105,10 @@ export async function uploadImagesAction(files: { name: string; type: string; ar
     for (const file of files) {
       await minioClient.putObject(bucketName, file.name, Buffer.from(file.arrayBuffer));
       console.log('Uploaded file:', file.name);
+      // Update the image file reference, extension, and size
+      const extension = file.name.split('.').pop()!;
+      const size = file.arrayBuffer.byteLength;             
+      await updateImageFileReference(file.name, extension, size);
     }
     revalidatePath('/');
   } catch (error) {
