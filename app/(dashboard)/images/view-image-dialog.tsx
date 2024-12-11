@@ -9,6 +9,7 @@ import {
 import { BucketItem } from 'minio';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { Maximize2 } from 'lucide-react';
 
 interface ViewImageDialogProps {
   image: BucketItem | null;
@@ -82,7 +83,15 @@ export function ViewImageDialog({
             )
           )}
         </div>
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-between mt-4">
+          <Button
+            onClick={() => window.open(imageUrl, '_blank')}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Maximize2 className="h-4 w-4" />
+            View Full Size Image in New Window
+          </Button>
           <Button onClick={handleRotate}>Rotate</Button>
         </div>
       </DialogContent>
