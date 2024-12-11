@@ -1,3 +1,5 @@
+'use client';
+
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,12 +19,12 @@ const formSchema = z.object({
 type EditCountryDialogProps = {
   isOpen: boolean;
   onClose: () => void;
-  onEditCountry: (id: number, name: string) => Promise<void>;
+  onEditCountry: (name: string) => Promise<void>;
   onDeleteCountry: (id: number) => Promise<void>;
   country: { id: number; name: string } | null;
 };
 
-function EditCountryDialog({ isOpen, onClose, onEditCountry, onDeleteCountry, country }: EditCountryDialogProps) {
+export default function EditCountryDialog({ isOpen, onClose, onEditCountry, onDeleteCountry, country }: EditCountryDialogProps) {
   const { toast } = useToast();
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -42,7 +44,7 @@ function EditCountryDialog({ isOpen, onClose, onEditCountry, onDeleteCountry, co
     if (!country) return;
     
     try {
-      await onEditCountry(country.id, values.name.trim());
+      await onEditCountry(values.name.trim());
       onClose();
     } catch (error) {
       toast({
@@ -59,9 +61,9 @@ function EditCountryDialog({ isOpen, onClose, onEditCountry, onDeleteCountry, co
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Manage Country</DialogTitle>
+          <DialogTitle>Edit Country</DialogTitle>
           <DialogDescription>
-            Edit or delete this country
+            Make changes to the country or delete it.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -79,17 +81,17 @@ function EditCountryDialog({ isOpen, onClose, onEditCountry, onDeleteCountry, co
                 </FormItem>
               )}
             />
-            <DialogFooter className="flex justify-between items-center">
+            <DialogFooter className="gap-2">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button type="button" variant="destructive" size="sm">
+                  <Button type="button" variant="destructive">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
                       This action cannot be undone. This will permanently delete the country.
                     </AlertDialogDescription>
@@ -97,26 +99,18 @@ function EditCountryDialog({ isOpen, onClose, onEditCountry, onDeleteCountry, co
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => onDeleteCountry(country.id)}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => country && onDeleteCountry(country.id)}
                     >
                       Delete
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-              <div className="flex space-x-2">
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button type="submit">Save Changes</Button>
-              </div>
+              <Button type="submit">Save Changes</Button>
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
   );
-}
-
-export default EditCountryDialog; 
+} 

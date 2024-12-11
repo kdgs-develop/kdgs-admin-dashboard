@@ -1,4 +1,5 @@
-import React from "react";
+'use client';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,15 +17,16 @@ type AddCountryDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   onAddCountry: (name: string) => Promise<void>;
+  initialName?: string;
 };
 
-function AddCountryDialog({ isOpen, onClose, onAddCountry }: AddCountryDialogProps) {
+export default function AddCountryDialog({ isOpen, onClose, onAddCountry, initialName = "" }: AddCountryDialogProps) {
   const { toast } = useToast();
-
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      name: initialName,
     },
   });
 
@@ -76,6 +78,4 @@ function AddCountryDialog({ isOpen, onClose, onAddCountry }: AddCountryDialogPro
       </DialogContent>
     </Dialog>
   );
-}
-
-export default AddCountryDialog; 
+} 

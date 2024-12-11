@@ -38,11 +38,11 @@ export function LocationAdministration() {
       try {
         const [citiesResult, countriesResult] = await Promise.all([
           getCitiesWithPagination(currentPage),
-          getCountries()
+          getCountries(1, 100)
         ]);
         setCities(citiesResult.cities);
         setTotalPages(citiesResult.totalPages);
-        setCountries(countriesResult);
+        setCountries(countriesResult.countries);
       } catch (error) {
         toast({
           title: 'Error fetching data',
