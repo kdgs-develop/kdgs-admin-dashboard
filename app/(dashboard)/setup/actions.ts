@@ -726,39 +726,64 @@ export async function deleteCemetery(id: number) {
   }
 }
 
-export async function getPeriodicals() {
+export async function getPeriodicals(page: number = 1, pageSize: number = 5) {
   try {
-    return await prisma.periodical.findMany({
+    const totalCount = await prisma.periodical.count();
+    const periodicals = await prisma.periodical.findMany({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       orderBy: { name: 'asc' },
       select: {
         id: true,
         name: true,
       }
     });
+
+    return {
+      periodicals,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
   } catch (error) {
     console.error('Error fetching periodicals:', error);
-    return [];
+    throw new Error('Failed to fetch periodicals');
   }
 }
 
-export async function searchPeriodicals(searchTerm: string) {
+export async function searchPeriodicals(
+  searchTerm: string,
+  page: number = 1,
+  pageSize: number = 5
+) {
   try {
-    return await prisma.periodical.findMany({
-      where: {
-        name: {
-          contains: searchTerm,
-          mode: 'insensitive'
-        }
-      },
+    const where: Prisma.PeriodicalWhereInput = {
+      name: {
+        contains: searchTerm,
+        mode: Prisma.QueryMode.insensitive
+      }
+    };
+
+    const totalCount = await prisma.periodical.count({ where });
+    
+    const periodicals = await prisma.periodical.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       orderBy: { name: 'asc' },
       select: {
         id: true,
         name: true,
       }
     });
+
+    return {
+      periodicals,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
   } catch (error) {
     console.error('Error searching periodicals:', error);
-    return [];
+    throw new Error('Failed to search periodicals');
   }
 }
 
