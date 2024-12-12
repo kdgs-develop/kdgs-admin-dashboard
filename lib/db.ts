@@ -344,7 +344,8 @@ export async function getObituaries(
       orderBy: { reference: 'asc' },
       include: {
         relatives: true,
-        fileBox: true
+        fileBox: true,
+        fileImages: true
       }
     }),
     prisma.obituary.count({ where })
