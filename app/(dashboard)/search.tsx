@@ -209,16 +209,11 @@ export function SearchInput() {
 
     setIsDownloading(true);
     try {
-      // Use getObituaries directly
       const { obituaries, totalObituaries } = await getObituaries(
         searchValue,
         0,
         1000
       );
-      console.log('Search results:', {
-        total: totalObituaries,
-        count: obituaries.length
-      });
 
       if (!totalObituaries) {
         toast({
@@ -228,8 +223,7 @@ export function SearchInput() {
         });
         return;
       }
-      // Generate the PDF with the actual total
-      console.log('Generating PDF with total:', totalObituaries);
+      
       const response = await fetch('/api/generate-search-pdf', {
         method: 'POST',
         headers: {
@@ -238,7 +232,7 @@ export function SearchInput() {
         },
         body: JSON.stringify({
           searchQuery: searchValue,
-          totalResults: totalObituaries
+          totalResults: totalObituaries,
         })
       });
 
@@ -249,8 +243,12 @@ export function SearchInput() {
       const pdfBlob = await response.blob();
       const pdfUrl = window.URL.createObjectURL(pdfBlob);
       const pdfLink = document.createElement('a');
+      const currentDateTime = new Date().toISOString()
+      .replace(/[:.]/g, '-')
+      .replace('T', '_')
+      .slice(0, -5); // Removes milliseconds and timezone offset
       pdfLink.href = pdfUrl;
-      pdfLink.download = `search_results_${Date.now()}.pdf`;
+      pdfLink.download = `KDGS-Report-${searchValue.replace(/\s+/g, '-')}-${currentDateTime}.pdf`;
       pdfLink.click();
       window.URL.revokeObjectURL(pdfUrl);
 
@@ -270,15 +268,15 @@ export function SearchInput() {
     }
   };
 
-  useEffect(() => {
-    if (searchValue) {
-      fetch(`/api/search?q=${encodeURIComponent(searchValue)}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setTotalResults(data.total);
-        });
-    }
-  }, [searchValue]);
+  // useEffect(() => {
+  //   if (searchValue) {
+  //     fetch(`/api/search?q=${encodeURIComponent(searchValue)}`)
+  //       .then((res) => res.json())
+  //       .then((data) => {
+  //         setTotalResults(data.total);
+  //       });
+  //   }
+  // }, [searchValue]);
 
   return (
     <div className="relative ml-auto flex gap-2 flex-1 md:grow-0">
