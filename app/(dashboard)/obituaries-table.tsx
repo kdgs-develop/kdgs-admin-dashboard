@@ -23,6 +23,7 @@ import { fetchObituariesAction, getEditObituaryDialogData } from './actions';
 import { AddObituaryDialog } from './add-obituary-dialog';
 import { CreateFileNumberDialog } from './create-file-number-dialog';
 import { Obituary } from './obituary';
+import { FilePlus } from 'lucide-react';
 
 interface AddObituaryDialogProps {
   isOpen: boolean;
@@ -97,6 +98,17 @@ export function ObituariesTable({
 
   return (
     <>
+      <div className="mb-4 flex justify-end">
+        <Button
+          disabled={role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'}
+          onClick={() => setIsCreateFileNumberDialogOpen(true)}
+          className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 flex items-center gap-2"
+        >
+          <FilePlus className="h-4 w-4" />
+          New File
+        </Button>
+      </div>
+
       <Card className="w-full">
         <CardHeader className="flex flex-row items-start justify-between gap-2">
           <div>
@@ -109,29 +121,7 @@ export function ObituariesTable({
             </CardDescription>
           </div>
           <div className="flex gap-2">
-            <Button
-              disabled={
-                role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
-              }
-              onClick={() => setIsCreateFileNumberDialogOpen(true)}
-            >
-              Create a New File Entry
-            </Button>
-            {/* <Button
-              disabled={
-                role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
-              }
-              onClick={async () => {
-                if (!dialogData) {
-                  const data = await getEditObituaryDialogData();
-                  setDialogData(data);
-                }
-                setIsAddDialogOpen(true);
-              }}
-              variant="destructive"
-            >
-              Add Obituary
-            </Button> */}
+            {/* Removing the duplicate button, keeping the div for future use if needed */}
           </div>
         </CardHeader>
         <CardContent>
