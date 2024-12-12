@@ -17,13 +17,13 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { getUserData, Obituary as ObituaryType } from '@/lib/db';
+import { FilePlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { startTransition, useEffect, useState } from 'react';
 import { fetchObituariesAction, getEditObituaryDialogData } from './actions';
 import { AddObituaryDialog } from './add-obituary-dialog';
 import { CreateFileNumberDialog } from './create-file-number-dialog';
 import { Obituary } from './obituary';
-import { FilePlus } from 'lucide-react';
 
 interface AddObituaryDialogProps {
   isOpen: boolean;
@@ -98,30 +98,31 @@ export function ObituariesTable({
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
-        <Button
-          disabled={role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'}
-          onClick={() => setIsCreateFileNumberDialogOpen(true)}
-          className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 flex items-center gap-2"
-        >
-          <FilePlus className="h-4 w-4" />
-          New File
-        </Button>
-      </div>
-
       <Card className="w-full">
         <CardHeader className="flex flex-row items-start justify-between gap-2">
           <div>
             <CardTitle className="mb-1">Obituary Index</CardTitle>
             <CardDescription>
               <span className="block mt-2" />
-              Manage obituaries, view their details, and add associated image files.
+              Manage obituaries, view their details, and add associated image
+              files.
               <span className="block mt-4" />
-              <strong>Search:</strong> Type any name or file number for regular search. For specific searches, use the dropdown menu to select search types.
+              <strong>Search:</strong> Type any name or file number for regular
+              search. For specific searches, use the dropdown menu to select
+              search types.
             </CardDescription>
           </div>
           <div className="flex gap-2">
-            {/* Removing the duplicate button, keeping the div for future use if needed */}
+            <Button
+              disabled={
+                role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
+              }
+              onClick={() => setIsCreateFileNumberDialogOpen(true)}
+              className="flex gap-2 items-center justify-center w-[140px] h-10 whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
+            >
+              <FilePlus className="h-4 w-4" />
+              Add New File
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -198,7 +199,7 @@ export function ObituariesTable({
           {...dialogData}
           role={role}
           currentUserFullName={currentUserFullName ?? ''}
-          cities={dialogData.cities.map(city => ({
+          cities={dialogData.cities.map((city) => ({
             id: city.id,
             name: city.name || '',
             province: city.province,
