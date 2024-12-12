@@ -1,16 +1,16 @@
-import { getObituaries, Obituary } from '@/lib/db';
-import { NextRequest, NextResponse } from 'next/server';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { getObituaries } from '@/lib/db';
 import fs from 'fs/promises';
+import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
-// A4 page dimensions in points (pt)
-const A4_PAGE = {
-  width: 595.28,
-  height: 841.89
-};
+// Cache static resources
+let cachedFont: any = null;
+let cachedBoldFont: any = null;
+let cachedLogo: any = null;
 
-// Table configuration
+const RECORDS_PER_PAGE = 25;
+const A4_PAGE = { width: 595.28, height: 841.89 };
 const TABLE_CONFIG = {
   startY: 680,
   margin: 50,
@@ -26,7 +26,6 @@ const TABLE_CONFIG = {
   ]
 };
 
-// Update footer configuration
 const FOOTER_CONFIG = {
   text: 'Compiled by © 2024 Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8\nDeveloped by Javier Gongora o/a Vyoniq Technologies',
   fontSize: 8,
@@ -34,219 +33,177 @@ const FOOTER_CONFIG = {
   lineSpacing: 2
 };
 
-// Add truncate helper
-function truncateText(text: string | null, maxLength: number): string {
-  if (!text) return '';
-  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const { searchQuery, totalResults } = await req.json();
-    console.log('Received request:', { searchQuery, totalResults });
 
-    // Get all results for the PDF (no pagination)
-    const { obituaries } = await getObituaries(searchQuery, 0, Number(totalResults));
-    console.log(`Found ${obituaries.length} obituaries`);
+    // Use existing getObituaries function
+    const { obituaries } = await getObituaries(
+      searchQuery,
+      0,
+      Number(totalResults)
+    );
 
-    // Create PDF document
     const pdfDoc = await PDFDocument.create();
-    
-    // Load and embed the KDGS logo
-    const logoPath = path.join(process.cwd(), 'public', 'kdgs.png');
-    const logoBytes = await fs.readFile(logoPath);
-    const logoImage = await pdfDoc.embedPng(logoBytes);
-    const logoSize = { width: 100, height: 50 }; // Adjust size as needed
 
-    // Create first page
-    let currentPage = pdfDoc.addPage([A4_PAGE.width, A4_PAGE.height]);
-    let pageNumber = 1;
-    const totalPages = Math.ceil(obituaries.length / 25); // Approximately 25 rows per page
+    // Load and cache fonts and logo only once
+    if (!cachedFont || !cachedBoldFont || !cachedLogo) {
+      [cachedFont, cachedBoldFont] = await Promise.all([
+        pdfDoc.embedFont(StandardFonts.Helvetica),
+        pdfDoc.embedFont(StandardFonts.HelveticaBold)
+      ]);
 
-    // Embed fonts
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const logoPath = path.join(process.cwd(), 'public', 'kdgs.png');
+      const logoBytes = await fs.readFile(logoPath);
+      cachedLogo = await pdfDoc.embedPng(logoBytes);
+    }
 
-    // Function to add header and footer to each page
-    const addPageHeader = (page: typeof currentPage) => {
-      // Add logo
-      page.drawImage(logoImage, {
+    const totalPages = Math.ceil(obituaries.length / RECORDS_PER_PAGE);
+    const logoSize = { width: 100, height: 50 };
+
+    // Process pages in batches
+    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+      const page = pdfDoc.addPage([A4_PAGE.width, A4_PAGE.height]);
+      const pageNumber = pageNum + 1;
+
+      // Add logo and header (batch operation)
+      page.drawImage(cachedLogo, {
         x: A4_PAGE.width - logoSize.width - TABLE_CONFIG.margin,
         y: A4_PAGE.height - logoSize.height - 30,
         width: logoSize.width,
         height: logoSize.height
       });
 
-      // Add title and search info on every page
-      page.drawText('KDGS Database - Search Results Report', {
-        x: TABLE_CONFIG.margin,
-        y: A4_PAGE.height - 50,
-        size: 14,
-        font: boldFont
+      // Draw all header text in one batch
+      const headerTexts = [
+        {
+          text: 'KDGS Database - Search Results Report',
+          size: 14,
+          y: A4_PAGE.height - 50,
+          font: cachedBoldFont
+        },
+        {
+          text: `Search Query: ${searchQuery}`,
+          size: 12,
+          y: A4_PAGE.height - 80,
+          font: cachedBoldFont
+        },
+        {
+          text: `Total Results: ${obituaries.length}`,
+          size: 10,
+          y: A4_PAGE.height - 95,
+          font: cachedFont
+        },
+        {
+          text: `Generated: ${new Date().toLocaleString()}`,
+          size: 10,
+          y: A4_PAGE.height - 110,
+          font: cachedFont
+        }
+      ];
+
+      headerTexts.forEach(({ text, size, y, font }) => {
+        page.drawText(text, {
+          x: TABLE_CONFIG.margin,
+          y,
+          size,
+          font
+        });
       });
 
-      page.drawText(`Search Query: ${searchQuery}`, {
-        x: TABLE_CONFIG.margin,
-        y: A4_PAGE.height - 80,
-        size: 12,
-        font: boldFont
-      });
-
-      page.drawText(`Total Results: ${obituaries.length}`, {
-        x: TABLE_CONFIG.margin,
-        y: A4_PAGE.height - 95,
-        size: 10,
-        font
-      });
-
-      page.drawText(`Generated: ${new Date().toLocaleString()}`, {
-        x: TABLE_CONFIG.margin,
-        y: A4_PAGE.height - 110,
-        size: 10,
-        font
-      });
-
-      // Draw table header
+      // Draw table header in one batch
       let x = TABLE_CONFIG.margin;
-      const headerY = TABLE_CONFIG.startY;
-      
-      TABLE_CONFIG.columns.forEach(column => {
+      TABLE_CONFIG.columns.forEach((column) => {
         page.drawText(column.title, {
           x,
-          y: headerY,
+          y: TABLE_CONFIG.startY,
           size: 10,
-          font: boldFont
+          font: cachedBoldFont
         });
         x += column.width;
       });
 
       // Draw header line
       page.drawLine({
-        start: { x: TABLE_CONFIG.margin, y: headerY - 5 },
-        end: { x: A4_PAGE.width - TABLE_CONFIG.margin, y: headerY - 5 },
+        start: { x: TABLE_CONFIG.margin, y: TABLE_CONFIG.startY - 5 },
+        end: {
+          x: A4_PAGE.width - TABLE_CONFIG.margin,
+          y: TABLE_CONFIG.startY - 5
+        },
         thickness: 1,
         color: rgb(0, 0, 0)
       });
 
+      // Process batch of records for current page
+      const startIdx = pageNum * RECORDS_PER_PAGE;
+      const endIdx = Math.min(
+        (pageNum + 1) * RECORDS_PER_PAGE,
+        obituaries.length
+      );
+      let yPos = TABLE_CONFIG.startY - TABLE_CONFIG.rowHeight;
+
+      // Draw all rows for current page in one batch
+      for (let i = startIdx; i < endIdx; i++) {
+        const obituary = obituaries[i];
+        x = TABLE_CONFIG.margin;
+
+        const rowData = [
+          (i + 1).toString(),
+          obituary.reference || '',
+          truncateText(obituary.surname, 12),
+          obituary.givenNames || '',
+          obituary.deathDate
+            ? new Date(obituary.deathDate).toLocaleDateString()
+            : '',
+          obituary.proofread ? 'Yes' : 'No',
+          obituary.fileImages?.length?.toString() || '0'
+        ];
+
+        rowData.forEach((text, colIndex) => {
+          page.drawText(text, {
+            x,
+            y: yPos,
+            size: 10,
+            font: cachedFont
+          });
+          x += TABLE_CONFIG.columns[colIndex].width;
+        });
+
+        yPos -= TABLE_CONFIG.rowHeight;
+      }
+
       // Add footer and page number
       const footerLines = FOOTER_CONFIG.text.split('\n');
-      const totalFooterHeight = footerLines.length * (FOOTER_CONFIG.fontSize + FOOTER_CONFIG.lineSpacing);
-      
-      // Calculate page number text width for right alignment
       const pageNumberText = `Page ${pageNumber} of ${totalPages}`;
-      const pageNumberWidth = font.widthOfTextAtSize(pageNumberText, FOOTER_CONFIG.fontSize);
-      
-      // Draw page number aligned with right margin
+      const pageNumberWidth = cachedFont.widthOfTextAtSize(
+        pageNumberText,
+        FOOTER_CONFIG.fontSize
+      );
+
       page.drawText(pageNumberText, {
-        x: A4_PAGE.width - TABLE_CONFIG.margin - pageNumberWidth, // Align with right margin
+        x: A4_PAGE.width - TABLE_CONFIG.margin - pageNumberWidth,
         y: FOOTER_CONFIG.y,
         size: FOOTER_CONFIG.fontSize,
-        font
+        font: cachedFont
       });
 
-      // Draw footer lines from bottom up
-      footerLines.reverse().forEach((line, index) => {
+      footerLines.forEach((line, index) => {
         page.drawText(line, {
           x: TABLE_CONFIG.margin,
-          y: FOOTER_CONFIG.y + (index * (FOOTER_CONFIG.fontSize + FOOTER_CONFIG.lineSpacing)),
+          y:
+            FOOTER_CONFIG.y +
+            index * (FOOTER_CONFIG.fontSize + FOOTER_CONFIG.lineSpacing),
           size: FOOTER_CONFIG.fontSize,
-          font,
+          font: cachedFont,
           color: rgb(0.4, 0.4, 0.4)
         });
       });
-    };
-
-    // Add header to first page
-    addPageHeader(currentPage);
-
-    // Draw table rows
-    let y = TABLE_CONFIG.startY - TABLE_CONFIG.rowHeight;
-    
-    for (let i = 0; i < obituaries.length; i++) {
-      const obituary: Obituary = obituaries[i];
-      console.log(obituary.fileImages);
-
-      // Check if we need a new page
-      if (y < 140) { // Increased from 120 to 140 to force new page after 25 entries
-        pageNumber++;
-        currentPage = pdfDoc.addPage([A4_PAGE.width, A4_PAGE.height]);
-        addPageHeader(currentPage);
-        y = TABLE_CONFIG.startY - TABLE_CONFIG.rowHeight;
-      }
-
-      // Draw row data
-      let x = TABLE_CONFIG.margin;
-      
-      // Index
-      currentPage.drawText(`${i + 1}`, {
-        x,
-        y,
-        size: 10,
-        font
-      });
-      x += TABLE_CONFIG.columns[0].width;
-
-      // File Number
-      currentPage.drawText(obituary.reference || '', {
-        x,
-        y,
-        size: 10,
-        font
-      });
-      x += TABLE_CONFIG.columns[1].width;
-
-      // Surname
-      currentPage.drawText(truncateText(obituary.surname, 12), {
-        x,
-        y,
-        size: 10,
-        font
-      });
-      x += TABLE_CONFIG.columns[2].width;
-
-      // Given Names
-      currentPage.drawText(obituary.givenNames || '', {
-        x,
-        y,
-        size: 10,
-        font
-      });
-      x += TABLE_CONFIG.columns[3].width;
-
-      // Death Date
-      currentPage.drawText(
-        obituary.deathDate
-          ? new Date(obituary.deathDate).toLocaleDateString()
-          : '',
-        {
-          x,
-          y,
-          size: 10,
-          font
-        }
-      );
-      x += TABLE_CONFIG.columns[4].width;
-
-      // Proofread
-      currentPage.drawText(obituary.proofread ? 'Yes' : 'No', {
-        x,
-        y,
-        size: 10,
-        font
-      });
-      x += TABLE_CONFIG.columns[5].width;
-      // Images Count
-      currentPage.drawText(obituary.fileImages?.length?.toString() || '0', {
-        x,
-        y,
-        size: 10,
-        font
-      });
-
-      y -= TABLE_CONFIG.rowHeight;
     }
 
-    const pdfBytes = await pdfDoc.save();
+    const pdfBytes = await pdfDoc.save({
+      useObjectStreams: false,
+      addDefaultPage: false
+    });
 
     return new NextResponse(pdfBytes, {
       headers: {
@@ -261,4 +218,9 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
+
+function truncateText(text: string | null, maxLength: number): string {
+  if (!text) return '';
+  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
+}
