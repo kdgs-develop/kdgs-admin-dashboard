@@ -1,6 +1,7 @@
 'use client';
 
 import { Spinner } from '@/components/icons';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -9,14 +10,12 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Search } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { getObituaries } from '@/lib/db';
+import { cn } from '@/lib/utils';
+import { Download, Search } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { forwardRef, useEffect, useRef, useState, useTransition } from 'react';
-import { cn } from '@/lib/utils';
-import { toast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
-import { getObituaries } from '@/lib/db';
 
 const SEARCH_OPTIONS = [
   { value: 'regular', label: 'Global Search' },
@@ -77,7 +76,7 @@ const HighlightedSearchInput = forwardRef<
 >(({ value, ...props }, ref) => {
   const parts = value?.toString().split(' ') || [];
   const command = parts[0].startsWith('@') ? parts[0] : '';
-  
+
   return (
     <div className="relative w-full">
       <Input
@@ -85,8 +84,8 @@ const HighlightedSearchInput = forwardRef<
         ref={ref}
         value={value}
         className={cn(
-          "w-full rounded-lg bg-background pl-8 md:w-[300px] lg:w-[400px] xl:w-[500px]",
-          command && "text-foreground"
+          'w-full rounded-lg bg-background pl-8 md:w-[300px] lg:w-[400px] xl:w-[500px]',
+          command && 'text-foreground'
         )}
       />
     </div>
@@ -207,13 +206,20 @@ export function SearchInput() {
 
   const handleDownloadReport = async () => {
     if (!searchValue) return;
-    
+
     setIsDownloading(true);
     try {
       // Use getObituaries directly
-      const { obituaries, totalObituaries } = await getObituaries(searchValue, 0, 1000);
-      console.log('Search results:', { total: totalObituaries, count: obituaries.length });
-      
+      const { obituaries, totalObituaries } = await getObituaries(
+        searchValue,
+        0,
+        1000
+      );
+      console.log('Search results:', {
+        total: totalObituaries,
+        count: obituaries.length
+      });
+
       if (!totalObituaries) {
         toast({
           title: 'No Results',
@@ -228,7 +234,7 @@ export function SearchInput() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/pdf'
+          Accept: 'application/pdf'
         },
         body: JSON.stringify({
           searchQuery: searchValue,
@@ -267,8 +273,8 @@ export function SearchInput() {
   useEffect(() => {
     if (searchValue) {
       fetch(`/api/search?q=${encodeURIComponent(searchValue)}`)
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           setTotalResults(data.total);
         });
     }
