@@ -298,34 +298,35 @@ export function SearchInput() {
         </Select>
       )}
 
-      <form action={searchAction} className="relative flex-1">
-        <Search className="absolute left-2.5 top-[.75rem] h-4 w-4 text-muted-foreground" />
-        <HighlightedSearchInput
-          ref={inputRef}
-          name="q"
-          type="search"
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          placeholder={`Search ${context}...`}
-        />
-        {isPending && <Spinner />}
-        {searchValue && (
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="absolute right-2 top-[0.3rem]"
-            onClick={handleDownloadReport}
-            disabled={isDownloading}
-          >
-            {isDownloading ? (
-              <Spinner className="h-4 w-4" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-          </Button>
-        )}
-      </form>
+      <div className="flex gap-2 flex-1">
+        <form action={searchAction} className="relative flex-1">
+          <Search className="absolute left-2.5 top-[.75rem] h-4 w-4 text-muted-foreground" />
+          <HighlightedSearchInput
+            ref={inputRef}
+            name="q"
+            type="search"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            placeholder={`Search ${context}...`}
+          />
+          {isPending && <Spinner />}
+        </form>
+
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleDownloadReport}
+          disabled={isDownloading || !searchValue}
+          className="flex gap-2 items-center whitespace-nowrap"
+        >
+          {isDownloading ? (
+            <Spinner className="h-4 w-4" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
+          Report
+        </Button>
+      </div>
     </div>
   );
 }
