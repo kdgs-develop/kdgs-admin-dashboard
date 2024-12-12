@@ -223,7 +223,7 @@ export function SearchInput() {
         });
         return;
       }
-      
+
       const response = await fetch('/api/generate-search-pdf', {
         method: 'POST',
         headers: {
@@ -232,7 +232,7 @@ export function SearchInput() {
         },
         body: JSON.stringify({
           searchQuery: searchValue,
-          totalResults: totalObituaries,
+          totalResults: totalObituaries
         })
       });
 
@@ -243,10 +243,11 @@ export function SearchInput() {
       const pdfBlob = await response.blob();
       const pdfUrl = window.URL.createObjectURL(pdfBlob);
       const pdfLink = document.createElement('a');
-      const currentDateTime = new Date().toISOString()
-      .replace(/[:.]/g, '-')
-      .replace('T', '_')
-      .slice(0, -5); // Removes milliseconds and timezone offset
+      const currentDateTime = new Date()
+        .toISOString()
+        .replace(/[:.]/g, '-')
+        .replace('T', '_')
+        .slice(0, -5); // Removes milliseconds and timezone offset
       pdfLink.href = pdfUrl;
       pdfLink.download = `KDGS-Report-${searchValue.replace(/\s+/g, '-')}-${currentDateTime}.pdf`;
       pdfLink.click();
