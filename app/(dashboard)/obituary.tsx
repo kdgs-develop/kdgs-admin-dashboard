@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Obituary as ObituaryType } from '@/lib/db';
 import { useRouter } from 'next/navigation';
@@ -8,7 +9,6 @@ import { deleteObituary, getEditObituaryDialogData } from './actions';
 import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 import { EditObituaryDialog } from './edit-obituary-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
-import { Progress } from "@/components/ui/progress";
 
 export function Obituary({
   obituary,
@@ -34,18 +34,20 @@ export function Obituary({
       if (obituary.reference) {
         setIsLoading(true);
         setLoadingProgress(0);
-        
+
         // Start progress simulation
         const progressInterval = setInterval(() => {
-          setLoadingProgress(prev => Math.min(prev + 10, 90));
+          setLoadingProgress((prev) => Math.min(prev + 10, 90));
         }, 100);
-        
+
         try {
-          const imageFiles = await fetchImagesForObituaryAction(obituary.reference);
+          const imageFiles = await fetchImagesForObituaryAction(
+            obituary.reference
+          );
           clearInterval(progressInterval);
           setLoadingProgress(100);
           setImages(imageFiles);
-          
+
           // Small delay before hiding the progress bar
           setTimeout(() => {
             setIsLoading(false);
@@ -126,7 +128,11 @@ export function Obituary({
         </TableCell>
         <TableCell>
           <div className="flex space-x-2">
-            <Button onClick={handleViewClick} variant="outline" size="sm">
+            <Button 
+              onClick={handleViewClick} 
+              size="sm"
+              className="bg-gray-600 hover:bg-gray-700 text-white transition-colors duration-200"
+            >
               View Report
             </Button>
             {(role === 'ADMIN' ||
@@ -134,13 +140,13 @@ export function Obituary({
               role === 'INDEXER') && (
               <Button
                 onClick={handleEditClick}
-                variant="default"
                 size="sm"
                 disabled={
                   role !== 'ADMIN' &&
                   role !== 'PROOFREADER' &&
                   role !== 'INDEXER'
                 }
+                className="bg-gray-500 hover:bg-gray-600 text-white transition-colors duration-200"
               >
                 Edit
               </Button>
@@ -148,9 +154,9 @@ export function Obituary({
             {role === 'ADMIN' && (
               <Button
                 onClick={handleDeleteClick}
-                variant="destructive"
                 size="sm"
                 disabled={role !== 'ADMIN'}
+                className="bg-gray-400 hover:bg-gray-500 text-white transition-colors duration-200"
               >
                 Delete
               </Button>
