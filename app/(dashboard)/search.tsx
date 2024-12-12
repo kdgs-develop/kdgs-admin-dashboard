@@ -320,10 +320,10 @@ export function SearchInput() {
 
         <Button
           type="button"
-          variant="outline"
+          variant="default"
           onClick={handleDownloadReport}
           disabled={isDownloading || !searchValue}
-          className="flex gap-2 items-center whitespace-nowrap"
+          className="flex gap-2 items-center whitespace-nowrap bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
         >
           {isDownloading ? (
             <Spinner className="h-4 w-4" />
