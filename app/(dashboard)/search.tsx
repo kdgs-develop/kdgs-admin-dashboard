@@ -13,6 +13,10 @@ import { Search } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { forwardRef, useEffect, useRef, useState, useTransition } from 'react';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import { getObituaries } from '@/lib/db';
 
 const SEARCH_OPTIONS = [
   { value: 'regular', label: 'Global Search' },
@@ -97,6 +101,8 @@ export function SearchInput() {
   const [isPending, startTransition] = useTransition();
   const [context, setContext] = useState('obituaries');
   const [searchValue, setSearchValue] = useState('');
+  const [totalResults, setTotalResults] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -199,6 +205,75 @@ export function SearchInput() {
     }
   }
 
+  const handleDownloadReport = async () => {
+    if (!searchValue) return;
+    
+    setIsDownloading(true);
+    try {
+      // Use getObituaries directly
+      const { obituaries, totalObituaries } = await getObituaries(searchValue, 0, 1000);
+      console.log('Search results:', { total: totalObituaries, count: obituaries.length });
+      
+      if (!totalObituaries) {
+        toast({
+          title: 'No Results',
+          description: 'No results found to generate PDF report.',
+          variant: 'destructive'
+        });
+        return;
+      }
+      // Generate the PDF with the actual total
+      console.log('Generating PDF with total:', totalObituaries);
+      const response = await fetch('/api/generate-search-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/pdf'
+        },
+        body: JSON.stringify({
+          searchQuery: searchValue,
+          totalResults: totalObituaries
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate PDF: ${response.statusText}`);
+      }
+
+      const pdfBlob = await response.blob();
+      const pdfUrl = window.URL.createObjectURL(pdfBlob);
+      const pdfLink = document.createElement('a');
+      pdfLink.href = pdfUrl;
+      pdfLink.download = `search_results_${Date.now()}.pdf`;
+      pdfLink.click();
+      window.URL.revokeObjectURL(pdfUrl);
+
+      toast({
+        title: 'Download Complete',
+        description: 'The search results report has been downloaded.'
+      });
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to download report. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (searchValue) {
+      fetch(`/api/search?q=${encodeURIComponent(searchValue)}`)
+        .then(res => res.json())
+        .then(data => {
+          setTotalResults(data.total);
+        });
+    }
+  }, [searchValue]);
+
   return (
     <div className="relative ml-auto flex gap-2 flex-1 md:grow-0">
       {context === 'obituaries' && (
@@ -234,6 +309,22 @@ export function SearchInput() {
           placeholder={`Search ${context}...`}
         />
         {isPending && <Spinner />}
+        {searchValue && (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="absolute right-2 top-[0.3rem]"
+            onClick={handleDownloadReport}
+            disabled={isDownloading}
+          >
+            {isDownloading ? (
+              <Spinner className="h-4 w-4" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+          </Button>
+        )}
       </form>
     </div>
   );
