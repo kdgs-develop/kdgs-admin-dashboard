@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
             (i + 1).toString(),
             obituary.reference || '',
             truncateText(obituary.surname, 12),
-            obituary.givenNames || '',
+            truncateText(obituary.givenNames, 19),
             obituary.deathDate
               ? new Date(obituary.deathDate).toLocaleDateString()
               : '',
