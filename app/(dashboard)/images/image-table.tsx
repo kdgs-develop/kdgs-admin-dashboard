@@ -200,24 +200,24 @@ export function ImageTable({ initialSearchQuery = '' }) {
                           <div className="flex space-x-2">
                             <Button
                               onClick={() => setSelectedImage(image)}
-                              variant="outline"
                               size="sm"
+                              className="bg-gray-600 hover:bg-gray-700 text-white transition-colors duration-200"
                             >
                               View
                             </Button>
                             <Button
                               onClick={() => setSelectedImageToEdit(image)}
-                              variant="default"
                               size="sm"
                               disabled={role !== 'ADMIN'}
+                              className="bg-gray-500 hover:bg-gray-600 text-white transition-colors duration-200"
                             >
                               Edit
                             </Button>
                             <Button
                               onClick={() => setSelectedImageToRename(image)}
-                              variant="destructive"
                               size="sm"
                               disabled={role !== 'ADMIN'}
+                              className="bg-gray-400 hover:bg-gray-500 text-white transition-colors duration-200"
                             >
                               Rename
                             </Button>
