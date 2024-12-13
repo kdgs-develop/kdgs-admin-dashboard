@@ -52,20 +52,24 @@ export default function ObituaryPage() {
 
   useEffect(() => {
     if (reference) {
-      fetchObituaryByReferenceAction(reference as string).then((data) => {
+      const decodedReference = decodeURIComponent(reference as string);
+      
+      fetchObituaryByReferenceAction(decodedReference).then((data) => {
         if (data) {
           setObituary(data as ObituaryWithAllRelations);
         }
       });
-      fetchImagesForObituaryAction(reference as string).then(setImages);
+      fetchImagesForObituaryAction(decodedReference).then(setImages);
     }
   }, [reference]);
 
   const handleDownloadPDF = async () => {
     setIsDownloading(true);
     try {
+      const decodedReference = decodeURIComponent(reference as string);
+      
       // Download PDF
-      const pdfResponse = await fetch(`/api/generate-pdf/${reference}`);
+      const pdfResponse = await fetch(`/api/generate-pdf/${encodeURIComponent(decodedReference)}`);
       if (!pdfResponse.ok) {
         throw new Error('Failed to generate PDF');
       }
@@ -73,7 +77,7 @@ export default function ObituaryPage() {
       const pdfUrl = window.URL.createObjectURL(pdfBlob);
       const pdfLink = document.createElement('a');
       pdfLink.href = pdfUrl;
-      pdfLink.download = `obituary_${reference}.pdf`;
+      pdfLink.download = `obituary_${decodedReference}.pdf`;
       pdfLink.click();
       window.URL.revokeObjectURL(pdfUrl);
 
