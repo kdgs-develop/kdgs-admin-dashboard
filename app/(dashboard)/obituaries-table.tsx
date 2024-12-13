@@ -98,7 +98,7 @@ export function ObituariesTable({
 
   return (
     <>
-      <Card className="w-full">
+      <Card className="w-full my-8">
         <CardHeader className="flex flex-row items-start justify-between gap-2">
           <div>
             <CardTitle className="mb-1">Obituary Index</CardTitle>
@@ -118,10 +118,10 @@ export function ObituariesTable({
                 role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
               }
               onClick={() => setIsCreateFileNumberDialogOpen(true)}
-              className="flex gap-2 items-center justify-center w-[140px] h-10 whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
+              className="flex gap-2 items-center justify-center w-32 h-10 mr-5 whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 "
             >
               <FilePlus className="h-4 w-4" />
-              Add New File
+              New Entry
             </Button>
           </div>
         </CardHeader>
