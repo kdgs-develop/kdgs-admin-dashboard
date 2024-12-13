@@ -84,7 +84,7 @@ const HighlightedSearchInput = forwardRef<
         ref={ref}
         value={value}
         className={cn(
-          'w-full rounded-lg bg-background pl-8 md:w-[300px] lg:w-[400px] xl:w-[500px]',
+          'w-full rounded-lg bg-background pl-8 md:w-[280px] lg:w-[330px] xl:w-[430px]',
           command && 'text-foreground'
         )}
       />
@@ -283,10 +283,10 @@ export function SearchInput() {
     <div className="relative ml-auto flex gap-2 flex-1 md:grow-0">
       {context === 'obituaries' && (
         <Select onValueChange={handleSearchOptionChange}>
-          <SelectTrigger className="w-[250px] lg:w-[350px] xl:w-[400px]">
+          <SelectTrigger className="w-[220px] lg:w-[280px] xl:w-[320px]">
             <SelectValue placeholder="Search type..." />
           </SelectTrigger>
-          <SelectContent className="min-w-[250px] lg:min-w-[350px] xl:min-w-[400px]">
+          <SelectContent className="min-w-[220px] lg:min-w-[280px] xl:min-w-[320px]">
             {SEARCH_OPTIONS.map((option) => (
               <SelectItem
                 key={option.value}
@@ -322,14 +322,14 @@ export function SearchInput() {
           variant="default"
           onClick={handleDownloadReport}
           disabled={isDownloading || !searchValue}
-          className="flex gap-2 items-center whitespace-nowrap bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+          className="flex gap-2 items-center whitespace-nowrap bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 w-32 h-10"
         >
           {isDownloading ? (
             <Spinner className="h-4 w-4" />
           ) : (
             <Download className="h-4 w-4" />
           )}
-          Report
+          PDF Report
         </Button>
       </div>
     </div>
