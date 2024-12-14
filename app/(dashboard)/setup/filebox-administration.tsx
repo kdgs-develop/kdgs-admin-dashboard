@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -7,30 +8,50 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus, Search, Edit, ChevronDown, ChevronUp } from 'lucide-react';
-import { getFileBoxes, addFileBox, searchFileBoxes, updateFileBox, deleteFileBox } from './actions';
-import AddFileBoxDialog from './add-filebox-dialog';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { ChevronDown, ChevronUp, Edit, Plus, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  addFileBox,
+  deleteFileBox,
+  getFileBoxes,
+  getObituaryCountForFileBox,
+  searchFileBoxes,
+  updateFileBox,
+  getOpenFileBoxId
+} from './actions';
+import AddFileBoxDialog from './add-filebox-dialog';
 import EditFileBoxDialog from './edit-filebox-dialog';
 
 export function FileBoxAdministration() {
-  const [fileBoxes, setFileBoxes] = useState<{ id: number; year: number; number: number }[]>([]);
+  const [fileBoxes, setFileBoxes] = useState<
+    { id: number; year: number; number: number; obituaryCount: number }[]
+  >([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchYear, setSearchYear] = useState('');
   const [searchNumber, setSearchNumber] = useState('');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedFileBox, setSelectedFileBox] = useState<{ id: number; year: number; number: number } | null>(null);
+  const [selectedFileBox, setSelectedFileBox] = useState<{
+    id: number;
+    year: number;
+    number: number;
+  } | null>(null);
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [currentOpenFileBoxId, setCurrentOpenFileBoxId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchFileBoxes() {
       try {
         const fetchedFileBoxes = await getFileBoxes();
-        setFileBoxes(fetchedFileBoxes);
+        const fileBoxesWithCounts = await Promise.all(
+          fetchedFileBoxes.map(async (box) => {
+            const count = await getObituaryCountForFileBox(box.id);
+            return { ...box, obituaryCount: count };
+          })
+        );
+        setFileBoxes(fileBoxesWithCounts);
       } catch (error) {
         toast({
           title: 'Error fetching file boxes',
@@ -39,7 +60,22 @@ export function FileBoxAdministration() {
         });
       }
     }
+
+    async function fetchCurrentOpenFileBox() {
+      try {
+        const openFileBoxId = await getOpenFileBoxId();
+        setCurrentOpenFileBoxId(openFileBoxId);
+      } catch (error) {
+        toast({
+          title: 'Error fetching current open file box',
+          description: error instanceof Error ? error.message : 'An unknown error occurred',
+          variant: 'destructive'
+        });
+      }
+    }
+
     fetchFileBoxes();
+    fetchCurrentOpenFileBox();
   }, [toast]);
 
   const handleSearch = async () => {
@@ -57,7 +93,13 @@ export function FileBoxAdministration() {
         searchYear ? parseInt(searchYear) : undefined,
         searchNumber ? parseInt(searchNumber) : undefined
       );
-      setFileBoxes(results);
+      const resultsWithCounts = await Promise.all(
+        results.map(async (box) => {
+          const count = await getObituaryCountForFileBox(box.id);
+          return { ...box, obituaryCount: count };
+        })
+      );
+      setFileBoxes(resultsWithCounts);
     } catch (error) {
       toast({
         title: 'Error searching file boxes',
@@ -70,10 +112,14 @@ export function FileBoxAdministration() {
   const handleAddFileBox = async (year: number, number: number) => {
     try {
       const newFileBox = await addFileBox(year, number);
-      setFileBoxes(prev => [...prev, newFileBox]);
+      const count = await getObituaryCountForFileBox(newFileBox.id);
+      setFileBoxes((prev) => [
+        ...prev,
+        { ...newFileBox, obituaryCount: count }
+      ]);
       toast({
         title: 'Success',
-        description: 'File box added successfully',
+        description: 'File box added successfully'
       });
     } catch (error) {
       toast({
@@ -86,15 +132,24 @@ export function FileBoxAdministration() {
 
   const handleEditFileBox = async (year: number, number: number) => {
     if (!selectedFileBox) return;
-    
+
     try {
-      const updatedFileBox = await updateFileBox(selectedFileBox.id, year, number);
-      setFileBoxes(prev => prev.map(box => 
-        box.id === selectedFileBox.id ? updatedFileBox : box
-      ));
+      const updatedFileBox = await updateFileBox(
+        selectedFileBox.id,
+        year,
+        number
+      );
+      const count = await getObituaryCountForFileBox(updatedFileBox.id);
+      setFileBoxes((prev) =>
+        prev.map((box) =>
+          box.id === selectedFileBox.id
+            ? { ...updatedFileBox, obituaryCount: count }
+            : box
+        )
+      );
       toast({
         title: 'Success',
-        description: 'File box updated successfully',
+        description: 'File box updated successfully'
       });
       setIsEditDialogOpen(false);
       setSelectedFileBox(null);
@@ -109,13 +164,13 @@ export function FileBoxAdministration() {
 
   const handleDeleteFileBox = async (id: number) => {
     if (!selectedFileBox) return;
-    
+
     try {
       await deleteFileBox(id);
-      setFileBoxes(prev => prev.filter(box => box.id !== id));
+      setFileBoxes((prev) => prev.filter((box) => box.id !== id));
       toast({
         title: 'Success',
-        description: 'File box deleted successfully',
+        description: 'File box deleted successfully'
       });
       setIsEditDialogOpen(false);
       setSelectedFileBox(null);
@@ -132,9 +187,27 @@ export function FileBoxAdministration() {
     setIsDialogOpen(true);
   };
 
+  const checkAndCreateNewFileBox = async (box: {
+    id: number;
+    year: number;
+    number: number;
+    obituaryCount: number;
+  }) => {
+    if (box.year === 0 && box.number === 0) {
+      return;
+    }
+
+    if (box.obituaryCount >= 950) {
+      const year = new Date().getFullYear();
+      const existingBoxes = fileBoxes.filter((b) => b.year === year);
+      const newNumber = existingBoxes.length > 0 ? existingBoxes.length + 1 : 1;
+      await handleAddFileBox(year, newNumber);
+    }
+  };
+
   return (
     <Card>
-      <CardHeader 
+      <CardHeader
         className="cursor-pointer flex flex-row items-center justify-between"
         onClick={() => setIsExpanded(!isExpanded)}
       >
@@ -187,21 +260,32 @@ export function FileBoxAdministration() {
             <div className="mt-4">
               <h3 className="text-sm font-medium mb-2">Found File Boxes:</h3>
               <div className="grid grid-cols-3 gap-2">
-                {fileBoxes.map((box) => (
-                  <div key={box.id} className="p-2 border rounded flex justify-between items-center">
-                    <span>Year: {box.year}, Number: {box.number}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedFileBox(box);
-                        setIsEditDialogOpen(true);
-                      }}
+                {fileBoxes.map((box) => {
+                  checkAndCreateNewFileBox(box);
+                  return (
+                    <div
+                      key={box.id}
+                      className="p-2 border rounded flex justify-between items-center"
                     >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                      <span>
+                        Year: {box.year}, Number: {box.number}, Obituaries: {box.obituaryCount}
+                        {box.id === currentOpenFileBoxId && (
+                          <span className="text-green-500 ml-2">Open</span>
+                        )}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedFileBox(box);
+                          setIsEditDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
