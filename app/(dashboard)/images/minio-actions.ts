@@ -116,7 +116,7 @@ export async function rotateImageAction(fileName: string) {
       data: { rotation: newRotation },
     });
 
-    console.log(`Updated rotation for image ${fileName} to ${newRotation} degrees`);
+    
   } catch (error) {
     console.error('Error rotating image:', error);
     throw new Error(
