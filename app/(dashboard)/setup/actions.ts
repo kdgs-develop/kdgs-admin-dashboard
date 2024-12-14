@@ -1037,3 +1037,27 @@ export async function deleteTitle(id: number) {
     throw new Error('Failed to delete title');
   }
 }
+
+export async function getObituaryCountForFileBox(fileBoxId: number): Promise<number> {
+  try {
+    const count = await prisma.obituary.count({
+      where: {
+        fileBoxId: fileBoxId,
+      },
+    });
+    return count;
+  } catch (error) {
+    console.error('Error fetching obituary count for file box:', error);
+    throw new Error('Failed to fetch obituary count');
+  }
+}
+
+export async function getOpenFileBoxId(): Promise<number> {
+  const setting = await prisma.settings.findUnique({
+    where: {
+      id: 'open_filebox_id'
+    }
+  });
+
+  return setting ? parseInt(setting.value) : 0; // Return 0 if no setting found
+}
