@@ -66,6 +66,9 @@ model Obituary {
   title          Title?        @relation(fields: [titleId], references: [id])
   relatives      Relative[]
   fileImages     ImageFile[]
+  images         Image[]
+
+  @@index([reference])
 }
 
 model Relative {
@@ -154,4 +157,19 @@ model Settings {
   value         String
   lastUpdatedAt DateTime @updatedAt
   updatedBy     String?
+}
+
+model Image {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  reference    String?
+  rotation     Int?     @default(0)
+  size         Int
+  lastModified DateTime @default(now())
+  etag         String
+  prefix       String?
+  obituary     Obituary? @relation(fields: [reference], references: [reference])
+
+  @@index([name])
+  @@index([lastModified])
 }
