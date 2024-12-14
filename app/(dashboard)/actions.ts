@@ -16,6 +16,7 @@ import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { deleteImageAction } from './images/minio-actions';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
+import { getObituaryCountForFileBox } from '@/app/(dashboard)/setup/actions';
 
 export async function fetchObituariesAction(
   offset: number = 0,
@@ -200,23 +201,53 @@ export async function createObituaryAction(
   // Get the open file box ID
   const openFileBoxId = await getOpenFileBoxId();
 
+  // Check how many obituaries are associated with the open file box ID
+  const obituaryCount = await getObituaryCountForFileBox(openFileBoxId);
+
+  let fileBoxIdToUse = openFileBoxId;
+
+  // If the count is 950 or more, create a new file box
+  if (obituaryCount >= 950) {
+    const currentYear = new Date().getFullYear();
+    const existingBoxes = await prisma.fileBox.findMany({
+      where: { year: currentYear },
+      orderBy: { number: 'asc' },
+    });
+
+    const newNumber = existingBoxes.length > 0 ? existingBoxes.length + 1 : 1;
+
+    // Create the new file box
+    const newFileBox = await prisma.fileBox.create({
+      data: {
+        year: currentYear,
+        number: newNumber,
+      },
+    });
+
+    fileBoxIdToUse = newFileBox.id; // Use the new file box ID
+
+    // Update the open file box ID in settings
+    await prisma.settings.upsert({
+      where: { id: 'open_filebox_id' },
+      update: { value: newFileBox.id.toString() },
+      create: { id: 'open_filebox_id', value: newFileBox.id.toString() },
+    });
+  }
+
   // Use a transaction to ensure all operations are performed atomically
   return await prisma.$transaction(async (prisma) => {
-    // Reset the ID sequence to the maximum existing ID
-    await prisma.$executeRaw`SELECT setval('obituary_id_seq', COALESCE((SELECT MAX(id) FROM "Obituary"), 1));`;
-
-    // Create a new obituary record in the database with the open file box ID
+    // Create a new obituary record in the database with the determined file box ID
     const newObituary = await prisma.obituary.create({
       data: {
         ...restObituaryData,
-        fileBoxId: openFileBoxId || 0,
+        fileBoxId: fileBoxIdToUse,
         cemetery: undefined,
         birthCity: undefined,
         deathCity: undefined,
         periodical: undefined,
         title: undefined,
-        fileBox: undefined
-      }
+        fileBox: undefined,
+      },
     });
 
     // Extract the generated id from the new obituary record
@@ -227,15 +258,15 @@ export async function createObituaryAction(
       await prisma.relative.createMany({
         data: relatives.map((relative) => ({
           obituaryId: newObituaryId,
-          ...relative
-        }))
+          ...relative,
+        })),
       });
     }
 
     // Fetch the final obituary record with the associated relatives
     const finalObituary = await prisma.obituary.findUnique({
       where: { id: newObituaryId },
-      include: { relatives: true }
+      include: { relatives: true },
     });
 
     // Revalidate the path to update the cache
