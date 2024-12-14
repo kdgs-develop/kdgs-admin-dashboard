@@ -269,8 +269,10 @@ export function FileBoxAdministration() {
                     >
                       <span>
                         Year: {box.year}, Number: {box.number}, Obituaries: {box.obituaryCount}
-                        {box.id === currentOpenFileBoxId && (
+                        {box.id === currentOpenFileBoxId ? (
                           <span className="text-green-500 ml-2">Open</span>
+                        ) : (
+                          <span className="text-red-500 ml-2">Closed</span>
                         )}
                       </span>
                       <Button
