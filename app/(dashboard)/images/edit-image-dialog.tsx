@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { BucketItem } from 'minio';
 import { DeleteImageConfirmationDialog } from './delete-image-confirmation-dialog';
+import { rotateImageAction } from './minio-actions';
+import { getImageRotation } from '@/lib/db';
 
 interface EditImageDialogProps {
   image: BucketItem | null;
   onClose: () => void;
   onDelete: (fileName: string) => void;
-  onRotate: (fileName: string, degrees: number) => Promise<void>;
+  onRotate: (fileName: string) => Promise<void>;
   getImageUrl: (fileName: string) => Promise<string>;
 }
 
@@ -24,22 +26,28 @@ export function EditImageDialog({ image, onClose, onDelete, onRotate, getImageUr
       if (image && image.name) {
         setIsLoading(true);
         const url = await getImageUrl(image.name);
-        setTimeout(() => {
-          setImageUrl(url);
-          setIsLoading(false);
-        }, 500); // Minimum loading time of 500ms
+        setImageUrl(url);
+        setIsLoading(false);
       }
     }
     fetchImageUrl();
   }, [image, getImageUrl]);
 
+  useEffect(() => {
+    async function fetchRotation() {
+      if (image && image.name) {
+        const currentRotation = await getImageRotation(image.name);
+        setRotation(currentRotation || 0); // Set the rotation state
+      }
+    }
+    fetchRotation();
+  }, [image]);
+
   const handleRotate = async () => {
     if (image && image.name) {
-      const newRotation = (rotation + 90) % 360;
-      setRotation(newRotation);
-      await onRotate(image.name, newRotation);
-      const newUrl = await getImageUrl(image.name);
-      setImageUrl(newUrl);
+      await onRotate(image.name);
+      const newRotation = await getImageRotation(image.name);
+      setRotation(newRotation || 0); // Update the local state with the new rotation
     }
   };
 

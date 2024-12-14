@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -6,63 +7,133 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
+import { getImageRotation } from '@/lib/db';
 import { BucketItem } from 'minio';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { Maximize2 } from 'lucide-react';
 
 interface ViewImageDialogProps {
   image: BucketItem | null;
   onClose: (fileName: string) => void;
-  onRotate?: (fileName: string, degrees: number) => Promise<void>;
   getImageUrl: (fileName: string) => Promise<string>;
+  onRotate: (fileName: string) => Promise<void>;
 }
 
 export function ViewImageDialog({
   image,
   onClose,
-  onRotate,
-  getImageUrl
+  getImageUrl,
+  onRotate
 }: ViewImageDialogProps) {
   const [rotation, setRotation] = useState(0);
   const [imageUrl, setImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [scale, setScale] = useState(1);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [position, setPosition] = useState({ x: 50, y: 50 }); // Centered by default
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const lastMousePosition = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     async function fetchImageUrl() {
       if (image && image.name) {
         setIsLoading(true);
         const url = await getImageUrl(image.name);
-        setTimeout(() => {
-          setImageUrl(url);
-          setIsLoading(false);
-        }, 500); // Minimum loading time of 500ms
+        setImageUrl(url);
+        setIsLoading(false);
       }
     }
     fetchImageUrl();
   }, [image, getImageUrl]);
 
-  const handleRotate = async () => {
+  useEffect(() => {
     if (image && image.name) {
-      const newRotation = (rotation + 90) % 360;
-      setRotation(newRotation);
-      if (onRotate) await onRotate(image.name, newRotation);
-      const newUrl = await getImageUrl(image.name);
-      setImageUrl(newUrl);
+      getImageRotation(image.name).then((rotation) => {
+        setRotation(rotation || 0);
+      });
+    }
+  }, [image]);
+
+  const handleZoom = () => {
+    if (isZoomed) {
+      setScale(1); // Reset scale to 1
+      setPosition({ x: 50, y: 50 }); // Reset position to center
+    } else {
+      setScale(2); // Zoom in
+    }
+    setIsZoomed(!isZoomed);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isZoomed && imageContainerRef.current) {
+      const { clientX, clientY } = e;
+      const { left, top, width, height } = imageContainerRef.current.getBoundingClientRect();
+      const x = ((clientX - left) / width) * 100;
+      const y = ((clientY - top) / height) * 100;
+      setPosition({ x, y });
     }
   };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isZoomed) {
+      isDragging.current = true;
+      lastMousePosition.current = { x: e.clientX, y: e.clientY };
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+  };
+
+  const handleMouseLeave = () => {
+    isDragging.current = false;
+  };
+
+  const handleMouseMoveDrag = (e: MouseEvent) => {
+    if (isDragging.current) {
+      const dx = e.clientX - lastMousePosition.current.x;
+      const dy = e.clientY - lastMousePosition.current.y;
+      setPosition((prev) => ({
+        x: prev.x + (dx / imageContainerRef.current!.clientWidth) * 100,
+        y: prev.y + (dy / imageContainerRef.current!.clientHeight) * 100,
+      }));
+      lastMousePosition.current = { x: e.clientX, y: e.clientY };
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMoveDrag);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMoveDrag);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
+  const handleRotate = async () => {
+    if (image && image.name) {
+      await onRotate(image.name);
+      const newRotation = await getImageRotation(image.name);
+      setRotation(newRotation || 0);
+    }
+  };
+
   return (
     <Dialog open={!!image} onOpenChange={() => onClose(image?.name || '')}>
       <DialogContent className="max-w-[90vw] w-full max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{image?.name}</DialogTitle>
-          <DialogDescription>
-            View and rotate the image.
-          </DialogDescription>
+          <DialogDescription>View the image.</DialogDescription>
         </DialogHeader>
+        
         <div
-          className="flex-grow relative flex items-center justify-center"
-          style={{ height: 'calc(90vh - 200px)' }}
+          ref={imageContainerRef}
+          className="flex-grow relative flex items-center justify-center cursor-zoom-in"
+          style={{ height: 'calc(90vh - 200px)', cursor: isZoomed ? 'zoom-out' : 'zoom-in' }}
+          onMouseMove={handleMouseMove}
+          onClick={handleZoom}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
         >
           {isLoading ? (
             <div className="flex items-center justify-center">
@@ -70,29 +141,30 @@ export function ViewImageDialog({
             </div>
           ) : (
             imageUrl && (
-              <Image
-                src={imageUrl}
-                alt={image?.name || 'Image'}
-                fill
+              <div
                 style={{
-                  objectFit: 'contain',
-                  transform: `rotate(${rotation}deg)`
+                  transform: `rotate(${rotation}deg) scale(${scale})`,
+                  transformOrigin: `${position.x}% ${position.y}%`,
+                  transition: 'transform 0.3s ease',
+                  position: 'relative',
+                  width: '100%',
+                  height: '100%',
                 }}
-                className="transition-transform duration-300"
-              />
+              >
+                <Image
+                  src={imageUrl}
+                  alt={image?.name || 'Image'}
+                  fill
+                  style={{ objectFit: 'contain' }}
+                />
+              </div>
             )
           )}
         </div>
+
         <div className="flex justify-between mt-4">
-          <Button
-            onClick={() => window.open(imageUrl, '_blank')}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Maximize2 className="h-4 w-4" />
-            View Full Size Image in New Window
-          </Button>
           <Button onClick={handleRotate}>Rotate</Button>
+          <Button variant="destructive" onClick={() => onClose(image?.name || '')}>Close</Button>
         </div>
       </DialogContent>
     </Dialog>

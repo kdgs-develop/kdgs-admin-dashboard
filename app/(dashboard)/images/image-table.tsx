@@ -27,8 +27,11 @@ import { ViewImageDialog } from './view-image-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from '@clerk/nextjs';
 import { getUserRole } from '@/lib/db';
+import { initialSync } from './sync-initial';
 
 const IMAGES_PER_PAGE = 5;
+
+type OrderField = 'fileNameAsc' | 'fileNameDesc' | 'lastModifiedAsc' | 'lastModifiedDesc';
 
 export function ImageTable({ initialSearchQuery = '' }) {
   const [images, setImages] = useState<BucketItem[]>([]);
@@ -41,7 +44,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [isLoading, setIsLoading] = useState(false);
-  const [imagesPerPage, setImagesPerPage] = useState<number>(5);
+  const [imagesPerPage, setImagesPerPage] = useState<number>(25);
   const [prevCursors, setPrevCursors] = useState<string[]>([]);
 
   const tableRef = useRef<HTMLDivElement>(null);
@@ -61,11 +64,13 @@ export function ImageTable({ initialSearchQuery = '' }) {
     setSearchQuery(searchParams.get('q') || '');
   }, [searchParams]);
 
+  const [orderBy, setOrderBy] = useState<OrderField>('fileNameAsc');
+
   useEffect(() => {
     setCursor(null);
     setPrevCursors([]);
     loadImages(true);
-  }, [searchQuery, imagesPerPage]);
+  }, [searchQuery, imagesPerPage, orderBy]);
 
   useEffect(() => {
     function updateTableHeight() {
@@ -86,36 +91,36 @@ export function ImageTable({ initialSearchQuery = '' }) {
   }, []);
 
   async function loadImages(reset: boolean = false) {
-    if (reset) {
-      setCursor(null);
-      setPrevCursors([]);
-    }
+    setImages([]);
     setIsLoading(true);
+    
     try {
-      const {
-        images: newImages,
-        hasMore,
-        nextCursor
-      } = await fetchImagesAction(
+      const { images: newImages, hasMore, nextCursor } = await fetchImagesAction(
         reset ? null : cursor,
         imagesPerPage,
-        searchQuery
+        searchQuery,
+        orderBy
       );
-      setImages(newImages);
+      setIsLoading(false);
+      setImages(newImages.map(img => ({
+        name: img.name,
+        size: img.size,
+        lastModified: img.lastModified,
+        etag: img.etag,
+        prefix: undefined // Remove optional prefix since BucketItem expects it to be undefined
+      })));
       setHasMore(hasMore);
-      if (nextCursor) {
-        setCursor(nextCursor);
-        if (!reset) {
-          setPrevCursors(prev => [...prev, cursor!]);
-        }
-      } else {
+      
+      if (reset) {
         setCursor(null);
+        setPrevCursors([]);
+      } else if (nextCursor) {
+        setCursor(nextCursor);
+        cursor && setPrevCursors(prev => [...prev, cursor]);
       }
-      setError(null);
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      console.error('Error loading images:', err);
-    } finally {
       setIsLoading(false);
     }
   }
@@ -125,8 +130,8 @@ export function ImageTable({ initialSearchQuery = '' }) {
     loadImages(true);
   }
 
-  async function handleRotate(fileName: string, degrees: number) {
-    await rotateImageAction(fileName, degrees);
+  async function handleRotate(fileName: string) {
+    await rotateImageAction(fileName);
     loadImages(true);
   }
 
@@ -164,11 +169,11 @@ export function ImageTable({ initialSearchQuery = '' }) {
           </div>
         ) : (
           <div className="w-full h-full flex flex-col" ref={tableRef}>
-            {isLoading && images.length === 0 ? (
-              <div className="flex-grow flex flex-col items-center justify-center">
+            {isLoading ? (
+              <div className="flex-grow flex flex-col items-center justify-center loading-indicator">
                 <Spinner className="h-8 w-8 mb-4" />
                 <p className="text-sm text-muted-foreground text-center">
-                  Fetching files...
+                  {images.length === 0 ? 'Sorting Images...' : 'Fetching files...'}
                 </p>
               </div>
             ) : images.length > 0 ? (
@@ -186,7 +191,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
                   <TableBody>
                     {images.map((image) => (
                       <TableRow key={image.name}>
-                        <TableCell>{image.name ?? 'Unnamed'}</TableCell>
+                        <TableCell>{image.name?.split('.')[0] ?? 'Unnamed'}</TableCell>
                         <TableCell>
                           {image.name?.split('.').pop() ?? 'Unknown'}
                         </TableCell>
@@ -240,20 +245,43 @@ export function ImageTable({ initialSearchQuery = '' }) {
       </CardContent>
       <CardFooter className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-            <div className="text-sm text-muted-foreground">
-              Images per page
-            </div>
+          <div className="text-sm text-muted-foreground">
+            Images per page
+          </div>
           <Select
             value={imagesPerPage.toString()}
             onValueChange={(value) => setImagesPerPage(Number(value))}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[100px]">
               <SelectValue placeholder="Images per page" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="5">5</SelectItem>
-              <SelectItem value="10">10</SelectItem>
               <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="text-sm text-muted-foreground">
+            Order by
+          </div>
+          <Select
+            value={orderBy}
+            onValueChange={(value: OrderField) => {
+              setIsLoading(true);
+              setOrderBy(value);
+              setImages([]);
+              loadImages(true);
+            }}
+          >
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Order by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="fileNameAsc">File Name (A-Z)</SelectItem>
+              <SelectItem value="fileNameDesc">File Name (Z-A)</SelectItem>
+              <SelectItem value="lastModifiedAsc">Last Modified (Oldest)</SelectItem>
+              <SelectItem value="lastModifiedDesc">Last Modified (Newest)</SelectItem>
             </SelectContent>
           </Select>
         </div>

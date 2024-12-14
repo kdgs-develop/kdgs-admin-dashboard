@@ -32,7 +32,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { addPeriodical, addTitle, updateObituaryAction } from './actions';
-import { deleteImageAction, getImageUrlAction } from './images/minio-actions';
+import { deleteImageAction, getImageUrlAction, rotateImageAction } from './images/minio-actions';
 import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 
@@ -1168,12 +1168,7 @@ export function EditObituaryDialog({
           image={selectedImage}
           onClose={() => setSelectedImage(null)}
           getImageUrl={getImageUrlAction}
-          // onRotate={function (
-          //   fileName: string,
-          //   degrees: number
-          // ): Promise<void> {
-          //   throw new Error('Function not implemented.');
-          // }}
+          onRotate={rotateImageAction}
         />
       )}
 

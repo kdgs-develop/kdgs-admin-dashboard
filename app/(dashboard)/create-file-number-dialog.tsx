@@ -34,7 +34,7 @@ import {
   generateReference,
   obituaryExists as obituaryExistsCheck
 } from './actions';
-import { getImageUrlAction } from './images/minio-actions';
+import { getImageUrlAction, rotateImageAction } from './images/minio-actions';
 import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 import { getUserData } from '@/lib/db';
@@ -184,9 +184,8 @@ export function CreateFileNumberDialog({
     setIsViewImageDialogOpen(false);
   };
 
-  const handleRotate = async (fileName: string, degrees: number) => {
-    // Implement rotation logic if needed
-    console.log(`Rotating ${fileName} by ${degrees} degrees`);
+  const handleRotate = async (fileName: string) => {
+    rotateImageAction(fileName);
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {

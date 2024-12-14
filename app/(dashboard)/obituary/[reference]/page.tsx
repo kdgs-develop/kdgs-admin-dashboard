@@ -10,7 +10,7 @@ import { BucketItem } from 'minio';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getImageUrlAction } from '../../images/minio-actions';
+import { getImageUrlAction, rotateImageAction } from '../../images/minio-actions';
 import { ViewImageDialog } from '../../images/view-image-dialog';
 import {
   fetchImagesForObituaryAction,
@@ -141,9 +141,8 @@ export default function ObituaryPage() {
   const fullName =
     `${obituary.title?.name || ''} ${obituary.givenNames || ''} ${obituary.surname || ''}`.trim();
 
-  const handleRotate = async (fileName: string, degrees: number) => {
-    // Implement rotation logic if needed
-    console.log(`Rotating ${fileName} by ${degrees} degrees`);
+  const handleRotate = async (fileName: string) => {
+    rotateImageAction(fileName);
   };
 
   return (
