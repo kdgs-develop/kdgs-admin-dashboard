@@ -27,6 +27,7 @@ import { ViewImageDialog } from './view-image-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from '@clerk/nextjs';
 import { getUserRole } from '@/lib/db';
+import { initialSync } from './sync-initial';
 
 const IMAGES_PER_PAGE = 5;
 
@@ -90,43 +91,36 @@ export function ImageTable({ initialSearchQuery = '' }) {
   }, []);
 
   async function loadImages(reset: boolean = false) {
-    if (reset) {
-      setCursor(null);
-      setPrevCursors([]);
-    }
-    
     setImages([]);
     setIsLoading(true);
     
     try {
-      const {
-        images: newImages,
-        hasMore,
-        nextCursor,
-      } = await fetchImagesAction(
+      const { images: newImages, hasMore, nextCursor } = await fetchImagesAction(
         reset ? null : cursor,
         imagesPerPage,
         searchQuery,
         orderBy
       );
-      
-      setImages(newImages);
+      setIsLoading(false);
+      setImages(newImages.map(img => ({
+        name: img.name,
+        size: img.size,
+        lastModified: img.lastModified,
+        etag: img.etag,
+        prefix: undefined // Remove optional prefix since BucketItem expects it to be undefined
+      })));
       setHasMore(hasMore);
       
-      if (nextCursor) {
-        setCursor(nextCursor);
-        if (!reset) {
-          setPrevCursors(prev => [...prev, cursor!]);
-        }
-      } else {
+      if (reset) {
         setCursor(null);
+        setPrevCursors([]);
+      } else if (nextCursor) {
+        setCursor(nextCursor);
+        cursor && setPrevCursors(prev => [...prev, cursor]);
       }
       
-      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      console.error('Error loading images:', err);
-    } finally {
       setIsLoading(false);
     }
   }
@@ -136,8 +130,8 @@ export function ImageTable({ initialSearchQuery = '' }) {
     loadImages(true);
   }
 
-  async function handleRotate(fileName: string, degrees: number) {
-    await rotateImageAction(fileName, degrees);
+  async function handleRotate(fileName: string) {
+    await rotateImageAction(fileName);
     loadImages(true);
   }
 
@@ -179,7 +173,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
               <div className="flex-grow flex flex-col items-center justify-center loading-indicator">
                 <Spinner className="h-8 w-8 mb-4" />
                 <p className="text-sm text-muted-foreground text-center">
-                  {images.length === 0 ? 'Fetching files...' : 'Sorting files...'}
+                  {images.length === 0 ? 'Sorting Images...' : 'Fetching files...'}
                 </p>
               </div>
             ) : images.length > 0 ? (
@@ -197,7 +191,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
                   <TableBody>
                     {images.map((image) => (
                       <TableRow key={image.name}>
-                        <TableCell>{image.name ?? 'Unnamed'}</TableCell>
+                        <TableCell>{image.name?.split('.')[0] ?? 'Unnamed'}</TableCell>
                         <TableCell>
                           {image.name?.split('.').pop() ?? 'Unknown'}
                         </TableCell>
