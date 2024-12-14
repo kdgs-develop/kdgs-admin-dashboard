@@ -1,6 +1,6 @@
 'use client';
 
-import { getImageUrlAction } from '@/app/(dashboard)/images/minio-actions';
+import { getImageUrlAction, rotateImageAction } from '@/app/(dashboard)/images/minio-actions';
 import { ViewImageDialog } from '@/app/(dashboard)/images/view-image-dialog';
 import {
   fetchImagesForObituaryAction,
@@ -109,9 +109,8 @@ export default function PublicObituaryPage() {
   const fullName =
     `${obituary.title?.name || ''} ${obituary.givenNames || ''} ${obituary.surname || ''}`.trim();
 
-  const handleRotate = async (fileName: string, degrees: number) => {
-    // Implement rotation logic if needed
-    console.log(`Rotating ${fileName} by ${degrees} degrees`);
+  const handleRotate = async (fileName: string) => {
+    rotateImageAction(fileName);
   };
 
   return (
