@@ -31,6 +31,8 @@ export function ViewImageDialog({
   const [isZoomed, setIsZoomed] = useState(false);
   const [position, setPosition] = useState({ x: 50, y: 50 }); // Centered by default
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const lastMousePosition = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     async function fetchImageUrl() {
@@ -53,7 +55,12 @@ export function ViewImageDialog({
   }, [image]);
 
   const handleZoom = () => {
-    setScale(isZoomed ? 1 : 2); // Toggle zoom scale
+    if (isZoomed) {
+      setScale(1); // Reset scale to 1
+      setPosition({ x: 50, y: 50 }); // Reset position to center
+    } else {
+      setScale(2); // Zoom in
+    }
     setIsZoomed(!isZoomed);
   };
 
@@ -66,6 +73,42 @@ export function ViewImageDialog({
       setPosition({ x, y });
     }
   };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isZoomed) {
+      isDragging.current = true;
+      lastMousePosition.current = { x: e.clientX, y: e.clientY };
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+  };
+
+  const handleMouseLeave = () => {
+    isDragging.current = false;
+  };
+
+  const handleMouseMoveDrag = (e: MouseEvent) => {
+    if (isDragging.current) {
+      const dx = e.clientX - lastMousePosition.current.x;
+      const dy = e.clientY - lastMousePosition.current.y;
+      setPosition((prev) => ({
+        x: prev.x + (dx / imageContainerRef.current!.clientWidth) * 100,
+        y: prev.y + (dy / imageContainerRef.current!.clientHeight) * 100,
+      }));
+      lastMousePosition.current = { x: e.clientX, y: e.clientY };
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMoveDrag);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMoveDrag);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
 
   const handleRotate = async () => {
     if (image && image.name) {
@@ -89,6 +132,8 @@ export function ViewImageDialog({
           style={{ height: 'calc(90vh - 200px)', cursor: isZoomed ? 'zoom-out' : 'zoom-in' }}
           onMouseMove={handleMouseMove}
           onClick={handleZoom}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
         >
           {isLoading ? (
             <div className="flex items-center justify-center">
