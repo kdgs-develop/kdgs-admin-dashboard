@@ -589,3 +589,14 @@ export async function updateImageFileReference(
 export async function deleteImageFileReference(fileName: string) {
   await prisma.imageFile.delete({ where: { name: fileName.split('.')[0] } });
 }
+
+// Get the rotation of an image
+export async function getImageRotation(fileName: string) {
+  const image = await prisma.image.findUnique({ where: { name: fileName } });
+  return image?.rotation;
+}
+
+// Update the rotation of an image
+export async function updateImageRotation(fileName: string, rotation: number) {
+  await prisma.image.update({ where: { name: fileName }, data: { rotation } });
+}
