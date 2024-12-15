@@ -55,7 +55,7 @@ export async function deleteObituary(formData: FormData) {
     });
 
     // Delete the image files from the database
-    await prisma.imageFile.deleteMany({
+    await prisma.image.deleteMany({
       where: { name: { startsWith: obituary.reference } }
     });
 
@@ -416,7 +416,7 @@ export async function generateNewFileNumber(
 
   const baseReference = existingObituary.reference.slice(0, 8); // Ensure we only use the first 8 characters
 
-  const imageFiles = await prisma.imageFile.findMany({
+  const imageFiles = await prisma.image.findMany({
     where: {
       name: {
         startsWith: baseReference
@@ -446,8 +446,8 @@ export async function generateNewFileNumber(
 
 // Create new image file
 export async function createImageFileAction(name: string) {
-  const newImageFile = await prisma.imageFile.create({
-    data: { name }
+  const newImageFile = await prisma.image.create({
+    data: { name, size: 0, etag: '', lastModified: new Date() }
   });
 
   revalidatePath('/');
