@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
               ? new Date(obituary.deathDate).toLocaleDateString()
               : '',
             obituary.proofread ? 'Yes' : 'No',
-            obituary.fileImages?.length?.toString() || '0'
+            obituary.images?.length?.toString() || '0'
           ];
 
           rowData.forEach((text, colIndex) => {

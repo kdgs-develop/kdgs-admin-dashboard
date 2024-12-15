@@ -3,6 +3,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from './prisma';
+import { getEtag } from '@/app/(dashboard)/images/minio-actions';
 
 // Helper function to validate dates
 function isValidDate(dateString: string): boolean {
@@ -17,7 +18,7 @@ export type Obituary = Awaited<
 > & {
   relatives?: Awaited<ReturnType<typeof prisma.relative.findMany>>;
   fileBox?: Awaited<ReturnType<typeof prisma.fileBox.findUnique>>;
-  fileImages?: Awaited<ReturnType<typeof prisma.imageFile.findMany>>;
+  images?: Awaited<ReturnType<typeof prisma.image.findMany>>;
 };
 
 function createBasicSearchConditions(
@@ -197,12 +198,12 @@ function createSpecialSearchCondition(
       proofread: val.toLowerCase() === 'true'
     }),
     '@images': (val) => ({
-      fileImages: val.toLowerCase() === 'true' ? { some: {} } : { none: {} }
+      images: val.toLowerCase() === 'true' ? { some: {} } : { none: {} }
     }),
     '@imagesProofread': (val, proofreadVal) => ({
       AND: [
         {
-          fileImages: val.toLowerCase() === 'true' ? { some: {} } : { none: {} }
+          images: val.toLowerCase() === 'true' ? { some: {} } : { none: {} }
         },
         { proofread: proofreadVal?.toLowerCase() === 'true' }
       ]
@@ -345,7 +346,7 @@ export async function getObituaries(
       include: {
         relatives: true,
         fileBox: true,
-        fileImages: true
+        images: true,
       }
     }),
     prisma.obituary.count({ where })
@@ -570,24 +571,27 @@ export async function getUserData() {
 // Update the image file reference, extension, and size
 export async function updateImageFileReference(
   fileName: string,
-  extension: string,
   size: number
 ) {
-  await prisma.imageFile.upsert({
+  await prisma.image.upsert({
     where: { name: fileName.split('.')[0] },
-    update: { reference: fileName.slice(0, 8), extension, size },
+    update: { reference: fileName.slice(0, 8), size },
     create: {
       name: fileName.split('.')[0],
       reference: fileName.slice(0, 8),
-      extension,
+      etag: '',
+      lastModified: new Date(),
       size
     }
   });
+  // get new etag and update the image
+  const newEtag = await getEtag(fileName);
+  await prisma.image.update({ where: { name: fileName.split('.')[0] }, data: { etag: newEtag } });
 }
 
 // Delete the image file reference
 export async function deleteImageFileReference(fileName: string) {
-  await prisma.imageFile.delete({ where: { name: fileName.split('.')[0] } });
+  await prisma.image.delete({ where: { name: fileName.split('.')[0] } });
 }
 
 // Get the rotation of an image

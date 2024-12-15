@@ -247,3 +247,14 @@ export async function syncMinioWithDatabase() {
     throw error;
   }
 }
+
+export async function getEtag(fileName: string): Promise<string> {
+  try {
+    const bucketName = process.env.MINIO_BUCKET_NAME!;
+    const statObject = await minioClient.statObject(bucketName, fileName);
+    return statObject.etag; // Return the ETag from the object's metadata
+  } catch (error) {
+    console.error('Error fetching ETag:', error);
+    throw new Error('Failed to fetch ETag for the image');
+  }
+}
