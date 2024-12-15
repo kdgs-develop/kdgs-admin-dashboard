@@ -8,7 +8,6 @@ import { useEffect, useState } from 'react';
 import { deleteObituary, getEditObituaryDialogData } from './actions';
 import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
 import { EditObituaryDialog } from './edit-obituary-dialog';
-import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 
 export function Obituary({
   obituary,
@@ -25,43 +24,8 @@ export function Obituary({
   const [dialogData, setDialogData] = useState<Awaited<
     ReturnType<typeof getEditObituaryDialogData>
   > | null>(null);
-  const [images, setImages] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-
-  useEffect(() => {
-    async function fetchImages() {
-      if (obituary.reference) {
-        setIsLoading(true);
-        setLoadingProgress(0);
-
-        // Start progress simulation
-        const progressInterval = setInterval(() => {
-          setLoadingProgress((prev) => Math.min(prev + 10, 90));
-        }, 100);
-
-        try {
-          const imageFiles = await fetchImagesForObituaryAction(
-            obituary.reference
-          );
-          clearInterval(progressInterval);
-          setLoadingProgress(100);
-          setImages(imageFiles);
-
-          // Small delay before hiding the progress bar
-          setTimeout(() => {
-            setIsLoading(false);
-            setLoadingProgress(0);
-          }, 200);
-        } catch (error) {
-          clearInterval(progressInterval);
-          setIsLoading(false);
-          setLoadingProgress(0);
-        }
-      }
-    }
-    fetchImages();
-  }, [obituary.reference]);
 
   const handleViewClick = () => {
     router.push(`/obituary/${obituary.reference}`);
@@ -100,18 +64,14 @@ export function Obituary({
         </TableCell>
         <TableCell className="w-[200px]">
           <div className="w-full">
-            {isLoading ? (
-              <div className="py-2">
-                <Progress value={loadingProgress} className="h-2 w-full" />
-              </div>
-            ) : images.length > 0 ? (
-              images.length === 1 ? (
-                <span className="truncate">{images[0]}</span>
+            {obituary.images && obituary.images.length > 0 ? (
+              obituary.images.length === 1 ? (
+                <span className="truncate">{obituary.images[0].name}</span>
               ) : (
                 <ul className="list-none space-y-1">
-                  {images.map((image, index) => (
+                  {obituary.images.map((image, index) => (
                     <li key={index} className="truncate text-xs">
-                      {image}
+                      {image.name}
                     </li>
                   ))}
                 </ul>
