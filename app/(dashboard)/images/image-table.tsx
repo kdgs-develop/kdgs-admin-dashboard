@@ -4,6 +4,13 @@ import { Spinner } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -11,6 +18,8 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import { getUserRole, ImageWithObituary } from '@/lib/db';
+import { useAuth } from '@clerk/nextjs';
 import { BucketItem } from 'minio';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -24,28 +33,33 @@ import {
 } from './minio-actions';
 import { RenameImageDialog } from './rename-image-dialog';
 import { ViewImageDialog } from './view-image-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAuth } from '@clerk/nextjs';
-import { getUserRole } from '@/lib/db';
-import { initialSync } from './sync-initial';
 
 const IMAGES_PER_PAGE = 5;
 
-type OrderField = 'fileNameAsc' | 'fileNameDesc' | 'lastModifiedAsc' | 'lastModifiedDesc';
+export type OrderField =
+  | 'fileNameAsc'
+  | 'fileNameDesc'
+  | 'lastModifiedAsc'
+  | 'lastModifiedDesc';
 
 export function ImageTable({ initialSearchQuery = '' }) {
-  const [images, setImages] = useState<BucketItem[]>([]);
+  const [images, setImages] = useState<ImageWithObituary[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
-  const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
+  const [selectedImage, setSelectedImage] = useState<ImageWithObituary | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
-  const [selectedImageToEdit, setSelectedImageToEdit] = useState<BucketItem | null>(null);
-  const [selectedImageToRename, setSelectedImageToRename] = useState<BucketItem | null>(null);
+  const [selectedImageToEdit, setSelectedImageToEdit] =
+    useState<ImageWithObituary | null>(null);
+  const [selectedImageToRename, setSelectedImageToRename] =
+    useState<ImageWithObituary | null>(null);
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [isLoading, setIsLoading] = useState(false);
   const [imagesPerPage, setImagesPerPage] = useState<number>(25);
   const [prevCursors, setPrevCursors] = useState<string[]>([]);
+  const [obituaryFilter, setObituaryFilter] = useState<'all' | 'has' | 'no'>('all');
 
   const tableRef = useRef<HTMLDivElement>(null);
   const [tableHeight, setTableHeight] = useState('400px');
@@ -70,7 +84,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
     setCursor(null);
     setPrevCursors([]);
     loadImages(true);
-  }, [searchQuery, imagesPerPage, orderBy]);
+  }, [searchQuery, imagesPerPage, orderBy, obituaryFilter]);
 
   useEffect(() => {
     function updateTableHeight() {
@@ -79,7 +93,8 @@ export function ImageTable({ initialSearchQuery = '' }) {
         const tableTop = tableRef.current.getBoundingClientRect().top;
         const footerHeight = 53; // Adjust this value to match your footer's height
         const cardFooterHeight = 64; // Height of the card's footer (pagination controls)
-        const newHeight = windowHeight - tableTop - footerHeight - cardFooterHeight;
+        const newHeight =
+          windowHeight - tableTop - footerHeight - cardFooterHeight;
         setTableHeight(`${Math.max(newHeight, 400)}px`); // Ensure a minimum height of 400px
       }
     }
@@ -93,34 +108,38 @@ export function ImageTable({ initialSearchQuery = '' }) {
   async function loadImages(reset: boolean = false) {
     setImages([]);
     setIsLoading(true);
-    
+
     try {
-      const { images: newImages, hasMore, nextCursor } = await fetchImagesAction(
+      const {
+        images: newImages,
+        hasMore,
+        nextCursor
+      } = await fetchImagesAction(
         reset ? null : cursor,
         imagesPerPage,
         searchQuery,
-        orderBy
+        orderBy,
+        obituaryFilter
       );
+
+  
+
       setIsLoading(false);
-      setImages(newImages.map(img => ({
-        name: img.name,
-        size: img.size,
-        lastModified: img.lastModified,
-        etag: img.etag,
-        prefix: undefined // Remove optional prefix since BucketItem expects it to be undefined
-      })));
+      setImages(newImages);
       setHasMore(hasMore);
-      
+
       if (reset) {
         setCursor(null);
         setPrevCursors([]);
       } else if (nextCursor) {
         setCursor(nextCursor);
-        cursor && setPrevCursors(prev => [...prev, cursor]);
+        cursor && setPrevCursors((prev) => [...prev, cursor]);
       }
-      
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      setError(
+        err instanceof Error ? err.message : 'An unknown error occurred'
+      );
+    } finally {
       setIsLoading(false);
     }
   }
@@ -144,7 +163,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
     if (prevCursors.length > 0) {
       const newCursor = prevCursors[prevCursors.length - 1];
       setCursor(newCursor);
-      setPrevCursors(prev => prev.slice(0, -1));
+      setPrevCursors((prev) => prev.slice(0, -1));
       loadImages();
     } else {
       loadImages(true);
@@ -173,11 +192,16 @@ export function ImageTable({ initialSearchQuery = '' }) {
               <div className="flex-grow flex flex-col items-center justify-center loading-indicator">
                 <Spinner className="h-8 w-8 mb-4" />
                 <p className="text-sm text-muted-foreground text-center">
-                  {images.length === 0 ? 'Sorting Images...' : 'Fetching files...'}
+                  {images.length === 0
+                    ? 'Sorting Images...'
+                    : 'Fetching files...'}
                 </p>
               </div>
             ) : images.length > 0 ? (
-              <div className="flex-grow overflow-auto" style={{ height: tableHeight }}>
+              <div
+                className="flex-grow overflow-auto"
+                style={{ height: tableHeight }}
+              >
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -185,13 +209,16 @@ export function ImageTable({ initialSearchQuery = '' }) {
                       <TableHead>Format</TableHead>
                       <TableHead>Size</TableHead>
                       <TableHead>Last Modified</TableHead>
+                      <TableHead>Has Obituary</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {images.map((image) => (
                       <TableRow key={image.name}>
-                        <TableCell>{image.name?.split('.')[0] ?? 'Unnamed'}</TableCell>
+                        <TableCell>
+                          {image.name?.split('.')[0] ?? 'Unnamed'}
+                        </TableCell>
                         <TableCell>
                           {image.name?.split('.').pop() ?? 'Unknown'}
                         </TableCell>
@@ -201,6 +228,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
                         <TableCell>
                           {image.lastModified?.toLocaleString() ?? 'Unknown'}
                         </TableCell>
+                        <TableCell>{image.obituary ? 'Yes' : 'No'}</TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
                             <Button
@@ -245,9 +273,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
       </CardContent>
       <CardFooter className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-muted-foreground">
-            Images per page
-          </div>
+          <div className="text-sm text-muted-foreground">Images per page</div>
           <Select
             value={imagesPerPage.toString()}
             onValueChange={(value) => setImagesPerPage(Number(value))}
@@ -262,9 +288,25 @@ export function ImageTable({ initialSearchQuery = '' }) {
             </SelectContent>
           </Select>
 
-          <div className="text-sm text-muted-foreground">
-            Order by
-          </div>
+          <div className="text-sm text-muted-foreground">Filter by Obituary</div>
+          <Select
+            value={obituaryFilter}
+            onValueChange={(value) => {
+              setObituaryFilter(value as 'all' | 'has' | 'no');
+              loadImages(true);
+            }}
+          >
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Filter by Obituary" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="has">Has Obituary</SelectItem>
+              <SelectItem value="no">No Obituary</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="text-sm text-muted-foreground">Order by</div>
           <Select
             value={orderBy}
             onValueChange={(value: OrderField) => {
@@ -280,15 +322,21 @@ export function ImageTable({ initialSearchQuery = '' }) {
             <SelectContent>
               <SelectItem value="fileNameAsc">File Name (A-Z)</SelectItem>
               <SelectItem value="fileNameDesc">File Name (Z-A)</SelectItem>
-              <SelectItem value="lastModifiedAsc">Last Modified (Oldest)</SelectItem>
-              <SelectItem value="lastModifiedDesc">Last Modified (Newest)</SelectItem>
+              <SelectItem value="lastModifiedAsc">
+                Last Modified (Oldest)
+              </SelectItem>
+              <SelectItem value="lastModifiedDesc">
+                Last Modified (Newest)
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-x-2">
           <Button
             onClick={handlePrevPage}
-            disabled={prevCursors.length === 0 && cursor === null || isLoading}
+            disabled={
+              (prevCursors.length === 0 && cursor === null) || isLoading
+            }
             variant="outline"
             size="sm"
           >
