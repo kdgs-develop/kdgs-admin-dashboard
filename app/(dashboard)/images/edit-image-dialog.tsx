@@ -5,10 +5,10 @@ import Image from 'next/image';
 import { BucketItem } from 'minio';
 import { DeleteImageConfirmationDialog } from './delete-image-confirmation-dialog';
 import { rotateImageAction } from './minio-actions';
-import { getImageRotation } from '@/lib/db';
+import { getImageRotation, ImageWithObituary as ImageType } from '@/lib/db';
 
 interface EditImageDialogProps {
-  image: BucketItem | null;
+  image: ImageType | BucketItem | null;
   onClose: () => void;
   onDelete: (fileName: string) => void;
   onRotate: (fileName: string) => Promise<void>;
