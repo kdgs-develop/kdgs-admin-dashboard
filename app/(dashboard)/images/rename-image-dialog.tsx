@@ -3,10 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ImageWithObituary as ImageType } from '@/lib/db';
 import { BucketItem } from 'minio';
-
 interface RenameImageDialogProps {
-  image: BucketItem | null;
+  image: ImageType | BucketItem | null;
   onClose: () => void;
   onRename: (oldName: string, newName: string) => void;
 }

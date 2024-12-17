@@ -7,12 +7,12 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { getImageRotation } from '@/lib/db';
-import { BucketItem } from 'minio';
+import { getImageRotation, ImageWithObituary as ImageType } from '@/lib/db';
 import Image from 'next/image';
+import { BucketItem } from 'minio';
 
 interface ViewImageDialogProps {
-  image: BucketItem | null;
+  image: ImageType | BucketItem | null;
   onClose: (fileName: string) => void;
   getImageUrl: (fileName: string) => Promise<string>;
   onRotate: (fileName: string) => Promise<void>;

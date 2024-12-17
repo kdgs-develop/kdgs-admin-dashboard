@@ -1,10 +1,11 @@
 'use server';
 
-import { deleteImageFileReference, updateImageFileReference } from '@/lib/db';
+import { ImageWithObituary } from '@/lib/db';
 import minioClient from '@/lib/minio-client';
 import { prisma } from '@/lib/prisma';
 import { BucketItem } from 'minio';
-import { revalidatePath } from 'next/cache';
+import { OrderField } from './image-table'; // Adjust the path as necessary
+import { Prisma } from '@prisma/client';
 
 interface SortableBucketItem {
   name?: string;
@@ -17,55 +18,36 @@ interface SortableBucketItem {
 
 export async function fetchImagesAction(
   cursor: string | null,
-  limit: number,
-  search: string,
-  orderBy:
-    | 'fileNameAsc'
-    | 'fileNameDesc'
-    | 'lastModifiedAsc'
-    | 'lastModifiedDesc'
-) {
-  try {
-    const images = await prisma.image.findMany({
-      where: search
-        ? {
-            name: { contains: search, mode: 'insensitive' }
-          }
-        : undefined,
-      orderBy: {
-        name: orderBy.includes('fileName')
-          ? orderBy.includes('Desc')
-            ? 'desc'
-            : 'asc'
-          : undefined,
-        lastModified: !orderBy.includes('fileName')
-          ? orderBy.includes('Desc')
-            ? 'desc'
-            : 'asc'
-          : undefined
-      },
-      take: limit,
-      skip: cursor ? 1 : 0,
-      cursor: cursor ? { name: cursor } : undefined
-    });
+  imagesPerPage: number,
+  searchQuery: string,
+  orderBy: OrderField,
+  obituaryFilter: 'all' | 'has' | 'no'
+): Promise<{
+  images: ImageWithObituary[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}> {
+  const query = {
+    where: {
+      ...(searchQuery && { name: { contains: searchQuery } }),
+      ...(obituaryFilter === 'has' && { obituary: { is: {} } }),
+      ...(obituaryFilter === 'no' && { obituary: null })
+    },
+    take: imagesPerPage,
+    ...(cursor && { skip: 1 }), // Skip the cursor if provided
+    orderBy: {
+      name: orderBy === 'fileNameAsc' ? 'asc' : 'desc' // Adjust based on your ordering logic
+    },
+    include: {
+      obituary: true // Include the related obituary data
+    }
+  };
 
-    const hasMore = images.length === limit;
+  const images = await prisma.image.findMany(query as Prisma.ImageFindManyArgs);
+  const hasMore = images.length === imagesPerPage; // Check if there are more images
+  const nextCursor = hasMore ? images[images.length - 1].id : null; // Set the next cursor
 
-    return {
-      images: images.map((img) => ({
-        name: img.name,
-        size: img.size,
-        lastModified: img.lastModified,
-        etag: img.etag,
-        prefix: img.prefix || undefined
-      })),
-      hasMore,
-      nextCursor: hasMore ? images[images.length - 1].name : null
-    };
-  } catch (error) {
-    console.error('Error fetching images:', error);
-    throw error;
-  }
+  return { images, hasMore, nextCursor };
 }
 
 export async function deleteImageAction(fileName: string) {
@@ -100,7 +82,7 @@ export async function rotateImageAction(fileName: string) {
   try {
     // Fetch the current image record from the database
     const image = await prisma.image.findUnique({
-      where: { name: fileName },
+      where: { name: fileName }
     });
 
     if (!image) {
@@ -113,10 +95,8 @@ export async function rotateImageAction(fileName: string) {
     // Update the image record with the new rotation value
     await prisma.image.update({
       where: { name: fileName },
-      data: { rotation: newRotation },
+      data: { rotation: newRotation }
     });
-
-    
   } catch (error) {
     console.error('Error rotating image:', error);
     throw new Error(
@@ -133,7 +113,7 @@ export async function renameImageAction(oldName: string, newName: string) {
       `${process.env.MINIO_BUCKET_NAME!}/${oldName}`
     );
     await minioClient.removeObject(process.env.MINIO_BUCKET_NAME!, oldName);
-    
+
     await prisma.image.update({
       where: { name: oldName },
       data: { name: newName }
@@ -189,7 +169,11 @@ export async function uploadImagesAction(
 // Add this new sync function
 export async function syncMinioWithDatabase() {
   try {
-    const stream = minioClient.listObjects(process.env.MINIO_BUCKET_NAME!, '', true);
+    const stream = minioClient.listObjects(
+      process.env.MINIO_BUCKET_NAME!,
+      '',
+      true
+    );
     const minioFiles: BucketItem[] = [];
 
     await new Promise<void>((resolve, reject) => {
@@ -214,7 +198,7 @@ export async function syncMinioWithDatabase() {
     for (let i = 0; i < minioFiles.length; i += batchSize) {
       const batch = minioFiles.slice(i, i + batchSize);
       await prisma.$transaction(async (tx) => {
-        const upsertPromises = batch.map(file => {
+        const upsertPromises = batch.map((file) => {
           if (file.etag !== undefined) {
             const dataToInsert = {
               name: file.name!,
@@ -229,7 +213,7 @@ export async function syncMinioWithDatabase() {
             return tx.image.upsert({
               where: { name: dataToInsert.name }, // Assuming 'name' is the unique identifier
               create: dataToInsert,
-              update: dataToInsert,
+              update: dataToInsert
             });
           }
           return Promise.resolve(); // Return a resolved promise for files without etag
@@ -240,7 +224,7 @@ export async function syncMinioWithDatabase() {
       });
 
       // Introduce a delay between transactions to avoid overwhelming the database
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Delay for 2 seconds (2000 milliseconds)
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Delay for 2 seconds (2000 milliseconds)
     }
   } catch (error) {
     console.error('Sync error:', error);

@@ -21,6 +21,10 @@ export type Obituary = Awaited<
   images?: Awaited<ReturnType<typeof prisma.image.findMany>>;
 };
 
+export type ImageWithObituary = Awaited<ReturnType<typeof prisma.image.findUnique>> & {
+  obituary?: Awaited<ReturnType<typeof prisma.obituary.findUnique>>;
+};
+
 function createBasicSearchConditions(
   search: string
 ): Prisma.ObituaryWhereInput[] {
