@@ -209,17 +209,6 @@ export function SearchInput() {
 
     setIsDownloading(true);
     try {
-      const { totalObituaries } = await getTotalResults(searchValue, 0, 1);
-
-      if (!totalObituaries) {
-        toast({
-          title: 'No Results',
-          description: 'No results found to generate PDF report.',
-          variant: 'destructive'
-        });
-        return;
-      }
-
       const response = await fetch('/api/generate-search-pdf', {
         method: 'POST',
         headers: {
@@ -227,7 +216,6 @@ export function SearchInput() {
         },
         body: JSON.stringify({
           searchQuery: searchValue,
-          totalResults: totalObituaries
         })
       });
 
