@@ -359,6 +359,56 @@ export async function getObituaries(
   return { obituaries, totalObituaries };
 }
 
+export async function getTotalResults(
+  search: string,
+  offset: number,
+  limit: number = 10
+): Promise<{totalObituaries: number }> {
+  // Split the search string differently to handle date ranges
+  const terms = search.split(' ');
+  let searchConditions: Prisma.ObituaryWhereInput[] = [];
+
+  if (terms[0].startsWith('@')) {
+    // Handle date range searches
+    if (terms[0].endsWith('From') && terms.length >= 4) {
+      const specialCondition = createSpecialSearchCondition(
+        terms[0],        // @dateFrom
+        terms[1],        // start date
+        terms[2],        // @dateTo
+        terms[3]         // end date
+      );
+      if (specialCondition) {
+        searchConditions.push(specialCondition);
+      }
+    } else {
+      // Handle regular special searches
+      const specialCondition = createSpecialSearchCondition(
+        terms[0],
+        terms[1],
+        terms[2]
+      );
+      if (specialCondition) {
+        searchConditions.push(specialCondition);
+      }
+    }
+  } else {
+    // Handle regular search
+    const [firstName, secondName, thirdName, fourthName] = terms;
+    searchConditions = [
+      ...createBasicSearchConditions(search),
+      ...createNameCombinationSearches(firstName, secondName, thirdName, fourthName)
+    ];
+  }
+
+  const where: Prisma.ObituaryWhereInput = search ? { OR: searchConditions } : {};
+
+  const [totalObituaries] = await Promise.all([
+    prisma.obituary.count({ where })
+  ]);
+
+  return { totalObituaries };
+}
+
 export async function deleteObituaryById(id: number) {
   await prisma.$transaction(async (prisma) => {
     // Delete all relatives associated with the obituary
