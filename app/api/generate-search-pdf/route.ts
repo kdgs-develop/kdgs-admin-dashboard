@@ -1,7 +1,7 @@
-import { getObituaries } from '@/lib/db';
+import { getObituariesSearchReport } from '@/lib/db';
 import { format } from 'date-fns';
 import { NextResponse } from 'next/server';
-import { PDFDocument, PDFPage, StandardFonts } from 'pdf-lib';
+import { PDFDocument, PDFFont, PDFPage, StandardFonts } from 'pdf-lib';
 
 const LETTER_WIDTH = 612;
 const LETTER_HEIGHT = 792;
@@ -9,11 +9,24 @@ const MARGIN = 50;
 const RECORDS_PER_PAGE = 25;
 const KDGS_LOGO_URL = 'https://kdgs-admin-dashboard.vercel.app/kdgs.png';
 
+function truncateText(text: string, width: number, fontSize: number, pdfFont: PDFFont): string {
+  if (!text) return '';
+  let truncated = text;
+  while (pdfFont.widthOfTextAtSize(truncated, fontSize) > width && truncated.length > 0) {
+    truncated = truncated.slice(0, -1);
+  }
+  return truncated.length < text.length ? truncated + '...' : truncated;
+}
+
 export async function POST(request: Request) {
   try {
-    const { searchQuery, totalResults } = await request.json();
+    const { searchQuery } = await request.json();
 
-    const { obituaries } = await getObituaries(searchQuery, 0, totalResults);
+    const { obituaries, totalObituaries } = await getObituariesSearchReport(
+      searchQuery,
+      0,
+      0
+    );
 
     if (!obituaries.length) {
       return NextResponse.json(
@@ -42,7 +55,7 @@ export async function POST(request: Request) {
       'Images'
     ];
     const columnWidths = [30, 70, 100, 100, 80, 70, 50];
-    const totalPages = Math.ceil(obituaries.length / RECORDS_PER_PAGE);
+    const totalPages = Math.ceil(totalObituaries / RECORDS_PER_PAGE);
 
     // Function to add header to each page
     const addPageHeader = (page: PDFPage, pageNumber: number) => {
@@ -65,7 +78,7 @@ export async function POST(request: Request) {
       });
 
       // Add total results
-      page.drawText(`Total Results: ${obituaries.length}`, {
+      page.drawText(`Total Results: ${totalObituaries}`, {
         x: MARGIN,
         y: height - MARGIN - 50,
         size: 10,
@@ -120,7 +133,7 @@ export async function POST(request: Request) {
       const startIdx = pageNum * RECORDS_PER_PAGE;
       const endIdx = Math.min(
         (pageNum + 1) * RECORDS_PER_PAGE,
-        obituaries.length
+        totalObituaries
       );
 
       for (let i = startIdx; i < endIdx; i++) {
@@ -130,15 +143,16 @@ export async function POST(request: Request) {
         const rowData = [
           (i + 1).toString(),
           obituary.reference || '',
-          obituary.surname || '',
-          obituary.givenNames || '',
+          truncateText(obituary.surname || '', columnWidths[2] - 5, 9, font),
+          truncateText(obituary.givenNames || '', columnWidths[3] - 5, 9, font),
           obituary.deathDate
             ? format(new Date(obituary.deathDate), 'yyyy-MM-dd')
             : '',
           obituary.proofread ? 'Yes' : 'No',
-          obituary.images?.length?.toString() || '0'
+          ''  // Empty string for images column
         ];
 
+        // Draw the row data
         rowData.forEach((text, colIndex) => {
           page.drawText(String(text), {
             x: xPos,
@@ -148,6 +162,36 @@ export async function POST(request: Request) {
           });
           xPos += columnWidths[colIndex];
         });
+
+        // // Handle images column separately
+        // const imageXPos = xPos - columnWidths[6]; // Position for images column
+        // if (!obituary.images?.length) {
+        //   page.drawText('None', {
+        //     x: imageXPos,
+        //     y: yPos,
+        //     size: 9,
+        //     font: font
+        //   });
+        // } else if (obituary.images?.length === 1) {
+        //   page.drawText(obituary.images[0].name, {
+        //     x: imageXPos,
+        //     y: yPos,
+        //     size: 9,
+        //     font: font
+        //   });
+        // } else {
+        //   // If multiple images, show all in smaller font vertically
+        //   obituary.images?.forEach((image, index) => {
+        //     page.drawText(image?.name, {
+        //       x: imageXPos,
+        //       y: yPos - (index * 10),
+        //       size: 7,
+        //       font: font
+        //     });
+        //   });
+        //   // Adjust yPos for multiple images
+        //   yPos -= (obituary.images?.length - 1) * 10;
+        // }
 
         yPos -= 20;
       }
