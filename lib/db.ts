@@ -1,9 +1,9 @@
 'use server';
 
+import { getEtag } from '@/app/(dashboard)/images/minio-actions';
 import { auth } from '@clerk/nextjs/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from './prisma';
-import { getEtag } from '@/app/(dashboard)/images/minio-actions';
 
 // Helper function to validate dates
 function isValidDate(dateString: string): boolean {
@@ -21,7 +21,9 @@ export type Obituary = Awaited<
   images?: Awaited<ReturnType<typeof prisma.image.findMany>>;
 };
 
-export type ImageWithObituary = Awaited<ReturnType<typeof prisma.image.findUnique>> & {
+export type ImageWithObituary = Awaited<
+  ReturnType<typeof prisma.image.findUnique>
+> & {
   obituary?: Awaited<ReturnType<typeof prisma.obituary.findUnique>>;
 };
 
@@ -35,28 +37,55 @@ function createBasicSearchConditions(
     { reference: { contains: search, mode: Prisma.QueryMode.insensitive } },
     { maidenName: { contains: search, mode: Prisma.QueryMode.insensitive } },
     { batch: { contains: search, mode: Prisma.QueryMode.insensitive } },
-    
+
     // Additional text fields
     { notes: { contains: search, mode: Prisma.QueryMode.insensitive } },
     { place: { contains: search, mode: Prisma.QueryMode.insensitive } },
-    
+
     // Related locations
-    { burialCemetery: { contains: search, mode: Prisma.QueryMode.insensitive } },
-    { cemetery: { name: { contains: search, mode: Prisma.QueryMode.insensitive } } },
-    { birthCity: { name: { contains: search, mode: Prisma.QueryMode.insensitive } } },
-    { deathCity: { name: { contains: search, mode: Prisma.QueryMode.insensitive } } },
-    
-    // Related records
-    { periodical: { name: { contains: search, mode: Prisma.QueryMode.insensitive } } },
-    { alsoKnownAs: { 
-      some: {
-        OR: [
-          { surname: { contains: search, mode: Prisma.QueryMode.insensitive } },
-          { otherNames: { contains: search, mode: Prisma.QueryMode.insensitive } }
-        ]
+    {
+      burialCemetery: { contains: search, mode: Prisma.QueryMode.insensitive }
+    },
+    {
+      cemetery: {
+        name: { contains: search, mode: Prisma.QueryMode.insensitive }
       }
-    }},
-    
+    },
+    {
+      birthCity: {
+        name: { contains: search, mode: Prisma.QueryMode.insensitive }
+      }
+    },
+    {
+      deathCity: {
+        name: { contains: search, mode: Prisma.QueryMode.insensitive }
+      }
+    },
+
+    // Related records
+    {
+      periodical: {
+        name: { contains: search, mode: Prisma.QueryMode.insensitive }
+      }
+    },
+    {
+      alsoKnownAs: {
+        some: {
+          OR: [
+            {
+              surname: { contains: search, mode: Prisma.QueryMode.insensitive }
+            },
+            {
+              otherNames: {
+                contains: search,
+                mode: Prisma.QueryMode.insensitive
+              }
+            }
+          ]
+        }
+      }
+    },
+
     // User fields
     { enteredBy: { contains: search, mode: Prisma.QueryMode.insensitive } },
     { editedBy: { contains: search, mode: Prisma.QueryMode.insensitive } }
@@ -77,36 +106,83 @@ function createNameCombinationSearches(
       // Given names + surname
       {
         AND: [
-          { givenNames: { contains: firstName, mode: Prisma.QueryMode.insensitive } },
-          { surname: { contains: secondName, mode: Prisma.QueryMode.insensitive } }
+          {
+            givenNames: {
+              contains: firstName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          },
+          {
+            surname: {
+              contains: secondName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          }
         ]
       },
       // Surname + given names
       {
         AND: [
-          { surname: { contains: firstName, mode: Prisma.QueryMode.insensitive } },
-          { givenNames: { contains: secondName, mode: Prisma.QueryMode.insensitive } }
+          {
+            surname: { contains: firstName, mode: Prisma.QueryMode.insensitive }
+          },
+          {
+            givenNames: {
+              contains: secondName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          }
         ]
       },
       // Maiden name searches
       {
         AND: [
-          { givenNames: { contains: firstName, mode: Prisma.QueryMode.insensitive } },
-          { maidenName: { contains: secondName, mode: Prisma.QueryMode.insensitive } }
+          {
+            givenNames: {
+              contains: firstName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          },
+          {
+            maidenName: {
+              contains: secondName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          }
         ]
       },
       // Partial name matches (for variations/misspellings)
       {
         OR: [
-          { givenNames: { startsWith: firstName, mode: Prisma.QueryMode.insensitive } },
-          { surname: { startsWith: secondName, mode: Prisma.QueryMode.insensitive } }
+          {
+            givenNames: {
+              startsWith: firstName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          },
+          {
+            surname: {
+              startsWith: secondName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          }
         ]
       },
       // Middle name as surname (common in genealogy)
       {
         AND: [
-          { givenNames: { contains: firstName, mode: Prisma.QueryMode.insensitive } },
-          { givenNames: { contains: secondName, mode: Prisma.QueryMode.insensitive } }
+          {
+            givenNames: {
+              contains: firstName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          },
+          {
+            givenNames: {
+              contains: secondName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          }
         ]
       }
     );
@@ -118,23 +194,42 @@ function createNameCombinationSearches(
       // First + middle + surname
       {
         AND: [
-          { givenNames: { contains: `${firstName} ${secondName}`, mode: Prisma.QueryMode.insensitive } },
-          { surname: { contains: thirdName, mode: Prisma.QueryMode.insensitive } }
+          {
+            givenNames: {
+              contains: `${firstName} ${secondName}`,
+              mode: Prisma.QueryMode.insensitive
+            }
+          },
+          {
+            surname: { contains: thirdName, mode: Prisma.QueryMode.insensitive }
+          }
         ]
       },
       // First + maiden + married
       {
         AND: [
-          { givenNames: { contains: firstName, mode: Prisma.QueryMode.insensitive } },
-          { maidenName: { contains: secondName, mode: Prisma.QueryMode.insensitive } },
-          { surname: { contains: thirdName, mode: Prisma.QueryMode.insensitive } }
+          {
+            givenNames: {
+              contains: firstName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          },
+          {
+            maidenName: {
+              contains: secondName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          },
+          {
+            surname: { contains: thirdName, mode: Prisma.QueryMode.insensitive }
+          }
         ]
       },
       // Multiple surnames (hyphenated or space-separated)
       {
-        surname: { 
-          contains: `${secondName} ${thirdName}`, 
-          mode: Prisma.QueryMode.insensitive 
+        surname: {
+          contains: `${secondName} ${thirdName}`,
+          mode: Prisma.QueryMode.insensitive
         }
       }
     );
@@ -146,16 +241,41 @@ function createNameCombinationSearches(
       // Two given names + maiden + married
       {
         AND: [
-          { givenNames: { contains: `${firstName} ${secondName}`, mode: Prisma.QueryMode.insensitive } },
-          { maidenName: { contains: thirdName, mode: Prisma.QueryMode.insensitive } },
-          { surname: { contains: fourthName, mode: Prisma.QueryMode.insensitive } }
+          {
+            givenNames: {
+              contains: `${firstName} ${secondName}`,
+              mode: Prisma.QueryMode.insensitive
+            }
+          },
+          {
+            maidenName: {
+              contains: thirdName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          },
+          {
+            surname: {
+              contains: fourthName,
+              mode: Prisma.QueryMode.insensitive
+            }
+          }
         ]
       },
       // Double-barrelled surnames with variations
       {
         OR: [
-          { surname: { contains: `${thirdName}-${fourthName}`, mode: Prisma.QueryMode.insensitive } },
-          { surname: { contains: `${thirdName} ${fourthName}`, mode: Prisma.QueryMode.insensitive } }
+          {
+            surname: {
+              contains: `${thirdName}-${fourthName}`,
+              mode: Prisma.QueryMode.insensitive
+            }
+          },
+          {
+            surname: {
+              contains: `${thirdName} ${fourthName}`,
+              mode: Prisma.QueryMode.insensitive
+            }
+          }
         ]
       }
     );
@@ -172,7 +292,11 @@ function createSpecialSearchCondition(
 ): Prisma.ObituaryWhereInput | null {
   const specialSearchMap: Record<
     string,
-    (val: string, extra?: string, fourth?: string) => Prisma.ObituaryWhereInput | null
+    (
+      val: string,
+      extra?: string,
+      fourth?: string
+    ) => Prisma.ObituaryWhereInput | null
   > = {
     '@fileNumber': (val) => ({
       reference: { contains: val, mode: Prisma.QueryMode.insensitive }
@@ -311,10 +435,10 @@ export async function getObituaries(
     // Handle date range searches
     if (terms[0].endsWith('From') && terms.length >= 4) {
       const specialCondition = createSpecialSearchCondition(
-        terms[0],        // @dateFrom
-        terms[1],        // start date
-        terms[2],        // @dateTo
-        terms[3]         // end date
+        terms[0], // @dateFrom
+        terms[1], // start date
+        terms[2], // @dateTo
+        terms[3] // end date
       );
       if (specialCondition) {
         searchConditions.push(specialCondition);
@@ -335,35 +459,53 @@ export async function getObituaries(
     const [firstName, secondName, thirdName, fourthName] = terms;
     searchConditions = [
       ...createBasicSearchConditions(search),
-      ...createNameCombinationSearches(firstName, secondName, thirdName, fourthName)
+      ...createNameCombinationSearches(
+        firstName,
+        secondName,
+        thirdName,
+        fourthName
+      )
     ];
   }
 
-  const where: Prisma.ObituaryWhereInput = search ? { OR: searchConditions } : {};
+  const where: Prisma.ObituaryWhereInput = search
+    ? { OR: searchConditions }
+    : {};
 
-  const [obituaries, totalObituaries] = await Promise.all([
-    prisma.obituary.findMany({
-      where,
-      take: limit,
-      skip: offset,
-      orderBy: { reference: 'asc' },
-      include: {
-        relatives: true,
-        fileBox: true,
-        images: true,
-      }
-    }),
-    prisma.obituary.count({ where })
-  ]);
+  const obituaries = await prisma.obituary.findMany({
+    where,
+    take: limit === 0 ? undefined : limit,
+    skip: offset,
+    orderBy: { reference: 'asc' },
+    include: {
+      relatives: true,
+      fileBox: true,
+      images: true
+    }
+  });
+
+  const totalObituaries = await prisma.obituary.count({ where });
 
   return { obituaries, totalObituaries };
 }
 
-export async function getTotalResults(
+// create a new type with the following fields: id, reference, surname, givenNames, deathDate, proofread, images
+// the images field should be an array of strings
+type ObituarySearchReport = {
+  id: number;
+  reference: string;
+  surname: string;
+  givenNames: string;
+  deathDate: Date | null;
+  proofread: boolean;
+  // images: { name: string }[];
+};
+
+export async function getObituariesSearchReport(
   search: string,
-  offset: number,
-  limit: number = 10
-): Promise<{totalObituaries: number }> {
+  offset: number = 0,
+  limit: number = 0
+): Promise<{ obituaries: ObituarySearchReport[]; totalObituaries: number }> {
   // Split the search string differently to handle date ranges
   const terms = search.split(' ');
   let searchConditions: Prisma.ObituaryWhereInput[] = [];
@@ -372,10 +514,10 @@ export async function getTotalResults(
     // Handle date range searches
     if (terms[0].endsWith('From') && terms.length >= 4) {
       const specialCondition = createSpecialSearchCondition(
-        terms[0],        // @dateFrom
-        terms[1],        // start date
-        terms[2],        // @dateTo
-        terms[3]         // end date
+        terms[0], // @dateFrom
+        terms[1], // start date
+        terms[2], // @dateTo
+        terms[3] // end date
       );
       if (specialCondition) {
         searchConditions.push(specialCondition);
@@ -396,11 +538,91 @@ export async function getTotalResults(
     const [firstName, secondName, thirdName, fourthName] = terms;
     searchConditions = [
       ...createBasicSearchConditions(search),
-      ...createNameCombinationSearches(firstName, secondName, thirdName, fourthName)
+      ...createNameCombinationSearches(
+        firstName,
+        secondName,
+        thirdName,
+        fourthName
+      )
     ];
   }
 
-  const where: Prisma.ObituaryWhereInput = search ? { OR: searchConditions } : {};
+  const where: Prisma.ObituaryWhereInput = search
+    ? { OR: searchConditions }
+    : {};
+
+  const obituaries = await prisma.obituary.findMany({
+    where,
+    orderBy: { reference: 'asc' },
+    select: {
+      id: true,
+      reference: true,
+      surname: true,
+      givenNames: true,
+      deathDate: true,
+      proofread: true,
+      // images: {
+      //   select: {
+      //     name: true
+      //   }
+      // }
+    }
+  });
+
+  const totalObituaries = await prisma.obituary.count({ where });
+
+  return { obituaries: obituaries as ObituarySearchReport[], totalObituaries };
+}
+
+export async function getTotalResults(
+  search: string,
+  offset: number,
+  limit: number = 10
+): Promise<{ totalObituaries: number }> {
+  // Split the search string differently to handle date ranges
+  const terms = search.split(' ');
+  let searchConditions: Prisma.ObituaryWhereInput[] = [];
+
+  if (terms[0].startsWith('@')) {
+    // Handle date range searches
+    if (terms[0].endsWith('From') && terms.length >= 4) {
+      const specialCondition = createSpecialSearchCondition(
+        terms[0], // @dateFrom
+        terms[1], // start date
+        terms[2], // @dateTo
+        terms[3] // end date
+      );
+      if (specialCondition) {
+        searchConditions.push(specialCondition);
+      }
+    } else {
+      // Handle regular special searches
+      const specialCondition = createSpecialSearchCondition(
+        terms[0],
+        terms[1],
+        terms[2]
+      );
+      if (specialCondition) {
+        searchConditions.push(specialCondition);
+      }
+    }
+  } else {
+    // Handle regular search
+    const [firstName, secondName, thirdName, fourthName] = terms;
+    searchConditions = [
+      ...createBasicSearchConditions(search),
+      ...createNameCombinationSearches(
+        firstName,
+        secondName,
+        thirdName,
+        fourthName
+      )
+    ];
+  }
+
+  const where: Prisma.ObituaryWhereInput = search
+    ? { OR: searchConditions }
+    : {};
 
   const [totalObituaries] = await Promise.all([
     prisma.obituary.count({ where })
@@ -623,10 +845,7 @@ export async function getUserData() {
 }
 
 // Update the image file reference, extension, and size
-export async function updateImageFileReference(
-  fileName: string,
-  size: number
-) {
+export async function updateImageFileReference(fileName: string, size: number) {
   await prisma.image.upsert({
     where: { name: fileName.split('.')[0] },
     update: { reference: fileName.slice(0, 8), size },
@@ -640,7 +859,10 @@ export async function updateImageFileReference(
   });
   // get new etag and update the image
   const newEtag = await getEtag(fileName);
-  await prisma.image.update({ where: { name: fileName.split('.')[0] }, data: { etag: newEtag } });
+  await prisma.image.update({
+    where: { name: fileName.split('.')[0] },
+    data: { etag: newEtag }
+  });
 }
 
 // Delete the image file reference
