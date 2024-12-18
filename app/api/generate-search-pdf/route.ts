@@ -163,35 +163,35 @@ export async function POST(request: Request) {
           xPos += columnWidths[colIndex];
         });
 
-        // // Handle images column separately
-        // const imageXPos = xPos - columnWidths[6]; // Position for images column
-        // if (!obituary.images?.length) {
-        //   page.drawText('None', {
-        //     x: imageXPos,
-        //     y: yPos,
-        //     size: 9,
-        //     font: font
-        //   });
-        // } else if (obituary.images?.length === 1) {
-        //   page.drawText(obituary.images[0].name, {
-        //     x: imageXPos,
-        //     y: yPos,
-        //     size: 9,
-        //     font: font
-        //   });
-        // } else {
-        //   // If multiple images, show all in smaller font vertically
-        //   obituary.images?.forEach((image, index) => {
-        //     page.drawText(image?.name, {
-        //       x: imageXPos,
-        //       y: yPos - (index * 10),
-        //       size: 7,
-        //       font: font
-        //     });
-        //   });
-        //   // Adjust yPos for multiple images
-        //   yPos -= (obituary.images?.length - 1) * 10;
-        // }
+        // Handle images column separately
+        const imageXPos = xPos - columnWidths[6]; // Position for images column
+        if (!obituary.images?.length) {
+          page.drawText('None', {
+            x: imageXPos,
+            y: yPos,
+            size: 9,
+            font: font
+          });
+        } else if (obituary.images?.length === 1) {
+          page.drawText(obituary.images[0].name, {
+            x: imageXPos,
+            y: yPos,
+            size: 9,
+            font: font
+          });
+        } else {
+          // If multiple images, show all in smaller font vertically
+          obituary.images?.forEach((image, index) => {
+            page.drawText(image?.name, {
+              x: imageXPos,
+              y: yPos - (index * 10),
+              size: 7,
+              font: font
+            });
+          });
+          // Adjust yPos for multiple images
+          yPos -= (obituary.images?.length - 1) * 10;
+        }
 
         yPos -= 20;
       }
