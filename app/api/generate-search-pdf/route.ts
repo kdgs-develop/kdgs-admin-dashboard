@@ -18,6 +18,9 @@ function truncateText(text: string, width: number, fontSize: number, pdfFont: PD
   return truncated.length < text.length ? truncated + '...' : truncated;
 }
 
+export const maxDuration = 300;
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const { searchQuery } = await request.json();
