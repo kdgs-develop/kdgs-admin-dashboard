@@ -24,11 +24,7 @@ export async function fetchObituariesAction(
   search: string = ''
 ) {
   'use server';
-  const { obituaries, totalObituaries } = await getObituaries(
-    search,
-    offset,
-    limit
-  );
+  const { obituaries, totalObituaries } = await getObituaries(search, offset, limit);
 
   revalidatePath('/');
   return { obituaries, total: totalObituaries };
