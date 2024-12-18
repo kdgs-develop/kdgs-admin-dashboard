@@ -19,7 +19,7 @@ function truncateText(text: string, width: number, fontSize: number, pdfFont: PD
 
 export const maxDuration = 60;
 
-const MAX_RECORDS_PER_PDF = 250;
+const MAX_RECORDS_PER_PDF = 50;
 
 interface Image {
   name: string;
