@@ -561,11 +561,11 @@ export async function getObituariesSearchReport(
       givenNames: true,
       deathDate: true,
       proofread: true,
-      // images: {
-      //   select: {
-      //     name: true
-      //   }
-      // }
+      images: {
+        select: {
+          name: true
+        }
+      }
     }
   });
 
