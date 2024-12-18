@@ -1,7 +1,7 @@
 import { getObituaries } from '@/lib/db';
-import { NextResponse } from 'next/server';
-import { PDFDocument, PDFPage, StandardFonts, rgb } from 'pdf-lib';
 import { format } from 'date-fns';
+import { NextResponse } from 'next/server';
+import { PDFDocument, PDFPage, StandardFonts } from 'pdf-lib';
 
 const LETTER_WIDTH = 612;
 const LETTER_HEIGHT = 792;
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   try {
     const { searchQuery, totalResults } = await request.json();
 
-    const { obituaries } = await getObituaries(searchQuery, 0, Number(totalResults));
+    const { obituaries } = await getObituaries(searchQuery, 0, totalResults);
 
     if (!obituaries.length) {
       return NextResponse.json(
@@ -27,18 +27,28 @@ export async function POST(request: Request) {
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     // Fetch and embed the KDGS logo
-    const logoImageBytes = await fetch(KDGS_LOGO_URL).then((res) => res.arrayBuffer());
+    const logoImageBytes = await fetch(KDGS_LOGO_URL).then((res) =>
+      res.arrayBuffer()
+    );
     const logoImage = await pdfDoc.embedPng(logoImageBytes);
 
-    const headers = ['#', 'File #', 'Surname', 'Given Names', 'Death Date', 'Proofread', 'Images'];
+    const headers = [
+      '#',
+      'File #',
+      'Surname',
+      'Given Names',
+      'Death Date',
+      'Proofread',
+      'Images'
+    ];
     const columnWidths = [30, 70, 100, 100, 80, 70, 50];
     const totalPages = Math.ceil(obituaries.length / RECORDS_PER_PAGE);
 
     // Function to add header to each page
     const addPageHeader = (page: PDFPage, pageNumber: number) => {
       const { width, height } = page.getSize();
-      
-      // Add title and search info
+
+      // Add title
       page.drawText('KDGS Database - Search Results Report', {
         x: MARGIN,
         y: height - MARGIN,
@@ -46,6 +56,7 @@ export async function POST(request: Request) {
         font: boldFont
       });
 
+      // Add search query
       page.drawText(`Search Query: ${searchQuery}`, {
         x: MARGIN,
         y: height - MARGIN - 30,
@@ -53,17 +64,27 @@ export async function POST(request: Request) {
         font: boldFont
       });
 
+      // Add total results
       page.drawText(`Total Results: ${obituaries.length}`, {
         x: MARGIN,
-        y: height - MARGIN - 45,
+        y: height - MARGIN - 50,
         size: 10,
         font: font
       });
 
-      // Add page number
-      page.drawText(`Page ${pageNumber} of ${totalPages}`, {
+      // Add date time
+      const currentDateTime = new Date().toLocaleString('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+
+      page.drawText(`Generated: ${currentDateTime}`, {
         x: MARGIN,
-        y: height - MARGIN - 60,
+        y: height - MARGIN - 70,
         size: 10,
         font: font
       });
@@ -97,8 +118,11 @@ export async function POST(request: Request) {
       let yPos = addPageHeader(page, pageNum + 1);
 
       const startIdx = pageNum * RECORDS_PER_PAGE;
-      const endIdx = Math.min((pageNum + 1) * RECORDS_PER_PAGE, obituaries.length);
-      
+      const endIdx = Math.min(
+        (pageNum + 1) * RECORDS_PER_PAGE,
+        obituaries.length
+      );
+
       for (let i = startIdx; i < endIdx; i++) {
         const obituary = obituaries[i];
         let xPos = MARGIN;
@@ -108,7 +132,9 @@ export async function POST(request: Request) {
           obituary.reference || '',
           obituary.surname || '',
           obituary.givenNames || '',
-          obituary.deathDate ? format(new Date(obituary.deathDate), 'yyyy-MM-dd') : '',
+          obituary.deathDate
+            ? format(new Date(obituary.deathDate), 'yyyy-MM-dd')
+            : '',
           obituary.proofread ? 'Yes' : 'No',
           obituary.images?.length?.toString() || '0'
         ];
@@ -127,18 +153,14 @@ export async function POST(request: Request) {
       }
 
       // Add footer
-      const footerText = 'Compiled by © 2024 Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8';
-      const copyrightText = 'Developed by Javier Gongora o/a Vyoniq Technologies';
-      const generationDate = `Generated on ${format(new Date(), 'yyyy-MM-dd')}`;
-      
-      page.drawText(footerText, {
-        x: MARGIN,
-        y: MARGIN + 30,
-        size: 8,
-        font: font
-      });
+      const footerText =
+        'Compiled by © 2024 Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8';
+      const copyrightText =
+        'Developed by Javier Gongora o/a Vyoniq Technologies';
+      const pageInfo = `Page ${pageNum + 1} of ${totalPages}`;
 
-      page.drawText(generationDate, {
+      // Draw footer text on the left
+      page.drawText(footerText, {
         x: MARGIN,
         y: MARGIN + 15,
         size: 8,
@@ -151,6 +173,16 @@ export async function POST(request: Request) {
         size: 8,
         font: font
       });
+
+      // Draw page info on the right
+      const pageWidth = page.getWidth();
+      const pageInfoWidth = font.widthOfTextAtSize(pageInfo, 8);
+      page.drawText(pageInfo, {
+        x: pageWidth - MARGIN - pageInfoWidth,
+        y: MARGIN,
+        size: 8,
+        font: font
+      });
     }
 
     const pdfBytes = await pdfDoc.save();
@@ -158,11 +190,13 @@ export async function POST(request: Request) {
     const pdfUrl = `data:application/pdf;base64,${pdfBase64}`;
 
     return NextResponse.json({ pdf: pdfUrl });
-
   } catch (error) {
     console.error('Error generating search report:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to generate report' },
+      {
+        error:
+          error instanceof Error ? error.message : 'Failed to generate report'
+      },
       { status: 500 }
     );
   }
