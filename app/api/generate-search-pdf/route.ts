@@ -19,7 +19,6 @@ function truncateText(text: string, width: number, fontSize: number, pdfFont: PD
 }
 
 export const maxDuration = 300;
-export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
