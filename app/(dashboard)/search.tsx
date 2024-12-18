@@ -209,7 +209,7 @@ export function SearchInput() {
 
     setIsDownloading(true);
     try {
-      const { totalObituaries } = await getTotalResults(searchValue, 0, 1000);
+      const { totalObituaries } = await getTotalResults(searchValue, 0, 1);
 
       if (!totalObituaries) {
         toast({
@@ -243,10 +243,16 @@ export function SearchInput() {
       link.href = pdfUrl;
       
       const currentDateTime = new Date()
-        .toISOString()
-        .replace(/[:.]/g, '-')
-        .replace('T', '_')
-        .slice(0, -5);
+        .toLocaleString('en-CA', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        })
+        .replace(/[/,:]/g, '-')
+        .replace(' ', '_');
       link.download = `KDGS-Report-${searchValue.replace(/\s+/g, '-')}-${currentDateTime}.pdf`;
       
       document.body.appendChild(link);
