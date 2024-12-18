@@ -498,7 +498,7 @@ type ObituarySearchReport = {
   givenNames: string;
   deathDate: Date | null;
   proofread: boolean;
-  // images: { name: string }[];
+  images: { name: string }[] | null;
 };
 
 export async function getObituariesSearchReport(
