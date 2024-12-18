@@ -11,11 +11,14 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { getObituaries, getTotalResults } from '@/lib/db';
+import { getObituaries, getObituariesSearchReport, getTotalResults } from '@/lib/db';
 import { cn } from '@/lib/utils';
 import { Download, Search } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { forwardRef, useEffect, useRef, useState, useTransition } from 'react';
+import { PDFDocument } from 'pdf-lib';
+
+const MAX_RECORDS_PER_PDF = 250;
 
 const SEARCH_OPTIONS = [
   { value: 'regular', label: 'Global Search' },
@@ -103,6 +106,7 @@ export function SearchInput() {
   const [totalResults, setTotalResults] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     setContext(pathname.startsWith('/images') ? 'images' : 'obituaries');
@@ -204,63 +208,75 @@ export function SearchInput() {
     }
   }
 
-  const handleDownloadReport = async () => {
-    if (!searchValue) return;
-
-    setIsDownloading(true);
+  const handleGenerateSearchPDF = async () => {
+    setIsGenerating(true);
+    
     try {
-      const response = await fetch('/api/generate-search-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          searchQuery: searchValue,
-        })
-      });
+      const { obituaries, totalObituaries } = await getObituariesSearchReport(
+        searchValue,
+        0,
+        Number.MAX_SAFE_INTEGER
+      );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate report');
+      // Split data into chunks
+      const chunks = [];
+      for (let i = 0; i < obituaries.length; i += MAX_RECORDS_PER_PDF) {
+        chunks.push(obituaries.slice(i, i + MAX_RECORDS_PER_PDF));
       }
 
-      const { pdf } = await response.json();
-      const pdfBlob = await fetch(pdf).then(res => res.blob());
-      const pdfUrl = window.URL.createObjectURL(pdfBlob);
+      // Generate PDFs sequentially
+      const pdfs = [];
+      for (let i = 0; i < chunks.length; i++) {
+        const response = await fetch('/api/generate-search-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            searchQuery: searchValue,
+            obituaries: chunks[i],
+            part: i + 1,
+            totalParts: chunks.length,
+            totalObituaries
+          })
+        });
+
+        if (!response.ok) throw new Error(`Failed to generate PDF part ${i + 1}`);
+        const { base64PDF } = await response.json();
+        pdfs.push(base64PDF);
+      }
+
+      // Merge PDFs
+      const mergedPdf = await PDFDocument.create();
+      
+      for (const base64PDF of pdfs) {
+        const pdfBytes = Uint8Array.from(atob(base64PDF), c => c.charCodeAt(0));
+        const pdf = await PDFDocument.load(pdfBytes);
+        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        copiedPages.forEach(page => mergedPdf.addPage(page));
+      }
+
+      // Save and download
+      const finalPdfBytes = await mergedPdf.save();
+      const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = pdfUrl;
-      
-      const currentDateTime = new Date()
-        .toLocaleString('en-CA', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        })
-        .replace(/[/,:]/g, '-')
-        .replace(' ', '_');
-      link.download = `KDGS-Report-${searchValue.replace(/\s+/g, '-')}-${currentDateTime}.pdf`;
-      
-      document.body.appendChild(link);
+      link.href = url;
+      link.download = 'search-results.pdf';
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(pdfUrl);
+      URL.revokeObjectURL(url);
 
       toast({
-        title: 'Success',
-        description: 'The search results report has been downloaded.'
+        title: 'Download Complete',
+        description: `Generated PDF with ${totalObituaries} records.`
       });
     } catch (error) {
       console.error('Error:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to download report',
+        description: 'Failed to generate PDF',
         variant: 'destructive'
       });
     } finally {
-      setIsDownloading(false);
+      setIsGenerating(false);
     }
   };
 
@@ -315,11 +331,11 @@ export function SearchInput() {
         <Button
           type="button"
           variant="default"
-          onClick={handleDownloadReport}
-          disabled={isDownloading || !searchValue}
+          onClick={handleGenerateSearchPDF}
+          disabled={isGenerating || !searchValue}
           className="flex gap-2 items-center whitespace-nowrap bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 w-32 h-10"
         >
-          {isDownloading ? (
+          {isGenerating ? (
             <Spinner className="h-4 w-4" />
           ) : (
             <Download className="h-4 w-4" />
