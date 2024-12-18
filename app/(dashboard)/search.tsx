@@ -18,7 +18,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { forwardRef, useEffect, useRef, useState, useTransition } from 'react';
 import { PDFDocument } from 'pdf-lib';
 
-const MAX_RECORDS_PER_PDF = 250;
+const MAX_RECORDS_PER_PDF = 50;
 
 const SEARCH_OPTIONS = [
   { value: 'regular', label: 'Global Search' },
