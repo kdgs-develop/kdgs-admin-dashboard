@@ -11,7 +11,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { getObituaries } from '@/lib/db';
+import { getObituaries, getTotalResults } from '@/lib/db';
 import { cn } from '@/lib/utils';
 import { Download, Search } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -209,11 +209,7 @@ export function SearchInput() {
 
     setIsDownloading(true);
     try {
-      const { obituaries, totalObituaries } = await getObituaries(
-        searchValue,
-        0,
-        1000
-      );
+      const { totalObituaries } = await getTotalResults(searchValue, 0, 1000);
 
       if (!totalObituaries) {
         toast({
@@ -227,8 +223,7 @@ export function SearchInput() {
       const response = await fetch('/api/generate-search-pdf', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/pdf'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           searchQuery: searchValue,
@@ -237,31 +232,37 @@ export function SearchInput() {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to generate PDF: ${response.statusText}`);
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate report');
       }
 
-      const pdfBlob = await response.blob();
+      const { pdf } = await response.json();
+      const pdfBlob = await fetch(pdf).then(res => res.blob());
       const pdfUrl = window.URL.createObjectURL(pdfBlob);
-      const pdfLink = document.createElement('a');
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      
       const currentDateTime = new Date()
         .toISOString()
         .replace(/[:.]/g, '-')
         .replace('T', '_')
-        .slice(0, -5); // Removes milliseconds and timezone offset
-      pdfLink.href = pdfUrl;
-      pdfLink.download = `KDGS-Report-${searchValue.replace(/\s+/g, '-')}-${currentDateTime}.pdf`;
-      pdfLink.click();
+        .slice(0, -5);
+      link.download = `KDGS-Report-${searchValue.replace(/\s+/g, '-')}-${currentDateTime}.pdf`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(pdfUrl);
 
       toast({
-        title: 'Download Complete',
+        title: 'Success',
         description: 'The search results report has been downloaded.'
       });
     } catch (error) {
-      console.error('Error downloading report:', error);
+      console.error('Error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to download report. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to download report',
         variant: 'destructive'
       });
     } finally {
