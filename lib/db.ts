@@ -568,6 +568,7 @@ export async function getObituariesSearchReport(
       }
     }
   });
+  console.log(obituaries);
 
   const totalObituaries = await prisma.obituary.count({ where });
 
