@@ -57,6 +57,7 @@ model Obituary {
   fileBoxId      Int?          @db.SmallInt
   batch          String?
   publicHash     String?       @unique
+  imageNames     String[]      @default([])
   alsoKnownAs    AlsoKnownAs[]
   birthCity      City?         @relation("birthCityId", fields: [birthCityId], references: [id])
   cemetery       Cemetery?     @relation(fields: [cemeteryId], references: [id])
@@ -101,9 +102,9 @@ model City {
 }
 
 model Country {
-  id          Int        @id @default(autoincrement())
-  name        String     @unique
-  cities      City[]
+  id     Int    @id @default(autoincrement())
+  name   String @unique
+  cities City[]
 }
 
 model Cemetery {
@@ -142,12 +143,12 @@ enum Role {
 }
 
 model ImageFile {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String   @unique
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String    @unique
   extension String?
   size      Int?
-  createdAt DateTime @default(now())
-  editedAt  DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  editedAt  DateTime  @updatedAt
   reference String?
   obituary  Obituary? @relation(fields: [reference], references: [reference])
 }
@@ -160,12 +161,12 @@ model Settings {
 }
 
 model Image {
-  id           String   @id @default(cuid())
-  name         String   @unique
+  id           String    @id @default(cuid())
+  name         String    @unique
   reference    String?
-  rotation     Int?     @default(0)
+  rotation     Int?      @default(0)
   size         Int
-  lastModified DateTime @default(now())
+  lastModified DateTime  @default(now())
   etag         String
   prefix       String?
   obituary     Obituary? @relation(fields: [reference], references: [reference])
