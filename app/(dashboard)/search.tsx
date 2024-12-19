@@ -208,7 +208,6 @@ export function SearchInput() {
 
     setIsDownloading(true);
     try {
-
       const response = await fetch('/api/generate-search-pdf', {
         method: 'POST',
         headers: {
