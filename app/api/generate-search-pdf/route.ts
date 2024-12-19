@@ -9,6 +9,8 @@ const MARGIN = 50;
 const RECORDS_PER_PAGE = 25;
 const LINE_HEIGHT = 12;
 const KDGS_LOGO_URL = 'https://kdgs-admin-dashboard.vercel.app/kdgs.png';
+const MAX_SURNAME_LENGTH = 15;
+const MAX_GIVEN_NAMES_LENGTH = 15;
 
 // Define column widths and positions
 const COLUMNS = {
@@ -158,7 +160,7 @@ export async function POST(req: NextRequest) {
         );
         const rowCenter = yPos - rowHeight / 2 + LINE_HEIGHT / 2;
 
-        // Draw row data with direct column positioning
+        // Draw row data with truncation
         page.drawText((i + 1).toString(), {
           x: COLUMNS.number.x,
           y: rowCenter,
@@ -173,19 +175,29 @@ export async function POST(req: NextRequest) {
           font: font
         });
 
-        page.drawText(obituary.surname || '', {
-          x: COLUMNS.surname.x,
-          y: rowCenter,
-          size: 9,
-          font: font
-        });
+        page.drawText(
+          obituary.surname?.[12]
+            ? `${(obituary.surname || '').slice(0, 12)}...`
+            : (obituary.surname || '').slice(0, 12),
+          {
+            x: COLUMNS.surname.x,
+            y: rowCenter,
+            size: 9,
+            font: font
+          }
+        );
 
-        page.drawText(obituary.givenNames || '', {
-          x: COLUMNS.givenNames.x,
-          y: rowCenter,
-          size: 9,
-          font: font
-        });
+        page.drawText(
+          obituary.givenNames?.[15]
+            ? `${(obituary.givenNames || '').slice(0, 15)}...`
+            : (obituary.givenNames || '').slice(0, 15),
+          {
+            x: COLUMNS.givenNames.x,
+            y: rowCenter,
+            size: 9,
+            font: font
+          }
+        );
 
         if (obituary.deathDate) {
           page.drawText(format(new Date(obituary.deathDate), 'yyyy-MM-dd'), {
