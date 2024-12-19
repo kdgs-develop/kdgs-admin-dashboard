@@ -3,9 +3,11 @@
 import { ImageWithObituary } from '@/lib/db';
 import minioClient from '@/lib/minio-client';
 import { prisma } from '@/lib/prisma';
-import { BucketItem } from 'minio';
-import { OrderField } from './image-table'; // Adjust the path as necessary
 import { Prisma } from '@prisma/client';
+import { BucketItem } from 'minio';
+import { revalidatePath } from 'next/cache';
+import { updateObituaryImageNames } from '../actions';
+import { OrderField } from './image-table'; // Adjust the path as necessary
 
 interface SortableBucketItem {
   name?: string;
@@ -54,6 +56,17 @@ export async function deleteImageAction(fileName: string) {
   try {
     await minioClient.removeObject(process.env.MINIO_BUCKET_NAME!, fileName);
     await prisma.image.delete({ where: { name: fileName } });
+    // Get the obituary reference from the image name (first 8 characters)
+    const reference = fileName.slice(0, 8);
+
+    // Find the obituary and update its imageNames
+    const obituary = await prisma.obituary.findFirst({
+      where: { reference }
+    });
+
+    if (obituary) {
+      await updateObituaryImageNames(obituary.id);
+    }
   } catch (error) {
     console.error('Error deleting image:', error);
     throw new Error(
