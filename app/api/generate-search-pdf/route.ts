@@ -1,218 +1,285 @@
-import { getObituaries } from '@/lib/db';
-import fs from 'fs/promises';
+import { getObituaries, getObituariesGeneratePDF } from '@/lib/db';
+import { format } from 'date-fns';
 import { NextRequest, NextResponse } from 'next/server';
-import path from 'path';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, PDFPage, rgb, StandardFonts } from 'pdf-lib';
 
-// Cache static resources
-let cachedFont: any = null;
-let cachedBoldFont: any = null;
-let cachedLogo: any = null;
-
+const LETTER_WIDTH = 612;
+const LETTER_HEIGHT = 792;
+const MARGIN = 50;
 const RECORDS_PER_PAGE = 25;
-const A4_PAGE = { width: 595.28, height: 841.89 };
-const TABLE_CONFIG = {
-  startY: 680,
-  margin: 50,
-  rowHeight: 21,
-  columns: [
-    { width: 30, title: '#' },
-    { width: 70, title: 'File #' },
-    { width: 100, title: 'Surname' },
-    { width: 100, title: 'Given Names' },
-    { width: 80, title: 'Death Date' },
-    { width: 70, title: 'Proofread' },
-    { width: 50, title: 'Images' }
-  ]
-};
+const LINE_HEIGHT = 12;
+const KDGS_LOGO_URL = 'https://kdgs-admin-dashboard.vercel.app/kdgs.png';
+const MAX_SURNAME_LENGTH = 15;
+const MAX_GIVEN_NAMES_LENGTH = 15;
 
-const FOOTER_CONFIG = {
-  text: 'Compiled by © 2024 Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8\nDeveloped by Javier Gongora o/a Vyoniq Technologies',
-  fontSize: 8,
-  y: 20,
-  lineSpacing: 2
+// Define column widths and positions
+const COLUMNS = {
+  number: { width: 30, x: MARGIN },
+  reference: { width: 70, x: MARGIN + 30 },
+  surname: { width: 100, x: MARGIN + 100 },
+  givenNames: { width: 100, x: MARGIN + 200 },
+  deathDate: { width: 80, x: MARGIN + 300 },
+  proofread: { width: 70, x: MARGIN + 380 },
+  images: { width: 80, x: MARGIN + 450 }
 };
 
 export async function POST(req: NextRequest) {
   try {
-    const { searchQuery, totalResults } = await req.json();
+    const { searchQuery } = await req.json();
 
-    // Use existing getObituaries function
-    const { obituaries } = await getObituaries(
-      searchQuery,
-      0,
-      Number(totalResults)
-    );
+    const { obituaries } = await getObituariesGeneratePDF(searchQuery);
 
-    const pdfDoc = await PDFDocument.create();
-
-    // Load and cache fonts and logo only once
-    if (!cachedFont || !cachedBoldFont || !cachedLogo) {
-      [cachedFont, cachedBoldFont] = await Promise.all([
-        pdfDoc.embedFont(StandardFonts.Helvetica),
-        pdfDoc.embedFont(StandardFonts.HelveticaBold)
-      ]);
-
-      const logoPath = path.join(process.cwd(), 'public', 'kdgs.png');
-      const logoBytes = await fs.readFile(logoPath);
-      cachedLogo = await pdfDoc.embedPng(logoBytes);
+    if (!obituaries.length) {
+      return NextResponse.json({ error: 'No results found' }, { status: 404 });
     }
 
-    const totalPages = Math.ceil(obituaries.length / RECORDS_PER_PAGE);
-    const logoSize = { width: 100, height: 50 };
+    const pdfDoc = await PDFDocument.create();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Process all pages concurrently
-    await Promise.all(
-      Array.from({ length: totalPages }).map(async (_, pageNum) => {
-        const page = pdfDoc.addPage([A4_PAGE.width, A4_PAGE.height]);
-        const pageNumber = pageNum + 1;
-
-        // Add logo only on the first page
-        if (pageNum === 0) {
-          page.drawImage(cachedLogo, {
-            x: A4_PAGE.width - logoSize.width - TABLE_CONFIG.margin,
-            y: A4_PAGE.height - logoSize.height - 30,
-            width: logoSize.width,
-            height: logoSize.height
-          });
-        }
-
-        // Draw all header text in one batch
-        const headerTexts = [
-          {
-            text: 'KDGS Database - Search Results Report',
-            size: 14,
-            y: A4_PAGE.height - 50,
-            font: cachedBoldFont
-          },
-          {
-            text: `Search Query: ${searchQuery}`,
-            size: 12,
-            y: A4_PAGE.height - 80,
-            font: cachedBoldFont
-          },
-          {
-            text: `Total Results: ${obituaries.length}`,
-            size: 10,
-            y: A4_PAGE.height - 95,
-            font: cachedFont
-          },
-          {
-            text: `Generated: ${new Date().toLocaleString()}`,
-            size: 10,
-            y: A4_PAGE.height - 110,
-            font: cachedFont
-          }
-        ];
-
-        headerTexts.forEach(({ text, size, y, font }) => {
-          page.drawText(text, {
-            x: TABLE_CONFIG.margin,
-            y,
-            size,
-            font
-          });
-        });
-
-        // Draw table header in one batch
-        let x = TABLE_CONFIG.margin;
-        TABLE_CONFIG.columns.forEach((column) => {
-          page.drawText(column.title, {
-            x,
-            y: TABLE_CONFIG.startY,
-            size: 10,
-            font: cachedBoldFont
-          });
-          x += column.width;
-        });
-
-        // Draw header line
-        page.drawLine({
-          start: { x: TABLE_CONFIG.margin, y: TABLE_CONFIG.startY - 5 },
-          end: {
-            x: A4_PAGE.width - TABLE_CONFIG.margin,
-            y: TABLE_CONFIG.startY - 5
-          },
-          thickness: 1,
-          color: rgb(0, 0, 0)
-        });
-
-        // Process batch of records for current page
-        const startIdx = pageNum * RECORDS_PER_PAGE;
-        const endIdx = Math.min(
-          (pageNum + 1) * RECORDS_PER_PAGE,
-          obituaries.length
-        );
-        let yPos = TABLE_CONFIG.startY - TABLE_CONFIG.rowHeight;
-
-        // Draw all rows for current page in one batch
-        for (let i = startIdx; i < endIdx; i++) {
-          const obituary = obituaries[i];
-          x = TABLE_CONFIG.margin;
-
-          const rowData = [
-            (i + 1).toString(),
-            obituary.reference || '',
-            truncateText(obituary.surname, 12),
-            truncateText(obituary.givenNames, 19),
-            obituary.deathDate
-              ? new Date(obituary.deathDate).toLocaleDateString()
-              : '',
-            obituary.proofread ? 'Yes' : 'No',
-            obituary.images?.length?.toString() || '0'
-          ];
-
-          rowData.forEach((text, colIndex) => {
-            page.drawText(text, {
-              x,
-              y: yPos,
-              size: 10,
-              font: cachedFont
-            });
-            x += TABLE_CONFIG.columns[colIndex].width;
-          });
-
-          yPos -= TABLE_CONFIG.rowHeight;
-        }
-
-        // Add footer and page number
-        const footerLines = FOOTER_CONFIG.text.split('\n');
-        const pageNumberText = `Page ${pageNumber} of ${totalPages}`;
-        const pageNumberWidth = cachedFont.widthOfTextAtSize(
-          pageNumberText,
-          FOOTER_CONFIG.fontSize
-        );
-
-        page.drawText(pageNumberText, {
-          x: A4_PAGE.width - TABLE_CONFIG.margin - pageNumberWidth,
-          y: FOOTER_CONFIG.y,
-          size: FOOTER_CONFIG.fontSize,
-          font: cachedFont
-        });
-
-        footerLines.forEach((line, index) => {
-          page.drawText(line, {
-            x: TABLE_CONFIG.margin,
-            y:
-              FOOTER_CONFIG.y +
-              index * (FOOTER_CONFIG.fontSize + FOOTER_CONFIG.lineSpacing),
-            size: FOOTER_CONFIG.fontSize,
-            font: cachedFont,
-            color: rgb(0.4, 0.4, 0.4)
-          });
-        });
-      })
+    // Fetch and embed the KDGS logo
+    const logoImageBytes = await fetch(KDGS_LOGO_URL).then((res) =>
+      res.arrayBuffer()
     );
+    const logoImage = await pdfDoc.embedPng(logoImageBytes);
 
-    const pdfBytes = await pdfDoc.save({
-      useObjectStreams: false,
-      addDefaultPage: false
-    });
+    const totalPages = Math.ceil(obituaries.length / RECORDS_PER_PAGE);
 
+    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+      const page = pdfDoc.addPage([LETTER_WIDTH, LETTER_HEIGHT]);
+      const { width, height } = page.getSize();
+
+      // Draw page header
+      const addPageHeader = (page: PDFPage, pageNumber: number) => {
+        const { width, height } = page.getSize();
+
+        // Add title
+        const title = 'Search Results Report';
+        page.drawText(title, {
+          x: MARGIN,
+          y: height - MARGIN,
+          size: 16,
+          font: boldFont
+        });
+
+        // Add search query info in bold and bigger
+        page.drawText(`Search Query: ${searchQuery}`, {
+          x: MARGIN,
+          y: height - MARGIN - 25,
+          size: 12,
+          font: boldFont
+        });
+
+        // Add total results in bold and bigger
+        page.drawText(`Total Results: ${obituaries.length}`, {
+          x: MARGIN,
+          y: height - MARGIN - 45,
+          size: 12,
+          font: boldFont
+        });
+
+        // Add page number
+        page.drawText(`Page ${pageNumber} of ${totalPages}`, {
+          x: MARGIN,
+          y: height - MARGIN - 65,
+          size: 10,
+          font: font
+        });
+
+        // Draw KDGS logo on the right (adjusted position)
+        page.drawImage(logoImage, {
+          x: width - 150,
+          y: height - 90,
+          width: 100,
+          height: 50
+        });
+
+        // Add table headers (adjusted position)
+        const headerY = height - MARGIN - 100;
+        page.drawText('#', {
+          x: COLUMNS.number.x,
+          y: headerY,
+          size: 10,
+          font: boldFont
+        });
+        page.drawText('File #', {
+          x: COLUMNS.reference.x,
+          y: headerY,
+          size: 10,
+          font: boldFont
+        });
+        page.drawText('Surname', {
+          x: COLUMNS.surname.x,
+          y: headerY,
+          size: 10,
+          font: boldFont
+        });
+        page.drawText('Given Names', {
+          x: COLUMNS.givenNames.x,
+          y: headerY,
+          size: 10,
+          font: boldFont
+        });
+        page.drawText('Death Date', {
+          x: COLUMNS.deathDate.x,
+          y: headerY,
+          size: 10,
+          font: boldFont
+        });
+        page.drawText('Proofread', {
+          x: COLUMNS.proofread.x,
+          y: headerY,
+          size: 10,
+          font: boldFont
+        });
+        page.drawText('Images', {
+          x: COLUMNS.images.x,
+          y: headerY,
+          size: 10,
+          font: boldFont
+        });
+
+        return height - MARGIN - 120; // Adjusted starting Y position for data
+      };
+
+      const headerY = addPageHeader(page, pageNum + 1);
+
+      let yPos = headerY;
+      const startIdx = pageNum * RECORDS_PER_PAGE;
+      const endIdx = Math.min(
+        (pageNum + 1) * RECORDS_PER_PAGE,
+        obituaries.length
+      );
+
+      for (let i = startIdx; i < endIdx; i++) {
+        const obituary = obituaries[i];
+        const imageCount = obituary.imageNames?.length || 0;
+        const rowHeight = Math.max(
+          LINE_HEIGHT,
+          imageCount > 0 ? imageCount * LINE_HEIGHT : LINE_HEIGHT
+        );
+        const rowCenter = yPos - rowHeight / 2 + LINE_HEIGHT / 2;
+
+        // Draw row data with truncation
+        page.drawText((i + 1).toString(), {
+          x: COLUMNS.number.x,
+          y: rowCenter,
+          size: 9,
+          font: font
+        });
+
+        page.drawText(obituary.reference || '', {
+          x: COLUMNS.reference.x,
+          y: rowCenter,
+          size: 9,
+          font: font
+        });
+
+        page.drawText(
+          obituary.surname?.[12]
+            ? `${(obituary.surname || '').slice(0, 12)}...`
+            : (obituary.surname || '').slice(0, 12),
+          {
+            x: COLUMNS.surname.x,
+            y: rowCenter,
+            size: 9,
+            font: font
+          }
+        );
+
+        page.drawText(
+          obituary.givenNames?.[15]
+            ? `${(obituary.givenNames || '').slice(0, 15)}...`
+            : (obituary.givenNames || '').slice(0, 15),
+          {
+            x: COLUMNS.givenNames.x,
+            y: rowCenter,
+            size: 9,
+            font: font
+          }
+        );
+
+        if (obituary.deathDate) {
+          page.drawText(format(new Date(obituary.deathDate), 'yyyy-MM-dd'), {
+            x: COLUMNS.deathDate.x,
+            y: rowCenter,
+            size: 9,
+            font: font
+          });
+        }
+
+        page.drawText(obituary.proofread ? 'Yes' : 'No', {
+          x: COLUMNS.proofread.x,
+          y: rowCenter,
+          size: 9,
+          font: font
+        });
+
+        // Draw image names
+        if (imageCount > 0) {
+          if (obituary.imageNames![0]) {
+            page.drawText(obituary.imageNames![0].slice(0, 15), {
+              x: COLUMNS.images.x,
+              y: yPos,
+              size: 8,
+              font: font,
+              color: rgb(0.4, 0.4, 0.4)
+            });
+          }
+
+          if (obituary.imageNames![1]) {
+            page.drawText(obituary.imageNames![1].slice(0, 15), {
+              x: COLUMNS.images.x,
+              y: yPos - LINE_HEIGHT,
+              size: 8,
+              font: font,
+              color: rgb(0.4, 0.4, 0.4)
+            });
+          }
+
+          if (obituary.imageNames![2]) {
+            page.drawText(obituary.imageNames![2].slice(0, 15), {
+              x: COLUMNS.images.x,
+              y: yPos - LINE_HEIGHT * 2,
+              size: 8,
+              font: font,
+              color: rgb(0.4, 0.4, 0.4)
+            });
+          }
+        }
+
+        yPos -= rowHeight + 8;
+      }
+
+      // Add footer
+      const footerText =
+        'Compiled by © 2024 Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8';
+      const copyrightText =
+        'Developed by Javier Gongora o/a Vyoniq Technologies';
+
+      page.drawText(footerText, {
+        x: MARGIN,
+        y: MARGIN + 15,
+        size: 8,
+        font: font
+      });
+
+      page.drawText(copyrightText, {
+        x: MARGIN,
+        y: MARGIN,
+        size: 8,
+        font: font
+      });
+    }
+
+    const pdfBytes = await pdfDoc.save();
+
+    // Return the PDF directly as a buffer
     return new NextResponse(pdfBytes, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="search_results_${Date.now()}.pdf"`
+        'Content-Disposition': `attachment; filename="KDGS_Search_Results_${Date.now()}.pdf"`,
+        'Cache-Control': 'no-cache'
       }
     });
   } catch (error) {
@@ -222,9 +289,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function truncateText(text: string | null, maxLength: number): string {
-  if (!text) return '';
-  return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
 }

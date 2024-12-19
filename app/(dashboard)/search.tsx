@@ -11,7 +11,6 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { getObituaries } from '@/lib/db';
 import { cn } from '@/lib/utils';
 import { Download, Search } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -209,21 +208,6 @@ export function SearchInput() {
 
     setIsDownloading(true);
     try {
-      const { obituaries, totalObituaries } = await getObituaries(
-        searchValue,
-        0,
-        1000
-      );
-
-      if (!totalObituaries) {
-        toast({
-          title: 'No Results',
-          description: 'No results found to generate PDF report.',
-          variant: 'destructive'
-        });
-        return;
-      }
-
       const response = await fetch('/api/generate-search-pdf', {
         method: 'POST',
         headers: {
@@ -231,8 +215,7 @@ export function SearchInput() {
           Accept: 'application/pdf'
         },
         body: JSON.stringify({
-          searchQuery: searchValue,
-          totalResults: totalObituaries
+          searchQuery: searchValue
         })
       });
 
@@ -268,16 +251,6 @@ export function SearchInput() {
       setIsDownloading(false);
     }
   };
-
-  // useEffect(() => {
-  //   if (searchValue) {
-  //     fetch(`/api/search?q=${encodeURIComponent(searchValue)}`)
-  //       .then((res) => res.json())
-  //       .then((data) => {
-  //         setTotalResults(data.total);
-  //       });
-  //   }
-  // }, [searchValue]);
 
   return (
     <div className="relative ml-auto flex gap-2 flex-1 md:grow-0">

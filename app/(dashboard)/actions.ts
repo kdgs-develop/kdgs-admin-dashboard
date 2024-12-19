@@ -1,9 +1,9 @@
 'use server';
-revalidatePath('/');
+
+import { getObituaryCountForFileBox } from '@/app/(dashboard)/setup/actions';
 import {
   deleteObituaryById,
   getCemeteries,
-  getCountries,
   getCities,
   getFileBoxes,
   getObituaries,
@@ -14,9 +14,18 @@ import {
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
-import { deleteImageAction } from './images/minio-actions';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
-import { getObituaryCountForFileBox } from '@/app/(dashboard)/setup/actions';
+import { deleteImageAction } from './images/minio-actions';
+
+// Helper function to conditionally revalidate
+const safeRevalidate = () => {
+  try {
+    revalidatePath('/');
+  } catch (error) {
+    // Ignore revalidation errors in API routes
+    console.debug('Skipping revalidation in API route');
+  }
+};
 
 export async function fetchObituariesAction(
   offset: number = 0,
@@ -30,7 +39,7 @@ export async function fetchObituariesAction(
     limit
   );
 
-  revalidatePath('/');
+  safeRevalidate();
   return { obituaries, total: totalObituaries };
 }
 
@@ -63,7 +72,7 @@ export async function deleteObituary(formData: FormData) {
     await deleteObituaryById(id);
   }
 
-  revalidatePath('/');
+  safeRevalidate();
 }
 
 interface EditObituaryDialogData {
@@ -211,7 +220,7 @@ export async function createObituaryAction(
     const currentYear = new Date().getFullYear();
     const existingBoxes = await prisma.fileBox.findMany({
       where: { year: currentYear },
-      orderBy: { number: 'asc' },
+      orderBy: { number: 'asc' }
     });
 
     const newNumber = existingBoxes.length > 0 ? existingBoxes.length + 1 : 1;
@@ -220,8 +229,8 @@ export async function createObituaryAction(
     const newFileBox = await prisma.fileBox.create({
       data: {
         year: currentYear,
-        number: newNumber,
-      },
+        number: newNumber
+      }
     });
 
     fileBoxIdToUse = newFileBox.id; // Use the new file box ID
@@ -230,7 +239,7 @@ export async function createObituaryAction(
     await prisma.settings.upsert({
       where: { id: 'open_filebox_id' },
       update: { value: newFileBox.id.toString() },
-      create: { id: 'open_filebox_id', value: newFileBox.id.toString() },
+      create: { id: 'open_filebox_id', value: newFileBox.id.toString() }
     });
   }
 
@@ -246,8 +255,8 @@ export async function createObituaryAction(
         deathCity: undefined,
         periodical: undefined,
         title: undefined,
-        fileBox: undefined,
-      },
+        fileBox: undefined
+      }
     });
 
     // Extract the generated id from the new obituary record
@@ -258,19 +267,19 @@ export async function createObituaryAction(
       await prisma.relative.createMany({
         data: relatives.map((relative) => ({
           obituaryId: newObituaryId,
-          ...relative,
-        })),
+          ...relative
+        }))
       });
     }
 
     // Fetch the final obituary record with the associated relatives
     const finalObituary = await prisma.obituary.findUnique({
       where: { id: newObituaryId },
-      include: { relatives: true },
+      include: { relatives: true }
     });
 
     // Revalidate the path to update the cache
-    revalidatePath('/');
+    safeRevalidate();
     return finalObituary!;
   });
 }
@@ -337,7 +346,7 @@ export async function updateObituaryAction(
     }
   );
 
-  revalidatePath('/');
+  safeRevalidate();
   return updatedObituaryWithRelations!;
 }
 
@@ -345,7 +354,7 @@ export async function deleteRelativeAction(relativeId: number) {
   await prisma.relative.delete({
     where: { id: relativeId }
   });
-  revalidatePath('/');
+  safeRevalidate();
 }
 
 export async function addTitle(name: string) {
@@ -354,7 +363,7 @@ export async function addTitle(name: string) {
     const newTitle = await prisma.title.create({
       data: { name }
     });
-    revalidatePath('/');
+    safeRevalidate();
     return newTitle;
   });
 }
@@ -365,7 +374,7 @@ export async function addCity(name: string) {
     const newCity = await prisma.city.create({
       data: { name }
     });
-    revalidatePath('/');
+    safeRevalidate();
     return newCity;
   });
 }
@@ -376,7 +385,7 @@ export async function addPeriodical(name: string) {
     const newPeriodical = await prisma.periodical.create({
       data: { name }
     });
-    revalidatePath('/');
+    safeRevalidate();
     return newPeriodical;
   });
 }
@@ -387,7 +396,7 @@ export async function addFileBox(year: number, number: number) {
     const newFileBox = await prisma.fileBox.create({
       data: { year, number }
     });
-    revalidatePath('/');
+    safeRevalidate();
     return newFileBox;
   });
 }
@@ -444,15 +453,80 @@ export async function generateNewFileNumber(
   return `${baseReference}${nextSuffix}`;
 }
 
-// Create new image file
+// Add this function to update obituary imageNames
+export async function updateObituaryImageNames(obituaryId: number) {
+  // Get all images for this obituary
+  const obituary = await prisma.obituary.findUnique({
+    where: { id: obituaryId },
+    include: {
+      images: {
+        orderBy: {
+          name: 'asc'
+        }
+      }
+    }
+  });
+
+  if (obituary) {
+    // Update the obituary with the new imageNames
+    await prisma.obituary.update({
+      where: { id: obituaryId },
+      data: {
+        imageNames: obituary.images.map(img => img.name)
+      }
+    });
+  }
+}
+
+// Modify createImageFileAction to update imageNames
 export async function createImageFileAction(name: string) {
   const newImageFile = await prisma.image.create({
     data: { name, size: 0, etag: '', lastModified: new Date() }
   });
 
-  revalidatePath('/');
+  // Get the obituary reference from the image name (first 8 characters)
+  const reference = name.slice(0, 8);
+  
+  // Find the obituary and update its imageNames
+  const obituary = await prisma.obituary.findFirst({
+    where: { reference }
+  });
+
+  if (obituary) {
+    await updateObituaryImageNames(obituary.id);
+  }
+
+  // Only revalidate if not called from an API route
+  if (typeof window !== 'undefined') {
+    safeRevalidate();
+  }
+  
   return newImageFile.name;
 }
+
+// // Add a function to delete image and update obituary
+// export async function deleteImageAction(name: string) {
+//   await prisma.image.delete({
+//     where: { name }
+//   });
+
+//   // Get the obituary reference from the image name (first 8 characters)
+//   const reference = name.slice(0, 8);
+  
+//   // Find the obituary and update its imageNames
+//   const obituary = await prisma.obituary.findFirst({
+//     where: { reference }
+//   });
+
+//   if (obituary) {
+//     await updateObituaryImageNames(obituary.id);
+//   }
+
+//   // Only revalidate if not called from an API route
+//   if (typeof window !== 'undefined') {
+//     safeRevalidate();
+//   }
+// }
 
 export async function getOpenFileBoxId(): Promise<number> {
   const setting = await prisma.settings.findUnique({
