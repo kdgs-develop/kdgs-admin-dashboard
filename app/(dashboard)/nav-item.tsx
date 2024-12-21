@@ -35,7 +35,9 @@ export function NavItem({
           )}
         >
           <span className="shrink-0">{children}</span>
-          <span className="hidden group-hover:inline whitespace-nowrap">{label}</span>
+          <span className="hidden group-hover:inline whitespace-nowrap">
+            {label}
+          </span>
           <span className="sr-only">{label}</span>
         </Link>
       </TooltipTrigger>
