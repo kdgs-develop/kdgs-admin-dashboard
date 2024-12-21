@@ -31,7 +31,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex h-[calc(100vh-100px)] w-full bg-background">
       <DesktopNav role={userRole} />
-      <div className="flex flex-1 flex-col transition-all duration-300 ease-in-out">
+      <div className="flex flex-1 flex-col transition-all duration-300 ease-in-out pt-2">
         <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 z-20">
           <MobileNav />
           <DashboardBreadcrumb />

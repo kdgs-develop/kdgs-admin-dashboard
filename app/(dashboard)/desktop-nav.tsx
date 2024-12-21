@@ -27,7 +27,7 @@ export function DesktopNav({ role }: DesktopNavProps) {
   return (
     <aside
       className={cn(
-        'hidden sm:flex flex-col border-r min-h-screen',
+        'hidden sm:flex flex-col border-r min-h-screen pt-2',
         'transition-[width] duration-300 ease-in-out',
         isOpen ? 'w-[135px]' : 'w-14',
         'bg-background'

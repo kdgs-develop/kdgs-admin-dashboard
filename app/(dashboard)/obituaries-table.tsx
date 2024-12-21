@@ -98,7 +98,7 @@ export function ObituariesTable({
 
   return (
     <>
-      <Card className="w-full my-8">
+      <Card className="w-full">
         <CardHeader className="flex flex-row items-start justify-between gap-2">
           <div>
             <CardTitle className="mb-1">Obituary Index</CardTitle>
