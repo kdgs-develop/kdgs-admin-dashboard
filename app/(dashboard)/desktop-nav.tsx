@@ -2,8 +2,8 @@
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Role } from '@prisma/client';
 import {
-  ChevronLeft,
   ChevronRight,
   FileText,
   Home,
@@ -25,75 +25,79 @@ function ToggleButton({
   return (
     <Button
       variant="ghost"
-      size="icon"
+      size="sm"
       onClick={onClick}
-      className="absolute -right-3 top-4 h-6 w-6 rounded-full border bg-background shadow-sm"
+      className="hover:bg-accent"
     >
-      {isOpen ? (
-        <ChevronLeft className="h-4 w-4" />
-      ) : (
-        <ChevronRight className="h-4 w-4" />
-      )}
+      <ChevronRight
+        className={cn(
+          'h-4 w-4 text-muted-foreground transition-transform duration-200',
+          isOpen && 'rotate-180'
+        )}
+      />
     </Button>
   );
 }
 
 interface DesktopNavProps {
-  role?: string | null;
+  role: Role;
 }
 
 export function DesktopNav({ role }: DesktopNavProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const handleToggle = () => setIsOpen(!isOpen);
+
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-10 hidden flex-col border-r sm:flex',
-        'transition-[width] duration-300 ease-in-out',
-        isOpen ? 'w-64 bg-background' : 'w-14 bg-background'
+        'hidden h-screen flex-none sm:flex flex-col border-r',
+        'transition-all duration-300 ease-in-out',
+        isOpen ? 'w-fit pr-4' : 'w-14',
+        'bg-background'
       )}
     >
-      <ToggleButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
+      <nav className="flex h-full flex-col px-1">
+        <ToggleButton isOpen={isOpen} onClick={handleToggle} />
+        <div className="flex flex-col gap-4">
+          <Link
+            href="/"
+            className="flex h-9 w-full items-center gap-3 rounded-lg text-lg font-semibold"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
+              <Image
+                className="h-4 w-4 transition-all"
+                src={'/icon.png'}
+                alt="Logo"
+                width={64}
+                height={64}
+              />
+            </div>
+            {isOpen && <span className="text-sm">K&DGS</span>}
+          </Link>
+        </div>
 
-      <nav
-        className={cn(
-          'flex flex-col items-center gap-4 px-0 sm:py-5',
-          isOpen ? 'items-start' : 'group-hover:items-start'
-        )}
-      >
-        <Link
-          href="/"
-          className="group flex h-9 w-full items-center gap-3 rounded-lg px-2 text-lg font-semibold"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <Image
-              className="h-4 w-4 transition-all"
-              src={'/icon.png'}
-              alt="Logo"
-              width={64}
-              height={64}
-            />
-          </div>
-          {isOpen && <span className="text-sm">KDGS Dashboard</span>}
-        </Link>
-
-        <NavItem href="/" label="Obituary Index">
-          <Home className="h-5 w-5" />
-        </NavItem>
-
-        <NavItem href="/images" label="Obituary Images">
-          <LucideImage className="h-5 w-5" />
-        </NavItem>
-
-        <NavItem href="/reports" label="Reports">
-          <FileText className="h-5 w-5" />
-        </NavItem>
-
-        {role === 'ADMIN' && (
-          <NavItem href="/setup" label="Admin Setup">
-            <Settings className="h-5 w-5" />
+        <div className="mt-4 flex-1 space-y-1 overflow-y-auto overflow-x-hidden">
+          <NavItem href="/" label="Index" isOpen={isOpen}>
+            <Home className="h-5 w-5" />
           </NavItem>
-        )}
+
+          <NavItem href="/images" label="Images" isOpen={isOpen}>
+            <LucideImage className="h-5 w-5" />
+          </NavItem>
+
+          {role !== 'VIEWER' && (
+            <NavItem href="/reports" label="Reports" isOpen={isOpen}>
+              <FileText className="h-5 w-5" />
+            </NavItem>
+          )}
+
+          {role === 'ADMIN' && (
+            <NavItem href="/setup" label="Admin" isOpen={isOpen}>
+              <Settings className="h-5 w-5" />
+            </NavItem>
+          )}
+        </div>
       </nav>
     </aside>
   );
