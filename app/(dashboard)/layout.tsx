@@ -29,7 +29,7 @@ export default async function DashboardLayout({
   const userRole = await getUserRole();
 
   return (
-    <div className="flex h-screen w-full bg-background">
+    <div className="flex h-[calc(100vh-100px)] w-full bg-background">
       <DesktopNav role={userRole} />
       <div className="flex flex-1 flex-col transition-all duration-300 ease-in-out">
         <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 z-20">
@@ -39,11 +39,11 @@ export default async function DashboardLayout({
           <UserClerkButton />
         </header>
         <main className="flex-1">
-          <div className="p-6">
+          <div className="p-3">
             <TransitionWrapper>{children}</TransitionWrapper>
           </div>
         </main>
-        <footer className="border-t p-4">
+        <footer>
           <Analytics />
         </footer>
       </div>
