@@ -27,7 +27,7 @@ export function DesktopNav({ role }: DesktopNavProps) {
   return (
     <aside
       className={cn(
-        'hidden sm:flex flex-col border-r min-h-screen pt-2',
+        'hidden sm:flex flex-col border-r min-h-screen pt-2 overflow-hidden',
         'transition-[width] duration-300 ease-in-out',
         isOpen ? 'w-[135px]' : 'w-14',
         'bg-background'
@@ -48,12 +48,10 @@ export function DesktopNav({ role }: DesktopNavProps) {
                 height={64}
               />
             </div>
-            <span
-              className={cn(
-                'text-sm transition-opacity duration-300',
-                isOpen ? 'opacity-100' : 'opacity-0'
-              )}
-            >
+            <span className={cn(
+              'text-sm transition-opacity duration-300',
+              isOpen ? 'opacity-100' : 'opacity-0'
+            )}>
               K&DGS
             </span>
           </Link>
