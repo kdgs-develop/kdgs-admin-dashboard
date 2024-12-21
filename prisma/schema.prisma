@@ -18,6 +18,7 @@ model Genealogist {
   role         Role?        @default(INDEXER)
   updatedAt    DateTime?    @updatedAt
   accessTimes  AccessTime[]
+  Report       Report[]
 }
 
 model AccessTime {
@@ -173,4 +174,15 @@ model Image {
 
   @@index([name])
   @@index([lastModified])
+}
+
+model Report {
+  id           String      @id @default(cuid())
+  fileName     String
+  searchQuery  String
+  createdAt    DateTime    @default(now())
+  userId       String
+  role         String
+  totalResults Int
+  createdBy    Genealogist @relation(fields: [userId], references: [clerkId])
 }
