@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@clerk/nextjs';
 import { Download, Search } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { forwardRef, useEffect, useRef, useState, useTransition } from 'react';
@@ -102,6 +103,7 @@ export function SearchInput() {
   const [totalResults, setTotalResults] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { userId } = useAuth();
 
   useEffect(() => {
     setContext(pathname.startsWith('/images') ? 'images' : 'obituaries');
@@ -204,18 +206,18 @@ export function SearchInput() {
   }
 
   const handleDownloadReport = async () => {
-    if (!searchValue) return;
+    if (!searchValue || !userId) return;
 
     setIsDownloading(true);
     try {
       const response = await fetch('/api/generate-search-pdf', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/pdf'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          searchQuery: searchValue
+          searchQuery: searchValue,
+          userId
         })
       });
 
@@ -223,18 +225,31 @@ export function SearchInput() {
         throw new Error(`Failed to generate PDF: ${response.statusText}`);
       }
 
-      const pdfBlob = await response.blob();
+      const data = await response.json();
+
+      // Create blob from base64 data
+      const binaryString = window.atob(data.pdf.split(',')[1]);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const pdfBlob = new Blob([bytes], { type: 'application/pdf' });
+
       const pdfUrl = window.URL.createObjectURL(pdfBlob);
       const pdfLink = document.createElement('a');
       const currentDateTime = new Date()
         .toISOString()
         .replace(/[:.]/g, '-')
         .replace('T', '_')
-        .slice(0, -5); // Removes milliseconds and timezone offset
+        .slice(0, -5);
+
       pdfLink.href = pdfUrl;
-      pdfLink.download = `KDGS-Report-${searchValue.replace(/\s+/g, '-')}-${currentDateTime}.pdf`;
+      const sanitizedQuery = searchValue.replace(/@/g, '').replace(/\s+/g, '-');
+      pdfLink.download = `kdgs-report-${sanitizedQuery}-${currentDateTime}.pdf`;
       pdfLink.click();
       window.URL.revokeObjectURL(pdfUrl);
+
+      // After successful report generation and download
 
       toast({
         title: 'Download Complete',

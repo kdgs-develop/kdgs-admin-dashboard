@@ -1,47 +1,31 @@
 'use client';
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
-} from '@/components/ui/tooltip';
-import clsx from 'clsx';
+import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export function NavItem({
-  href,
-  label,
-  children
-}: {
+interface NavItemProps {
   href: string;
   label: string;
   children: React.ReactNode;
-}) {
+  isOpen: boolean;
+}
+
+export function NavItem({ href, label, children, isOpen }: NavItemProps) {
   const pathname = usePathname();
+  const isActive = pathname === href;
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link
-          href={href}
-          className={clsx(
-            'flex h-9 items-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8',
-            'group-hover:w-full group-hover:justify-start group-hover:px-3 group-hover:gap-3',
-            'w-9 justify-center md:w-8',
-            {
-              'font-semibold': pathname === href
-            }
-          )}
-        >
-          <span className="shrink-0">{children}</span>
-          <span className="hidden group-hover:inline whitespace-nowrap">{label}</span>
-          <span className="sr-only">{label}</span>
-        </Link>
-      </TooltipTrigger>
-      <TooltipContent side="right" className="group-hover:hidden">
-        {label}
-      </TooltipContent>
-    </Tooltip>
+    <Link
+      href={href}
+      className={cn(
+        'flex items-center gap-3 rounded-lg px-2 py-2',
+        isActive && 'bg-accent text-accent-foreground',
+        isOpen ? 'w-full justify-start' : 'w-10 justify-center'
+      )}
+    >
+      <div className="flex h-5 w-5 items-center justify-center">{children}</div>
+      {isOpen && <span className="text-sm font-medium">{label}</span>}
+    </Link>
   );
 }

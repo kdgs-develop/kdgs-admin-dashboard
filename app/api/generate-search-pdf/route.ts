@@ -1,4 +1,6 @@
-import { getObituaries, getObituariesGeneratePDF } from '@/lib/db';
+import { getObituariesGeneratePDF } from '@/lib/db';
+import minioClient from '@/lib/minio-client';
+import { prisma } from '@/lib/prisma';
 import { format } from 'date-fns';
 import { NextRequest, NextResponse } from 'next/server';
 import { PDFDocument, PDFPage, rgb, StandardFonts } from 'pdf-lib';
@@ -25,7 +27,11 @@ const COLUMNS = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { searchQuery } = await req.json();
+    const { searchQuery, userId } = await req.json();
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { obituaries } = await getObituariesGeneratePDF(searchQuery);
 
@@ -274,14 +280,47 @@ export async function POST(req: NextRequest) {
 
     const pdfBytes = await pdfDoc.save();
 
-    // Return the PDF directly as a buffer
-    return new NextResponse(pdfBytes, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="KDGS_Search_Results_${Date.now()}.pdf"`,
-        'Cache-Control': 'no-cache'
+    // Save to MinIO first
+    const sanitizedQuery = searchQuery.replace(/@/g, '').replace(/\s+/g, '-');
+    const fileName = `kdgs-report-${sanitizedQuery}-${Date.now()}.pdf`;
+    const bucketName = process.env.MINIO_BUCKET_NAME!;
+
+    try {
+      await minioClient.putObject(
+        bucketName,
+        `reports/${fileName}`, // Note the 'reports/' prefix
+        Buffer.from(pdfBytes)
+      );
+    } catch (error) {
+      console.error('Error saving PDF to MinIO:', error);
+      throw new Error('Failed to save report');
+    }
+
+    // Convert to base64 for immediate download
+    const pdfBase64 = Buffer.from(pdfBytes).toString('base64');
+    const pdfUrl = `data:application/pdf;base64,${pdfBase64}`;
+
+    // Save report record to database
+    const genealogist = await prisma.genealogist.findUnique({
+      where: { clerkId: userId }
+    });
+
+    if (!genealogist) {
+      throw new Error('Genealogist not found');
+    }
+
+    await prisma.report.create({
+      data: {
+        fileName,
+        searchQuery,
+        userId,
+        role: genealogist.role || '',
+        totalResults: obituaries.length
       }
     });
+
+    // Return the PDF data URL
+    return NextResponse.json({ pdf: pdfUrl });
   } catch (error) {
     console.error('Error generating PDF:', error);
     return NextResponse.json(

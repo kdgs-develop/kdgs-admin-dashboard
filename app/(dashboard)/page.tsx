@@ -1,7 +1,7 @@
 'use client';
 
-import { ObituariesTable } from './obituaries-table';
 import { useSearchParams } from 'next/navigation';
+import { ObituariesTable } from './obituaries-table';
 
 export default function ObituaryIndexPage() {
   const searchParams = useSearchParams();
@@ -10,11 +10,13 @@ export default function ObituaryIndexPage() {
   const search = searchParams.get('q') ?? '';
 
   return (
-    <ObituariesTable
-      offset={offset}
-      limit={limit}
-      search={search}
-      refreshTrigger={0}
-    />
+    <div className="container mx-auto p-4 max-w-[calc(4xl)]">
+      <ObituariesTable
+        offset={offset}
+        limit={limit}
+        search={search}
+        refreshTrigger={0}
+      />
+    </div>
   );
 }

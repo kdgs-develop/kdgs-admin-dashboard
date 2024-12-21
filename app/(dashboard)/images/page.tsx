@@ -15,20 +15,22 @@ export default function ImagesPage() {
   const searchQuery = searchParams.get('q') || '';
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Obituary Images</CardTitle>
-        <CardDescription>
-          View and manage image files from our KDGS storage server.
-          <span className='block mt-4' />
-          <strong>Please note:</strong> Manually renaming image files may
-          severely impact database integrity and storage server functionality.
-          Exercise caution when modifying file names.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ImageTable initialSearchQuery={searchQuery} />
-      </CardContent>
-    </Card>
+    <div className="container mx-auto p-4 max-w-[calc(4xl)]">
+      <Card>
+        <CardHeader>
+          <CardTitle>Obituary Images</CardTitle>
+          <CardDescription>
+            View and manage image files from our KDGS storage server.
+            <span className="block mt-4" />
+            <strong>Please note:</strong> Manually renaming image files may
+            severely impact database integrity and storage server functionality.
+            Exercise caution when modifying file names.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ImageTable initialSearchQuery={searchQuery} />
+        </CardContent>
+      </Card>
+    </div>
   );
 }
