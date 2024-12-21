@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
   ChevronLeft,
@@ -12,10 +13,15 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { NavItem } from './nav-item';
 
-function ToggleButton({ isOpen, onClick }: { isOpen: boolean; onClick: () => void }) {
+function ToggleButton({
+  isOpen,
+  onClick
+}: {
+  isOpen: boolean;
+  onClick: () => void;
+}) {
   return (
     <Button
       variant="ghost"
@@ -42,19 +48,19 @@ export function DesktopNav({ role }: DesktopNavProps) {
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-10 hidden flex-col border-r sm:flex",
-        "transition-[width] duration-300 ease-in-out",
-        isOpen 
-          ? "w-64 bg-background" 
-          : "w-14 bg-background/60 backdrop-blur-sm hover:w-min"
+        'fixed inset-y-0 left-0 z-10 hidden flex-col border-r sm:flex',
+        'transition-[width] duration-300 ease-in-out',
+        isOpen ? 'w-64 bg-background' : 'w-14 bg-background'
       )}
     >
       <ToggleButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
-      
-      <nav className={cn(
-        "flex flex-col items-center gap-4 px-0 sm:py-5",
-        isOpen ? "items-start" : "group-hover:items-start"
-      )}>
+
+      <nav
+        className={cn(
+          'flex flex-col items-center gap-4 px-0 sm:py-5',
+          isOpen ? 'items-start' : 'group-hover:items-start'
+        )}
+      >
         <Link
           href="/"
           className="group flex h-9 w-full items-center gap-3 rounded-lg px-2 text-lg font-semibold"
@@ -91,4 +97,4 @@ export function DesktopNav({ role }: DesktopNavProps) {
       </nav>
     </aside>
   );
-} 
+}
