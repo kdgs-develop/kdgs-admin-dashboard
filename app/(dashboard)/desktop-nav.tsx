@@ -15,50 +15,25 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { NavItem } from './nav-item';
 
-function ToggleButton({
-  isOpen,
-  onClick
-}: {
-  isOpen: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={onClick}
-      className="hover:bg-accent"
-    >
-      <ChevronRight
-        className={cn(
-          'h-4 w-4 text-muted-foreground transition-transform duration-200',
-          isOpen && 'rotate-180'
-        )}
-      />
-    </Button>
-  );
-}
-
 interface DesktopNavProps {
   role: Role;
 }
 
 export function DesktopNav({ role }: DesktopNavProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   const handleToggle = () => setIsOpen(!isOpen);
 
   return (
     <aside
       className={cn(
-        'hidden h-screen flex-none sm:flex flex-col border-r',
-        'transition-all duration-300 ease-in-out',
-        isOpen ? 'w-fit pr-4' : 'w-14',
+        'hidden sm:flex flex-col border-r min-h-screen',
+        'transition-all duration-900 ease-in-out',
+        isOpen ? 'max-w-fit pr-4' : 'w-14',
         'bg-background'
       )}
     >
-      <nav className="flex h-full flex-col px-1">
-        <ToggleButton isOpen={isOpen} onClick={handleToggle} />
+      <nav className="flex flex-col px-1 py-2.5 pl-2.5 sticky top-0">
         <div className="flex flex-col gap-4">
           <Link
             href="/"
@@ -77,7 +52,7 @@ export function DesktopNav({ role }: DesktopNavProps) {
           </Link>
         </div>
 
-        <div className="mt-4 flex-1 space-y-1 overflow-y-auto overflow-x-hidden">
+        <div className="mt-4 flex flex-col gap-1">
           <NavItem href="/" label="Index" isOpen={isOpen}>
             <Home className="h-5 w-5" />
           </NavItem>
@@ -97,6 +72,22 @@ export function DesktopNav({ role }: DesktopNavProps) {
               <Settings className="h-5 w-5" />
             </NavItem>
           )}
+
+          <div className="flex items-center justify-end mt-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleToggle}
+              className="hover:bg-accent"
+            >
+              <ChevronRight
+                className={cn(
+                  'h-4 w-4 text-muted-foreground transition-transform duration-200',
+                  isOpen && 'rotate-180'
+                )}
+              />
+            </Button>
+          </div>
         </div>
       </nav>
     </aside>
