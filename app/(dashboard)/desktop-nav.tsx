@@ -28,12 +28,12 @@ export function DesktopNav({ role }: DesktopNavProps) {
     <aside
       className={cn(
         'hidden sm:flex flex-col border-r min-h-screen',
-        'transition-all duration-900 ease-in-out',
-        isOpen ? 'max-w-fit pr-4' : 'w-14',
+        'transition-[width] duration-300 ease-in-out',
+        isOpen ? 'w-[135px]' : 'w-14',
         'bg-background'
       )}
     >
-      <nav className="flex flex-col px-1 py-2.5 pl-2.5 sticky top-0">
+      <nav className="flex flex-col px-1 py-2.5 pl-2.5 sticky top-0 overflow-hidden">
         <div className="flex flex-col gap-4">
           <Link
             href="/"
