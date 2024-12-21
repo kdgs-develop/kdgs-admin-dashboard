@@ -1,78 +1,68 @@
 'use server';
 
+import minioClient from '@/lib/minio-client';
 import { prisma } from '@/lib/prisma';
-import { Genealogist } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 
-export async function fetchObituariesAction(
-  reportType: 'proofread' | 'unproofread',
-  page: number,
-  itemsPerPage: number
-) {
-  const skip = (page - 1) * itemsPerPage;
-
-  const [obituaries, total] = await Promise.all([
-    prisma.obituary.findMany({
-      where: {
-        proofread: reportType === 'proofread'
-      },
-      orderBy: {
-        reference: 'asc'
-      },
-      skip,
-      take: itemsPerPage,
-    }),
-    prisma.obituary.count({
-      where: {
-        proofread: reportType === 'proofread'
-      }
-    })
-  ]);
-
-  return { obituaries, total };
-}
-
-export async function fetchCurrentUserAction(userId: string): Promise<Genealogist | null> {
-  return prisma.genealogist.findUnique({
-    where: { clerkId: userId }
-  });
-}
-
-export async function fetchObituaryByReferenceAction(reference: string) {
+export async function fetchReportsAction(page: number, perPage: number) {
   try {
-    return await prisma.obituary.findUnique({
-      where: { reference },
-      include: {
-        title: true,
-        alsoKnownAs: true,
-        birthCity: true,
-        deathCity: true,
-        cemetery: true,
-        periodical: true,
-        fileBox: true,
-        relatives: true
-      }
-    });
+    const skip = (page - 1) * perPage;
+
+    const [reports, total] = await Promise.all([
+      prisma.report.findMany({
+        skip,
+        take: perPage,
+        orderBy: {
+          createdAt: 'desc'
+        },
+        include: {
+          createdBy: {
+            select: {
+              fullName: true
+            }
+          }
+        }
+      }),
+      prisma.report.count()
+    ]);
+
+    return { reports, total };
   } catch (error) {
-    console.error('Error fetching obituary:', error);
-    return null;
+    console.error('Error fetching reports:', error);
+    throw new Error('Failed to fetch reports');
   }
 }
 
-export async function fetchFileBoxesAction() {
+export async function deleteReportAction(reportId: string, fileName: string) {
   try {
-    return await prisma.fileBox.findMany({
-      orderBy: [
-        { year: 'desc' },
-        { number: 'asc' }
-      ],
-      select: {
-        id: true,
-        year: true,
-        number: true,
-      }
+    const bucketName = process.env.MINIO_BUCKET_NAME!;
+
+    // Delete from Minio using the reports prefix
+    await minioClient.removeObject(bucketName, `reports/${fileName}`);
+
+    // Delete from database
+    await prisma.report.delete({
+      where: { id: reportId }
     });
   } catch (error) {
-    console.error('Error fetching file boxes:', error);
-    return [];
+    console.error('Error deleting report:', error);
+    throw new Error('Failed to delete report');
+  }
+}
+
+export async function getReportUrlAction(fileName: string) {
+  try {
+    const bucketName = process.env.MINIO_BUCKET_NAME!;
+
+    return await minioClient.presignedGetObject(
+      bucketName,
+      `reports/${fileName}`,
+      24 * 60 * 60 // URL valid for 1 day
+    );
+  } catch (error) {
+    console.error('Error getting report URL:', error);
+    throw new Error('Failed to get report URL');
+  } finally {
+    revalidatePath('/');
   }
 }
