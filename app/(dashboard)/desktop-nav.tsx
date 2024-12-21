@@ -48,10 +48,12 @@ export function DesktopNav({ role }: DesktopNavProps) {
                 height={64}
               />
             </div>
-            <span className={cn(
-              'text-sm transition-opacity duration-300',
-              isOpen ? 'opacity-100' : 'opacity-0'
-            )}>
+            <span
+              className={cn(
+                'text-[12pt] font-bold transition-opacity duration-300 ml-[-7px]',
+                isOpen ? 'opacity-100' : 'opacity-0'
+              )}
+            >
               K&DGS
             </span>
           </Link>
