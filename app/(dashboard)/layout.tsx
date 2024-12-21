@@ -3,7 +3,13 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { prisma } from '@/lib/prisma';
 import { auth, currentUser, User } from '@clerk/nextjs/server';
 import { Analytics } from '@vercel/analytics/react';
-import { Home, Image as LucideImage, FileText, PanelLeft, Settings } from 'lucide-react';
+import {
+  FileText,
+  Home,
+  Image as LucideImage,
+  PanelLeft,
+  Settings
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -54,7 +60,8 @@ async function DesktopNav() {
   });
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-10 hidden group w-14 hover:w-min flex-col border-r bg-background/60 backdrop-blur-sm sm:flex
+    <aside
+      className="fixed inset-y-0 left-0 z-10 hidden group w-14 hover:w-min flex-col border-r bg-background/60 backdrop-blur-sm sm:flex
       transition-[width] duration-100 hover:duration-100 ease-out hover:ease-in"
     >
       <nav className="flex flex-col items-center group-hover:items-start gap-4 px-0 sm:py-5">
@@ -63,9 +70,14 @@ async function DesktopNav() {
           className="group flex h-9 w-full items-center gap-3 rounded-lg px-2 text-lg font-semibold"
         >
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <Image className="h-4 w-4 transition-all group-hover:scale-110" src={"/icon.png"} alt='Logo' width={64} height={64} />
+            <Image
+              className="h-4 w-4 transition-all group-hover:scale-110"
+              src={'/icon.png'}
+              alt="Logo"
+              width={64}
+              height={64}
+            />
           </div>
-          
         </Link>
 
         <NavItem href="/" label="Obituary Index">
@@ -105,7 +117,13 @@ function MobileNav() {
             href="/"
             className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
           >
-            <Image className="h-4 w-4 transition-all group-hover:scale-110" src={"/icon.png"} alt='Logo' width={64} height={64} />
+            <Image
+              className="h-4 w-4 transition-all group-hover:scale-110"
+              src={'/icon.png'}
+              alt="Logo"
+              width={64}
+              height={64}
+            />
 
             <span className="sr-only">Obituary Dashboard</span>
           </Link>
