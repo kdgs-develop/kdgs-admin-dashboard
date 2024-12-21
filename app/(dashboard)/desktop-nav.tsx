@@ -33,22 +33,29 @@ export function DesktopNav({ role }: DesktopNavProps) {
         'bg-background'
       )}
     >
-      <nav className="flex flex-col px-1 py-2.5 pl-2.5 sticky top-0 overflow-hidden">
+      <nav className="flex flex-col px-1 py-2.5 pl-2.5 sticky top-0">
         <div className="flex flex-col gap-4">
           <Link
             href="/"
-            className="flex h-9 w-full items-center gap-3 rounded-lg text-lg font-semibold"
+            className="flex h-9 w-full items-center gap-3 rounded-lg text-lg font-semibold whitespace-nowrap"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shrink-0">
               <Image
-                className="h-4 w-4 transition-all"
+                className="h-4 w-4"
                 src={'/icon.png'}
                 alt="Logo"
                 width={64}
                 height={64}
               />
             </div>
-            {isOpen && <span className="text-sm">K&DGS</span>}
+            <span
+              className={cn(
+                'text-sm transition-opacity duration-300',
+                isOpen ? 'opacity-100' : 'opacity-0'
+              )}
+            >
+              K&DGS
+            </span>
           </Link>
         </div>
 
