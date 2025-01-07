@@ -8,23 +8,30 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList
+} from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import {
+  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronsUpDown,
   ChevronUp,
   Plus,
-  Search,
-  ChevronsUpDown
+  Search
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
@@ -37,21 +44,6 @@ import {
 } from './actions';
 import { AddCemeteryDialog } from './add-cemetery-dialog';
 import { EditCemeteryDialog } from './edit-cemetery-dialog';
-import {
-  Command,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandEmpty,
-  CommandGroup
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover';
-import { Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 // Add this type for better type safety
 type City = {
@@ -78,7 +70,7 @@ export function CemeteryAdministration() {
   );
 
   const [openCitySelect, setOpenCitySelect] = useState(false);
-  const [citySearch, setCitySearch] = useState("");
+  const [citySearch, setCitySearch] = useState('');
   const [filteredCities, setFilteredCities] = useState<City[]>([]);
 
   useEffect(() => {
@@ -119,7 +111,9 @@ export function CemeteryAdministration() {
           const cityName = (city?.name ?? '').toLowerCase();
           const countryName = (city?.country?.name ?? '').toLowerCase();
           const searchTerm = citySearch.toLowerCase();
-          return cityName.includes(searchTerm) || countryName.includes(searchTerm);
+          return (
+            cityName.includes(searchTerm) || countryName.includes(searchTerm)
+          );
         })
       );
     } else {
@@ -221,10 +215,10 @@ export function CemeteryAdministration() {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div>
-          <CardTitle>Cemetery Management</CardTitle>
+          <CardTitle>Interment Place Management</CardTitle>
           {!isExpanded && (
             <CardDescription>
-              Click to manage cemeteries and search records
+              Click to manage interment places and search records
             </CardDescription>
           )}
         </div>
@@ -256,8 +250,10 @@ export function CemeteryAdministration() {
                     className="w-full justify-between"
                   >
                     {searchCityId
-                      ? cities?.find((city) => city?.id?.toString() === searchCityId)?.name ?? 'Unnamed'
-                      : "All Cities"}
+                      ? (cities?.find(
+                          (city) => city?.id?.toString() === searchCityId
+                        )?.name ?? 'Unnamed')
+                      : 'All Cities'}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -279,14 +275,14 @@ export function CemeteryAdministration() {
                             value="all-cities"
                             onSelect={() => {
                               setSearchCityId(undefined);
-                              setCitySearch("");
+                              setCitySearch('');
                               setOpenCitySelect(false);
                             }}
                           >
                             <Check
                               className={cn(
-                                "mr-2 h-4 w-4",
-                                !searchCityId ? "opacity-100" : "opacity-0"
+                                'mr-2 h-4 w-4',
+                                !searchCityId ? 'opacity-100' : 'opacity-0'
                               )}
                             />
                             All Cities
@@ -299,17 +295,22 @@ export function CemeteryAdministration() {
                                 value={city.id.toString()}
                                 onSelect={() => {
                                   setSearchCityId(city.id?.toString());
-                                  setCitySearch("");
+                                  setCitySearch('');
                                   setOpenCitySelect(false);
                                 }}
                               >
                                 <Check
                                   className={cn(
-                                    "mr-2 h-4 w-4",
-                                    searchCityId === city.id?.toString() ? "opacity-100" : "opacity-0"
+                                    'mr-2 h-4 w-4',
+                                    searchCityId === city.id?.toString()
+                                      ? 'opacity-100'
+                                      : 'opacity-0'
                                   )}
                                 />
-                                {city.name ?? 'Unnamed'} {city.country?.name ? `(${city.country.name})` : ''}
+                                {city.name ?? 'Unnamed'}{' '}
+                                {city.country?.name
+                                  ? `(${city.country.name})`
+                                  : ''}
                               </CommandItem>
                             );
                           })}
@@ -369,7 +370,12 @@ export function CemeteryAdministration() {
                     </span>
                     {cemetery.city && (
                       <span className="ml-2 text-sm text-muted-foreground">
-                        ({cemetery.city.name}, {cemetery.city.country.name})
+                        ({cemetery.city.name}
+                        {cemetery.city.province &&
+                          `, ${cemetery.city.province}`}
+                        {cemetery.city.country?.name &&
+                          `, ${cemetery.city.country.name}`}
+                        )
                       </span>
                     )}
                   </div>
