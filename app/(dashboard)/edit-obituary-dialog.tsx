@@ -560,8 +560,8 @@ export function EditObituaryDialog({
                   control={form.control}
                   name="cemeteryId"
                   label="Interment Place"
-                  placeholder="Select a cemetery"
-                  emptyText="No cemetery found."
+                  placeholder="Select an interment place"
+                  emptyText="No interment place found."
                   items={cemeteries.map((cemetery) => ({
                     id: cemetery.id,
                     name: cemetery.name,
