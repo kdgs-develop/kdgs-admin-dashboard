@@ -31,7 +31,7 @@ import { BucketItem } from 'minio';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { addPeriodical, addTitle, updateObituaryAction } from './actions';
+import { addFamilyRelationship, addPeriodical, addTitle, updateObituaryAction } from './actions';
 import {
   deleteImageAction,
   getImageUrlAction,
@@ -105,6 +105,7 @@ const formSchema = z.object({
           .string()
           .nullable()
           .transform((val) => val?.toUpperCase()),
+        familyRelationshipId: z.string().optional(),
         predeceased: z.boolean()
       })
     )
@@ -160,6 +161,7 @@ interface EditObituaryDialogProps {
     };
   }[];
   periodicals: { id: number; name: string }[];
+  familyRelationships: { id: string; name: string; category: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
 }
 
@@ -172,6 +174,7 @@ export function EditObituaryDialog({
   cities,
   cemeteries,
   periodicals,
+  familyRelationships,
   fileBoxes
 }: EditObituaryDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -196,6 +199,8 @@ export function EditObituaryDialog({
   const [localTitles, setLocalTitles] = useState(titles);
   const [localCities, setLocalCities] = useState(cities);
   const [localPeriodicals, setLocalPeriodicals] = useState(periodicals);
+  const [localFamilyRelationships, setLocalFamilyRelationships] =
+    useState(familyRelationships);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -890,33 +895,66 @@ export function EditObituaryDialog({
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name={`relatives.${index}.relationship`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">Relationship</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            className="h-8 text-sm"
-                            value={field.value || ''}
-                            onChange={(e) => {
-                              const formatted = e.target.value
-                                .split(' ')
-                                .map(
-                                  (word) =>
-                                    word.charAt(0).toUpperCase() +
-                                    word.slice(1).toLowerCase()
-                                )
-                                .join(' ');
-                              field.onChange(formatted);
-                            }}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                  {/* If relatives.${index}.familyRelationshipId is not empty then show a combo box form field for familyRelationshipId */}
+                  {!form.getValues(`relatives.${index}.familyRelationshipId`) &&
+                  form.getValues(`relatives.${index}.relationship`) ? (
+                    <FormField
+                      control={form.control}
+                      name={`relatives.${index}.relationship`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">
+                            Relationship
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className="h-8 text-sm"
+                              value={field.value || ''}
+                              onChange={(e) => {
+                                const formatted = e.target.value
+                                  .split(' ')
+                                  .map(
+                                    (word) =>
+                                      word.charAt(0).toUpperCase() +
+                                      word.slice(1).toLowerCase()
+                                  )
+                                  .join(' ');
+                                field.onChange(formatted);
+                              }}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  ) : (
+                    // combo box form field for familyRelationshipId
+                    <ComboboxFormField
+                      control={form.control}
+                      name="familyRelationshipId"
+                      label="Relationship"
+                      placeholder="Select a family relationship"
+                      emptyText="No family relationship found."
+                      items={localFamilyRelationships}
+                      onAddItem={async (name) => {
+                        const newFamilyRelationship =
+                          await addFamilyRelationship(name);
+                        setLocalFamilyRelationships([
+                          ...familyRelationships,
+                          {
+                            id: newFamilyRelationship.id,
+                            name: newFamilyRelationship?.name!,
+                            category: newFamilyRelationship?.category!
+                          }
+                        ]);
+                        return {
+                          id: newFamilyRelationship.id,
+                          name: newFamilyRelationship?.name!
+                        };
+                      }}
+                    />
+                  )}
+
                   <FormField
                     control={form.control}
                     name={`relatives.${index}.predeceased`}
@@ -958,6 +996,7 @@ export function EditObituaryDialog({
                       surname: '',
                       givenNames: '',
                       relationship: '',
+                      familyRelationshipId: '',
                       predeceased: false
                     }
                   ]);
