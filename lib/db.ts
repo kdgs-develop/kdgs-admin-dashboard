@@ -491,7 +491,7 @@ export async function getObituaries(
 }
 
 export async function getObituariesGeneratePDF(
-  search: string,
+  search: string
 ): Promise<{ obituaries: Partial<Obituary>[] }> {
   // Split the search string differently to handle date ranges
   const terms = search.split(' ');
@@ -711,6 +711,17 @@ export async function getPeriodicals() {
     orderBy: {
       name: 'asc'
     }
+  });
+}
+
+export async function getFamilyRelationships() {
+  return prisma.familyRelationship.findMany({
+    select: {
+      id: true,
+      name: true,
+      category: true
+    },
+    orderBy: [{ name: 'asc' }]
   });
 }
 

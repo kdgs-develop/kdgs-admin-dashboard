@@ -5,6 +5,7 @@ import {
   deleteObituaryById,
   getCemeteries,
   getCities,
+  getFamilyRelationships,
   getFileBoxes,
   getObituaries,
   getPeriodicals,
@@ -14,8 +15,8 @@ import {
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
-import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 import { deleteImageAction } from './images/minio-actions';
+import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 
 // Helper function to conditionally revalidate
 const safeRevalidate = () => {
@@ -93,65 +94,86 @@ interface EditObituaryDialogData {
     };
   }[];
   periodicals: { id: number; name: string }[];
+  familyRelationships: { id: string; name: string; category: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
 }
 
 export async function getEditObituaryDialogData(): Promise<EditObituaryDialogData> {
-  const [rawTitles, rawCities, rawCemeteries, rawPeriodicals, rawFileBoxes] =
-    await Promise.all([
+  try {
+    const [
+      rawTitles,
+      rawCities,
+      rawCemeteries,
+      rawPeriodicals,
+      rawFamilyRelationships,
+      rawFileBoxes
+    ] = await Promise.all([
       getTitles(),
       getCities(),
       getCemeteries(),
       getPeriodicals(),
+      getFamilyRelationships(),
       getFileBoxes()
     ]);
 
-  const titles = rawTitles.filter(
-    (title): title is { id: number; name: string } => title.name !== null
-  );
+    const titles = rawTitles.filter(
+      (title): title is { id: number; name: string } => title.name !== null
+    );
 
-  const cities = rawCities.filter(
-    (
-      city
-    ): city is {
-      id: number;
-      name: string | null;
-      province: string | null;
-      country: { name: string } | null;
-    } => true
-  );
-
-  const cemeteries = rawCemeteries.filter(
-    (
-      cemetery
-    ): cemetery is {
-      id: number;
-      name: string;
-      city: {
-        name: string;
+    const cities = rawCities.filter(
+      (
+        city
+      ): city is {
+        id: number;
+        name: string | null;
         province: string | null;
         country: { name: string } | null;
-      };
-    } => cemetery.name !== null
-  );
+      } => true
+    );
 
-  const periodicals = rawPeriodicals.filter(
-    (periodical): periodical is { id: number; name: string } =>
-      periodical.name !== null
-  );
+    const cemeteries = rawCemeteries.filter(
+      (
+        cemetery
+      ): cemetery is {
+        id: number;
+        name: string;
+        city: {
+          name: string;
+          province: string | null;
+          country: { name: string } | null;
+        };
+      } => cemetery.name !== null
+    );
 
-  const fileBoxes = rawFileBoxes.filter(
-    (fileBox): fileBox is { id: number; year: number; number: number } =>
-      fileBox.year !== null && fileBox.number !== null
-  );
+    const periodicals = rawPeriodicals.filter(
+      (periodical): periodical is { id: number; name: string } =>
+        periodical.name !== null
+    );
 
-  return {
-    titles,
-    cities,
-    cemeteries,
-    periodicals,
-    fileBoxes
-  };
+    const familyRelationships = rawFamilyRelationships.filter(
+      (
+        familyRelationship
+      ): familyRelationship is { id: string; name: string; category: string } =>
+        familyRelationship.name !== null && familyRelationship.category !== null
+    );
+
+    const fileBoxes = rawFileBoxes.filter(
+      (fileBox): fileBox is { id: number; year: number; number: number } =>
+        fileBox.year !== null && fileBox.number !== null
+    );
+
+    return {
+      titles,
+      cities,
+      cemeteries,
+      periodicals,
+      familyRelationships,
+      fileBoxes
+    };
+  } catch (error) {
+    console.error('Error in getEditObituaryDialogData:', error);
+    throw error;
+  }
 }
 
 export async function generateReference(surname: string): Promise<string> {
@@ -472,7 +494,7 @@ export async function updateObituaryImageNames(obituaryId: number) {
     await prisma.obituary.update({
       where: { id: obituaryId },
       data: {
-        imageNames: obituary.images.map(img => img.name)
+        imageNames: obituary.images.map((img) => img.name)
       }
     });
   }
@@ -486,7 +508,7 @@ export async function createImageFileAction(name: string) {
 
   // Get the obituary reference from the image name (first 8 characters)
   const reference = name.slice(0, 8);
-  
+
   // Find the obituary and update its imageNames
   const obituary = await prisma.obituary.findFirst({
     where: { reference }
@@ -500,7 +522,7 @@ export async function createImageFileAction(name: string) {
   if (typeof window !== 'undefined') {
     safeRevalidate();
   }
-  
+
   return newImageFile.name;
 }
 
@@ -512,7 +534,7 @@ export async function createImageFileAction(name: string) {
 
 //   // Get the obituary reference from the image name (first 8 characters)
 //   const reference = name.slice(0, 8);
-  
+
 //   // Find the obituary and update its imageNames
 //   const obituary = await prisma.obituary.findFirst({
 //     where: { reference }
@@ -536,4 +558,14 @@ export async function getOpenFileBoxId(): Promise<number> {
   });
 
   return setting ? parseInt(setting.value) : 0;
+}
+
+export async function addFamilyRelationship(name: string) {
+  const category = 'Other'; // Default category for new relationships
+  return await prisma.familyRelationship.create({
+    data: {
+      name,
+      category
+    }
+  });
 }

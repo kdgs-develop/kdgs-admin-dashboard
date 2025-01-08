@@ -37,6 +37,7 @@ interface AddObituaryDialogProps {
     country?: { name: string } | null;
   }[];
   periodicals: { id: number; name: string }[];
+  familyRelationships: { id: string; name: string; category: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
   role: string | null;
   currentUserFullName: string;
@@ -205,6 +206,7 @@ export function ObituariesTable({
             province: city.province,
             country: city.country
           }))}
+          familyRelationships={dialogData.familyRelationships}
         />
       )}
       <CreateFileNumberDialog
