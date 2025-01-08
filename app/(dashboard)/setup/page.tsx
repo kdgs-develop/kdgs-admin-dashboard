@@ -17,6 +17,7 @@ import { CountryAdministration } from './country-administration';
 import { FileBoxAdministration } from './filebox-administration';
 import { PeriodicalAdministration } from './periodical-administration';
 import { TitleAdministration } from './title-administration';
+import { RelationshipAdministration } from './relationship-administration';
 
 export default async function SetupPage() {
   const { userId } = auth();
@@ -47,6 +48,8 @@ export default async function SetupPage() {
               <LocationAdministration />
               
               <PeriodicalAdministration />
+
+              <RelationshipAdministration />
 
               <CemeteryAdministration />
 
