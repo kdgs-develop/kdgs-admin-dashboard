@@ -74,13 +74,15 @@ model Obituary {
 }
 
 model Relative {
-  id           Int      @id @default(autoincrement())
-  obituaryId   Int
-  surname      String?
-  givenNames   String?
-  relationship String?
-  predeceased  Boolean  @default(false)
-  Obituary     Obituary @relation(fields: [obituaryId], references: [id])
+  id                   Int                 @id @default(autoincrement())
+  obituaryId           Int
+  surname              String?
+  givenNames           String?
+  relationship         String? // Keep for backward compatibility
+  familyRelationshipId String?
+  predeceased          Boolean             @default(false)
+  Obituary             Obituary            @relation(fields: [obituaryId], references: [id])
+  familyRelationship   FamilyRelationship? @relation(fields: [familyRelationshipId], references: [id])
 }
 
 model AlsoKnownAs {
@@ -185,4 +187,11 @@ model Report {
   role         String
   totalResults Int
   createdBy    Genealogist @relation(fields: [userId], references: [clerkId])
+}
+
+model FamilyRelationship {
+  id        String        @id @default(cuid())
+  name      String
+  category  String
+  relatives Relative[]
 }
