@@ -32,7 +32,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { addPeriodical, addTitle, updateObituaryAction } from './actions';
-import { deleteImageAction, getImageUrlAction, rotateImageAction } from './images/minio-actions';
+import {
+  deleteImageAction,
+  getImageUrlAction,
+  rotateImageAction
+} from './images/minio-actions';
 import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 
@@ -847,8 +851,11 @@ export function EditObituaryDialog({
                         <FormControl>
                           <Input
                             {...field}
-                            className="h-8 text-sm"
+                            className="h-8 text-sm uppercase"
                             value={field.value || ''}
+                            onChange={(e) => {
+                              field.onChange(e.target.value.toUpperCase());
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -866,6 +873,17 @@ export function EditObituaryDialog({
                             {...field}
                             className="h-8 text-sm"
                             value={field.value || ''}
+                            onChange={(e) => {
+                              const formatted = e.target.value
+                                .split(' ')
+                                .map(
+                                  (name) =>
+                                    name.charAt(0).toUpperCase() +
+                                    name.slice(1).toLowerCase()
+                                )
+                                .join(' ');
+                              field.onChange(formatted);
+                            }}
                           />
                         </FormControl>
                         <FormMessage />
@@ -883,6 +901,17 @@ export function EditObituaryDialog({
                             {...field}
                             className="h-8 text-sm"
                             value={field.value || ''}
+                            onChange={(e) => {
+                              const formatted = e.target.value
+                                .split(' ')
+                                .map(
+                                  (word) =>
+                                    word.charAt(0).toUpperCase() +
+                                    word.slice(1).toLowerCase()
+                                )
+                                .join(' ');
+                              field.onChange(formatted);
+                            }}
                           />
                         </FormControl>
                       </FormItem>

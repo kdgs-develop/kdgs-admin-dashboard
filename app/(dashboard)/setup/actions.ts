@@ -20,14 +20,21 @@ interface UpdateGenealogistParams {
   role?: string;
 }
 
-export async function createGenealogist({ firstName, lastName, email, phone, role, password }: CreateGenealogistParams) {
+export async function createGenealogist({
+  firstName,
+  lastName,
+  email,
+  phone,
+  role,
+  password
+}: CreateGenealogistParams) {
   try {
     // Create user in Clerk (without phone number)
     const clerkUser = await clerkClient().users.createUser({
       firstName,
       lastName,
       emailAddress: [email],
-      password,
+      password
     });
 
     // Create user in our database (including phone number)
@@ -36,11 +43,11 @@ export async function createGenealogist({ firstName, lastName, email, phone, rol
         fullName: `${firstName} ${lastName}`,
         phone,
         clerkId: clerkUser.id,
-        role: role as Role,
-      },
+        role: role as Role
+      }
     });
 
-    return {...genealogist, email};
+    return { ...genealogist, email };
   } catch (error) {
     console.error('Error creating genealogist:', error);
     throw error;
@@ -71,16 +78,18 @@ export async function getGenealogists() {
         clerkId: true,
         fullName: true,
         phone: true,
-        role: true,
-      },
+        role: true
+      }
     });
 
     const genealogistsWithEmail = await Promise.all(
       genealogists.map(async (genealogist) => {
-        const clerkUser = await clerkClient().users.getUser(genealogist.clerkId);
+        const clerkUser = await clerkClient().users.getUser(
+          genealogist.clerkId
+        );
         return {
           ...genealogist,
-          email: clerkUser.emailAddresses[0]?.emailAddress || '',
+          email: clerkUser.emailAddresses[0]?.emailAddress || ''
         };
       })
     );
@@ -92,7 +101,11 @@ export async function getGenealogists() {
   }
 }
 
-export async function updateGenealogist({ id, phone, role }: UpdateGenealogistParams) {
+export async function updateGenealogist({
+  id,
+  phone,
+  role
+}: UpdateGenealogistParams) {
   try {
     const genealogist = await prisma.genealogist.findUnique({ where: { id } });
     if (!genealogist) throw new Error('Genealogist not found');
@@ -102,14 +115,14 @@ export async function updateGenealogist({ id, phone, role }: UpdateGenealogistPa
       where: { id },
       data: {
         phone,
-        role: role as Role,
-      },
+        role: role as Role
+      }
     });
 
     // Update user role in Clerk if it has changed
     if (role) {
       await clerkClient().users.updateUser(genealogist.clerkId, {
-        publicMetadata: { role },
+        publicMetadata: { role }
       });
     }
 
@@ -120,13 +133,16 @@ export async function updateGenealogist({ id, phone, role }: UpdateGenealogistPa
   }
 }
 
-export async function updateGenealogistPassword(id: number, newPassword: string) {
+export async function updateGenealogistPassword(
+  id: number,
+  newPassword: string
+) {
   try {
     const genealogist = await prisma.genealogist.findUnique({ where: { id } });
     if (!genealogist) throw new Error('Genealogist not found');
 
     await clerkClient().users.updateUser(genealogist.clerkId, {
-      password: newPassword,
+      password: newPassword
     });
 
     return true;
@@ -136,7 +152,9 @@ export async function updateGenealogistPassword(id: number, newPassword: string)
   }
 }
 
-export async function getCities(): Promise<Prisma.CityGetPayload<{ include: { country: true } }>[]> {
+export async function getCities(): Promise<
+  Prisma.CityGetPayload<{ include: { country: true } }>[]
+> {
   try {
     const cities = await prisma.city.findMany({
       include: {
@@ -156,21 +174,27 @@ export async function getCities(): Promise<Prisma.CityGetPayload<{ include: { co
   }
 }
 
-export async function addCity(name: string | null, province: string | null, countryId: number) {
+export async function addCity(
+  name: string | null,
+  province: string | null,
+  countryId: number
+) {
   try {
     // Check for existing city with exact match including null values
     const existingCity = await prisma.city.findFirst({
       where: {
         AND: [
-          { name: name },  // This will match null with null
+          { name: name }, // This will match null with null
           { province: province }, // This will match null with null
           { countryId: countryId }
         ]
-      },
+      }
     });
 
     if (existingCity) {
-      throw new Error('A location with these exact details already exists in the database');
+      throw new Error(
+        'A location with these exact details already exists in the database'
+      );
     }
 
     // Create the new city
@@ -178,7 +202,7 @@ export async function addCity(name: string | null, province: string | null, coun
       data: {
         name,
         province,
-        countryId,
+        countryId
       },
       include: {
         country: true
@@ -186,7 +210,7 @@ export async function addCity(name: string | null, province: string | null, coun
     });
 
     revalidatePath('/');
-    
+
     return {
       id: newCity.id,
       name: newCity.name,
@@ -213,7 +237,7 @@ export async function getCountries(page: number = 1, pageSize: number = 5) {
       orderBy: { name: 'asc' },
       select: {
         id: true,
-        name: true,
+        name: true
       }
     });
 
@@ -242,7 +266,7 @@ export async function searchCountries(
     };
 
     const totalCount = await prisma.country.count({ where });
-    
+
     const countries = await prisma.country.findMany({
       where,
       skip: (page - 1) * pageSize,
@@ -250,7 +274,7 @@ export async function searchCountries(
       orderBy: { name: 'asc' },
       select: {
         id: true,
-        name: true,
+        name: true
       }
     });
 
@@ -292,8 +316,8 @@ export async function getFileBoxes() {
   try {
     const fileBoxes = await prisma.fileBox.findMany({
       orderBy: {
-        year: 'desc',
-      },
+        year: 'desc'
+      }
     });
     return fileBoxes;
   } catch (error) {
@@ -309,10 +333,7 @@ export async function searchFileBoxes(year?: number, number?: number) {
 
     const fileBoxes = await prisma.fileBox.findMany({
       where: whereClause,
-      orderBy: [
-        { year: 'desc' },
-        { number: 'asc' }
-      ]
+      orderBy: [{ year: 'desc' }, { number: 'asc' }]
     });
     return fileBoxes;
   } catch (error) {
@@ -326,22 +347,21 @@ export async function addFileBox(year: number, number: number) {
     // First check if the file box already exists
     const existing = await prisma.fileBox.findFirst({
       where: {
-        AND: [
-          { year },
-          { number }
-        ]
+        AND: [{ year }, { number }]
       }
     });
 
     if (existing) {
-      throw new Error('A file box with this year and number combination already exists');
+      throw new Error(
+        'A file box with this year and number combination already exists'
+      );
     }
 
     const fileBox = await prisma.fileBox.create({
       data: {
         year,
-        number,
-      },
+        number
+      }
     });
     return fileBox;
   } catch (error) {
@@ -368,15 +388,17 @@ export async function updateFileBox(id: number, year: number, number: number) {
     });
 
     if (existing) {
-      throw new Error('A file box with this year and number combination already exists');
+      throw new Error(
+        'A file box with this year and number combination already exists'
+      );
     }
 
     const fileBox = await prisma.fileBox.update({
       where: { id },
       data: {
         year,
-        number,
-      },
+        number
+      }
     });
     return fileBox;
   } catch (error) {
@@ -398,7 +420,9 @@ export async function deleteFileBox(id: number) {
     });
 
     if (fileBox?.obituaries.length) {
-      throw new Error('Cannot delete file box that is being used by obituaries');
+      throw new Error(
+        'Cannot delete file box that is being used by obituaries'
+      );
     }
 
     await prisma.fileBox.delete({
@@ -412,7 +436,10 @@ export async function deleteFileBox(id: number) {
   }
 }
 
-export async function getCountriesWithPagination(page: number, pageSize: number = 5) {
+export async function getCountriesWithPagination(
+  page: number,
+  pageSize: number = 5
+) {
   try {
     const totalCount = await prisma.country.count();
     const countries = await prisma.country.findMany({
@@ -422,7 +449,7 @@ export async function getCountriesWithPagination(page: number, pageSize: number 
         name: 'asc'
       }
     });
-    
+
     return {
       countries,
       totalCount,
@@ -461,10 +488,7 @@ export async function updateCountry(id: number, name: string) {
   try {
     const existing = await prisma.country.findFirst({
       where: {
-        AND: [
-          { name: { equals: name, mode: 'insensitive' } },
-          { NOT: { id } }
-        ]
+        AND: [{ name: { equals: name, mode: 'insensitive' } }, { NOT: { id } }]
       }
     });
 
@@ -474,7 +498,7 @@ export async function updateCountry(id: number, name: string) {
 
     const country = await prisma.country.update({
       where: { id },
-      data: { name },
+      data: { name }
     });
     revalidatePath('/');
     return country;
@@ -486,7 +510,10 @@ export async function updateCountry(id: number, name: string) {
   }
 }
 
-export async function getCitiesWithPagination(page: number, pageSize: number = 5) {
+export async function getCitiesWithPagination(
+  page: number,
+  pageSize: number = 5
+) {
   try {
     const totalCount = await prisma.city.count();
     const cities = await prisma.city.findMany({
@@ -499,7 +526,7 @@ export async function getCitiesWithPagination(page: number, pageSize: number = 5
         country: true
       }
     });
-    
+
     return {
       cities,
       totalCount,
@@ -511,7 +538,12 @@ export async function getCitiesWithPagination(page: number, pageSize: number = 5
   }
 }
 
-export async function updateCity(id: number, name: string | null, province: string | null, countryId: number) {
+export async function updateCity(
+  id: number,
+  name: string | null,
+  province: string | null,
+  countryId: number
+) {
   try {
     const city = await prisma.city.update({
       where: { id },
@@ -538,17 +570,21 @@ export async function deleteCity(id: number) {
     // Check if the city is being used by any obituaries or cemeteries
     const city = await prisma.city.findUnique({
       where: { id },
-      include: { 
+      include: {
         obituaries_birthCityId: { select: { id: true } },
         obituaries_deathCityId: { select: { id: true } },
         cemeteries: { select: { id: true } }
       }
     });
 
-    if (city?.obituaries_birthCityId.length || 
-        city?.obituaries_deathCityId.length || 
-        city?.cemeteries.length) {
-      throw new Error('Cannot delete city that is being used by obituaries or cemeteries');
+    if (
+      city?.obituaries_birthCityId.length ||
+      city?.obituaries_deathCityId.length ||
+      city?.cemeteries.length
+    ) {
+      throw new Error(
+        'Cannot delete city that is being used by obituaries or cemeteries'
+      );
     }
 
     await prisma.city.delete({
@@ -571,27 +607,27 @@ export async function searchCities(
 ) {
   try {
     const where: any = {};
-    
+
     if (name) {
       where.name = {
         contains: name,
         mode: 'insensitive'
       };
     }
-    
+
     if (province) {
       where.province = {
         contains: province,
         mode: 'insensitive'
       };
     }
-    
+
     if (countryId) {
       where.countryId = countryId;
     }
 
     const totalCount = await prisma.city.count({ where });
-    
+
     const cities = await prisma.city.findMany({
       where,
       skip: (page - 1) * pageSize,
@@ -615,7 +651,10 @@ export async function searchCities(
   }
 }
 
-export async function getCemeteriesWithPagination(page: number, pageSize: number = 5) {
+export async function getCemeteriesWithPagination(
+  page: number,
+  pageSize: number = 5
+) {
   try {
     const totalCount = await prisma.cemetery.count();
     const cemeteries = await prisma.cemetery.findMany({
@@ -632,7 +671,7 @@ export async function getCemeteriesWithPagination(page: number, pageSize: number
         }
       }
     });
-    
+
     return {
       cemeteries,
       totalCount,
@@ -652,20 +691,20 @@ export async function searchCemeteries(
 ) {
   try {
     const where: any = {};
-    
+
     if (name) {
       where.name = {
         contains: name,
         mode: 'insensitive'
       };
     }
-    
+
     if (cityId) {
       where.cityId = cityId;
     }
 
     const totalCount = await prisma.cemetery.count({ where });
-    
+
     const cemeteries = await prisma.cemetery.findMany({
       where,
       skip: (page - 1) * pageSize,
@@ -717,7 +756,11 @@ export async function addCemetery(name: string | null, cityId: number | null) {
   }
 }
 
-export async function updateCemetery(id: number, name: string | null, cityId: number | null) {
+export async function updateCemetery(
+  id: number,
+  name: string | null,
+  cityId: number | null
+) {
   try {
     const cemetery = await prisma.cemetery.update({
       where: { id },
@@ -747,13 +790,15 @@ export async function deleteCemetery(id: number) {
     // Check if the cemetery is being used by any obituaries
     const cemetery = await prisma.cemetery.findUnique({
       where: { id },
-      include: { 
+      include: {
         obituaries: { select: { id: true } }
       }
     });
 
     if (cemetery?.obituaries.length) {
-      throw new Error('Cannot delete cemetery that is being used by obituaries');
+      throw new Error(
+        'Cannot delete cemetery that is being used by obituaries'
+      );
     }
 
     await prisma.cemetery.delete({
@@ -776,7 +821,7 @@ export async function getPeriodicals(page: number = 1, pageSize: number = 5) {
       orderBy: { name: 'asc' },
       select: {
         id: true,
-        name: true,
+        name: true
       }
     });
 
@@ -805,7 +850,7 @@ export async function searchPeriodicals(
     };
 
     const totalCount = await prisma.periodical.count({ where });
-    
+
     const periodicals = await prisma.periodical.findMany({
       where,
       skip: (page - 1) * pageSize,
@@ -813,7 +858,7 @@ export async function searchPeriodicals(
       orderBy: { name: 'asc' },
       select: {
         id: true,
-        name: true,
+        name: true
       }
     });
 
@@ -853,10 +898,7 @@ export async function updatePeriodical(id: number, name: string) {
     // Check if another periodical exists with the same name
     const existing = await prisma.periodical.findFirst({
       where: {
-        AND: [
-          { name: { equals: name, mode: 'insensitive' } },
-          { NOT: { id } }
-        ]
+        AND: [{ name: { equals: name, mode: 'insensitive' } }, { NOT: { id } }]
       }
     });
 
@@ -866,7 +908,7 @@ export async function updatePeriodical(id: number, name: string) {
 
     const periodical = await prisma.periodical.update({
       where: { id },
-      data: { name },
+      data: { name }
     });
     revalidatePath('/');
     return periodical;
@@ -888,7 +930,9 @@ export async function deletePeriodical(id: number) {
     });
 
     if (obituariesUsingPeriodical > 0) {
-      throw new Error('Cannot delete periodical as it is being used by obituaries');
+      throw new Error(
+        'Cannot delete periodical as it is being used by obituaries'
+      );
     }
 
     await prisma.periodical.delete({
@@ -912,7 +956,7 @@ export async function getTitles(page: number = 1, pageSize: number = 5) {
       orderBy: { name: 'asc' },
       select: {
         id: true,
-        name: true,
+        name: true
       }
     });
 
@@ -941,7 +985,7 @@ export async function searchTitles(
     };
 
     const totalCount = await prisma.title.count({ where });
-    
+
     const titles = await prisma.title.findMany({
       where,
       skip: (page - 1) * pageSize,
@@ -949,7 +993,7 @@ export async function searchTitles(
       orderBy: { name: 'asc' },
       select: {
         id: true,
-        name: true,
+        name: true
       }
     });
 
@@ -991,10 +1035,7 @@ export async function updateTitle(id: number, name: string) {
   try {
     const existing = await prisma.title.findFirst({
       where: {
-        AND: [
-          { name: { equals: name, mode: 'insensitive' } },
-          { NOT: { id } }
-        ]
+        AND: [{ name: { equals: name, mode: 'insensitive' } }, { NOT: { id } }]
       }
     });
 
@@ -1004,7 +1045,7 @@ export async function updateTitle(id: number, name: string) {
 
     const title = await prisma.title.update({
       where: { id },
-      data: { name },
+      data: { name }
     });
     revalidatePath('/');
     return title;
@@ -1038,12 +1079,14 @@ export async function deleteTitle(id: number) {
   }
 }
 
-export async function getObituaryCountForFileBox(fileBoxId: number): Promise<number> {
+export async function getObituaryCountForFileBox(
+  fileBoxId: number
+): Promise<number> {
   try {
     const count = await prisma.obituary.count({
       where: {
-        fileBoxId: fileBoxId,
-      },
+        fileBoxId: fileBoxId
+      }
     });
     return count;
   } catch (error) {
@@ -1060,4 +1103,25 @@ export async function getOpenFileBoxId(): Promise<number> {
   });
 
   return setting ? parseInt(setting.value) : 0; // Return 0 if no setting found
+}
+
+export async function setOpenFileBoxId(id: number) {
+  try {
+    await prisma.settings.upsert({
+      where: {
+        id: 'open_filebox_id'
+      },
+      update: {
+        value: id.toString()
+      },
+      create: {
+        id: 'open_filebox_id',
+        value: id.toString()
+      }
+    });
+    return true;
+  } catch (error) {
+    console.error('Error setting open file box:', error);
+    throw new Error('Failed to set open file box');
+  }
 }
