@@ -24,8 +24,8 @@ type ComboboxFormFieldProps = {
   label: string;
   placeholder: string;
   emptyText: string;
-  items: { id: number; name: string | null; province?: string; country?: { name: string }; city?: { name: string | null ; province?: string, country?: { name: string } } }[];
-  onAddItem?: (name: string) => Promise<{ id: number; name: string, province?: string, country?: { name: string }, city?: { name: string } }>;
+  items: { id: number | string; name: string | null; province?: string; country?: { name: string }; city?: { name: string | null ; province?: string, country?: { name: string } } }[];
+  onAddItem?: (name: string) => Promise<{ id: number | string; name: string, province?: string, country?: { name: string }, city?: { name: string } }>;
 };
 
 function ComboboxFormField({
@@ -72,8 +72,8 @@ function ComboboxFormField({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className="flex flex-col">
-          <FormLabel className="text-xs">{label}</FormLabel>
+        <FormItem className="flex flex-col self-end">
+          <FormLabel className="text-xs mb-[3px]">{label}</FormLabel>
           <Popover open={open} onOpenChange={handleOpenChange}>
             <PopoverTrigger asChild>
               <FormControl>
