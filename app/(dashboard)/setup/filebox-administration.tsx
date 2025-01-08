@@ -17,9 +17,10 @@ import {
   deleteFileBox,
   getFileBoxes,
   getObituaryCountForFileBox,
+  getOpenFileBoxId,
   searchFileBoxes,
-  updateFileBox,
-  getOpenFileBoxId
+  setOpenFileBoxId,
+  updateFileBox
 } from './actions';
 import AddFileBoxDialog from './add-filebox-dialog';
 import EditFileBoxDialog from './edit-filebox-dialog';
@@ -39,7 +40,9 @@ export function FileBoxAdministration() {
   } | null>(null);
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [currentOpenFileBoxId, setCurrentOpenFileBoxId] = useState<number | null>(null);
+  const [currentOpenFileBoxId, setCurrentOpenFileBoxId] = useState<
+    number | null
+  >(null);
 
   useEffect(() => {
     async function fetchFileBoxes() {
@@ -55,7 +58,10 @@ export function FileBoxAdministration() {
       } catch (error) {
         toast({
           title: 'Error fetching file boxes',
-          description: error instanceof Error ? error.message : 'An unknown error occurred',
+          description:
+            error instanceof Error
+              ? error.message
+              : 'An unknown error occurred',
           variant: 'destructive'
         });
       }
@@ -68,7 +74,10 @@ export function FileBoxAdministration() {
       } catch (error) {
         toast({
           title: 'Error fetching current open file box',
-          description: error instanceof Error ? error.message : 'An unknown error occurred',
+          description:
+            error instanceof Error
+              ? error.message
+              : 'An unknown error occurred',
           variant: 'destructive'
         });
       }
@@ -103,7 +112,8 @@ export function FileBoxAdministration() {
     } catch (error) {
       toast({
         title: 'Error searching file boxes',
-        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        description:
+          error instanceof Error ? error.message : 'An unknown error occurred',
         variant: 'destructive'
       });
     }
@@ -124,7 +134,8 @@ export function FileBoxAdministration() {
     } catch (error) {
       toast({
         title: 'Error adding file box',
-        description: error instanceof Error ? error.message : 'Failed to add file box',
+        description:
+          error instanceof Error ? error.message : 'Failed to add file box',
         variant: 'destructive'
       });
     }
@@ -156,7 +167,8 @@ export function FileBoxAdministration() {
     } catch (error) {
       toast({
         title: 'Error updating file box',
-        description: error instanceof Error ? error.message : 'Failed to update file box',
+        description:
+          error instanceof Error ? error.message : 'Failed to update file box',
         variant: 'destructive'
       });
     }
@@ -177,7 +189,8 @@ export function FileBoxAdministration() {
     } catch (error) {
       toast({
         title: 'Error deleting file box',
-        description: error instanceof Error ? error.message : 'Failed to delete file box',
+        description:
+          error instanceof Error ? error.message : 'Failed to delete file box',
         variant: 'destructive'
       });
     }
@@ -265,26 +278,59 @@ export function FileBoxAdministration() {
                   return (
                     <div
                       key={box.id}
-                      className="p-2 border rounded flex justify-between items-center"
+                      className="p-2 border rounded flex justify-between flex-col"
                     >
                       <span>
-                        Year: {box.year}, Number: {box.number}, Obituaries: {box.obituaryCount}
+                        Year: {box.year}, <br />
+                        Number: {box.number}, <br />
+                        Obituaries: {box.obituaryCount} <br />
                         {box.id === currentOpenFileBoxId ? (
-                          <span className="text-green-500 ml-2">Open</span>
+                          <span className="text-green-500 font-semibold">Open</span>
                         ) : (
-                          <span className="text-red-500 ml-2">Closed</span>
+                          <span className="text-red-500 font-semibold">Closed</span>
                         )}
                       </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedFileBox(box);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2 mt-2 justify-end">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedFileBox(box);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                        {box.id !== currentOpenFileBoxId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                await setOpenFileBoxId(box.id);
+                                setCurrentOpenFileBoxId(box.id);
+                                toast({
+                                  title: 'Success',
+                                  description: 'File box set as open'
+                                });
+                              } catch (error) {
+                                toast({
+                                  title: 'Error setting file box as open',
+                                  description:
+                                    error instanceof Error
+                                      ? error.message
+                                      : 'An unknown error occurred',
+                                  variant: 'destructive'
+                                });
+                              }
+                            }}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Set Open
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
