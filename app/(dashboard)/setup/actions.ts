@@ -1125,3 +1125,102 @@ export async function setOpenFileBoxId(id: number) {
     throw new Error('Failed to set open file box');
   }
 }
+
+export async function getRelationships(page: number, perPage: number) {
+  const skip = (page - 1) * perPage;
+  const [relationships, totalCount] = await prisma.$transaction([
+    prisma.familyRelationship.findMany({
+      skip,
+      take: perPage,
+      orderBy: { name: 'asc' }
+    }),
+    prisma.familyRelationship.count()
+  ]);
+
+  return {
+    relationships,
+    totalCount,
+    totalPages: Math.ceil(totalCount / perPage)
+  };
+}
+
+export async function searchRelationships(
+  searchTerm: string,
+  page: number,
+  perPage: number
+) {
+  const skip = (page - 1) * perPage;
+  const [relationships, totalCount] = await prisma.$transaction([
+    prisma.familyRelationship.findMany({
+      where: {
+        name: {
+          contains: searchTerm,
+          mode: 'insensitive'
+        }
+      },
+      skip,
+      take: perPage,
+      orderBy: { name: 'asc' }
+    }),
+    prisma.familyRelationship.count({
+      where: {
+        name: {
+          contains: searchTerm,
+          mode: 'insensitive'
+        }
+      }
+    })
+  ]);
+
+  return {
+    relationships,
+    totalCount,
+    totalPages: Math.ceil(totalCount / perPage)
+  };
+}
+
+export async function addRelationship(name: string, category: string) {
+  const existing = await prisma.familyRelationship.findFirst({
+    where: { name: { equals: name, mode: 'insensitive' } }
+  });
+
+  if (existing) {
+    throw new Error('A relationship with this name already exists');
+  }
+
+  const relationship = await prisma.familyRelationship.create({
+    data: { name, category }
+  });
+  revalidatePath('/');
+  return relationship;
+}
+
+export async function updateRelationship(
+  id: string,
+  name: string,
+  category: string
+) {
+  const existing = await prisma.familyRelationship.findFirst({
+    where: {
+      AND: [{ name: { equals: name, mode: 'insensitive' } }, { NOT: { id } }]
+    }
+  });
+
+  if (existing) {
+    throw new Error('A relationship with this name already exists');
+  }
+
+  const relationship = await prisma.familyRelationship.update({
+    where: { id },
+    data: { name, category }
+  });
+  revalidatePath('/');
+  return relationship;
+}
+
+export async function deleteRelationship(id: string) {
+  await prisma.familyRelationship.delete({
+    where: { id }
+  });
+  revalidatePath('/');
+}
