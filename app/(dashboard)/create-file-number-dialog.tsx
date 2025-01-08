@@ -32,7 +32,8 @@ import {
   createObituaryAction,
   generateNewFileNumber,
   generateReference,
-  obituaryExists as obituaryExistsCheck
+  obituaryExists as obituaryExistsCheck,
+  getOpenFileBoxId
 } from './actions';
 import { getImageUrlAction, rotateImageAction } from './images/minio-actions';
 import { ViewImageDialog } from './images/view-image-dialog';
@@ -195,6 +196,9 @@ export function CreateFileNumberDialog({
     const { surname, givenNames, deathDate, enteredBy, enteredOn } = values;
     let newObituary;
     try {
+      // Get the current open file box ID
+      const openFileBoxId = await getOpenFileBoxId();
+      
       if (!obituaryExists) {
         newObituary = await createObituaryAction({
           reference: fileNumber,
@@ -202,7 +206,8 @@ export function CreateFileNumberDialog({
           givenNames: givenNames,
           deathDate: deathDate,
           enteredBy: currentUserFullName || '',
-          enteredOn: new Date()
+          enteredOn: new Date(),
+          fileBox: { connect: { id: openFileBoxId } }
         });
       }
       await createImageFileAction(fileNumber);
