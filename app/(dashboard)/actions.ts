@@ -177,7 +177,10 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
 }
 
 export async function generateReference(surname: string): Promise<string> {
-  const prefix = surname.slice(0, 4).toUpperCase();
+  // Clean the surname to only contain letters
+  const cleanedSurname = surname.replace(/[^A-Za-z]/g, '');
+  const prefix = cleanedSurname.slice(0, 4).toUpperCase();
+
   const latestObituary = await prisma.obituary.findFirst({
     where: {
       reference: {
