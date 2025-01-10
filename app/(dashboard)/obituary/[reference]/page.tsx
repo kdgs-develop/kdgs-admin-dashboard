@@ -419,7 +419,7 @@ export default function ObituaryPage() {
           Compiled by Kelowna & District Genealogical Society PO Box 21105
           Kelowna BC Canada V1Y 9N8
         </p>
-        <p>© 2024 Javier Gongora</p>
+        <p>© 2025 Javier Gongora o/a Vyoniq Technologies</p>
       </footer>
       {selectedImage && (
         <ViewImageDialog
