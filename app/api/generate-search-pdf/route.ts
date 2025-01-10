@@ -259,7 +259,7 @@ export async function POST(req: NextRequest) {
 
       // Add footer
       const footerText =
-        'Compiled by © 2024 Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8';
+        'Compiled by © 2025 Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8';
       const copyrightText =
         'Developed by Javier Gongora o/a Vyoniq Technologies';
 
