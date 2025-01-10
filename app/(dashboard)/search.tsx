@@ -267,6 +267,12 @@ export function SearchInput() {
     }
   };
 
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    searchAction(formData);
+  }
+
   return (
     <div className="relative ml-auto flex gap-2 flex-1 md:grow-0">
       {context === 'obituaries' && (
@@ -292,17 +298,32 @@ export function SearchInput() {
       )}
 
       <div className="flex gap-2 flex-1">
-        <form action={searchAction} className="relative flex-1">
-          <Search className="absolute left-2.5 top-[.75rem] h-4 w-4 text-muted-foreground" />
-          <HighlightedSearchInput
-            ref={inputRef}
-            name="q"
-            type="search"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            placeholder={`Search ${context}...`}
-          />
-          {isPending && <Spinner />}
+        <form action={searchAction} className="relative flex flex-1 gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-[.75rem] h-4 w-4 text-muted-foreground" />
+            <HighlightedSearchInput
+              ref={inputRef}
+              name="q"
+              type="search"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              placeholder={`Search ${context}...`}
+            />
+          </div>
+
+          <Button
+            type="submit"
+            variant="default"
+            disabled={isPending}
+            className="flex gap-2 items-center w-28"
+          >
+            {isPending ? (
+              <Spinner className="h-4 w-4" />
+            ) : (
+              <Search className="h-4 w-4" />
+            )}
+            {isPending ? 'Searching...' : 'Search'}
+          </Button>
         </form>
 
         <Button
