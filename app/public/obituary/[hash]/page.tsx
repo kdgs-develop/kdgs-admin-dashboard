@@ -170,7 +170,7 @@ export default function PublicObituaryPage() {
           Kelowna BC Canada V1Y 9N8
         </p>
         <span className="text-sm text-gray-500">
-          © 2024 Kelowna & District Genealogical Society | Developed by{' '}
+          © 2025 Kelowna & District Genealogical Society | Developed by{' '}
           {/* <a
             href="https://vyoniq.com"
             target="_blank"
