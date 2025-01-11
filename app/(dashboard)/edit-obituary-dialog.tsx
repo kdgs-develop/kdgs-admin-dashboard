@@ -357,14 +357,13 @@ export function EditObituaryDialog({
     try {
       const { relatives, alsoKnownAs, ...obituaryData } = values;
 
-      // Log the relatives data
-
-      // Prepare relatives data
+      // Prepare relatives data with familyRelationshipId
       const relativesData =
         relatives?.map((relative) => ({
           surname: relative.surname || '',
           givenNames: relative.givenNames || '',
           relationship: relative.relationship || '',
+          familyRelationshipId: relative.familyRelationshipId || null,
           predeceased: relative.predeceased
         })) || [];
 
