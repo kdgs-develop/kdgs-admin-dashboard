@@ -340,8 +340,12 @@ export async function updateObituaryAction(
       if (relatives && relatives.length > 0) {
         await prisma.relative.createMany({
           data: relatives.map((relative) => ({
-            ...relative,
-            obituaryId: id
+            obituaryId: id,
+            surname: relative.surname || null,
+            givenNames: relative.givenNames || null,
+            relationship: relative.relationship || null,
+            familyRelationshipId: relative.familyRelationshipId || null,
+            predeceased: relative.predeceased || false
           }))
         });
       }
@@ -364,7 +368,14 @@ export async function updateObituaryAction(
       // Fetch the updated obituary with new relations
       const finalObituary = await prisma.obituary.findUnique({
         where: { id },
-        include: { relatives: true, alsoKnownAs: true }
+        include: {
+          relatives: {
+            include: {
+              familyRelationship: true
+            }
+          },
+          alsoKnownAs: true
+        }
       });
 
       return finalObituary;
