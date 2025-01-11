@@ -31,7 +31,12 @@ import { BucketItem } from 'minio';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { addFamilyRelationship, addPeriodical, addTitle, updateObituaryAction } from './actions';
+import {
+  addFamilyRelationship,
+  addPeriodical,
+  addTitle,
+  updateObituaryAction
+} from './actions';
 import {
   deleteImageAction,
   getImageUrlAction,
@@ -845,7 +850,7 @@ export function EditObituaryDialog({
             {/* Relatives */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Relatives</h3>
-              {form.watch('relatives')?.map((_, index) => (
+              {form.watch('relatives')?.map((relative, index) => (
                 <div key={index} className="flex space-x-2">
                   <FormField
                     control={form.control}
@@ -895,7 +900,6 @@ export function EditObituaryDialog({
                       </FormItem>
                     )}
                   />
-                  {/* If relatives.${index}.familyRelationshipId is not empty then show a combo box form field for familyRelationshipId */}
                   {!form.getValues(`relatives.${index}.familyRelationshipId`) &&
                   form.getValues(`relatives.${index}.relationship`) ? (
                     <FormField
@@ -912,14 +916,7 @@ export function EditObituaryDialog({
                               className="h-8 text-sm"
                               value={field.value || ''}
                               onChange={(e) => {
-                                const formatted = e.target.value
-                                  .split(' ')
-                                  .map(
-                                    (word) =>
-                                      word.charAt(0).toUpperCase() +
-                                      word.slice(1).toLowerCase()
-                                  )
-                                  .join(' ');
+                                const formatted = e.target.value.toUpperCase();
                                 field.onChange(formatted);
                               }}
                             />
@@ -928,19 +925,18 @@ export function EditObituaryDialog({
                       )}
                     />
                   ) : (
-                    // combo box form field for familyRelationshipId
                     <ComboboxFormField
                       control={form.control}
-                      name="familyRelationshipId"
+                      name={`relatives.${index}.familyRelationshipId`}
                       label="Relationship"
-                      placeholder="Select a family relationship"
-                      emptyText="No family relationship found."
+                      placeholder="Select a relationship"
+                      emptyText="No relationship found."
                       items={localFamilyRelationships}
                       onAddItem={async (name) => {
                         const newFamilyRelationship =
                           await addFamilyRelationship(name);
                         setLocalFamilyRelationships([
-                          ...familyRelationships,
+                          ...localFamilyRelationships,
                           {
                             id: newFamilyRelationship.id,
                             name: newFamilyRelationship?.name!,
@@ -954,7 +950,6 @@ export function EditObituaryDialog({
                       }}
                     />
                   )}
-
                   <FormField
                     control={form.control}
                     name={`relatives.${index}.predeceased`}
