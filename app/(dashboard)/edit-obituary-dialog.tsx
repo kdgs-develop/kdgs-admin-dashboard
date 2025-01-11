@@ -220,6 +220,8 @@ export function EditObituaryDialog({
   const [localFamilyRelationships, setLocalFamilyRelationships] =
     useState(familyRelationships);
 
+  const [includeOtherFamilyText, setIncludeOtherFamilyText] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -430,6 +432,14 @@ export function EditObituaryDialog({
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const currentNotes = form.getValues('notes') || '';
+    const familyText = 'See obituary image for other family members.';
+    if (currentNotes.includes(familyText)) {
+      setIncludeOtherFamilyText(true);
+    }
+  }, [form]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -651,6 +661,7 @@ export function EditObituaryDialog({
                       akas?.splice(index, 1);
                       form.setValue('alsoKnownAs', akas || []);
                     }}
+                    className="h-8 mt-8 hover:bg-destructive/10 text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -839,24 +850,6 @@ export function EditObituaryDialog({
               </div>
             </div>
 
-            {/* Additional Information */}
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Additional Information</h3>
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">Notes</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} className="h-20 text-sm" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
             {/* Relatives */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Relatives</h3>
@@ -964,14 +957,21 @@ export function EditObituaryDialog({
                     control={form.control}
                     name={`relatives.${index}.predeceased`}
                     render={({ field }) => (
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
+                      <FormItem>
                         <FormLabel className="text-xs">Predeceased</FormLabel>
+                        <FormControl>
+                          <div className="h-8 rounded-md border border-input bg-background px-3 flex items-center space-x-2">
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              className="data-[state=checked]:bg-primary"
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              {field.value ? 'Yes' : 'No'}
+                            </span>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -984,8 +984,9 @@ export function EditObituaryDialog({
                       relatives?.splice(index, 1);
                       form.setValue('relatives', relatives || []);
                     }}
+                    className="h-8 mt-8 hover:bg-destructive/10 text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4 font-black" />
                   </Button>
                 </div>
               ))}
@@ -1010,6 +1011,57 @@ export function EditObituaryDialog({
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Relative
               </Button>
+            </div>
+
+            {/* Additional Information */}
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Additional Information</h3>
+              <div className="flex items-center space-x-2 mb-2">
+                <Checkbox
+                  id="includeOtherFamily"
+                  checked={includeOtherFamilyText}
+                  onCheckedChange={(checked) => {
+                    setIncludeOtherFamilyText(checked as boolean);
+                    const currentNotes = form.getValues('notes') || '';
+                    const familyText =
+                      'See obituary image for other family members.';
+
+                    if (checked) {
+                      // Add the text on a new line if there's existing content
+                      const newNotes = currentNotes
+                        ? `${currentNotes}\n${familyText}`
+                        : familyText;
+                      form.setValue('notes', newNotes);
+                    } else {
+                      // Remove the text and any empty lines
+                      const newNotes = currentNotes
+                        .split('\n')
+                        .filter((line) => line !== familyText)
+                        .join('\n');
+                      form.setValue('notes', newNotes);
+                    }
+                  }}
+                />
+                <label
+                  htmlFor="includeOtherFamily"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Include other family members note
+                </label>
+              </div>
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs">Notes</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} className="h-20 text-sm" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Proofread Information */}
