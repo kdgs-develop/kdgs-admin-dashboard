@@ -210,7 +210,6 @@ export function CreateFileNumberDialog({
           fileBox: { connect: { id: openFileBoxId } }
         });
       }
-      await createImageFileAction(fileNumber);
       onSave(newObituary as Obituary);
       onClose();
       toast({
