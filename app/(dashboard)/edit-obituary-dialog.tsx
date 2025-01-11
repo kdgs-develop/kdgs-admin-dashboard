@@ -144,6 +144,19 @@ interface EditObituaryDialogProps {
   obituary: {
     id: number;
     reference: string;
+    relatives?: {
+      id: number;
+      surname: string | null;
+      givenNames: string | null;
+      relationship: string | null;
+      familyRelationshipId: string | null;
+      familyRelationship?: {
+        id: string;
+        name: string;
+        category: string;
+      } | null;
+      predeceased: boolean;
+    }[];
     [key: string]: any;
   };
   isOpen: boolean;
@@ -240,15 +253,13 @@ export function EditObituaryDialog({
       editedOn: new Date(),
       fileBoxId: obituary.fileBoxId || undefined,
       relatives:
-        obituary.relatives?.map(
-          (relative: Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>) => ({
-            ...relative
-            // surname: relative.surname || '',
-            // givenNames: relative.givenNames || '',
-            // relationship: relative.relationship || '',
-            // predeceased: relative.predeceased || false
-          })
-        ) || [],
+        obituary.relatives?.map((relative) => ({
+          surname: relative.surname || '',
+          givenNames: relative.givenNames || '',
+          relationship: relative.relationship || '',
+          familyRelationshipId: relative.familyRelationshipId || undefined,
+          predeceased: relative.predeceased || false
+        })) || [],
       alsoKnownAs:
         obituary.alsoKnownAs?.map(
           (aka: Omit<Prisma.AlsoKnownAsCreateManyInput[], 'obituaryId'>) => ({
