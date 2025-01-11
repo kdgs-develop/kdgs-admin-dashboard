@@ -316,74 +316,69 @@ type ObituaryUpdateInput = Prisma.ObituaryUpdateInput & {
 
 export async function updateObituaryAction(
   id: number,
-  obituaryData: Omit<ObituaryUpdateInput, 'relatives' | 'alsoKnownAs'>,
-  relatives: Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>,
-  alsoKnownAs: Omit<Prisma.AlsoKnownAsCreateManyInput[], 'obituaryId'>
-): Promise<
-  Prisma.ObituaryGetPayload<{ include: { relatives: true; alsoKnownAs: true } }>
-> {
-  const updatedObituaryWithRelations = await prisma.$transaction(
-    async (prisma) => {
-      // Update the obituary
-      const updatedObituary = await prisma.obituary.update({
-        where: { id },
-        data: obituaryData,
-        include: { relatives: true, alsoKnownAs: true }
-      });
-
-      // Delete existing relatives
+  obituaryData: any,
+  relativesData: any[],
+  alsoKnownAsData: { surname: string | null; otherNames: string | null }[]
+) {
+  try {
+    return await prisma.$transaction(async (prisma) => {
+      // First delete existing relations
       await prisma.relative.deleteMany({
         where: { obituaryId: id }
       });
 
-      // Create new relatives if any
-      if (relatives && relatives.length > 0) {
-        await prisma.relative.createMany({
-          data: relatives.map((relative) => ({
-            obituaryId: id,
-            surname: relative.surname || null,
-            givenNames: relative.givenNames || null,
-            relationship: relative.relationship || null,
-            familyRelationshipId: relative.familyRelationshipId || null,
-            predeceased: relative.predeceased || false
-          }))
-        });
-      }
-
-      // Delete existing AKAs
       await prisma.alsoKnownAs.deleteMany({
         where: { obituaryId: id }
       });
 
-      // Create new AKAs if any
-      if (alsoKnownAs && alsoKnownAs.length > 0) {
-        await prisma.alsoKnownAs.createMany({
-          data: alsoKnownAs.map((aka) => ({
-            ...aka,
-            obituaryId: id
-          }))
-        });
+      // Create new relatives with proper structure
+      if (relativesData.length > 0) {
+        for (const relative of relativesData) {
+          await prisma.relative.create({
+            data: {
+              surname: relative.surname || '',
+              givenNames: relative.givenNames || '',
+              relationship: relative.relationship || '',
+              familyRelationshipId: relative.familyRelationshipId,
+              predeceased: relative.predeceased,
+              obituaryId: id
+            }
+          });
+        }
       }
 
-      // Fetch the updated obituary with new relations
-      const finalObituary = await prisma.obituary.findUnique({
-        where: { id },
-        include: {
-          relatives: {
-            include: {
-              familyRelationship: true
+      // Create new alsoKnownAs
+      if (alsoKnownAsData.length > 0) {
+        for (const aka of alsoKnownAsData) {
+          await prisma.alsoKnownAs.create({
+            data: {
+              surname: aka.surname || null,
+              otherNames: aka.otherNames || null,
+              obituaryId: id
             }
-          },
+          });
+        }
+      }
+
+      // Update the obituary
+      const { id: _, ...updateData } = obituaryData;
+      const updatedObituary = await prisma.obituary.update({
+        where: { id },
+        data: updateData,
+        include: {
+          relatives: true,
           alsoKnownAs: true
         }
       });
 
-      return finalObituary;
-    }
-  );
-
-  safeRevalidate();
-  return updatedObituaryWithRelations!;
+      return updatedObituary;
+    });
+  } catch (error) {
+    console.error('Server action error:', error);
+    throw new Error(
+      error instanceof Error ? error.message : 'Failed to update obituary'
+    );
+  }
 }
 
 export async function deleteRelativeAction(relativeId: number) {
