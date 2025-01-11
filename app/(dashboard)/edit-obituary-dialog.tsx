@@ -370,13 +370,17 @@ export function EditObituaryDialog({
     try {
       const { relatives, alsoKnownAs, ...obituaryData } = values;
 
-      // Prepare relatives data with familyRelationshipId
+      // Prepare relatives data without obituaryId
       const relativesData =
         relatives?.map((relative) => ({
           surname: relative.surname || '',
           givenNames: relative.givenNames || '',
           relationship: relative.relationship || '',
-          familyRelationshipId: relative.familyRelationshipId || null,
+          familyRelationship: relative.familyRelationshipId
+            ? {
+                connect: { id: relative.familyRelationshipId }
+              }
+            : undefined,
           predeceased: relative.predeceased
         })) || [];
 
@@ -394,38 +398,43 @@ export function EditObituaryDialog({
           formData.append('files', file.file, file.newName);
         });
 
-        const response = await fetch('/api/upload', {
+        const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
           body: formData
         });
 
-        if (!response.ok) {
+        if (!uploadResponse.ok) {
           throw new Error('Failed to upload new images');
         }
       }
 
-      // Update the obituary with both relatives and alsoKnownAs
+      // Update the obituary
       const updatedObituary = await updateObituaryAction(
         obituary.id,
         obituaryData,
-        relativesData as Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>,
-        alsoKnownAsData as Omit<
-          Prisma.AlsoKnownAsCreateManyInput[],
-          'obituaryId'
-        >
+        relativesData,
+        alsoKnownAsData
       );
 
-      onSave(updatedObituary);
+      if (!updatedObituary) {
+        throw new Error('Failed to update obituary - no response received');
+      }
+
+      await onSave(updatedObituary);
       onClose();
       toast({
-        title: 'Obituary updated',
-        description: 'The obituary has been updated successfully.'
+        title: 'Success',
+        description: 'The obituary has been updated successfully.',
+        variant: 'default'
       });
     } catch (error) {
       console.error('Error updating obituary:', error);
       toast({
         title: 'Error',
-        description: `Failed to update the obituary: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description:
+          error instanceof Error
+            ? `Failed to update obituary: ${error.message}`
+            : 'An unexpected error occurred while updating the obituary',
         variant: 'destructive'
       });
     } finally {
