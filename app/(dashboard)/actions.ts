@@ -113,7 +113,7 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
       getCemeteries(),
       getPeriodicals(),
       getFamilyRelationships(),
-      getFileBoxes()
+      getFileBoxes(),
     ]);
 
     const titles = rawTitles.filter(
@@ -231,7 +231,6 @@ export async function createObituaryAction(
   }
 ): Promise<Obituary> {
   const { relatives, ...restObituaryData } = obituaryData;
-
   // Get the open file box ID
   const openFileBoxId = await getOpenFileBoxId();
 
@@ -322,6 +321,10 @@ export async function updateObituaryAction(
 ) {
   try {
     return await prisma.$transaction(async (prisma) => {
+      // Reset both sequences before creating new records
+      await prisma.$executeRaw`SELECT setval('relative_id_seq', COALESCE((SELECT MAX(id) FROM "Relative"), 1));`;
+      await prisma.$executeRaw`SELECT setval('alsoknownas_id_seq', COALESCE((SELECT MAX(id) FROM "AlsoKnownAs"), 1));`;
+
       // First delete existing relations
       await prisma.relative.deleteMany({
         where: { obituaryId: id }
@@ -339,7 +342,7 @@ export async function updateObituaryAction(
               surname: relative.surname || '',
               givenNames: relative.givenNames || '',
               relationship: relative.relationship || '',
-              familyRelationshipId: relative.familyRelationshipId,
+              familyRelationshipId: relative.familyRelationshipId || undefined,
               predeceased: relative.predeceased,
               obituaryId: id
             }
@@ -349,6 +352,7 @@ export async function updateObituaryAction(
 
       // Create new alsoKnownAs
       if (alsoKnownAsData.length > 0) {
+        // Create the alsoKnownAs records using for loop
         for (const aka of alsoKnownAsData) {
           await prisma.alsoKnownAs.create({
             data: {
