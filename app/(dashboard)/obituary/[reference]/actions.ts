@@ -4,7 +4,6 @@ import minioClient from '@/lib/minio-client';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { createHash } from 'crypto';
-import { notFound } from "next/navigation";
 
 type ObituaryWithRelations = Prisma.ObituaryGetPayload<{
   include: {
@@ -12,7 +11,11 @@ type ObituaryWithRelations = Prisma.ObituaryGetPayload<{
     cemetery: true;
     periodical: true;
     fileBox: true;
-    relatives: true;
+    relatives: {
+      include: {
+        familyRelationship: true
+      }
+    };
     alsoKnownAs: true;
     birthCity: {
       include: {
@@ -37,19 +40,23 @@ export async function fetchObituaryByReferenceAction(
       cemetery: true,
       periodical: true,
       fileBox: true,
-      relatives: true,
+      relatives: {
+        include: {
+          familyRelationship: true
+        }
+      },
       alsoKnownAs: true,
       birthCity: {
         include: {
-          country: true,
-        },
+          country: true
+        }
       },
       deathCity: {
         include: {
-          country: true,
-        },
-      },
-    },
+          country: true
+        }
+      }
+    }
   });
 }
 
@@ -71,7 +78,9 @@ export async function fetchImagesForObituaryAction(
   });
 }
 
-export async function generatePublicHashAction(obituaryId: number): Promise<string> {
+export async function generatePublicHashAction(
+  obituaryId: number
+): Promise<string> {
   const hash = createHash('sha256')
     .update(`${obituaryId}-${process.env.HASH_SECRET}`)
     .digest('hex');
@@ -99,27 +108,27 @@ export async function getPublicObituaryByHash(hash: string) {
 
   try {
     const obituary = await prisma.obituary.findUnique({
-      where: { 
-        publicHash: hash,
+      where: {
+        publicHash: hash
       },
       include: {
         title: true,
-        birthCity: { 
-          include: { 
-            country: true 
-          } 
+        birthCity: {
+          include: {
+            country: true
+          }
         },
-        deathCity: { 
-          include: { 
-            country: true 
-          } 
+        deathCity: {
+          include: {
+            country: true
+          }
         },
         cemetery: true,
         periodical: true,
         fileBox: true,
         relatives: true,
-        alsoKnownAs: true,
-      },
+        alsoKnownAs: true
+      }
     });
 
     // Log for debugging

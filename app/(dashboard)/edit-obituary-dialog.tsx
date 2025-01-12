@@ -25,7 +25,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { getUserData } from '@/lib/db';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Prisma } from '@prisma/client';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { BucketItem } from 'minio';
 import { useEffect, useRef, useState } from 'react';
@@ -157,6 +156,11 @@ interface EditObituaryDialogProps {
       } | null;
       predeceased: boolean;
     }[];
+    alsoKnownAs?: {
+      id: number;
+      surname: string | null;
+      otherNames: string | null;
+    }[];
     [key: string]: any;
   };
   isOpen: boolean;
@@ -195,6 +199,9 @@ export function EditObituaryDialog({
   familyRelationships,
   fileBoxes
 }: EditObituaryDialogProps) {
+  console.log('Received obituary data:', obituary);
+  console.log('Received obituary AKA data:', obituary.alsoKnownAs);
+
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<
     Array<{ file: File; newName: string }>
@@ -263,11 +270,10 @@ export function EditObituaryDialog({
           predeceased: relative.predeceased || false
         })) || [],
       alsoKnownAs:
-        obituary.alsoKnownAs?.map(
-          (aka: Omit<Prisma.AlsoKnownAsCreateManyInput[], 'obituaryId'>) => ({
-            ...aka
-          })
-        ) || [],
+        obituary.alsoKnownAs?.map((aka) => ({
+          surname: aka.surname || '',
+          otherNames: aka.otherNames || ''
+        })) || [],
       batch: obituary.batch || ''
     }
   });
@@ -370,7 +376,7 @@ export function EditObituaryDialog({
     try {
       const { relatives, alsoKnownAs, ...obituaryData } = values;
 
-      // Prepare relatives data with familyRelationshipId
+      // Prepare relatives data without obituaryId
       const relativesData =
         relatives?.map((relative) => ({
           surname: relative.surname || '',
@@ -394,38 +400,43 @@ export function EditObituaryDialog({
           formData.append('files', file.file, file.newName);
         });
 
-        const response = await fetch('/api/upload', {
+        const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
           body: formData
         });
 
-        if (!response.ok) {
+        if (!uploadResponse.ok) {
           throw new Error('Failed to upload new images');
         }
       }
 
-      // Update the obituary with both relatives and alsoKnownAs
+      // Update the obituary
       const updatedObituary = await updateObituaryAction(
         obituary.id,
         obituaryData,
-        relativesData as Omit<Prisma.RelativeCreateManyInput[], 'obituaryId'>,
-        alsoKnownAsData as Omit<
-          Prisma.AlsoKnownAsCreateManyInput[],
-          'obituaryId'
-        >
+        relativesData,
+        alsoKnownAsData
       );
 
-      onSave(updatedObituary);
+      if (!updatedObituary) {
+        throw new Error('Failed to update obituary - no response received');
+      }
+
+      await onSave(updatedObituary);
       onClose();
       toast({
-        title: 'Obituary updated',
-        description: 'The obituary has been updated successfully.'
+        title: 'Success',
+        description: 'The obituary has been updated successfully.',
+        variant: 'default'
       });
     } catch (error) {
       console.error('Error updating obituary:', error);
       toast({
         title: 'Error',
-        description: `Failed to update the obituary: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        description:
+          error instanceof Error
+            ? `Failed to update obituary: ${error.message}`
+            : 'An unexpected error occurred while updating the obituary',
         variant: 'destructive'
       });
     } finally {
@@ -440,6 +451,19 @@ export function EditObituaryDialog({
       setIncludeOtherFamilyText(true);
     }
   }, [form]);
+
+  useEffect(() => {
+    if (obituary.alsoKnownAs?.length) {
+      // Force update the form with AKA values
+      form.setValue(
+        'alsoKnownAs',
+        obituary.alsoKnownAs.map((aka) => ({
+          surname: aka.surname || '',
+          otherNames: aka.otherNames || ''
+        }))
+      );
+    }
+  }, [obituary.alsoKnownAs, form]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -614,10 +638,10 @@ export function EditObituaryDialog({
             </div>
 
             {/* Also Known As */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Also Known As</h3>
+            <div className="space-y-2">
+              <FormLabel className="text-xs flex">Also Known As</FormLabel>
               {form.watch('alsoKnownAs')?.map((_, index) => (
-                <div key={index} className="flex space-x-2">
+                <div key={index} className="flex items-end space-x-2">
                   <FormField
                     control={form.control}
                     name={`alsoKnownAs.${index}.surname`}
@@ -627,11 +651,13 @@ export function EditObituaryDialog({
                         <FormControl>
                           <Input
                             {...field}
-                            className="h-8 text-sm"
+                            className="h-8 text-sm uppercase"
                             value={field.value || ''}
+                            onChange={(e) => {
+                              field.onChange(e.target.value.toUpperCase());
+                            }}
                           />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -644,11 +670,21 @@ export function EditObituaryDialog({
                         <FormControl>
                           <Input
                             {...field}
-                            className="h-8 text-sm"
+                            className="h-8 text-sm capitalize"
                             value={field.value || ''}
+                            onChange={(e) => {
+                              const formatted = e.target.value
+                                .split(' ')
+                                .map(
+                                  (name) =>
+                                    name.charAt(0).toUpperCase() +
+                                    name.slice(1).toLowerCase()
+                                )
+                                .join(' ');
+                              field.onChange(formatted);
+                            }}
                           />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -657,11 +693,13 @@ export function EditObituaryDialog({
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      const akas = form.getValues('alsoKnownAs');
-                      akas?.splice(index, 1);
-                      form.setValue('alsoKnownAs', akas || []);
+                      const alsoKnownAs = form.getValues('alsoKnownAs') || [];
+                      form.setValue(
+                        'alsoKnownAs',
+                        alsoKnownAs.filter((_, i) => i !== index)
+                      );
                     }}
-                    className="h-8 mt-8 hover:bg-destructive/10 text-destructive hover:text-destructive"
+                    className="hover:bg-destructive/10 text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -672,13 +710,10 @@ export function EditObituaryDialog({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const akas = form.getValues('alsoKnownAs') || [];
+                  const alsoKnownAs = form.getValues('alsoKnownAs') || [];
                   form.setValue('alsoKnownAs', [
-                    ...akas,
-                    {
-                      surname: '',
-                      otherNames: ''
-                    }
+                    ...alsoKnownAs,
+                    { surname: '', otherNames: '' }
                   ]);
                 }}
               >
@@ -745,6 +780,7 @@ export function EditObituaryDialog({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleRemoveFile(index)}
+                        className="hover:bg-destructive/10 text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -986,7 +1022,7 @@ export function EditObituaryDialog({
                     }}
                     className="h-8 mt-8 hover:bg-destructive/10 text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4 font-black" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               ))}

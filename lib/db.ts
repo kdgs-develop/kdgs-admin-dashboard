@@ -16,6 +16,7 @@ function isValidDate(dateString: string): boolean {
 export type Obituary = Awaited<
   ReturnType<typeof prisma.obituary.findUnique>
 > & {
+  alsoKnownAs?: Awaited<ReturnType<typeof prisma.alsoKnownAs.findMany>>;
   relatives?: Awaited<ReturnType<typeof prisma.relative.findMany>>;
   fileBox?: Awaited<ReturnType<typeof prisma.fileBox.findUnique>>;
   images?: Awaited<ReturnType<typeof prisma.image.findMany>>;
@@ -481,7 +482,8 @@ export async function getObituaries(
       include: {
         relatives: true,
         fileBox: true,
-        images: true
+        images: true,
+        alsoKnownAs: true
       }
     }),
     prisma.obituary.count({ where })
@@ -598,7 +600,8 @@ export async function updateObituary(
     editedBy,
     editedOn,
     fileBoxId,
-    relatives
+    relatives,
+    alsoKnownAs
   } = obituaryData;
 
   const updatedObituary = await prisma.obituary.update({
@@ -632,6 +635,10 @@ export async function updateObituary(
       relatives: {
         deleteMany: {},
         create: relatives
+      },
+      alsoKnownAs: {
+        deleteMany: {},
+        create: alsoKnownAs
       }
     }
   });
