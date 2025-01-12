@@ -9,7 +9,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Location name is required"),
+  name: z.string().optional(),
   province: z.string().optional(),
   countryId: z.string().min(1, "Country is required"),
 });
@@ -72,7 +72,7 @@ function AddLocationDialog({ isOpen, onClose, onAddCity, countries, initialValue
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location Name</FormLabel>
+                  <FormLabel>Location Name (Optional)</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
