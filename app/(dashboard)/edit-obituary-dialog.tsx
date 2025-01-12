@@ -382,11 +382,7 @@ export function EditObituaryDialog({
           surname: relative.surname || '',
           givenNames: relative.givenNames || '',
           relationship: relative.relationship || '',
-          familyRelationship: relative.familyRelationshipId
-            ? {
-                connect: { id: relative.familyRelationshipId }
-              }
-            : undefined,
+          familyRelationshipId: relative.familyRelationshipId || null,
           predeceased: relative.predeceased
         })) || [];
 
@@ -703,6 +699,7 @@ export function EditObituaryDialog({
                         alsoKnownAs.filter((_, i) => i !== index)
                       );
                     }}
+                    className="hover:bg-destructive/10 text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -783,6 +780,7 @@ export function EditObituaryDialog({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleRemoveFile(index)}
+                        className="hover:bg-destructive/10 text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -1024,7 +1022,7 @@ export function EditObituaryDialog({
                     }}
                     className="h-8 mt-8 hover:bg-destructive/10 text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4 font-black" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
