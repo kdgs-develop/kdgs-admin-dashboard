@@ -512,7 +512,7 @@ export async function updateCountry(id: number, name: string) {
 
 export async function getCitiesWithPagination(
   page: number,
-  pageSize: number = 5
+  pageSize: number = 10
 ) {
   try {
     const totalCount = await prisma.city.count();
@@ -603,7 +603,7 @@ export async function searchCities(
   province?: string,
   countryId?: number,
   page: number = 1,
-  pageSize: number = 5
+  pageSize: number = 10
 ) {
   try {
     const where: any = {};
@@ -632,9 +632,14 @@ export async function searchCities(
       where,
       skip: (page - 1) * pageSize,
       take: pageSize,
-      orderBy: {
-        name: 'asc'
-      },
+      orderBy: [
+        {
+          name: {
+            sort: 'asc',
+            nulls: 'first' // This will put empty names at the beginning
+          }
+        }
+      ],
       include: {
         country: true
       }
