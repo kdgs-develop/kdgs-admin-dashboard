@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -7,19 +8,40 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Plus,
+  Search
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus, Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getCitiesWithPagination, addCity, updateCity, deleteCity, getCountries, searchCities } from './actions';
+import {
+  addCity,
+  deleteCity,
+  getCitiesWithPagination,
+  getCountries,
+  searchCities,
+  updateCity
+} from './actions';
 import AddLocationDialog from './add-location-dialog';
 import EditLocationDialog from './edit-location-dialog';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function LocationAdministration() {
   const [cities, setCities] = useState<any[]>([]);
-  const [countries, setCountries] = useState<{ id: number; name: string }[]>([]);
+  const [countries, setCountries] = useState<{ id: number; name: string }[]>(
+    []
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState<any>(null);
@@ -31,30 +53,58 @@ export function LocationAdministration() {
   // Search states
   const [searchName, setSearchName] = useState('');
   const [searchProvince, setSearchProvince] = useState('');
-  const [searchCountryId, setSearchCountryId] = useState<string | undefined>(undefined);
+  const [searchCountryId, setSearchCountryId] = useState<string | undefined>(
+    undefined
+  );
+  const [isSearchMode, setIsSearchMode] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [citiesResult, countriesResult] = await Promise.all([
-          getCitiesWithPagination(currentPage),
-          getCountries(1, 100)
-        ]);
-        setCities(citiesResult.cities);
-        setTotalPages(citiesResult.totalPages);
-        setCountries(countriesResult.countries);
+        if (isSearchMode) {
+          const result = await searchCities(
+            searchName || undefined,
+            searchProvince || undefined,
+            searchCountryId ? parseInt(searchCountryId) : undefined,
+            currentPage
+          );
+          setCities(result.cities);
+          setTotalPages(result.totalPages);
+        } else {
+          const [citiesResult, countriesResult] = await Promise.all([
+            getCitiesWithPagination(currentPage),
+            getCountries(1, 100)
+          ]);
+          setCities(citiesResult.cities);
+          setTotalPages(citiesResult.totalPages);
+          setCountries(countriesResult.countries);
+        }
       } catch (error) {
         toast({
           title: 'Error fetching data',
-          description: error instanceof Error ? error.message : 'An unknown error occurred',
+          description:
+            error instanceof Error
+              ? error.message
+              : 'An unknown error occurred',
           variant: 'destructive'
         });
       }
     }
     fetchData();
-  }, [currentPage, toast]);
+  }, [
+    currentPage,
+    isSearchMode,
+    searchName,
+    searchProvince,
+    searchCountryId,
+    toast
+  ]);
 
-  const handleAddCity = async (name: string | null, province: string | null, countryId: number) => {
+  const handleAddCity = async (
+    name: string | null,
+    province: string | null,
+    countryId: number
+  ) => {
     try {
       const newCity = await addCity(name, province, countryId);
       const result = await getCitiesWithPagination(currentPage);
@@ -62,18 +112,24 @@ export function LocationAdministration() {
       setTotalPages(result.totalPages);
       toast({
         title: 'Success',
-        description: 'Location added successfully',
+        description: 'Location added successfully'
       });
     } catch (error) {
       toast({
         title: 'Error adding location',
-        description: error instanceof Error ? error.message : 'Failed to add location',
+        description:
+          error instanceof Error ? error.message : 'Failed to add location',
         variant: 'destructive'
       });
     }
   };
 
-  const handleEditCity = async (id: number, name: string | null, province: string | null, countryId: number) => {
+  const handleEditCity = async (
+    id: number,
+    name: string | null,
+    province: string | null,
+    countryId: number
+  ) => {
     try {
       await updateCity(id, name, province, countryId);
       const result = await getCitiesWithPagination(currentPage);
@@ -81,14 +137,15 @@ export function LocationAdministration() {
       setTotalPages(result.totalPages);
       toast({
         title: 'Success',
-        description: 'Location updated successfully',
+        description: 'Location updated successfully'
       });
       setIsEditDialogOpen(false);
       setSelectedCity(null);
     } catch (error) {
       toast({
         title: 'Error updating location',
-        description: error instanceof Error ? error.message : 'Failed to update location',
+        description:
+          error instanceof Error ? error.message : 'Failed to update location',
         variant: 'destructive'
       });
     }
@@ -102,14 +159,15 @@ export function LocationAdministration() {
       setTotalPages(result.totalPages);
       toast({
         title: 'Success',
-        description: 'Location deleted successfully',
+        description: 'Location deleted successfully'
       });
       setIsEditDialogOpen(false);
       setSelectedCity(null);
     } catch (error) {
       toast({
         title: 'Error deleting location',
-        description: error instanceof Error ? error.message : 'Failed to delete location',
+        description:
+          error instanceof Error ? error.message : 'Failed to delete location',
         variant: 'destructive'
       });
     }
@@ -117,18 +175,21 @@ export function LocationAdministration() {
 
   const handleSearch = async () => {
     try {
+      setCurrentPage(1);
+      setIsSearchMode(true);
       const result = await searchCities(
         searchName || undefined,
         searchProvince || undefined,
         searchCountryId ? parseInt(searchCountryId) : undefined,
-        currentPage
+        1
       );
       setCities(result.cities);
       setTotalPages(result.totalPages);
     } catch (error) {
       toast({
         title: 'Error searching locations',
-        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        description:
+          error instanceof Error ? error.message : 'An unknown error occurred',
         variant: 'destructive'
       });
     }
@@ -203,8 +264,8 @@ export function LocationAdministration() {
               <Search className="mr-2 h-4 w-4" />
               Search
             </Button>
-            <Button 
-              onClick={() => handleOpenAddDialogWithSearch()} 
+            <Button
+              onClick={() => handleOpenAddDialogWithSearch()}
               variant="outline"
             >
               <Plus className="mr-2 h-4 w-4" />
@@ -221,7 +282,7 @@ export function LocationAdministration() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -232,7 +293,9 @@ export function LocationAdministration() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
                 disabled={currentPage === totalPages}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -243,10 +306,19 @@ export function LocationAdministration() {
           {cities.length > 0 && (
             <div className="grid gap-2">
               {cities.map((city) => (
-                <div key={city.id} className="p-2 border rounded flex justify-between items-center">
+                <div
+                  key={city.id}
+                  className="p-2 border rounded flex justify-between items-center"
+                >
                   <div>
-                    <span className="font-medium">{city.name || 'Unnamed'}</span>
-                    {city.province && <span className="ml-2 text-muted-foreground">{city.province}</span>}
+                    <span className="font-medium">
+                      {city.name || ''}
+                    </span>
+                    {city.province && (
+                      <span className="ml-2 text-muted-foreground">
+                        {city.province}
+                      </span>
+                    )}
                     {city.country && (
                       <span className="ml-2 text-sm text-muted-foreground">
                         ({city.country.name})
