@@ -1,0 +1,30 @@
+{
+  "destination":  {
+                      "bucket":  "kdgs-files",
+                      "region":  "us-sea-1",
+                      "accessKey":  "access-key",
+                      "secretKey":  "secret-key",
+                      "useSSL":  true,
+                      "endpoint":  "linode.host.com"
+                  },
+  "backup":  {
+                 "maxDailyChangePercent":  10,
+                 "compressionLevel":  9,
+                 "retentionDays":  7
+             },
+  "source":  {
+                 "endpoint":  "host:9000",
+                 "bucket":  "kdgs-files",
+                 "useSSL":  true,
+                 "secretKey":  "secret-key",
+                 "accessKey":  "access-key"
+             },
+  "notification":  {
+                       "email":  {
+                                     "from":  "",
+                                     "to":  "",
+                                     "smtpServer":  "",
+                                     "enabled":  false
+                                 }
+                   }
+}
