@@ -935,13 +935,16 @@ export function EditObituaryDialog({
                             value={field.value || ''}
                             onChange={(e) => {
                               const formatted = e.target.value
-                                .split(' ')
-                                .map(
-                                  (name) =>
-                                    name.charAt(0).toUpperCase() +
-                                    name.slice(1).toLowerCase()
-                                )
-                                .join(' ');
+                                .split(/(\(|\)|\s+)/) // Split on spaces and brackets
+                                .filter(word => word.trim()) // Remove empty strings
+                                .map(word => {
+                                  if (word === '(' || word === ')') return word;
+                                  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                                })
+                                .join(' ')
+                                .replace(/\s*\(\s*/g, ' (') // Clean up spaces around brackets
+                                .replace(/\s*\)\s*/g, ') ')
+                                .trim();
                               field.onChange(formatted);
                             }}
                           />
