@@ -9,16 +9,17 @@ datasource db {
 }
 
 model Genealogist {
-  id           Int          @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
   fullName     String?
   phone        String?
   lastAccessAt DateTime?
-  clerkId      String       @unique
-  createdAt    DateTime     @default(now())
-  role         Role?        @default(INDEXER)
-  updatedAt    DateTime?    @updatedAt
+  clerkId      String        @unique
+  createdAt    DateTime      @default(now())
+  role         Role?         @default(INDEXER)
+  updatedAt    DateTime?     @updatedAt
   accessTimes  AccessTime[]
   Report       Report[]
+  batchNumbers BatchNumber[]
 }
 
 model AccessTime {
@@ -56,7 +57,8 @@ model Obituary {
   editedBy       String?
   editedOn       DateTime?     @updatedAt
   fileBoxId      Int?          @db.SmallInt
-  batch          String?
+  batchNumberId  String?
+  batchNumber    BatchNumber?  @relation(fields: [batchNumberId], references: [id])
   publicHash     String?       @unique
   imageNames     String[]      @default([])
   alsoKnownAs    AlsoKnownAs[]
@@ -190,8 +192,17 @@ model Report {
 }
 
 model FamilyRelationship {
-  id        String        @id @default(cuid())
+  id        String     @id @default(cuid())
   name      String
   category  String
   relatives Relative[]
+}
+
+model BatchNumber {
+  id          String      @id @default(cuid())
+  number      String      @unique
+  createdAt   DateTime    @default(now())
+  createdById String
+  createdBy   Genealogist @relation(fields: [createdById], references: [clerkId])
+  obituaries  Obituary[]
 }
