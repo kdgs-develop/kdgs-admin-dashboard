@@ -279,7 +279,8 @@ export async function createObituaryAction(
         deathCity: undefined,
         periodical: undefined,
         title: undefined,
-        fileBox: undefined
+        fileBox: undefined,
+        batchNumber: undefined
       }
     });
 
