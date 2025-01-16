@@ -31,17 +31,19 @@ interface AddBatchNumberDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (batchNumber: string) => Promise<void>;
+  initialNumber?: string;
 }
 
 export function AddBatchNumberDialog({
   isOpen,
   onClose,
-  onAdd
+  onAdd,
+  initialNumber
 }: AddBatchNumberDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      number: ''
+      number: initialNumber || ''
     }
   });
 

@@ -1229,3 +1229,121 @@ export async function deleteRelationship(id: string) {
   });
   revalidatePath('/');
 }
+
+export async function getBatchNumbers(page: number, itemsPerPage: number) {
+  try {
+    const skip = (page - 1) * itemsPerPage;
+    
+    const [batchNumbers, totalCount] = await Promise.all([
+      prisma.batchNumber.findMany({
+        skip,
+        take: itemsPerPage,
+        orderBy: {
+          createdAt: 'desc'
+        },
+        include: {
+          createdBy: {
+            select: {
+              fullName: true
+            }
+          }
+        }
+      }),
+      prisma.batchNumber.count()
+    ]);
+
+    return {
+      batchNumbers,
+      totalCount,
+      totalPages: Math.ceil(totalCount / itemsPerPage)
+    };
+  } catch (error) {
+    console.error('Error in getBatchNumbers:', error);
+    throw error;
+  }
+}
+
+export async function searchBatchNumbers(searchTerm: string, page: number, itemsPerPage: number) {
+  try {
+    const skip = (page - 1) * itemsPerPage;
+    
+    const [batchNumbers, totalCount] = await Promise.all([
+      prisma.batchNumber.findMany({
+        where: {
+          number: {
+            contains: searchTerm,
+            mode: 'insensitive'
+          }
+        },
+        skip,
+        take: itemsPerPage,
+        orderBy: {
+          createdAt: 'desc'
+        },
+        include: {
+          createdBy: {
+            select: {
+              fullName: true
+            }
+          }
+        }
+      }),
+      prisma.batchNumber.count({
+        where: {
+          number: {
+            contains: searchTerm,
+            mode: 'insensitive'
+          }
+        }
+      })
+    ]);
+
+    return {
+      batchNumbers,
+      totalCount,
+      totalPages: Math.ceil(totalCount / itemsPerPage)
+    };
+  } catch (error) {
+    console.error('Error in searchBatchNumbers:', error);
+    throw error;
+  }
+}
+
+export async function updateBatchNumber(id: string, number: string) {
+  try {
+    const updatedBatchNumber = await prisma.batchNumber.update({
+      where: { id },
+      data: { number },
+      include: {
+        createdBy: {
+          select: {
+            fullName: true
+          }
+        }
+      }
+    });
+    
+    return updatedBatchNumber;
+  } catch (error) {
+    console.error('Error in updateBatchNumber:', error);
+    throw error;
+  }
+}
+
+export async function deleteBatchNumber(id: string) {
+  try {
+    // First, remove the batch number reference from any obituaries
+    await prisma.obituary.updateMany({
+      where: { batchNumberId: id },
+      data: { batchNumberId: null }
+    });
+
+    // Then delete the batch number
+    await prisma.batchNumber.delete({
+      where: { id }
+    });
+  } catch (error) {
+    console.error('Error in deleteBatchNumber:', error);
+    throw error;
+  }
+}
