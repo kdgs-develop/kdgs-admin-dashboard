@@ -77,7 +77,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function GeneaologistAdministration() {
+export function GenealogistAdministration() {
   const dashboard_url = process.env.NEXT_PUBLIC_DASHBOARD_URL!;
   const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!;
   const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!;
