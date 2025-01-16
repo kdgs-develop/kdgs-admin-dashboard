@@ -274,10 +274,6 @@ export function LocationAdministration() {
           </div>
 
           <div className="flex justify-between items-center">
-            <Button onClick={() => setIsDialogOpen(true)} variant="outline">
-              <Plus className="mr-2 h-4 w-4" />
-              Add New Location
-            </Button>
             <div className="flex space-x-2">
               <Button
                 variant="outline"
