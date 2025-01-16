@@ -18,6 +18,7 @@ import { FileBoxAdministration } from './filebox-administration';
 import { PeriodicalAdministration } from './periodical-administration';
 import { TitleAdministration } from './title-administration';
 import { RelationshipAdministration } from './relationship-administration';
+import { BatchNumberAdministration } from './batch-number-administration';
 
 export default async function SetupPage() {
   const { userId } = auth();
@@ -42,6 +43,8 @@ export default async function SetupPage() {
               <BulkUpload />
 
               <FileBoxAdministration />
+              
+              <BatchNumberAdministration />
 
               <CountryAdministration />
 
@@ -50,6 +53,7 @@ export default async function SetupPage() {
               <PeriodicalAdministration />
 
               <RelationshipAdministration />
+
 
               <CemeteryAdministration />
 
