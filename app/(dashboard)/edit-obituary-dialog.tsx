@@ -31,11 +31,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import {
+  addBatchNumber,
   addFamilyRelationship,
   addPeriodical,
   addTitle,
   updateObituaryAction
 } from './actions';
+import { AddBatchNumberDialog } from './add-batch-number-dialog';
 import {
   deleteImageAction,
   getImageUrlAction,
@@ -114,7 +116,7 @@ const formSchema = z.object({
       })
     )
     .optional(),
-  batch: z.string().optional(),
+  batchNumberId: z.string().optional(),
   alsoKnownAs: z
     .array(
       z.object({
@@ -185,6 +187,12 @@ interface EditObituaryDialogProps {
   periodicals: { id: number; name: string }[];
   familyRelationships: { id: string; name: string; category: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
+  batchNumbers: {
+    id: string;
+    number: string;
+    createdAt: Date;
+    createdBy: { fullName: string | null };
+  }[];
 }
 
 export function EditObituaryDialog({
@@ -197,7 +205,8 @@ export function EditObituaryDialog({
   cemeteries,
   periodicals,
   familyRelationships,
-  fileBoxes
+  fileBoxes,
+  batchNumbers
 }: EditObituaryDialogProps) {
   console.log('Received obituary data:', obituary);
   console.log('Received obituary AKA data:', obituary.alsoKnownAs);
@@ -228,6 +237,8 @@ export function EditObituaryDialog({
     useState(familyRelationships);
 
   const [includeOtherFamilyText, setIncludeOtherFamilyText] = useState(false);
+
+  const [isAddBatchNumberDialogOpen, setIsAddBatchNumberDialogOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -274,7 +285,7 @@ export function EditObituaryDialog({
           surname: aka.surname || '',
           otherNames: aka.otherNames || ''
         })) || [],
-      batch: obituary.batch || ''
+      batchNumberId: obituary.batchNumberId || ''
     }
   });
 
@@ -1264,24 +1275,30 @@ export function EditObituaryDialog({
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="batch"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs">Batch</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className="h-8 text-sm"
-                        disabled={role !== 'ADMIN'}
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="flex gap-2 items-start">
+                <ComboboxFormField
+                  control={form.control}
+                  name="batchNumberId"
+                  label="Batch Number"
+                  placeholder="Select a batch number"
+                  emptyText="No batch numbers found."
+                  items={batchNumbers.map((batch) => ({
+                    id: batch.id,
+                    name: `${batch.number} (${batch.createdBy.fullName || 'Unknown'})`
+                  }))}
+                />
+                <div className="pt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsAddBatchNumberDialogOpen(true)}
+                    className="h-8 mt-1"
+                  >
+                    <PlusCircle className="h-3 w-3 mr-2" />
+                    Create new batch number
+                  </Button>
+                </div>
+              </div>
             </div>
 
             {/* File Box */}
@@ -1362,6 +1379,16 @@ export function EditObituaryDialog({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AddBatchNumberDialog
+        isOpen={isAddBatchNumberDialogOpen}
+        onClose={() => setIsAddBatchNumberDialogOpen(false)}
+        onAdd={async (number) => {
+          const newBatch = await addBatchNumber(number);
+          // Update local batch numbers state if needed
+          setIsAddBatchNumberDialogOpen(false);
+        }}
+      />
     </Dialog>
   );
 }
