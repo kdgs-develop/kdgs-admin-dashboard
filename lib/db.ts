@@ -775,7 +775,10 @@ export async function getBatchNumbers() {
       createdBy: {
          select: {
          fullName: true 
-        } } }
+        } } },
+    orderBy: {
+      createdAt: 'desc'
+    }
   });
 }
 
