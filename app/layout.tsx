@@ -19,10 +19,11 @@ export default function RootLayout({
 }) {
   return (
     <Providers>
-      <html lang="en" className="h-full">
-        <body className="flex flex-col min-h-full">
-          <link rel="icon" href="/icon.png" sizes="any" />
-          <div className="flex-grow">{children}</div>
+      <html lang="en">
+        <body>
+          <div className="pb-16">
+            {children}
+          </div>
           <Toaster />
           <Footer />
         </body>
