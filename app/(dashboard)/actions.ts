@@ -3,6 +3,7 @@
 import { getObituaryCountForFileBox } from '@/app/(dashboard)/setup/actions';
 import {
   deleteObituaryById,
+  getBatchNumbers,
   getCemeteries,
   getCities,
   getFamilyRelationships,
@@ -10,6 +11,7 @@ import {
   getObituaries,
   getPeriodicals,
   getTitles,
+  getUserDataWithClerkId,
   Obituary
 } from '@/lib/db';
 import { prisma } from '@/lib/prisma';
@@ -96,6 +98,12 @@ interface EditObituaryDialogData {
   periodicals: { id: number; name: string }[];
   familyRelationships: { id: string; name: string; category: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
+  batchNumbers: {
+    id: string;
+    number: string;
+    createdAt: Date;
+    createdBy: { fullName: string | null };
+  }[];
 }
 
 export async function getEditObituaryDialogData(): Promise<EditObituaryDialogData> {
@@ -106,7 +114,8 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
       rawCemeteries,
       rawPeriodicals,
       rawFamilyRelationships,
-      rawFileBoxes
+      rawFileBoxes,
+      rawBatchNumbers
     ] = await Promise.all([
       getTitles(),
       getCities(),
@@ -114,6 +123,7 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
       getPeriodicals(),
       getFamilyRelationships(),
       getFileBoxes(),
+      getBatchNumbers()
     ]);
 
     const titles = rawTitles.filter(
@@ -162,13 +172,19 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
         fileBox.year !== null && fileBox.number !== null
     );
 
+    const batchNumbers = rawBatchNumbers.filter(
+      (batchNumber): batchNumber is { id: string; number: string; createdAt: Date; createdBy: { fullName: string | null } } =>
+        batchNumber.number !== null && batchNumber.createdBy !== null
+    );
+
     return {
       titles,
       cities,
       cemeteries,
       periodicals,
       familyRelationships,
-      fileBoxes
+      fileBoxes,
+      batchNumbers
     };
   } catch (error) {
     console.error('Error in getEditObituaryDialogData:', error);
@@ -582,4 +598,25 @@ export async function addFamilyRelationship(name: string) {
       category
     }
   });
+}
+
+export async function addBatchNumber(number: string) {
+  const userData = await getUserDataWithClerkId();
+  if (!userData) throw new Error('User not found');
+
+  const newBatch = await prisma.batchNumber.create({
+    data: {
+      number,
+      createdById: userData.clerkId
+    },
+    include: {
+      createdBy: {
+        select: {
+          fullName: true
+        }
+      }
+    }
+  });
+
+  return newBatch;
 }
