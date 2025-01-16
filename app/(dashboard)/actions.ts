@@ -514,30 +514,30 @@ export async function updateObituaryImageNames(obituaryId: number) {
 }
 
 // Modify createImageFileAction to update imageNames
-export async function createImageFileAction(name: string) {
-  const newImageFile = await prisma.image.create({
-    data: { name, size: 0, etag: '', lastModified: new Date() }
-  });
+// export async function createImageFileAction(name: string) {
+//   const newImageFile = await prisma.image.create({
+//     data: { name, size: 0, etag: '', lastModified: new Date() }
+//   });
 
-  // Get the obituary reference from the image name (first 8 characters)
-  const reference = name.slice(0, 8);
+//   // Get the obituary reference from the image name (first 8 characters)
+//   const reference = name.slice(0, 8);
 
-  // Find the obituary and update its imageNames
-  const obituary = await prisma.obituary.findFirst({
-    where: { reference }
-  });
+//   // Find the obituary and update its imageNames
+//   const obituary = await prisma.obituary.findFirst({
+//     where: { reference }
+//   });
 
-  if (obituary) {
-    await updateObituaryImageNames(obituary.id);
-  }
+//   if (obituary) {
+//     await updateObituaryImageNames(obituary.id);
+//   }
 
-  // Only revalidate if not called from an API route
-  if (typeof window !== 'undefined') {
-    safeRevalidate();
-  }
+//   // Only revalidate if not called from an API route
+//   if (typeof window !== 'undefined') {
+//     safeRevalidate();
+//   }
 
-  return newImageFile.name;
-}
+//   return newImageFile.name;
+// }
 
 // // Add a function to delete image and update obituary
 // export async function deleteImageAction(name: string) {
