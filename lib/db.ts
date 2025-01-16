@@ -19,6 +19,7 @@ export type Obituary = Awaited<
   alsoKnownAs?: Awaited<ReturnType<typeof prisma.alsoKnownAs.findMany>>;
   relatives?: Awaited<ReturnType<typeof prisma.relative.findMany>>;
   fileBox?: Awaited<ReturnType<typeof prisma.fileBox.findUnique>>;
+  batchNumber?: Awaited<ReturnType<typeof prisma.batchNumber.findUnique>>;
   images?: Awaited<ReturnType<typeof prisma.image.findMany>>;
 };
 
@@ -37,7 +38,11 @@ function createBasicSearchConditions(
     { givenNames: { contains: search, mode: Prisma.QueryMode.insensitive } },
     { reference: { contains: search, mode: Prisma.QueryMode.insensitive } },
     { maidenName: { contains: search, mode: Prisma.QueryMode.insensitive } },
-    { batch: { contains: search, mode: Prisma.QueryMode.insensitive } },
+    {
+      batchNumber: {
+        number: { contains: search, mode: Prisma.QueryMode.insensitive }
+      }
+    },
 
     // Additional text fields
     { notes: { contains: search, mode: Prisma.QueryMode.insensitive } },
@@ -379,8 +384,10 @@ function createSpecialSearchCondition(
         { fileBox: { number: { equals: parseInt(boxNumber || '') } } }
       ]
     }),
-    '@batch': (val) => ({
-      batch: { contains: val, mode: Prisma.QueryMode.insensitive }
+    '@batchNumber': (val) => ({
+      batchNumber: {
+        number: { contains: val, mode: Prisma.QueryMode.insensitive }
+      }
     }),
     '@publishDate': (val) =>
       isValidDate(val) ? { publishDate: { equals: new Date(val) } } : null,
@@ -419,7 +426,6 @@ function createSpecialSearchCondition(
       place: { contains: val, mode: Prisma.QueryMode.insensitive }
     })
   };
-
   return specialSearchMap[keyword]?.(value, extra, fourth) ?? null;
 }
 
@@ -483,7 +489,14 @@ export async function getObituaries(
         relatives: true,
         fileBox: true,
         images: true,
-        alsoKnownAs: true
+        alsoKnownAs: true,
+        birthCity: true,
+        cemetery: true,
+        deathCity: true,
+        periodical: true,
+        title: true,
+        fileImages: true,
+        batchNumber: true
       }
     }),
     prisma.obituary.count({ where })
@@ -600,8 +613,9 @@ export async function updateObituary(
     editedBy,
     editedOn,
     fileBoxId,
+    batchNumberId,
     relatives,
-    alsoKnownAs
+    alsoKnownAs,
   } = obituaryData;
 
   const updatedObituary = await prisma.obituary.update({
@@ -632,6 +646,7 @@ export async function updateObituary(
       editedBy,
       editedOn,
       fileBoxId,
+      batchNumberId,
       relatives: {
         deleteMany: {},
         create: relatives
@@ -639,7 +654,7 @@ export async function updateObituary(
       alsoKnownAs: {
         deleteMany: {},
         create: alsoKnownAs
-      }
+      },
     }
   });
 
@@ -750,6 +765,23 @@ export async function getFileBoxes() {
   });
 }
 
+// Get batch numbers
+export async function getBatchNumbers() {
+  return prisma.batchNumber.findMany({
+    select: { 
+      id: true, 
+      number: true, 
+      createdAt: true, 
+      createdBy: {
+         select: {
+         fullName: true 
+        } } },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  });
+}
+
 // Get user role
 export async function getUserRole() {
   const { userId } = auth();
@@ -780,6 +812,17 @@ export async function getUserData() {
   const userData = await prisma.genealogist.findUnique({
     where: { clerkId: userId! },
     select: { fullName: true, role: true }
+  });
+
+  return userData;
+}
+
+// Get current user with clerkID
+export async function getUserDataWithClerkId() {
+  const { userId } = auth();
+  const userData = await prisma.genealogist.findUnique({
+    where: { clerkId: userId! },
+    select: { fullName: true, role: true,clerkId: true }
   });
 
   return userData;

@@ -10,7 +10,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { AdminBackup } from './admin-backup';
 import { BulkUpload } from './bulk-upload';
-import { GeneaologistAdministration } from './genealogist-administration';
+import { GenealogistAdministration } from './genealogist-administration';
 import { LocationAdministration } from './location-administration';
 import { CemeteryAdministration } from './cemetery-administration';
 import { CountryAdministration } from './country-administration';
@@ -55,7 +55,7 @@ export default async function SetupPage() {
 
               <TitleAdministration />
 
-              <GeneaologistAdministration />
+              <GenealogistAdministration />
 
               <AdminBackup />
              

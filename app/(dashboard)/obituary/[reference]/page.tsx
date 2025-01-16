@@ -35,7 +35,11 @@ type ObituaryWithAllRelations = Prisma.ObituaryGetPayload<{
     cemetery: true;
     periodical: true;
     fileBox: true;
-    relatives: true;
+    relatives: {
+      include: {
+        familyRelationship: true
+      }
+    };
   };
 }>;
 
@@ -146,7 +150,7 @@ export default function ObituaryPage() {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen py-8">
+    <div className="bg-gray-100 min-h-screen py-8 pb-20">
       <Card className="max-w-4xl mx-auto border-t-4 border-blue-600 shadow-lg">
         <CardHeader className="bg-white">
           <div className="flex items-center justify-between">
@@ -266,11 +270,10 @@ export default function ObituaryPage() {
               {obituary.relatives.length > 0 ? (
                 <dl className="space-y-2">
                   {obituary.relatives
-                    .filter((relative) => relative.relationship) // Filter out relatives with null relationship
                     .map((relative, index) => (
                       <div key={index} className="flex">
                         <dt className="font-medium text-gray-600 w-1/3">
-                          {relative.relationship}:
+                          {relative.familyRelationship?.name || relative.relationship}:
                         </dt>
                         <dd className="w-2/3">
                           {`${relative.givenNames || ''} ${relative.surname || ''} ${relative.predeceased ? '(Predeceased)' : ''}`.trim() ||
@@ -414,13 +417,6 @@ export default function ObituaryPage() {
           )}
         </Button>
       </div>
-      <footer className="mt-8 text-center text-sm text-gray-500">
-        <p>
-          Compiled by Kelowna & District Genealogical Society PO Box 21105
-          Kelowna BC Canada V1Y 9N8
-        </p>
-        <p>© 2025 Javier Gongora o/a Vyoniq Technologies</p>
-      </footer>
       {selectedImage && (
         <ViewImageDialog
           image={selectedImage}

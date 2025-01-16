@@ -5,7 +5,6 @@ import minioClient from '@/lib/minio-client';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { BucketItem } from 'minio';
-import { revalidatePath } from 'next/cache';
 import { updateObituaryImageNames } from '../actions';
 import { OrderField } from './image-table'; // Adjust the path as necessary
 
@@ -138,7 +137,7 @@ export async function renameImageAction(oldName: string, newName: string) {
     );
   }
 }
-// After uploading images, update the image file references
+// After uploading images, update the image table and the obituary imagesNames property
 export async function uploadImagesAction(
   files: { name: string; type: string; arrayBuffer: ArrayBuffer }[]
 ) {
@@ -167,6 +166,7 @@ export async function uploadImagesAction(
             reference: reference
           }
         });
+        await updateObituaryImageNames(obituary.id);
       } else {
         throw new Error(`No obituary found for reference: ${reference}`);
       }
@@ -190,10 +190,10 @@ export async function syncMinioWithDatabase() {
     const minioFiles: BucketItem[] = [];
 
     await new Promise<void>((resolve, reject) => {
-      stream.on('data', (obj) => {
+      stream.on('data', (obj: any) => {
         console.log('Received object:', obj);
         if (obj.name) {
-          minioFiles.push(obj);
+          minioFiles.push(obj as BucketItem);
         }
       });
       stream.on('error', (err) => {

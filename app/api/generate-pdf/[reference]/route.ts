@@ -17,7 +17,11 @@ export async function GET(
         cemetery: true,
         periodical: true,
         fileBox: true,
-        relatives: true,
+        relatives: {
+          include: {
+            familyRelationship: true
+          }
+        },
         alsoKnownAs: true
       }
     });
@@ -172,7 +176,7 @@ export async function GET(
     if (obituary.relatives.length > 0) {
       obituary.relatives.forEach((relative) => {
         drawKeyValuePair(
-          relative.relationship || 'N/A',
+          relative.familyRelationship?.name || relative.relationship || 'N/A',
           `${relative.givenNames || ''} ${relative.surname || ''} ${relative.predeceased ? '(Predeceased)' : ''}`,
           currentY
         );

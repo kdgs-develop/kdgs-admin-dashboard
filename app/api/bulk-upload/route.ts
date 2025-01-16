@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { updateObituaryImageNames } from '@/app/(dashboard)/actions';
+import { prisma } from '@/lib/prisma';
 import { Client } from 'minio';
+import { NextRequest, NextResponse } from 'next/server';
 import { Readable } from 'stream';
-
 const minioClient = new Client({
   endPoint: process.env.MINIO_ENDPOINT!,
   port: parseInt(process.env.MINIO_PORT!),
@@ -23,6 +24,8 @@ export async function POST(req: NextRequest) {
 
   try {
     await uploadFile(file);
+    // Add image name to obituary imagesNames property
+    
     return NextResponse.json({ message: `Successfully uploaded ${file.name}` });
   } catch (error) {
     console.error('Upload error:', error);
@@ -36,13 +39,32 @@ async function uploadFile(file: File): Promise<void> {
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      await minioClient.putObject(
+      const uploadResponse = await minioClient.putObject(
         BUCKET_NAME,
         file.name,
         fileStream,
         file.size,
         { 'Content-Type': file.type }
       );
+
+      const size = file.size;
+      // Only create an image record if an obituary with the 8 first characters of the file name exists.
+      const reference = file.name.slice(0, 8);
+      const obituary = await prisma.obituary.findUnique({
+        where: { reference }
+      });
+      if (obituary) {
+        await prisma.image.create({
+          data: {
+            name: file.name,
+            size,
+            lastModified: new Date(),
+            etag: uploadResponse.etag,
+            reference: reference
+          }
+        });
+        await updateObituaryImageNames(obituary.id);
+      }
       return;
     } catch (error) {
       console.error(`Attempt ${attempt + 1} failed for ${file.name}:`, error);
