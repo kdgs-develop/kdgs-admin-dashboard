@@ -23,7 +23,7 @@ const SEARCH_OPTIONS = [
   { value: 'separator-1', label: '── Files & References ──', disabled: true },
   { value: '@fileNumber', label: 'File Number' },
   { value: '@fileBox', label: 'File Box (YYYY N)' },
-  { value: '@batch', label: 'Batch Number' },
+  { value: '@batchNumber', label: 'Batch Number' },
 
   { value: 'separator-2', label: '── Names ──', disabled: true },
   { value: '@surname', label: 'Surname' },
@@ -172,7 +172,7 @@ export function SearchInput() {
         newSearchValue = `${value} `; // Leave space for user input
       } else if (value === '@enteredBy' || value === '@editedBy') {
         newSearchValue = `${value} `; // Leave space for user input
-      } else if (value === '@batch') {
+      } else if (value === '@batchNumber') {
         newSearchValue = `${value} `; // Leave space for user input
       } else {
         newSearchValue = `${value} `; // Default case with space for input
