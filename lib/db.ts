@@ -452,10 +452,15 @@ export async function getObituaries(
       }
     } else {
       // Handle regular special searches
+
+      // Check if the search is a multi-word search
+      const isMultiWord = terms[1].startsWith('"');
+    
       const specialCondition = createSpecialSearchCondition(
         terms[0],
-        terms[1],
-        terms[2]
+        // if multi-word search then delete " symbol and terms[0] from search string, trim the string and use the remaining string as the search value
+        isMultiWord ? `${search.replace(new RegExp(terms[0], 'g'), '').replace(/"/g, '').trim()}` : terms[1],
+        isMultiWord ? undefined : terms[2]
       );
       if (specialCondition) {
         searchConditions.push(specialCondition);
