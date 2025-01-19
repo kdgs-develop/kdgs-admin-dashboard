@@ -33,11 +33,15 @@ export async function fetchImagesAction(
 
   const query = {
     where: {
-      ...(searchQuery && { name: { contains: searchQuery } }),
+      ...(searchQuery && { 
+        name: { 
+          contains: searchQuery,
+          mode: 'insensitive' // Make the search case-insensitive
+        } 
+      }),
       ...(obituaryFilter === 'has' && { obituary: { is: {} } }),
       ...(obituaryFilter === 'no' && { obituary: null }),
       ...(cursor && {
-        // Add cursor-based conditions based on the ordering
         ...(orderBy === 'fileNameAsc' && { name: { gt: cursor } }),
         ...(orderBy === 'fileNameDesc' && { name: { lt: cursor } }),
         ...(orderBy === 'lastModifiedAsc' && { 

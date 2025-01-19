@@ -7,13 +7,10 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { useSearchParams } from 'next/navigation';
-import { ImageTable } from './image-table';
+import { Suspense } from 'react';
+import { ImageTableWrapper } from './image-table-wrapper';
 
 export default function ImagesPage() {
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.get('q') || '';
-
   return (
     <div className="container mx-auto p-4 max-w-[calc(4xl)]">
       <Card>
@@ -28,7 +25,9 @@ export default function ImagesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ImageTable initialSearchQuery={searchQuery} />
+          <Suspense fallback={<div>Loading...</div>}>
+            <ImageTableWrapper />
+          </Suspense>
         </CardContent>
       </Card>
     </div>
