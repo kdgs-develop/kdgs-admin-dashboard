@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/table';
 import { getUserRole, ImageWithObituary } from '@/lib/db';
 import { useAuth } from '@clerk/nextjs';
-import { BucketItem } from 'minio';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { EditImageDialog } from './edit-image-dialog';
@@ -63,6 +62,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
 
   const tableRef = useRef<HTMLDivElement>(null);
   const [tableHeight, setTableHeight] = useState('400px');
+  const tableContentRef = useRef<HTMLDivElement>(null);
 
   const [role, setRole] = useState<string | null>(null);
   const { userId } = useAuth();
@@ -78,7 +78,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
     setSearchQuery(searchParams.get('q') || '');
   }, [searchParams]);
 
-  const [orderBy, setOrderBy] = useState<OrderField>('fileNameAsc');
+  const [orderBy, setOrderBy] = useState<OrderField>('lastModifiedDesc');
 
   useEffect(() => {
     setCursor(null);
@@ -105,9 +105,16 @@ export function ImageTable({ initialSearchQuery = '' }) {
     return () => window.removeEventListener('resize', updateTableHeight);
   }, []);
 
+  // Add useEffect to handle scroll reset
+  useEffect(() => {
+    if (tableContentRef.current && images.length > 0) {
+      tableContentRef.current.scrollTop = 0;
+    }
+  }, [images]);
+
   async function loadImages(reset: boolean = false) {
-    setImages([]);
     setIsLoading(true);
+    setImages([]);
 
     try {
       const {
@@ -122,9 +129,6 @@ export function ImageTable({ initialSearchQuery = '' }) {
         obituaryFilter
       );
 
-  
-
-      setIsLoading(false);
       setImages(newImages);
       setHasMore(hasMore);
 
@@ -165,14 +169,17 @@ export function ImageTable({ initialSearchQuery = '' }) {
       setCursor(newCursor);
       setPrevCursors((prev) => prev.slice(0, -1));
       loadImages();
+      tableContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       loadImages(true);
+      tableContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
   function handleNextPage() {
     if (hasMore) {
       loadImages();
+      tableContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
@@ -199,6 +206,7 @@ export function ImageTable({ initialSearchQuery = '' }) {
               </div>
             ) : images.length > 0 ? (
               <div
+                ref={tableContentRef}
                 className="flex-grow overflow-auto"
                 style={{ height: tableHeight }}
               >
@@ -285,6 +293,8 @@ export function ImageTable({ initialSearchQuery = '' }) {
               <SelectItem value="25">25</SelectItem>
               <SelectItem value="50">50</SelectItem>
               <SelectItem value="100">100</SelectItem>
+              <SelectItem value="250">250</SelectItem>
+              <SelectItem value="500">500</SelectItem>
             </SelectContent>
           </Select>
 
@@ -320,14 +330,14 @@ export function ImageTable({ initialSearchQuery = '' }) {
               <SelectValue placeholder="Order by" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="lastModifiedDesc">
+                Last Modified (Newest First)
+              </SelectItem>
+              <SelectItem value="lastModifiedAsc">
+                Last Modified (Oldest First)
+              </SelectItem>
               <SelectItem value="fileNameAsc">File Name (A-Z)</SelectItem>
               <SelectItem value="fileNameDesc">File Name (Z-A)</SelectItem>
-              <SelectItem value="lastModifiedAsc">
-                Last Modified (Oldest)
-              </SelectItem>
-              <SelectItem value="lastModifiedDesc">
-                Last Modified (Newest)
-              </SelectItem>
             </SelectContent>
           </Select>
         </div>
