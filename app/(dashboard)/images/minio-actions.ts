@@ -28,25 +28,58 @@ export async function fetchImagesAction(
   hasMore: boolean;
   nextCursor: string | null;
 }> {
+  // Add a safety check for maximum page size
+  const safeImagesPerPage = Math.min(Math.max(1, imagesPerPage), 500);
+
   const query = {
     where: {
       ...(searchQuery && { name: { contains: searchQuery } }),
       ...(obituaryFilter === 'has' && { obituary: { is: {} } }),
-      ...(obituaryFilter === 'no' && { obituary: null })
+      ...(obituaryFilter === 'no' && { obituary: null }),
+      ...(cursor && {
+        // Add cursor-based conditions based on the ordering
+        ...(orderBy === 'fileNameAsc' && { name: { gt: cursor } }),
+        ...(orderBy === 'fileNameDesc' && { name: { lt: cursor } }),
+        ...(orderBy === 'lastModifiedAsc' && { 
+          OR: [
+            { lastModified: { gt: new Date(cursor) } },
+            { 
+              lastModified: { equals: new Date(cursor) },
+              id: { gt: cursor }
+            }
+          ]
+        }),
+        ...(orderBy === 'lastModifiedDesc' && { 
+          OR: [
+            { lastModified: { lt: new Date(cursor) } },
+            { 
+              lastModified: { equals: new Date(cursor) },
+              id: { lt: cursor }
+            }
+          ]
+        })
+      })
     },
-    take: imagesPerPage,
-    ...(cursor && { skip: 1 }), // Skip the cursor if provided
-    orderBy: {
-      name: orderBy === 'fileNameAsc' ? 'asc' : 'desc' // Adjust based on your ordering logic
-    },
+    take: safeImagesPerPage,
+    orderBy: [
+      ...(orderBy.startsWith('fileName') ? [{ name: orderBy === 'fileNameAsc' ? 'asc' : 'desc' }] : []),
+      ...(orderBy.startsWith('lastModified') ? [
+        { lastModified: orderBy === 'lastModifiedAsc' ? 'asc' : 'desc' },
+        { id: orderBy === 'lastModifiedAsc' ? 'asc' : 'desc' }
+      ] : [])
+    ],
     include: {
-      obituary: true // Include the related obituary data
+      obituary: true
     }
   };
 
   const images = await prisma.image.findMany(query as Prisma.ImageFindManyArgs);
-  const hasMore = images.length === imagesPerPage; // Check if there are more images
-  const nextCursor = hasMore ? images[images.length - 1].id : null; // Set the next cursor
+  const hasMore = images.length === safeImagesPerPage;
+  const nextCursor = hasMore ? (
+    orderBy.startsWith('fileName') 
+      ? images[images.length - 1].name 
+      : images[images.length - 1].lastModified?.toISOString()
+  ) : null;
 
   return { images, hasMore, nextCursor };
 }
