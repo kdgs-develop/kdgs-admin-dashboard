@@ -171,6 +171,21 @@ function ComboboxFormField({
                     </Button> */}
                   </CommandEmpty>
                   <CommandGroup>
+                    <CommandItem
+                      value="None"
+                      onSelect={() => {
+                        field.onChange(null);
+                        setOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          field.value === undefined || null ? 'opacity-100' : 'opacity-0'
+                        )}
+                      />
+                      None
+                    </CommandItem>
                     {items.map((item) => (
                       <CommandItem
                         value={[
