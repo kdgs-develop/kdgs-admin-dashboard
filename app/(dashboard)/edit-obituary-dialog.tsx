@@ -52,7 +52,7 @@ const formSchema = z.object({
     .string()
     .optional()
     .transform((val) => val?.toUpperCase()),
-  titleId: z.number().optional(),
+  titleId: z.number().nullable().optional(),
   givenNames: z
     .string()
     .optional()
@@ -69,13 +69,13 @@ const formSchema = z.object({
     .optional()
     .transform((val) => val?.toUpperCase()),
   birthDate: z.coerce.date().optional(),
-  birthCityId: z.number().optional(),
+  birthCityId: z.number().nullable().optional(),
   deathDate: z.coerce.date().optional(),
-  deathCityId: z.number().optional(),
+  deathCityId: z.number().nullable().optional(),
   burialCemetery: z.string().optional(),
-  cemeteryId: z.number().optional(),
+  cemeteryId: z.number().nullable().optional(),
   place: z.string().optional(),
-  periodicalId: z.number().optional(),
+  periodicalId: z.number().nullable().optional(),
   publishDate: z.coerce.date().optional(),
   page: z.string().max(8, 'Page must be 8 characters or less').optional(),
   column: z.string().max(8, 'Column must be 8 characters or less').optional(),
@@ -87,7 +87,7 @@ const formSchema = z.object({
   enteredOn: z.coerce.date().optional(),
   editedBy: z.string().optional(),
   editedOn: z.coerce.date().optional(),
-  fileBoxId: z.number().optional(),
+  fileBoxId: z.number().nullable().optional(),
   relatives: z
     .array(
       z.object({
@@ -116,7 +116,7 @@ const formSchema = z.object({
       })
     )
     .optional(),
-  batchNumberId: z.string().optional(),
+  batchNumberId: z.string().nullable().optional(),
   alsoKnownAs: z
     .array(
       z.object({
