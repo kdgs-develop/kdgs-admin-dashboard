@@ -9,16 +9,16 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { AdminBackup } from './admin-backup';
+import { BatchNumberAdministration } from './batch-number-administration';
 import { BulkUpload } from './bulk-upload';
-import { GenealogistAdministration } from './genealogist-administration';
-import { LocationAdministration } from './location-administration';
 import { CemeteryAdministration } from './cemetery-administration';
 import { CountryAdministration } from './country-administration';
 import { FileBoxAdministration } from './filebox-administration';
+import { GenealogistAdministration } from './genealogist-administration';
+import { LocationAdministration } from './location-administration';
 import { PeriodicalAdministration } from './periodical-administration';
-import { TitleAdministration } from './title-administration';
 import { RelationshipAdministration } from './relationship-administration';
-import { BatchNumberAdministration } from './batch-number-administration';
+import { TitleAdministration } from './title-administration';
 
 export default async function SetupPage() {
   const { userId } = auth();
@@ -28,41 +28,36 @@ export default async function SetupPage() {
     where: { clerkId: userId }
   });
 
-  if (user?.role !== 'ADMIN') redirect('/dashboard');
+  if (user?.role !== 'ADMIN' && user?.role !== 'PROCESS_MANAGER') redirect('/dashboard');
+
+  const isAdmin = user?.role === 'ADMIN';
 
   return (
     <div className="container mx-auto px-4 max-w-[calc(4xl)]">
       <div className="space-y-6 mt-4">
         <Card className="w-[calc(100%)]">
           <CardHeader>
-            <CardTitle>Admin Setup</CardTitle>
+            <CardTitle>System Administration</CardTitle>
             <CardDescription>
-              Configure your obituary management system.
+              Manage file boxes, batch numbers, and other system configurations.
             </CardDescription>
             <CardContent className="space-y-4 pt-4 px-0">
-              <BulkUpload />
-
               <FileBoxAdministration />
-              
               <BatchNumberAdministration />
+              {isAdmin && (
+                <>
+                  <BulkUpload />
+                  <CountryAdministration />
+                  <LocationAdministration />
+                  <PeriodicalAdministration />
+                  <RelationshipAdministration />
+                  <CemeteryAdministration />
+                  <TitleAdministration />
+                  <GenealogistAdministration />
+                  <AdminBackup />
+                </>
+              )}
 
-              <CountryAdministration />
-
-              <LocationAdministration />
-              
-              <PeriodicalAdministration />
-
-              <RelationshipAdministration />
-
-
-              <CemeteryAdministration />
-
-              <TitleAdministration />
-
-              <GenealogistAdministration />
-
-              <AdminBackup />
-             
             </CardContent>
           </CardHeader>
         </Card>
