@@ -77,7 +77,6 @@ const formSchema = z.object({
   deathCityId: z.number().nullable().optional(),
   burialCemetery: z.string().optional(),
   cemeteryId: z.number().nullable().optional(),
-  place: z.string().optional(),
   periodicalId: z.number().nullable().optional(),
   publishDate: z.coerce.date().optional(),
   page: z.string().max(8, 'Page must be 8 characters or less').optional(),
@@ -257,7 +256,6 @@ export function EditObituaryDialog({
       deathCityId: obituary.deathCityId || undefined,
       burialCemetery: obituary.burialCemetery || '',
       cemeteryId: obituary.cemeteryId || undefined,
-      place: obituary.place || '',
       periodicalId: obituary.periodicalId || undefined,
       publishDate: obituary.publishDate
         ? new Date(obituary.publishDate)
@@ -861,21 +859,6 @@ export function EditObituaryDialog({
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Publish Date</FormLabel>
                       <DatePicker date={field.value} setDate={field.onChange} />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="place"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">
-                        Place of Publication
-                      </FormLabel>
-                      <FormControl>
-                        <Input {...field} className="h-8 text-sm" />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
