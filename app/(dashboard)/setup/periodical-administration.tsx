@@ -75,12 +75,12 @@ export function PeriodicalAdministration() {
       if (results.totalCount === 0) {
         toast({
           title: 'No results found',
-          description: `No periodicals found matching "${searchName}"`,
+          description: `No publications found matching "${searchName}"`,
         });
       }
     } catch (error) {
       toast({
-        title: 'Error searching periodicals',
+        title: 'Error searching publications',
         description: error instanceof Error ? error.message : 'An unknown error occurred',
         variant: 'destructive'
       });
@@ -92,14 +92,14 @@ export function PeriodicalAdministration() {
       const newPeriodical = await addPeriodical(name);
       toast({
         title: 'Success',
-        description: 'Periodical added successfully',
+        description: 'Publication added successfully',
       });
       await fetchPeriodicals(1);
       setCurrentPage(1);
     } catch (error) {
       toast({
-        title: 'Error adding periodical',
-        description: error instanceof Error ? error.message : 'Failed to add periodical',
+        title: 'Error adding publication',
+        description: error instanceof Error ? error.message : 'Failed to add publication',
         variant: 'destructive'
       });
     }
@@ -112,15 +112,15 @@ export function PeriodicalAdministration() {
       await updatePeriodical(selectedPeriodical.id, name);
       toast({
         title: 'Success',
-        description: 'Periodical updated successfully',
+        description: 'Publication updated successfully',
       });
       setIsEditDialogOpen(false);
       setSelectedPeriodical(null);
       fetchPeriodicals(currentPage);
     } catch (error) {
       toast({
-        title: 'Error updating periodical',
-        description: error instanceof Error ? error.message : 'Failed to update periodical',
+        title: 'Error updating publication',
+        description: error instanceof Error ? error.message : 'Failed to update publication',
         variant: 'destructive'
       });
     }
@@ -133,15 +133,15 @@ export function PeriodicalAdministration() {
       await deletePeriodical(id);
       toast({
         title: 'Success',
-        description: 'Periodical deleted successfully',
+        description: 'Publication deleted successfully',
       });
       setIsEditDialogOpen(false);
       setSelectedPeriodical(null);
       fetchPeriodicals(currentPage);
     } catch (error) {
       toast({
-        title: 'Error deleting periodical',
-        description: error instanceof Error ? error.message : 'Failed to delete periodical',
+        title: 'Error deleting publication',
+        description: error instanceof Error ? error.message : 'Failed to delete publication',
         variant: 'destructive'
       });
     }
@@ -154,10 +154,10 @@ export function PeriodicalAdministration() {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div>
-          <CardTitle>Periodical Management</CardTitle>
+          <CardTitle>Publication Management</CardTitle>
           {!isExpanded && (
             <CardDescription>
-              Click to manage periodicals and search records
+              Click to manage publications and search records
             </CardDescription>
           )}
         </div>
@@ -200,7 +200,7 @@ export function PeriodicalAdministration() {
           {periodicalData.periodicals.length > 0 && (
             <>
               <div className="mt-4">
-                <h3 className="text-sm font-medium mb-2">Found Periodicals:</h3>
+                <h3 className="text-sm font-medium mb-2">Found Publications:</h3>
                 <div className="space-y-2">
                   {periodicalData.periodicals.map((periodical) => (
                     <div 
