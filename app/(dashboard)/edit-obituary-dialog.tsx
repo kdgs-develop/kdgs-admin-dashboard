@@ -70,7 +70,10 @@ const formSchema = z.object({
     .transform((val) => val?.toUpperCase()),
   birthDate: z.coerce.date().optional(),
   birthCityId: z.number().nullable().optional(),
-  deathDate: z.coerce.date().optional(),
+  deathDate: z.date({
+    required_error: "Death date is required",
+    invalid_type_error: "Please select a valid death date",
+  }),
   deathCityId: z.number().nullable().optional(),
   burialCemetery: z.string().optional(),
   cemeteryId: z.number().nullable().optional(),
@@ -112,7 +115,7 @@ const formSchema = z.object({
           .nullable()
           .transform((val) => val?.toUpperCase()),
         familyRelationshipId: z.string().optional(),
-        predeceased: z.boolean()
+        predeceased: z.boolean().default(false)
       })
     )
     .optional(),
@@ -490,7 +493,18 @@ export function EditObituaryDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form 
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              if (errors.deathDate) {
+                toast({
+                  title: "Death Date is required",
+                  description: "Please select a valid death date",
+                  variant: "destructive"
+                });
+              }
+            })} 
+            className="space-y-4"
+          >
             <div className="grid grid-cols-2 gap-4">
               {/* Personal Information */}
               <h3 className="text-lg font-semibold col-span-2">

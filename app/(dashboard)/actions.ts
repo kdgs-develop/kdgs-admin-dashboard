@@ -369,7 +369,6 @@ export async function updateObituaryAction(
 
       // Create new alsoKnownAs
       if (alsoKnownAsData.length > 0) {
-        // Create the alsoKnownAs records using for loop
         for (const aka of alsoKnownAsData) {
           await prisma.alsoKnownAs.create({
             data: {
@@ -383,9 +382,19 @@ export async function updateObituaryAction(
 
       // Update the obituary
       const { id: _, ...updateData } = obituaryData;
+      
+      // Handle batchNumberId specifically
+      if (updateData.batchNumberId === '') {
+        updateData.batchNumberId = null;
+      }
+
       const updatedObituary = await prisma.obituary.update({
         where: { id },
-        data: updateData,
+        data: {
+          ...updateData,
+          // Ensure batchNumberId is properly handled
+          batchNumberId: updateData.batchNumberId || null
+        },
         include: {
           relatives: true,
           alsoKnownAs: true
