@@ -170,7 +170,9 @@ function ComboboxFormField({
                       Create a new location
                     </Button> */}
                   </CommandEmpty>
-                  <CommandGroup>
+                  <CommandGroup className="h-[200px] overflow-y-auto" onWheel={(e) => {
+                    e.currentTarget.scrollTop += e.deltaY;
+                  }}>
                     <CommandItem
                       value="None"
                       onSelect={() => {
