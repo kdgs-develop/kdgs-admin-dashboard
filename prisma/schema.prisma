@@ -144,6 +144,7 @@ enum Role {
   INDEXER // create file number, edit obituaries
   SCANNER // scan obituaries
   PROOFREADER // edit obituaries
+  PROCESS_MANAGER // process obituaries
   ADMIN // create, edit, delete obituaries, genealogists, etc.
 }
 
