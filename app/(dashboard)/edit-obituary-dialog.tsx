@@ -1133,7 +1133,7 @@ export function EditObituaryDialog({
                             handleProofreadChange(checked as boolean);
                           }}
                           disabled={
-                            (role !== 'ADMIN' && role !== 'PROOFREADER') ||
+                            (role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'PROCESS_MANAGER') ||
                             !hasImages
                           }
                         />
