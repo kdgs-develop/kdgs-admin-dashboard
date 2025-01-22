@@ -1,0 +1,1 @@
+DELETE FROM "_prisma_migrations" WHERE migration_name = '20250122035905_add_periodical_city_relation';
