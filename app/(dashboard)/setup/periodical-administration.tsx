@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -7,20 +8,23 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus, Search, Edit, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { getPeriodicals, addPeriodical, searchPeriodicals, updatePeriodical, deletePeriodical } from './actions';
-import AddPeriodicalDialog from './add-periodical-dialog';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Edit, Loader2, Plus, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { addPeriodical, deletePeriodical, getCities, getPeriodicals, searchPeriodicals, updatePeriodical } from './actions';
+import AddPeriodicalDialog from './add-periodical-dialog';
 import EditPeriodicalDialog from './edit-periodical-dialog';
+import { CityWithRelations, PeriodicalWithRelations } from '@/types/prisma';
 
 interface PeriodicalData {
-  periodicals: { id: number; name: string | null }[];
+  periodicals: PeriodicalWithRelations[];
   totalCount: number;
   totalPages: number;
 }
+// Use only Prisma types to include to Periodical types its relationship City
+
+
 
 export function PeriodicalAdministration() {
   const [periodicalData, setPeriodicalData] = useState<PeriodicalData>({
@@ -28,10 +32,11 @@ export function PeriodicalAdministration() {
     totalCount: 0,
     totalPages: 0
   });
+  const [cities, setCities] = useState<CityWithRelations[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchName, setSearchName] = useState('');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedPeriodical, setSelectedPeriodical] = useState<{ id: number; name: string | null } | null>(null);
+  const [selectedPeriodical, setSelectedPeriodical] = useState<PeriodicalWithRelations | null>(null);
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,7 +47,18 @@ export function PeriodicalAdministration() {
     setIsLoading(true);
     try {
       const data = await getPeriodicals(page, itemsPerPage);
-      setPeriodicalData(data);
+      setPeriodicalData({
+        periodicals: data.periodicals.map(p => ({
+          id: p.id,
+          name: p.name,
+          url: p.url,
+          cityId: p.city?.id || null,
+          city: p.city || null,
+          _count: p._count
+        })),
+        totalCount: data.totalCount,
+        totalPages: data.totalPages
+      });
     } catch (error) {
       toast({
         title: 'Error fetching periodicals',
@@ -55,10 +71,27 @@ export function PeriodicalAdministration() {
   };
 
   useEffect(() => {
-    if (isExpanded) {
-      fetchPeriodicals(currentPage);
-    }
-  }, [currentPage, isExpanded]);
+      async function fetchData() {
+        const [periodicalsResult, citiesResult] = await Promise.all([
+          getPeriodicals(currentPage, itemsPerPage),
+          getCities()
+        ]);
+        setPeriodicalData({
+          periodicals: periodicalsResult.periodicals.map(p => ({
+            id: p.id,
+            name: p.name,
+            url: p.url,
+            cityId: p.city?.id || null,
+            city: p.city || null,
+            _count: p._count
+          })),
+          totalCount: periodicalsResult.totalCount,
+          totalPages: periodicalsResult.totalPages
+        });
+        setCities(citiesResult);
+      }
+      fetchData();
+  }, [currentPage, toast]);
 
   const handleSearch = async () => {
     if (!searchName) {
@@ -69,7 +102,18 @@ export function PeriodicalAdministration() {
 
     try {
       const results = await searchPeriodicals(searchName, 1, itemsPerPage);
-      setPeriodicalData(results);
+      setPeriodicalData({
+        periodicals: results.periodicals.map(p => ({
+          id: p.id,
+          name: p.name || '',
+          url: p.url || '',
+          cityId: p.city?.id || null,
+          city: p.city || null,
+          _count: p._count
+        })),
+        totalCount: results.totalCount,
+        totalPages: results.totalPages
+      });
       setCurrentPage(1);
       
       if (results.totalCount === 0) {
@@ -87,9 +131,9 @@ export function PeriodicalAdministration() {
     }
   };
 
-  const handleAddPeriodical = async (name: string) => {
+  const handleAddPeriodical = async (name: string, url?: string | null, cityId?: number | null) => {
     try {
-      const newPeriodical = await addPeriodical(name);
+      const newPeriodical = await addPeriodical(name, url, cityId);
       toast({
         title: 'Success',
         description: 'Publication added successfully',
@@ -105,11 +149,11 @@ export function PeriodicalAdministration() {
     }
   };
 
-  const handleEditPeriodical = async (name: string) => {
+  const handleEditPeriodical = async (name: string, url?: string | null, cityId?: number | null) => {
     if (!selectedPeriodical) return;
     
     try {
-      await updatePeriodical(selectedPeriodical.id, name);
+      await updatePeriodical(selectedPeriodical.id, name, url, cityId);
       toast({
         title: 'Success',
         description: 'Publication updated successfully',
@@ -207,7 +251,35 @@ export function PeriodicalAdministration() {
                       key={periodical.id} 
                       className="p-3 border rounded flex justify-between items-center hover:bg-accent"
                     >
-                      <span className="text-sm">{periodical.name}</span>
+                      <div>
+                        <span className="text-sm">{periodical.name}</span>
+
+                          <span className="ml-2 text-sm text-muted-foreground">
+                            {periodical.url ? `${periodical.url} ` : ''}
+                            
+                            {(periodical.city?.name) && (
+                              <>
+                              (
+                                {periodical.city?.name && (
+                                  <>
+                                    {periodical.city.name}
+                                    {periodical.city.province && ` - ${periodical.city.province}`}
+                                    {periodical.city.country?.name && ` - ${periodical.city.country.name}`}
+                                  </>
+                                )}
+                            
+                              )
+                              </>
+                            )}
+                          </span>
+                          
+                          {periodical._count?.obituaries !== undefined && (
+                            <span title="Number of obituaries" className='text-muted-foreground text-xs'>
+                                    {" "} ({periodical._count.obituaries} obituaries)
+                            </span>
+                          )}
+
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -253,6 +325,7 @@ export function PeriodicalAdministration() {
             onClose={() => setIsDialogOpen(false)}
             onAddPeriodical={handleAddPeriodical}
             initialName={searchName}
+            cities={cities}
           />
 
           <EditPeriodicalDialog
@@ -263,7 +336,8 @@ export function PeriodicalAdministration() {
             }}
             onEditPeriodical={handleEditPeriodical}
             onDeletePeriodical={handleDeletePeriodical}
-            periodical={selectedPeriodical as { id: number; name: string } | null}
+            periodical={selectedPeriodical as PeriodicalWithRelations | null}
+            cities={cities}
           />
         </CardContent>
       )}
