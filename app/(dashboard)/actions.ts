@@ -103,6 +103,7 @@ interface EditObituaryDialogData {
     number: string;
     createdAt: Date;
     createdBy: { fullName: string | null };
+    _count?: { obituaries: number };
   }[];
 }
 
@@ -178,9 +179,8 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
       (fileBox): fileBox is { id: number; year: number; number: number } =>
         fileBox.year !== null && fileBox.number !== null
     );
-
     const batchNumbers = rawBatchNumbers.filter(
-      (batchNumber): batchNumber is { id: string; number: string; createdAt: Date; createdBy: { fullName: string | null } } =>
+      (batchNumber): batchNumber is { id: string; number: string; createdAt: Date; createdBy: { fullName: string | null }; _count: { obituaries: number } } =>
         batchNumber.number !== null && batchNumber.createdBy !== null
     );
 
