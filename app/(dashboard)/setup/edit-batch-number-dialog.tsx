@@ -14,14 +14,15 @@ import * as z from "zod";
 
 const formSchema = z.object({
   number: z.string().min(1, "Batch number is required"),
+  assignedObituaries: z.number().min(1, "Must assign at least 1 obituary").default(25)
 });
 
 type EditBatchNumberDialogProps = {
   isOpen: boolean;
   onClose: () => void;
-  onEditBatchNumber: (number: string) => Promise<void>;
+  onEditBatchNumber: (number: string, assignedObituaries: number) => Promise<void>;
   onDeleteBatchNumber: (id: string) => Promise<void>;
-  batchNumber: { id: string; number: string } | null;
+  batchNumber: { id: string; number: string; assignedObituaries: number } | null;
 };
 
 export default function EditBatchNumberDialog({ 
@@ -37,12 +38,13 @@ export default function EditBatchNumberDialog({
     resolver: zodResolver(formSchema),
     defaultValues: {
       number: batchNumber?.number || "",
+      assignedObituaries: batchNumber?.assignedObituaries || 25,
     },
   });
 
   React.useEffect(() => {
     if (batchNumber) {
-      form.reset({ number: batchNumber.number });
+      form.reset({ number: batchNumber.number, assignedObituaries: batchNumber.assignedObituaries });
     }
   }, [batchNumber, form]);
 
@@ -50,7 +52,7 @@ export default function EditBatchNumberDialog({
     if (!batchNumber) return;
     
     try {
-      await onEditBatchNumber(values.number.trim());
+      await onEditBatchNumber(values.number.trim(), values.assignedObituaries);
       onClose();
     } catch (error) {
       toast({
@@ -82,6 +84,23 @@ export default function EditBatchNumberDialog({
                   <FormLabel>Batch Number</FormLabel>
                   <FormControl>
                     <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="assignedObituaries"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assigned Obituaries</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      {...field} 
+                      onChange={e => field.onChange(parseInt(e.target.value))}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
