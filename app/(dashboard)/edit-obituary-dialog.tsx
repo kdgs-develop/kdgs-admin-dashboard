@@ -1312,7 +1312,7 @@ export function EditObituaryDialog({
                     console.log('Processing batch:', batch);
                     return {
                       id: batch.id,
-                      name: `${batch.number} (${batch._count?.obituaries} of ${batch.assignedObituaries} done), created by ${batch.createdBy?.fullName || 'Unknown'}`
+                      name: `${batch.number} (${batch._count?.obituaries} of ${batch.assignedObituaries} done) Created by ${batch.createdBy?.fullName || 'Unknown'} on ${batch.createdAt.toLocaleDateString()}`
                     };
                   })}
                   onAddItem={async (name) => {
@@ -1321,7 +1321,7 @@ export function EditObituaryDialog({
                     setIsAddBatchNumberDialogOpen(false);
                     return {
                       id: newBatch.id,
-                      name: `${newBatch.number} (0 of ${newBatch.assignedObituaries} done), created by ${newBatch.createdBy?.fullName || 'Unknown'}`
+                      name: `${newBatch.number} (0 of ${newBatch.assignedObituaries} done) Created by ${newBatch.createdBy?.fullName || 'Unknown'} on ${newBatch.createdAt.toLocaleDateString()}`
                     };
                   }}
                 />
