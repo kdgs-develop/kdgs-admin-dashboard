@@ -9,17 +9,22 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
+import { CityWithRelations, PeriodicalWithRelations } from "@/types/prisma";
+import ComboboxFormField from "@/components/ui/combo-form-field";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  url: z.string().optional(),
+  cityId: z.number().nullable().optional()
 });
 
 type EditPeriodicalDialogProps = {
   isOpen: boolean;
   onClose: () => void;
-  onEditPeriodical: (name: string) => Promise<void>;
+  onEditPeriodical: (name: string, url?: string | null, cityId?: number | null) => Promise<void>;
   onDeletePeriodical: (id: number) => Promise<void>;
-  periodical: { id: number; name: string } | null;
+  periodical: PeriodicalWithRelations | null;
+  cities: CityWithRelations[];
 };
 
 function EditPeriodicalDialog({ 
@@ -27,7 +32,8 @@ function EditPeriodicalDialog({
   onClose, 
   onEditPeriodical, 
   onDeletePeriodical, 
-  periodical 
+  periodical,
+  cities 
 }: EditPeriodicalDialogProps) {
   const { toast } = useToast();
 
@@ -35,20 +41,24 @@ function EditPeriodicalDialog({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: periodical?.name || '',
+      url: periodical?.url || '',
+      cityId: periodical?.cityId || null
     },
   });
 
   useEffect(() => {
     if (periodical) {
       form.reset({
-        name: periodical.name,
+        name: periodical.name || '',
+        url: periodical.url || '',
+        cityId: periodical.cityId || null
       });
     }
   }, [periodical, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await onEditPeriodical(values.name);
+      await onEditPeriodical(values.name, values.url, values.cityId);
       onClose();
     } catch (error) {
       toast({
@@ -65,7 +75,7 @@ function EditPeriodicalDialog({
         <DialogHeader>
           <DialogTitle>Edit Periodical</DialogTitle>
           <DialogDescription>
-            Update the name for this periodical.
+            Update the information for this periodical.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -83,6 +93,34 @@ function EditPeriodicalDialog({
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>URL (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <ComboboxFormField
+              control={form.control}
+              name="cityId"
+              label="Location (Optional)"
+              placeholder="Select a location"
+              emptyText="No location found."
+              items={cities.map((city) => ({
+                id: city.id,
+                name: city.name ?? '',
+                province: city.province ?? undefined,
+                country: city.country
+                  ? { name: city.country.name }
+                  : undefined
+              }))}
+            />
             <DialogFooter className="flex justify-between items-center">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -95,7 +133,7 @@ function EditPeriodicalDialog({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the periodical.
+                      This action cannot be undone. This will permanently delete the publication.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
