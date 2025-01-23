@@ -1295,7 +1295,7 @@ export async function getBatchNumbers(page: number, itemsPerPage: number) {
             select: {
               obituaries: true
             }
-          }
+          },
         },
         orderBy: {
           createdAt: 'desc'
@@ -1366,11 +1366,14 @@ export async function searchBatchNumbers(searchTerm: string, page: number, items
   }
 }
 
-export async function updateBatchNumber(id: string, number: string) {
+export async function updateBatchNumber(id: string, number: string, assignedObituaries: number) {
   try {
     const updatedBatchNumber = await prisma.batchNumber.update({
       where: { id },
-      data: { number },
+      data: { 
+        number,
+        assignedObituaries 
+      },
       include: {
         createdBy: {
           select: {
