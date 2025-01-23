@@ -778,6 +778,7 @@ export async function getFileBoxes() {
 }
 
 // Get batch numbers
+// include assignedObituaries
 export async function getBatchNumbers() {
   return prisma.batchNumber.findMany({
     select: { 
@@ -785,13 +786,14 @@ export async function getBatchNumbers() {
       number: true, 
       createdAt: true, 
       createdBy: {
-         select: {
-         fullName: true
+        select: {
+          fullName: true
         }
       },
       _count: {
         select: { obituaries: true }
-      }
+      },
+      assignedObituaries: true
     },
     orderBy: {
       createdAt: 'desc'
