@@ -47,17 +47,6 @@ import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 import { PeriodicalWithRelations } from '@/types/prisma';
 
-interface BatchNumberType {
-  id: string;
-  number: string;
-  createdBy: {
-    fullName: string | null;
-  };
-  _count?: {
-    obituaries: number;
-  };
-}
-
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
   surname: z
@@ -204,6 +193,7 @@ interface EditObituaryDialogProps {
   batchNumbers: {
     id: string;
     number: string;
+    assignedObituaries: number;
     createdAt: Date;
     createdBy: { fullName: string | null };
     _count?: { obituaries: number };
@@ -1322,7 +1312,7 @@ export function EditObituaryDialog({
                     console.log('Processing batch:', batch);
                     return {
                       id: batch.id,
-                      name: `${batch.number} (${batch._count?.obituaries ?? 0} obituaries) - ${batch.createdBy?.fullName || 'Unknown'}`
+                      name: `${batch.number} (${batch._count?.obituaries} of ${batch.assignedObituaries} done), created by ${batch.createdBy?.fullName || 'Unknown'}`
                     };
                   })}
                   onAddItem={async (name) => {
@@ -1331,7 +1321,7 @@ export function EditObituaryDialog({
                     setIsAddBatchNumberDialogOpen(false);
                     return {
                       id: newBatch.id,
-                      name: `${newBatch.number} (0 obituaries) - ${newBatch.createdBy?.fullName || 'Unknown'}`
+                      name: `${newBatch.number} (0 of ${newBatch.assignedObituaries} done), created by ${newBatch.createdBy?.fullName || 'Unknown'}`
                     };
                   }}
                 />
