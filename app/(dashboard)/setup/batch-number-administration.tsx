@@ -18,7 +18,7 @@ import { deleteBatchNumber, getBatchNumbers, searchBatchNumbers, updateBatchNumb
 import EditBatchNumberDialog from './edit-batch-number-dialog';
 
 interface BatchNumberData {
-  batchNumbers: { id: string; number: string; createdBy: { fullName: string | null } }[];
+  batchNumbers: { id: string; number: string; createdBy: { fullName: string | null }; _count?: { obituaries: number } }[];
   totalCount: number;
   totalPages: number;
 }
@@ -209,7 +209,9 @@ export function BatchNumberAdministration() {
                       className="p-3 border rounded flex justify-between items-center hover:bg-accent"
                     >
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium">{batch.number}</span>
+                        <span className="text-sm font-medium">
+                          {batch.number} ({batch._count?.obituaries || 0} obituaries)
+                        </span>
                         <span className="text-sm text-muted-foreground">
                           Created by: {batch.createdBy.fullName || 'Unknown'}
                         </span>
