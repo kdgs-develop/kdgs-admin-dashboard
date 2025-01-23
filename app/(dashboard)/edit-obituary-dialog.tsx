@@ -45,6 +45,7 @@ import {
 } from './images/minio-actions';
 import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
+import { PeriodicalWithRelations } from '@/types/prisma';
 
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
@@ -186,7 +187,7 @@ interface EditObituaryDialogProps {
       country: { name: string } | null;
     };
   }[];
-  periodicals: { id: number; name: string }[];
+  periodicals: { id: number; name: string; city?: { name: string; province: string | null; country: { name: string } | null } | null }[];
   familyRelationships: { id: string; name: string; category: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
   batchNumbers: {
@@ -842,14 +843,36 @@ export function EditObituaryDialog({
                   label="Publication"
                   placeholder="Select a periodical"
                   emptyText="No periodical found."
-                  items={localPeriodicals}
+                  items={localPeriodicals.map((periodical) => ({
+                    id: periodical.id,
+                    name: periodical.name,
+                    city: periodical.city ? {
+                      name: periodical.city.name || '',
+                      province: periodical.city.province || undefined,
+                      country: periodical.city.country ? { name: periodical.city.country.name } : undefined
+                    } : undefined
+                  }))}
                   onAddItem={async (name) => {
                     const newPeriodical = await addPeriodical(name);
-                    setLocalPeriodicals([
-                      ...localPeriodicals,
-                      { id: newPeriodical.id, name: newPeriodical?.name! }
-                    ]);
-                    return { id: newPeriodical.id, name: newPeriodical?.name! };
+                    const formattedPeriodical = {
+                      id: newPeriodical.id,
+                      name: newPeriodical.name || '',
+                      city: newPeriodical.city ? {
+                        name: newPeriodical.city.name || '',
+                        province: newPeriodical.city.province,
+                        country: newPeriodical.city.country
+                      } : null
+                    };
+                    setLocalPeriodicals([...localPeriodicals, formattedPeriodical]);
+                    return {
+                      id: newPeriodical.id,
+                      name: newPeriodical.name || '',
+                      city: newPeriodical.city ? {
+                        name: newPeriodical.city.name || '',
+                        province: newPeriodical.city.province || undefined,
+                        country: newPeriodical.city.country ? { name: newPeriodical.city.country.name } : undefined
+                      } : undefined
+                    };
                   }}
                 />
                 <FormField
