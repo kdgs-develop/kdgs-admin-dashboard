@@ -1,0 +1,6 @@
+-- This is an empty migration file
+-- It acknowledges the changes that are already in the database
+-- AlterTable
+-- ALTER TABLE "Periodical" ADD COLUMN "cityId" SMALLINT,
+-- ADD COLUMN "url" TEXT,
+-- ADD FOREIGN KEY ("cityId") REFERENCES "City"("id"); 
