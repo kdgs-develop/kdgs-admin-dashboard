@@ -116,21 +116,19 @@ function ComboboxFormField({
                 >
                   {field.value
                     ? items.find((item) => item.id === field.value)
-                      ? [
-                          items.find((item) => item.id === field.value)?.name,
-                          items.find((item) => item.id === field.value)
-                            ?.province,
-                          items.find((item) => item.id === field.value)?.country
-                            ?.name,
-                          items.find((item) => item.id === field.value)?.city
-                            ?.name,
-                          items.find((item) => item.id === field.value)?.city
-                            ?.province,
-                          items.find((item) => item.id === field.value)?.city
-                            ?.country?.name
-                        ]
-                          .filter(Boolean)
-                          .join(', ')
+                      ? (() => {
+                          const item = items.find((i) => i.id === field.value);
+                          const locationInfo = item?.city 
+                            ? [
+                                item.city.name,
+                                item.city.province,
+                                item.city.country?.name
+                              ].filter(Boolean).join(' - ')
+                            : '';
+                          return locationInfo 
+                            ? `${item?.name} (${locationInfo})`
+                            : item?.name;
+                        })()
                       : placeholder
                     : placeholder}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -191,15 +189,11 @@ function ComboboxFormField({
                     {items.map((item) => (
                       <CommandItem
                         value={[
-                          item?.name,
-                          item?.province,
-                          item?.country?.name,
-                          item?.city?.name,
-                          item?.city?.province,
-                          item?.city?.country?.name
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
+                          item.name,
+                          item.city?.name,
+                          item.city?.province,
+                          item.city?.country?.name
+                        ].filter(Boolean).join(' ')}
                         key={item.id}
                         onSelect={() => {
                           field.onChange(item.id);
@@ -209,21 +203,21 @@ function ComboboxFormField({
                         <Check
                           className={cn(
                             'mr-2 h-4 w-4',
-                            item.id === field.value
-                              ? 'opacity-100'
-                              : 'opacity-0'
+                            item.id === field.value ? 'opacity-100' : 'opacity-0'
                           )}
                         />
-                        {[
-                          item?.name,
-                          item?.province,
-                          item?.country?.name,
-                          item?.city?.name,
-                          item?.city?.province,
-                          item?.city?.country?.name
-                        ]
-                          .filter(Boolean)
-                          .join(', ')}
+                        <div className="flex flex-col">
+                          <span>{item.name}</span>
+                          {item.city && (
+                            <span className="text-xs text-muted-foreground">
+                              {[
+                                item.city.name,
+                                item.city.province,
+                                item.city.country?.name
+                              ].filter(Boolean).join(' - ')}
+                            </span>
+                          )}
+                        </div>
                       </CommandItem>
                     ))}
                   </CommandGroup>
