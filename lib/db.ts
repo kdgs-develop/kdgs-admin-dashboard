@@ -793,7 +793,7 @@ export async function getBatchNumbers() {
       _count: {
         select: { obituaries: true }
       },
-      assignedObituaries: true
+      assignedObituaries: true,
     },
     orderBy: {
       createdAt: 'desc'
