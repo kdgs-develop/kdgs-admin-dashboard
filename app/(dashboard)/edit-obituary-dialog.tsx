@@ -47,6 +47,17 @@ import { ViewImageDialog } from './images/view-image-dialog';
 import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
 import { PeriodicalWithRelations } from '@/types/prisma';
 
+interface BatchNumberType {
+  id: string;
+  number: string;
+  createdBy: {
+    fullName: string | null;
+  };
+  _count?: {
+    obituaries: number;
+  };
+}
+
 const formSchema = z.object({
   reference: z.string().length(8, 'Reference must be 8 characters'),
   surname: z
@@ -195,6 +206,7 @@ interface EditObituaryDialogProps {
     number: string;
     createdAt: Date;
     createdBy: { fullName: string | null };
+    _count?: { obituaries: number };
   }[];
 }
 
@@ -213,6 +225,7 @@ export function EditObituaryDialog({
 }: EditObituaryDialogProps) {
   console.log('Received obituary data:', obituary);
   console.log('Received obituary AKA data:', obituary.alsoKnownAs);
+  console.log('Received batch numbers:', batchNumbers);
 
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<
@@ -1305,10 +1318,22 @@ export function EditObituaryDialog({
                   label="Batch Number"
                   placeholder="Select a batch number"
                   emptyText="No batch numbers found."
-                  items={batchNumbers.map((batch) => ({
-                    id: batch.id,
-                    name: `${batch.number} (${batch.createdBy.fullName || 'Unknown'})`
-                  }))}
+                  items={batchNumbers.map((batch) => {
+                    console.log('Processing batch:', batch);
+                    return {
+                      id: batch.id,
+                      name: `${batch.number} (${batch._count?.obituaries ?? 0} obituaries) - ${batch.createdBy?.fullName || 'Unknown'}`
+                    };
+                  })}
+                  onAddItem={async (name) => {
+                    const newBatch = await addBatchNumber(name);
+                    console.log('New batch created:', newBatch);
+                    setIsAddBatchNumberDialogOpen(false);
+                    return {
+                      id: newBatch.id,
+                      name: `${newBatch.number} (0 obituaries) - ${newBatch.createdBy?.fullName || 'Unknown'}`
+                    };
+                  }}
                 />
                 <div className="pt-6">
                   <Button
