@@ -1,0 +1,10 @@
+-- AlterTable
+ALTER TABLE "Periodical" 
+ADD COLUMN IF NOT EXISTS "cityId" SMALLINT,
+ADD COLUMN IF NOT EXISTS "url" TEXT;
+
+-- AddForeignKey
+ALTER TABLE "Periodical"
+ADD CONSTRAINT "Periodical_cityId_fkey"
+FOREIGN KEY ("cityId") REFERENCES "City"("id")
+ON DELETE SET NULL ON UPDATE CASCADE;
