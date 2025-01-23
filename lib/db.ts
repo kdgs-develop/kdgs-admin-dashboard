@@ -786,8 +786,13 @@ export async function getBatchNumbers() {
       createdAt: true, 
       createdBy: {
          select: {
-         fullName: true 
-        } } },
+         fullName: true
+        }
+      },
+      _count: {
+        select: { obituaries: true }
+      }
+    },
     orderBy: {
       createdAt: 'desc'
     }
