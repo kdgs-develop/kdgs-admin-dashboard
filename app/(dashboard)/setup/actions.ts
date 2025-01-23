@@ -826,7 +826,18 @@ export async function getPeriodicals(page: number = 1, pageSize: number = 5) {
       orderBy: { name: 'asc' },
       select: {
         id: true,
-        name: true
+        name: true,
+        url: true,
+        city: {
+          include: {
+            country: true
+          }
+        },
+        _count: {
+          select: {
+            obituaries: true
+          }
+        }
       }
     });
 
@@ -863,7 +874,18 @@ export async function searchPeriodicals(
       orderBy: { name: 'asc' },
       select: {
         id: true,
-        name: true
+        name: true,
+        url: true,
+        city: {
+          include: {
+            country: true
+          }
+        },
+        _count: {
+          select: {
+            obituaries: true
+          }
+        }
       }
     });
 
@@ -878,53 +900,76 @@ export async function searchPeriodicals(
   }
 }
 
-export async function addPeriodical(name: string) {
-  return prisma.$transaction(async (prisma) => {
-    // Check if periodical already exists
-    const existing = await prisma.periodical.findFirst({
-      where: { name: { equals: name, mode: 'insensitive' } }
-    });
-
-    if (existing) {
-      throw new Error('A periodical with this name already exists');
+export async function addPeriodical(name: string, url?: string | null, cityId?: number | null) {
+  const existing = await prisma.periodical.findFirst({
+    where: {
+      name: {
+        equals: name,
+        mode: 'insensitive'
+      }
     }
-
-    await prisma.$executeRaw`SELECT setval('periodical_id_seq', COALESCE((SELECT MAX(id) FROM "Periodical"), 1));`;
-    const newPeriodical = await prisma.periodical.create({
-      data: { name }
-    });
-    revalidatePath('/');
-    return newPeriodical;
   });
+
+  if (existing) {
+    throw new Error('A periodical with this name already exists');
+  }
+
+  const periodical = await prisma.periodical.create({
+    data: {
+      name,
+      url: url || null,
+      cityId: cityId || null
+    },
+    include: {
+      city: {
+        include: {
+          country: true
+        }
+      }
+    }
+  });
+
+  revalidatePath('/');
+  return periodical;
 }
 
-export async function updatePeriodical(id: number, name: string) {
-  try {
-    // Check if another periodical exists with the same name
-    const existing = await prisma.periodical.findFirst({
-      where: {
-        AND: [{ name: { equals: name, mode: 'insensitive' } }, { NOT: { id } }]
-      }
-    });
-
-    if (existing) {
-      throw new Error('A periodical with this name already exists');
+export async function updatePeriodical(
+  id: number,
+  name: string,
+  url?: string | null,
+  cityId?: number | null
+) {
+  const existing = await prisma.periodical.findFirst({
+    where: {
+      AND: [
+        { name: { equals: name, mode: 'insensitive' } },
+        { NOT: { id } }
+      ]
     }
+  });
 
-    const periodical = await prisma.periodical.update({
-      where: { id },
-      data: { name }
-    });
-    revalidatePath('/');
-    return periodical;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2002') {
-        throw new Error('A periodical with this name already exists');
-      }
-    }
-    throw error;
+  if (existing) {
+    throw new Error('A periodical with this name already exists');
   }
+
+  const periodical = await prisma.periodical.update({
+    where: { id },
+    data: {
+      name,
+      url: url || null,
+      cityId: cityId || null
+    },
+    include: {
+      city: {
+        include: {
+          country: true
+        }
+      }
+    }
+  });
+
+  revalidatePath('/');
+  return periodical;
 }
 
 export async function deletePeriodical(id: number) {
