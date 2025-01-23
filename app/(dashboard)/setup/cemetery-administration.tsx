@@ -331,33 +331,11 @@ export function CemeteryAdministration() {
             </Button>
           </div>
 
-          {/* Pagination */}
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="py-2 px-3 text-sm">
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+          
 
           {/* Cemetery List */}
           {cemeteries.length > 0 && (
+            <>
             <div className="grid gap-2">
               {cemeteries.map((cemetery) => (
                 <div
@@ -392,6 +370,31 @@ export function CemeteryAdministration() {
                 </div>
               ))}
             </div>
+              {/* Pagination Controls */}
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="py-2 px-3 text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+            </>
           )}
 
           <AddCemeteryDialog
