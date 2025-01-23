@@ -61,12 +61,6 @@
     "typescript": "5.3.3",
     "zod": "^3.23.8"
   },
-  "prettier": {
-    "arrowParens": "always",
-    "singleQuote": true,
-    "tabWidth": 2,
-    "trailingComma": "none"
-  },
   "devDependencies": {
     "ts-node": "^10.9.2"
   }

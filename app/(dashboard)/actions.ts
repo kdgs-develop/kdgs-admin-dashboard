@@ -156,8 +156,15 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
     );
 
     const periodicals = rawPeriodicals.filter(
-      (periodical): periodical is { id: number; name: string } =>
-        periodical.name !== null
+      (periodical): periodical is {
+        id: number;
+        name: string;
+        city: {
+          name: string | null;
+          province: string | null;
+          country: { name: string } | null;
+        } | null;
+      } => periodical.name !== null
     );
 
     const familyRelationships = rawFamilyRelationships.filter(
@@ -440,11 +447,12 @@ export async function addCity(name: string) {
   });
 }
 
-export async function addPeriodical(name: string) {
+export async function addPeriodical(name: string, cityId?: number | null) {
   return prisma.$transaction(async (prisma) => {
     await prisma.$executeRaw`SELECT setval('periodical_id_seq', COALESCE((SELECT MAX(id) FROM "Periodical"), 1));`;
     const newPeriodical = await prisma.periodical.create({
-      data: { name }
+      data: { name, cityId },
+      include: { city: { include: { country: true } } }
     });
     safeRevalidate();
     return newPeriodical;

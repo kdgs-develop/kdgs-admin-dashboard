@@ -96,14 +96,15 @@ model AlsoKnownAs {
 }
 
 model City {
-  id                     Int        @id @default(autoincrement())
+  id                     Int          @id @default(autoincrement())
   name                   String?
   province               String?
   countryId              Int?
   cemeteries             Cemetery[]
-  country                Country?   @relation(fields: [countryId], references: [id])
-  obituaries_birthCityId Obituary[] @relation("birthCityId")
-  obituaries_deathCityId Obituary[] @relation("deathCityId")
+  periodicals            Periodical[]
+  country                Country?     @relation(fields: [countryId], references: [id])
+  obituaries_birthCityId Obituary[]   @relation("birthCityId")
+  obituaries_deathCityId Obituary[]   @relation("deathCityId")
 }
 
 model Country {
@@ -123,6 +124,9 @@ model Cemetery {
 model Periodical {
   id         Int        @id @default(autoincrement())
   name       String?
+  url        String?
+  cityId     Int? // Removed @db.SmallInt to match City.id type
+  city       City?      @relation(fields: [cityId], references: [id])
   obituaries Obituary[]
 }
 
