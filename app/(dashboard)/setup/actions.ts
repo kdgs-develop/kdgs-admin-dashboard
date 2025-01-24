@@ -1279,23 +1279,32 @@ export async function getBatchNumbers(page: number, itemsPerPage: number) {
   try {
     const skip = (page - 1) * itemsPerPage;
     
+    console.log('Fetching batch numbers with counts...');
+    
     const [batchNumbers, totalCount] = await Promise.all([
       prisma.batchNumber.findMany({
         skip,
         take: itemsPerPage,
-        orderBy: {
-          createdAt: 'desc'
-        },
         include: {
           createdBy: {
             select: {
               fullName: true
             }
-          }
+          },
+          _count: {
+            select: {
+              obituaries: true
+            }
+          },
+        },
+        orderBy: {
+          createdAt: 'desc'
         }
       }),
       prisma.batchNumber.count()
     ]);
+
+    console.log('Batch numbers with counts:', JSON.stringify(batchNumbers, null, 2));
 
     return {
       batchNumbers,
@@ -1330,6 +1339,9 @@ export async function searchBatchNumbers(searchTerm: string, page: number, items
             select: {
               fullName: true
             }
+          },
+          _count: {
+            select: { obituaries: true }
           }
         }
       }),
@@ -1354,11 +1366,14 @@ export async function searchBatchNumbers(searchTerm: string, page: number, items
   }
 }
 
-export async function updateBatchNumber(id: string, number: string) {
+export async function updateBatchNumber(id: string, number: string, assignedObituaries: number) {
   try {
     const updatedBatchNumber = await prisma.batchNumber.update({
       where: { id },
-      data: { number },
+      data: { 
+        number,
+        assignedObituaries 
+      },
       include: {
         createdBy: {
           select: {

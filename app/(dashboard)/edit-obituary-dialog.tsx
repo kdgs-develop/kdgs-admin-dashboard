@@ -193,8 +193,10 @@ interface EditObituaryDialogProps {
   batchNumbers: {
     id: string;
     number: string;
+    assignedObituaries: number;
     createdAt: Date;
     createdBy: { fullName: string | null };
+    _count?: { obituaries: number };
   }[];
 }
 
@@ -213,6 +215,7 @@ export function EditObituaryDialog({
 }: EditObituaryDialogProps) {
   console.log('Received obituary data:', obituary);
   console.log('Received obituary AKA data:', obituary.alsoKnownAs);
+  console.log('Received batch numbers:', batchNumbers);
 
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<
@@ -1305,10 +1308,22 @@ export function EditObituaryDialog({
                   label="Batch Number"
                   placeholder="Select a batch number"
                   emptyText="No batch numbers found."
-                  items={batchNumbers.map((batch) => ({
-                    id: batch.id,
-                    name: `${batch.number} (${batch.createdBy.fullName || 'Unknown'})`
-                  }))}
+                  items={batchNumbers.map((batch) => {
+                    console.log('Processing batch:', batch);
+                    return {
+                      id: batch.id,
+                      name: `${batch.number} (${batch._count?.obituaries} of ${batch.assignedObituaries} done) Created by ${batch.createdBy?.fullName || 'Unknown'} on ${batch.createdAt.toLocaleDateString()}`
+                    };
+                  })}
+                  onAddItem={async (name) => {
+                    const newBatch = await addBatchNumber(name);
+                    console.log('New batch created:', newBatch);
+                    setIsAddBatchNumberDialogOpen(false);
+                    return {
+                      id: newBatch.id,
+                      name: `${newBatch.number} (0 of ${newBatch.assignedObituaries} done) Created by ${newBatch.createdBy?.fullName || 'Unknown'} on ${newBatch.createdAt.toLocaleDateString()}`
+                    };
+                  }}
                 />
                 <div className="pt-6">
                   <Button

@@ -18,7 +18,7 @@ import { deleteBatchNumber, getBatchNumbers, searchBatchNumbers, updateBatchNumb
 import EditBatchNumberDialog from './edit-batch-number-dialog';
 
 interface BatchNumberData {
-  batchNumbers: { id: string; number: string; createdBy: { fullName: string | null } }[];
+  batchNumbers: { id: string; number: string; createdBy: { fullName: string | null }, createdAt: Date; _count?: { obituaries: number }; assignedObituaries: number }[];
   totalCount: number;
   totalPages: number;
 }
@@ -32,7 +32,7 @@ export function BatchNumberAdministration() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchNumber, setSearchNumber] = useState('');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedBatchNumber, setSelectedBatchNumber] = useState<{ id: string; number: string } | null>(null);
+  const [selectedBatchNumber, setSelectedBatchNumber] = useState<{ id: string; number: string, assignedObituaries: number } | null>(null);
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -106,11 +106,11 @@ export function BatchNumberAdministration() {
     }
   };
 
-  const handleEditBatchNumber = async (number: string) => {
+  const handleEditBatchNumber = async (number: string, assignedObituaries: number) => {
     if (!selectedBatchNumber) return;
     
     try {
-      await updateBatchNumber(selectedBatchNumber.id, number);
+      await updateBatchNumber(selectedBatchNumber.id, number, assignedObituaries);
       toast({
         title: 'Success',
         description: 'Batch number updated successfully',
@@ -209,9 +209,11 @@ export function BatchNumberAdministration() {
                       className="p-3 border rounded flex justify-between items-center hover:bg-accent"
                     >
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium">{batch.number}</span>
+                        <span className="text-sm font-medium">
+                        {batch.number} ({batch._count?.obituaries || 0} of {batch.assignedObituaries} assigned obituaries)
+                        </span>
                         <span className="text-sm text-muted-foreground">
-                          Created by: {batch.createdBy.fullName || 'Unknown'}
+                          Created by {batch.createdBy.fullName || 'Unknown'} on {batch.createdAt.toLocaleDateString()}
                         </span>
                       </div>
                       <Button

@@ -24,13 +24,14 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 const formSchema = z.object({
-  number: z.string().min(1, 'Batch number is required')
+  number: z.string().min(1, 'Batch number is required'),
+  assignedObituaries: z.number().min(1).default(25)
 });
 
 interface AddBatchNumberDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (batchNumber: string) => Promise<void>;
+  onAdd: (batchNumber: string, assignedObituaries: number) => Promise<void>;
   initialNumber?: string;
 }
 
@@ -43,13 +44,14 @@ export function AddBatchNumberDialog({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      number: initialNumber || ''
+      number: initialNumber || '',
+      assignedObituaries: 25
     }
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await onAdd(values.number);
+      await onAdd(values.number, values.assignedObituaries);
       form.reset();
       onClose();
     } catch (error) {
@@ -78,6 +80,19 @@ export function AddBatchNumberDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Batch Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="assignedObituaries"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assigned Obituaries</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>

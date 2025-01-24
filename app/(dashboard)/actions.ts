@@ -101,8 +101,10 @@ interface EditObituaryDialogData {
   batchNumbers: {
     id: string;
     number: string;
+    assignedObituaries: number;
     createdAt: Date;
     createdBy: { fullName: string | null };
+    _count?: { obituaries: number };
   }[];
 }
 
@@ -178,9 +180,8 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
       (fileBox): fileBox is { id: number; year: number; number: number } =>
         fileBox.year !== null && fileBox.number !== null
     );
-
     const batchNumbers = rawBatchNumbers.filter(
-      (batchNumber): batchNumber is { id: string; number: string; createdAt: Date; createdBy: { fullName: string | null } } =>
+      (batchNumber): batchNumber is { id: string; number: string; createdAt: Date; createdBy: { fullName: string | null }; _count: { obituaries: number }; assignedObituaries: number } =>
         batchNumber.number !== null && batchNumber.createdBy !== null
     );
 
@@ -617,13 +618,14 @@ export async function addFamilyRelationship(name: string) {
   });
 }
 
-export async function addBatchNumber(number: string) {
+export async function addBatchNumber(number: string, assignedObituaries: number = 25) {
   const userData = await getUserDataWithClerkId();
   if (!userData) throw new Error('User not found');
 
   const newBatch = await prisma.batchNumber.create({
     data: {
       number,
+      assignedObituaries,
       createdById: userData.clerkId
     },
     include: {
