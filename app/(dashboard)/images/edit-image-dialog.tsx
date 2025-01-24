@@ -91,7 +91,37 @@ export function EditImageDialog({ image, onClose, onDelete, onRotate, getImageUr
             )}
           </div>
           <div className="flex justify-between mt-4">
-            <Button onClick={handleRotate}>Rotate</Button>
+            <div className="flex gap-2">
+              <Button onClick={handleRotate}>Rotate</Button>
+              <Button 
+                onClick={async () => {
+                  if (image?.name && imageUrl) {
+                    try {
+                      const response = await fetch(imageUrl);
+                      const blob = await response.blob();
+                      // Create a new blob with the correct filename
+                      const newBlob = new Blob([blob], { type: blob.type });
+                      const url = window.URL.createObjectURL(newBlob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      const fileName = image.name;
+                      console.log('Downloading file:', fileName);
+                      link.download = fileName;
+                      // Hide link
+                      link.style.display = 'none';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(url);
+                    } catch (error) {
+                      console.error('Download error:', error);
+                    }
+                  }
+                }}
+              >
+                Download
+              </Button>
+            </div>
             <Button variant="destructive" onClick={handleDelete}>Delete</Button>
           </div>
         </DialogContent>
