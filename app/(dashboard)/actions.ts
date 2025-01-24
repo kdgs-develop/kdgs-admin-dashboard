@@ -101,6 +101,7 @@ interface EditObituaryDialogData {
   batchNumbers: {
     id: string;
     number: string;
+    assignedObituaries: number;
     createdAt: Date;
     createdBy: { fullName: string | null };
     _count?: { obituaries: number };
