@@ -1431,3 +1431,50 @@ export async function deleteBatchNumber(id: string) {
     throw error;
   }
 }
+
+export async function cleanupOrphanedGenealogists() {
+  try {
+    const genealogists = await prisma.genealogist.findMany({
+      select: {
+        id: true,
+        clerkId: true,
+        fullName: true,
+      },
+    });
+
+    const cleanupResults = {
+      total: genealogists.length,
+      cleaned: 0,
+      details: [] as string[],
+    };
+
+    for (const genealogist of genealogists) {
+      try {
+        await clerkClient().users.getUser(genealogist.clerkId);
+      } catch (error) {
+        if ((error as any).status === 404) {
+          // First, delete all reports associated with this genealogist
+          await prisma.report.deleteMany({
+            where: { userId: genealogist.clerkId },
+          });
+
+          // Then delete the genealogist
+          await prisma.genealogist.delete({
+            where: { id: genealogist.id },
+          });
+
+          cleanupResults.cleaned++;
+          cleanupResults.details.push(
+            `Deleted orphaned genealogist: ${genealogist.fullName || genealogist.id}`
+          );
+        }
+      }
+    }
+
+    console.log("Cleanup results:", cleanupResults);
+    return cleanupResults;
+  } catch (error) {
+    console.error("Error cleaning up orphaned genealogists:", error);
+    throw error;
+  }
+}

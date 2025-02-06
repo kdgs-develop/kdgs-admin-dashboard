@@ -1,62 +1,63 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import { useToast } from '@/hooks/use-toast';
-import emailjs from '@emailjs/browser';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Role } from '@prisma/client';
-import { Edit2, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import * as z from 'zod';
+  TableRow,
+} from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import emailjs from "@emailjs/browser";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Role } from "@prisma/client";
+import { Edit2, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import * as z from "zod";
 import {
   createGenealogist,
   deleteGenealogist,
   getGenealogists,
   updateGenealogist,
-  updateGenealogistPassword
-} from './actions';
-import { DeleteConfirmationDialog } from './delete-confirmation-dialog';
+  updateGenealogistPassword,
+  cleanupOrphanedGenealogists,
+} from "./actions";
+import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
 
 interface Genealogist {
   id: number;
@@ -67,12 +68,12 @@ interface Genealogist {
 }
 
 const formSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Invalid email address'),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
-  role: z.enum(['VIEWER', 'SCANNER', 'INDEXER', 'PROOFREADER', 'ADMIN']),
-  password: z.string().min(8, 'Password must be at least 8 characters')
+  role: z.enum(["VIEWER", "SCANNER", "INDEXER", "PROOFREADER", "ADMIN"]),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -86,8 +87,8 @@ export function GenealogistAdministration() {
   const [genealogists, setGenealogists] = useState<Genealogist[]>([]);
   const [editingGenealogist, setEditingGenealogist] =
     useState<Genealogist | null>(null);
-  const [editPhone, setEditPhone] = useState('');
-  const [editRole, setEditRole] = useState('');
+  const [editPhone, setEditPhone] = useState("");
+  const [editRole, setEditRole] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [emailDetails, setEmailDetails] = useState<{
     to: string;
@@ -98,7 +99,7 @@ export function GenealogistAdministration() {
   } | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<
-    'delete' | 'newPassword' | null
+    "delete" | "newPassword" | null
   >(null);
   const [selectedGenealogist, setSelectedGenealogist] =
     useState<Genealogist | null>(null);
@@ -110,13 +111,13 @@ export function GenealogistAdministration() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      role: 'VIEWER',
-      password: ''
-    }
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      role: "VIEWER",
+      password: "",
+    },
   });
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -126,13 +127,32 @@ export function GenealogistAdministration() {
       const fetchedGenealogists = await getGenealogists();
       setGenealogists(fetchedGenealogists);
     } catch (error) {
-      console.error('Error fetching genealogists:', error);
-      toast({ title: 'Error fetching genealogists', variant: 'destructive' });
+      console.error("Error fetching genealogists:", error);
+      toast({ title: "Error fetching genealogists", variant: "destructive" });
     }
   };
 
   useEffect(() => {
-    fetchGenealogists();
+    const initializeAdminPanel = async () => {
+      try {
+        // First cleanup orphaned records
+        const cleanupResults = await cleanupOrphanedGenealogists();
+        console.log("Cleanup completed:", cleanupResults);
+
+        // Then fetch the updated list
+        const updatedGenealogists = await getGenealogists();
+        setGenealogists(updatedGenealogists);
+      } catch (error) {
+        console.error("Error initializing admin panel:", error);
+        toast({
+          title: "Error initializing admin panel",
+          description: "Failed to cleanup orphaned records",
+          variant: "destructive",
+        });
+      }
+    };
+
+    initializeAdminPanel();
   }, []);
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
@@ -140,12 +160,12 @@ export function GenealogistAdministration() {
   const generateSecurePassword = () => {
     const length = 12;
     const charset =
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';
-    let password = '';
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+    let password = "";
     for (let i = 0; i < length; i++) {
       password += charset.charAt(Math.floor(Math.random() * charset.length));
     }
-    form.setValue('password', password);
+    form.setValue("password", password);
     return password;
   };
 
@@ -155,9 +175,9 @@ export function GenealogistAdministration() {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        phone: data.phone || '',
+        phone: data.phone || "",
         role: data.role,
-        password: data.password
+        password: data.password,
       });
 
       if (newGenealogist && newGenealogist.email) {
@@ -167,24 +187,24 @@ export function GenealogistAdministration() {
             fullName:
               newGenealogist.fullName || `${data.firstName} ${data.lastName}`,
             role: newGenealogist.role || data.role,
-            id: newGenealogist.id
+            id: newGenealogist.id,
           },
           data.password,
           false
         );
       } else {
-        throw new Error('Failed to create genealogist or email is missing');
+        throw new Error("Failed to create genealogist or email is missing");
       }
 
-      toast({ title: 'Genealogist created successfully' });
+      toast({ title: "Genealogist created successfully" });
       fetchGenealogists();
       form.reset();
     } catch (error) {
-      console.error('Error creating genealogist:', error);
+      console.error("Error creating genealogist:", error);
       toast({
-        title: 'Error creating genealogist',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive'
+        title: "Error creating genealogist",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
       });
     }
   };
@@ -194,8 +214,8 @@ export function GenealogistAdministration() {
     setIsSending(true);
     try {
       if (!details || !details.to) {
-        console.error('Email details:', details);
-        throw new Error('Recipient email is missing');
+        console.error("Email details:", details);
+        throw new Error("Recipient email is missing");
       }
 
       emailjs.init(publicKey);
@@ -206,27 +226,27 @@ export function GenealogistAdministration() {
         password: details.password,
         role: details.role,
         dashboard_url: dashboard_url,
-        is_resend: details.isResend
+        is_resend: details.isResend,
       };
 
-      console.log('Sending email with params:', templateParams);
+      console.log("Sending email with params:", templateParams);
 
       const result = await emailjs.send(serviceId, templateId, templateParams);
 
-      if (result.text !== 'OK') {
-        throw new Error('Failed to send email');
+      if (result.text !== "OK") {
+        throw new Error("Failed to send email");
       }
 
       toast({
-        title: details.isResend ? 'New password sent' : 'Welcome email sent',
-        description: `Email sent successfully to ${details.to}`
+        title: details.isResend ? "New password sent" : "Welcome email sent",
+        description: `Email sent successfully to ${details.to}`,
       });
     } catch (error) {
-      console.error('Error sending email:', error);
+      console.error("Error sending email:", error);
       toast({
-        title: 'Error sending email',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive'
+        title: "Error sending email",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
       });
     } finally {
       setIsSending(false);
@@ -244,7 +264,7 @@ export function GenealogistAdministration() {
     isResend: boolean = false
   ) => {
     if (!genealogist.email) {
-      throw new Error('Genealogist email is missing');
+      throw new Error("Genealogist email is missing");
     }
 
     const details = {
@@ -252,7 +272,7 @@ export function GenealogistAdministration() {
       name: genealogist.fullName,
       password: password,
       role: genealogist.role,
-      isResend: isResend
+      isResend: isResend,
     };
 
     setEmailDetails(details);
@@ -261,13 +281,13 @@ export function GenealogistAdministration() {
 
   const handleDeleteGenealogist = (genealogist: Genealogist) => {
     setSelectedGenealogist(genealogist);
-    setConfirmAction('delete');
+    setConfirmAction("delete");
     setIsConfirmDialogOpen(true);
   };
 
   const handleSendNewPassword = (genealogist: Genealogist) => {
     setSelectedGenealogist(genealogist);
-    setConfirmAction('newPassword');
+    setConfirmAction("newPassword");
     setIsConfirmDialogOpen(true);
   };
 
@@ -275,25 +295,25 @@ export function GenealogistAdministration() {
     if (!selectedGenealogist) return;
 
     try {
-      if (confirmAction === 'newPassword') {
+      if (confirmAction === "newPassword") {
         const newPassword = generateSecurePassword();
         await updateGenealogistPassword(selectedGenealogist.id, newPassword);
         await sendWelcomeEmail(
           {
             email: selectedGenealogist.email,
-            fullName: selectedGenealogist.fullName || 'Genealogist',
-            role: selectedGenealogist.role || 'Unknown',
-            id: selectedGenealogist.id
+            fullName: selectedGenealogist.fullName || "Genealogist",
+            role: selectedGenealogist.role || "Unknown",
+            id: selectedGenealogist.id,
           },
           newPassword,
           true
         );
-      } else if (confirmAction === 'delete') {
+      } else if (confirmAction === "delete") {
         await deleteGenealogist(selectedGenealogist.id);
       }
       fetchGenealogists();
     } catch (error) {
-      console.error('Error in handleConfirmAction:', error);
+      console.error("Error in handleConfirmAction:", error);
       throw error; // Rethrow the error to be caught in handleConfirmAction
     } finally {
       setIsConfirmDialogOpen(false);
@@ -304,8 +324,8 @@ export function GenealogistAdministration() {
 
   const openEditDialog = (genealogist: Genealogist) => {
     setEditingGenealogist(genealogist);
-    setEditPhone(genealogist.phone || '');
-    setEditRole(genealogist.role || '');
+    setEditPhone(genealogist.phone || "");
+    setEditRole(genealogist.role || "");
     setIsEditDialogOpen(true);
   };
 
@@ -316,19 +336,37 @@ export function GenealogistAdministration() {
       await updateGenealogist({
         id: editingGenealogist.id,
         phone: editPhone,
-        role: editRole as Role
+        role: editRole as Role,
       });
-      toast({ title: 'Genealogist updated successfully' });
+      toast({ title: "Genealogist updated successfully" });
       fetchGenealogists();
       setIsEditDialogOpen(false);
     } catch (error) {
-      toast({ title: 'Error updating genealogist', variant: 'destructive' });
+      toast({ title: "Error updating genealogist", variant: "destructive" });
+    }
+  };
+
+  const handleManualCleanup = async () => {
+    try {
+      await cleanupOrphanedGenealogists();
+      await fetchGenealogists();
+      toast({
+        title: "Cleanup completed",
+        description: "Successfully removed orphaned records",
+      });
+    } catch (error) {
+      console.error("Error during manual cleanup:", error);
+      toast({
+        title: "Error during cleanup",
+        description: "Failed to cleanup orphaned records",
+        variant: "destructive",
+      });
     }
   };
 
   return (
     <Card className="w-[calc(100%)]">
-      <CardHeader 
+      <CardHeader
         className="cursor-pointer flex flex-row items-center justify-between"
         onClick={() => setIsExpanded(!isExpanded)}
       >
@@ -351,8 +389,20 @@ export function GenealogistAdministration() {
       {isExpanded && (
         <CardContent>
           <div className="space-y-8">
+            <div className="flex justify-end mb-4">
+              <Button
+                onClick={handleManualCleanup}
+                variant="outline"
+                className="text-sm"
+              >
+                Update Genealogists List
+              </Button>
+            </div>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -459,7 +509,7 @@ export function GenealogistAdministration() {
                             <FormControl>
                               <Input
                                 placeholder="Password"
-                                type={showPassword ? 'text' : 'password'}
+                                type={showPassword ? "text" : "password"}
                                 {...field}
                               />
                             </FormControl>
@@ -483,7 +533,14 @@ export function GenealogistAdministration() {
                     )}
                   />
                 </div>
-                <div className="flex justify-end mt-4">
+                <div className="flex justify-end mt-4 space-x-2">
+                  <Button
+                    onClick={handleManualCleanup}
+                    variant="outline"
+                    className="text-sm"
+                  >
+                    Refresh Genealogists List
+                  </Button>
                   <Button
                     type="submit"
                     className="w-full md:w-auto"
@@ -509,10 +566,10 @@ export function GenealogistAdministration() {
                 <TableBody>
                   {genealogists.map((genealogist) => (
                     <TableRow key={genealogist.id}>
-                      <TableCell>{genealogist.fullName || 'N/A'}</TableCell>
+                      <TableCell>{genealogist.fullName || "N/A"}</TableCell>
                       <TableCell>{genealogist.email}</TableCell>
-                      <TableCell>{genealogist.phone || 'N/A'}</TableCell>
-                      <TableCell>{genealogist.role || 'N/A'}</TableCell>
+                      <TableCell>{genealogist.phone || "N/A"}</TableCell>
+                      <TableCell>{genealogist.role || "N/A"}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
                           <Button
@@ -520,7 +577,7 @@ export function GenealogistAdministration() {
                             size="sm"
                             onClick={() => openEditDialog(genealogist)}
                             disabled={
-                              genealogist.email === 'kdgs.develop@gmail.com'
+                              genealogist.email === "kdgs.develop@gmail.com"
                             }
                           >
                             <Edit2 className="h-4 w-4" />
@@ -530,7 +587,7 @@ export function GenealogistAdministration() {
                             size="sm"
                             onClick={() => handleSendNewPassword(genealogist)}
                             disabled={
-                              genealogist.email === 'kdgs.develop@gmail.com'
+                              genealogist.email === "kdgs.develop@gmail.com"
                             }
                           >
                             Send New Password
@@ -540,7 +597,7 @@ export function GenealogistAdministration() {
                             size="sm"
                             onClick={() => handleDeleteGenealogist(genealogist)}
                             disabled={
-                              genealogist.email === 'kdgs.develop@gmail.com'
+                              genealogist.email === "kdgs.develop@gmail.com"
                             }
                           >
                             Delete
@@ -557,7 +614,7 @@ export function GenealogistAdministration() {
               isOpen={isConfirmDialogOpen}
               onClose={() => setIsConfirmDialogOpen(false)}
               onConfirm={handleConfirmAction}
-              action={confirmAction as 'delete' | 'newPassword'}
+              action={confirmAction as "delete" | "newPassword"}
             />
 
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
