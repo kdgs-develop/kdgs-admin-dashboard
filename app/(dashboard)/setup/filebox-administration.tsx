@@ -251,6 +251,34 @@ export function FileBoxAdministration() {
               <Search className="mr-2 h-4 w-4" />
               Search
             </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  const fetchedFileBoxes = await getFileBoxes();
+                  const fileBoxesWithCounts = await Promise.all(
+                    fetchedFileBoxes.map(async (box) => {
+                      const count = await getObituaryCountForFileBox(box.id);
+                      return { ...box, obituaryCount: count };
+                    })
+                  );
+                  setFileBoxes(fileBoxesWithCounts);
+                  setSearchYear("");
+                  setSearchNumber("");
+                } catch (error) {
+                  toast({
+                    title: "Error fetching file boxes",
+                    description:
+                      error instanceof Error
+                        ? error.message
+                        : "An unknown error occurred",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              variant="secondary"
+            >
+              Show All
+            </Button>
             <Button onClick={handleOpenDialog} variant="outline">
               <Plus className="mr-2 h-4 w-4" />
               Add New
