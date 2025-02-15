@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { ChevronDown, ChevronUp, Edit, Plus, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { ChevronDown, ChevronUp, Edit, Plus, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   addFileBox,
   deleteFileBox,
@@ -20,18 +20,18 @@ import {
   getOpenFileBoxId,
   searchFileBoxes,
   setOpenFileBoxId,
-  updateFileBox
-} from './actions';
-import AddFileBoxDialog from './add-filebox-dialog';
-import EditFileBoxDialog from './edit-filebox-dialog';
+  updateFileBox,
+} from "./actions";
+import AddFileBoxDialog from "./add-filebox-dialog";
+import EditFileBoxDialog from "./edit-filebox-dialog";
 
 export function FileBoxAdministration() {
   const [fileBoxes, setFileBoxes] = useState<
     { id: number; year: number; number: number; obituaryCount: number }[]
   >([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchYear, setSearchYear] = useState('');
-  const [searchNumber, setSearchNumber] = useState('');
+  const [searchYear, setSearchYear] = useState("");
+  const [searchNumber, setSearchNumber] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedFileBox, setSelectedFileBox] = useState<{
     id: number;
@@ -57,12 +57,12 @@ export function FileBoxAdministration() {
         setFileBoxes(fileBoxesWithCounts);
       } catch (error) {
         toast({
-          title: 'Error fetching file boxes',
+          title: "Error fetching file boxes",
           description:
             error instanceof Error
               ? error.message
-              : 'An unknown error occurred',
-          variant: 'destructive'
+              : "An unknown error occurred",
+          variant: "destructive",
         });
       }
     }
@@ -73,12 +73,12 @@ export function FileBoxAdministration() {
         setCurrentOpenFileBoxId(openFileBoxId);
       } catch (error) {
         toast({
-          title: 'Error fetching current open file box',
+          title: "Error fetching current open file box",
           description:
             error instanceof Error
               ? error.message
-              : 'An unknown error occurred',
-          variant: 'destructive'
+              : "An unknown error occurred",
+          variant: "destructive",
         });
       }
     }
@@ -90,9 +90,9 @@ export function FileBoxAdministration() {
   const handleSearch = async () => {
     if (!searchYear && !searchNumber) {
       toast({
-        title: 'Search Error',
-        description: 'Please enter a year or number to search',
-        variant: 'destructive'
+        title: "Search Error",
+        description: "Please enter a year or number to search",
+        variant: "destructive",
       });
       return;
     }
@@ -111,10 +111,10 @@ export function FileBoxAdministration() {
       setFileBoxes(resultsWithCounts);
     } catch (error) {
       toast({
-        title: 'Error searching file boxes',
+        title: "Error searching file boxes",
         description:
-          error instanceof Error ? error.message : 'An unknown error occurred',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
       });
     }
   };
@@ -123,20 +123,26 @@ export function FileBoxAdministration() {
     try {
       const newFileBox = await addFileBox(year, number);
       const count = await getObituaryCountForFileBox(newFileBox.id);
+
+      // Set the new file box as the current open one
+      await setOpenFileBoxId(newFileBox.id);
+      setCurrentOpenFileBoxId(newFileBox.id);
+
       setFileBoxes((prev) => [
         ...prev,
-        { ...newFileBox, obituaryCount: count }
+        { ...newFileBox, obituaryCount: count },
       ]);
+
       toast({
-        title: 'Success',
-        description: 'File box added successfully'
+        title: "Success",
+        description: "New file box created and set as current",
       });
     } catch (error) {
       toast({
-        title: 'Error adding file box',
+        title: "Error adding file box",
         description:
-          error instanceof Error ? error.message : 'Failed to add file box',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "Failed to add file box",
+        variant: "destructive",
       });
     }
   };
@@ -159,17 +165,17 @@ export function FileBoxAdministration() {
         )
       );
       toast({
-        title: 'Success',
-        description: 'File box updated successfully'
+        title: "Success",
+        description: "File box updated successfully",
       });
       setIsEditDialogOpen(false);
       setSelectedFileBox(null);
     } catch (error) {
       toast({
-        title: 'Error updating file box',
+        title: "Error updating file box",
         description:
-          error instanceof Error ? error.message : 'Failed to update file box',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "Failed to update file box",
+        variant: "destructive",
       });
     }
   };
@@ -181,41 +187,23 @@ export function FileBoxAdministration() {
       await deleteFileBox(id);
       setFileBoxes((prev) => prev.filter((box) => box.id !== id));
       toast({
-        title: 'Success',
-        description: 'File box deleted successfully'
+        title: "Success",
+        description: "File box deleted successfully",
       });
       setIsEditDialogOpen(false);
       setSelectedFileBox(null);
     } catch (error) {
       toast({
-        title: 'Error deleting file box',
+        title: "Error deleting file box",
         description:
-          error instanceof Error ? error.message : 'Failed to delete file box',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "Failed to delete file box",
+        variant: "destructive",
       });
     }
   };
 
   const handleOpenDialog = () => {
     setIsDialogOpen(true);
-  };
-
-  const checkAndCreateNewFileBox = async (box: {
-    id: number;
-    year: number;
-    number: number;
-    obituaryCount: number;
-  }) => {
-    if (box.year === 0 && box.number === 0) {
-      return;
-    }
-
-    if (box.obituaryCount >= 950) {
-      const year = new Date().getFullYear();
-      const existingBoxes = fileBoxes.filter((b) => b.year === year);
-      const newNumber = existingBoxes.length > 0 ? existingBoxes.length + 1 : 1;
-      await handleAddFileBox(year, newNumber);
-    }
   };
 
   return (
@@ -274,7 +262,6 @@ export function FileBoxAdministration() {
               <h3 className="text-sm font-medium mb-2">Found File Boxes:</h3>
               <div className="grid grid-cols-3 gap-2">
                 {fileBoxes.map((box) => {
-                  checkAndCreateNewFileBox(box);
                   return (
                     <div
                       key={box.id}
@@ -285,9 +272,13 @@ export function FileBoxAdministration() {
                         Number: {box.number}, <br />
                         Obituaries: {box.obituaryCount} <br />
                         {box.id === currentOpenFileBoxId ? (
-                          <span className="text-green-500 font-semibold">Open</span>
+                          <span className="text-green-500 font-semibold">
+                            Open
+                          </span>
                         ) : (
-                          <span className="text-red-500 font-semibold">Closed</span>
+                          <span className="text-red-500 font-semibold">
+                            Closed
+                          </span>
                         )}
                       </span>
                       <div className="flex gap-2 mt-2 justify-end">
@@ -311,17 +302,17 @@ export function FileBoxAdministration() {
                                 await setOpenFileBoxId(box.id);
                                 setCurrentOpenFileBoxId(box.id);
                                 toast({
-                                  title: 'Success',
-                                  description: 'File box set as open'
+                                  title: "Success",
+                                  description: "File box set as open",
                                 });
                               } catch (error) {
                                 toast({
-                                  title: 'Error setting file box as open',
+                                  title: "Error setting file box as open",
                                   description:
                                     error instanceof Error
                                       ? error.message
-                                      : 'An unknown error occurred',
-                                  variant: 'destructive'
+                                      : "An unknown error occurred",
+                                  variant: "destructive",
                                 });
                               }
                             }}
