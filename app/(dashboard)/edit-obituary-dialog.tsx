@@ -98,18 +98,7 @@ const formSchema = z.object({
           .string()
           .nullable()
           .transform((val) => val?.toUpperCase()),
-        givenNames: z
-          .string()
-          .nullable()
-          .transform((val) =>
-            val
-              ?.split(" ")
-              .map(
-                (name) =>
-                  name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
-              )
-              .join(" ")
-          ),
+        givenNames: z.string().nullable(),
         relationship: z
           .string()
           .nullable()
@@ -396,20 +385,44 @@ export function EditObituaryDialog({
     }
   };
 
+  const formatName = (name: string) => {
+    return name
+      .split(/(\([^)]+\))/)
+      .map((part) => {
+        if (part.startsWith("(") && part.endsWith(")")) {
+          // Handle text within brackets
+          const innerText = part.slice(1, -1);
+          return `(${innerText
+            .split(" ")
+            .map(
+              (word) =>
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join(" ")})`;
+        }
+        // Handle text outside brackets
+        return part
+          .split(" ")
+          .map(
+            (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          )
+          .join(" ");
+      })
+      .join("");
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
       const { relatives, alsoKnownAs, ...obituaryData } = values;
 
-      // Prepare relatives data without obituaryId
-      const relativesData =
-        relatives?.map((relative) => ({
-          surname: relative.surname || "",
-          givenNames: relative.givenNames || "",
-          relationship: relative.relationship || "",
-          familyRelationshipId: relative.familyRelationshipId || null,
-          predeceased: relative.predeceased,
-        })) || [];
+      // Format relatives' names
+      const formattedRelatives = relatives?.map((relative) => ({
+        ...relative,
+        givenNames: relative.givenNames
+          ? formatName(relative.givenNames)
+          : null,
+      }));
 
       // Prepare alsoKnownAs data
       const alsoKnownAsData =
@@ -438,9 +451,12 @@ export function EditObituaryDialog({
       // Update the obituary
       const updatedObituary = await updateObituaryAction(
         obituary.id,
-        obituaryData,
-        relativesData,
-        alsoKnownAsData
+        {
+          ...obituaryData,
+          relatives: formattedRelatives,
+        },
+        formattedRelatives || [],
+        alsoKnownAsData || []
       );
 
       if (!updatedObituary) {
@@ -576,7 +592,30 @@ export function EditObituaryDialog({
                     <FormItem>
                       <FormLabel className="text-xs">Given Names</FormLabel>
                       <FormControl>
-                        <Input {...field} className="h-8 text-sm capitalize" />
+                        <Input
+                          {...field}
+                          className="h-8 text-sm"
+                          onChange={(e) => {
+                            const formatted = e.target.value
+                              .split(" ")
+                              .map((word) => {
+                                if (word.startsWith("(")) {
+                                  // Capitalize after opening parenthesis
+                                  return (
+                                    "(" +
+                                    word.charAt(1).toUpperCase() +
+                                    word.slice(2)
+                                  );
+                                }
+                                // Capitalize first letter of each word, keep rest as typed
+                                return (
+                                  word.charAt(0).toUpperCase() + word.slice(1)
+                                );
+                              })
+                              .join(" ");
+                            field.onChange(formatted);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -711,17 +750,32 @@ export function EditObituaryDialog({
                         <FormControl>
                           <Input
                             {...field}
-                            className="h-8 text-sm capitalize"
+                            className="h-8 text-sm"
                             value={field.value || ""}
                             onChange={(e) => {
                               const formatted = e.target.value
-                                .split(" ")
-                                .map(
-                                  (name) =>
-                                    name.charAt(0).toUpperCase() +
-                                    name.slice(1).toLowerCase()
-                                )
-                                .join(" ");
+                                .split(/(\([^)]+\))/) // Split on parentheses content
+                                .map((part) => {
+                                  if (
+                                    part.startsWith("(") &&
+                                    part.endsWith(")")
+                                  ) {
+                                    // Keep everything inside parentheses exactly as typed
+                                    return part;
+                                  }
+                                  // Only capitalize words outside parentheses, preserve spaces
+                                  return part
+                                    .split(" ")
+                                    .map((word) => {
+                                      if (!word) return word; // Preserve empty strings (spaces)
+                                      return (
+                                        word.charAt(0).toUpperCase() +
+                                        word.slice(1).toLowerCase()
+                                      );
+                                    })
+                                    .join(" "); // Join with single space to preserve user's spacing
+                                })
+                                .join(""); // Join without adding any extra spaces
                               field.onChange(formatted);
                             }}
                           />
@@ -985,19 +1039,22 @@ export function EditObituaryDialog({
                             value={field.value || ""}
                             onChange={(e) => {
                               const formatted = e.target.value
-                                .split(/(\(|\)|\s+)/) // Split on spaces and brackets
-                                .filter((word) => word.trim()) // Remove empty strings
+                                .split(" ")
                                 .map((word) => {
-                                  if (word === "(" || word === ")") return word;
+                                  if (word.startsWith("(")) {
+                                    // Capitalize after opening parenthesis
+                                    return (
+                                      "(" +
+                                      word.charAt(1).toUpperCase() +
+                                      word.slice(2)
+                                    );
+                                  }
+                                  // Capitalize first letter of each word, keep rest as typed
                                   return (
-                                    word.charAt(0).toUpperCase() +
-                                    word.slice(1).toLowerCase()
+                                    word.charAt(0).toUpperCase() + word.slice(1)
                                   );
                                 })
-                                .join(" ")
-                                .replace(/\s*\(\s*/g, " (") // Clean up spaces around brackets
-                                .replace(/\s*\)\s*/g, ") ")
-                                .trim();
+                                .join(" ");
                               field.onChange(formatted);
                             }}
                           />
