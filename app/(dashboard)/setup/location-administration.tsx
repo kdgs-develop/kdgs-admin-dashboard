@@ -15,6 +15,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectScrollUpButton,
+  SelectScrollDownButton,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -25,7 +27,7 @@ import {
   Plus,
   Search,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   addCity,
   deleteCity,
@@ -57,6 +59,21 @@ export function LocationAdministration() {
     undefined
   );
   const [isSearchMode, setIsSearchMode] = useState(false);
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+
+  const refreshCountries = useCallback(async () => {
+    try {
+      const updatedCountries = await getCountries(1, 1000);
+      setCountries(updatedCountries.countries);
+    } catch (error) {
+      console.error("Error fetching countries:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch countries",
+        variant: "destructive",
+      });
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -99,14 +116,6 @@ export function LocationAdministration() {
     searchCountryId,
     toast,
   ]);
-
-  useEffect(() => {
-    async function fetchCountries() {
-      const updatedCountries = await getCountries(1, 1000); // Large pageSize to get all countries
-      setCountries(updatedCountries.countries);
-    }
-    fetchCountries();
-  }, []); // Only fetch once on mount
 
   const handleAddCity = async (
     name: string | null,
@@ -254,6 +263,12 @@ export function LocationAdministration() {
               <Select
                 value={searchCountryId}
                 onValueChange={setSearchCountryId}
+                onOpenChange={(open) => {
+                  setIsCountryDropdownOpen(open);
+                  if (open) {
+                    refreshCountries();
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a country" />
