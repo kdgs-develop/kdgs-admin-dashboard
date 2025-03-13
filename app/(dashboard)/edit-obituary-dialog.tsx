@@ -1,54 +1,54 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import ComboboxFormField from '@/components/ui/combo-form-field';
-import { DatePicker } from '@/components/ui/date-picker';
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import ComboboxFormField from "@/components/ui/combo-form-field";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/hooks/use-toast';
-import { getUserData } from '@/lib/db';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { PlusCircle, Trash2 } from 'lucide-react';
-import { BucketItem } from 'minio';
-import { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
+import { getUserData } from "@/lib/db";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { PlusCircle, Trash2 } from "lucide-react";
+import { BucketItem } from "minio";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import {
   addBatchNumber,
   addFamilyRelationship,
   addPeriodical,
   addTitle,
-  updateObituaryAction
-} from './actions';
-import { AddBatchNumberDialog } from './add-batch-number-dialog';
+  updateObituaryAction,
+} from "./actions";
+import { AddBatchNumberDialog } from "./add-batch-number-dialog";
 import {
   deleteImageAction,
   getImageUrlAction,
-  rotateImageAction
-} from './images/minio-actions';
-import { ViewImageDialog } from './images/view-image-dialog';
-import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
-import { PeriodicalWithRelations } from '@/types/prisma';
+  rotateImageAction,
+} from "./images/minio-actions";
+import { ViewImageDialog } from "./images/view-image-dialog";
+import { fetchImagesForObituaryAction } from "./obituary/[reference]/actions";
+import { PeriodicalWithRelations } from "@/types/prisma";
 
 const formSchema = z.object({
-  reference: z.string().length(8, 'Reference must be 8 characters'),
+  reference: z.string().length(8, "Reference must be 8 characters"),
   surname: z
     .string()
     .optional()
@@ -59,11 +59,11 @@ const formSchema = z.object({
     .optional()
     .transform((val) =>
       val
-        ?.split(' ')
+        ?.split(" ")
         .map(
           (name) => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
         )
-        .join(' ')
+        .join(" ")
     ),
   maidenName: z
     .string()
@@ -80,8 +80,8 @@ const formSchema = z.object({
   cemeteryId: z.number().nullable().optional(),
   periodicalId: z.number().nullable().optional(),
   publishDate: z.coerce.date().optional(),
-  page: z.string().max(8, 'Page must be 8 characters or less').optional(),
-  column: z.string().max(8, 'Column must be 8 characters or less').optional(),
+  page: z.string().max(8, "Page must be 8 characters or less").optional(),
+  column: z.string().max(8, "Column must be 8 characters or less").optional(),
   notes: z.string().optional(),
   proofread: z.boolean(),
   proofreadDate: z.coerce.date().nullable(),
@@ -103,19 +103,19 @@ const formSchema = z.object({
           .nullable()
           .transform((val) =>
             val
-              ?.split(' ')
+              ?.split(" ")
               .map(
                 (name) =>
                   name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
               )
-              .join(' ')
+              .join(" ")
           ),
         relationship: z
           .string()
           .nullable()
           .transform((val) => val?.toUpperCase()),
         familyRelationshipId: z.string().optional(),
-        predeceased: z.boolean().default(false)
+        predeceased: z.boolean().default(false),
       })
     )
     .optional(),
@@ -132,16 +132,16 @@ const formSchema = z.object({
           .nullable()
           .transform((val) =>
             val
-              ?.split(' ')
+              ?.split(" ")
               .map(
                 (name) =>
                   name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
               )
-              .join(' ')
-          )
+              .join(" ")
+          ),
       })
     )
-    .optional()
+    .optional(),
 });
 
 interface EditObituaryDialogProps {
@@ -187,7 +187,15 @@ interface EditObituaryDialogProps {
       country: { name: string } | null;
     };
   }[];
-  periodicals: { id: number; name: string; city?: { name: string; province: string | null; country: { name: string } | null } | null }[];
+  periodicals: {
+    id: number;
+    name: string;
+    city?: {
+      name: string;
+      province: string | null;
+      country: { name: string } | null;
+    } | null;
+  }[];
   familyRelationships: { id: string; name: string; category: string }[];
   fileBoxes: { id: number; year: number; number: number }[];
   batchNumbers: {
@@ -211,11 +219,11 @@ export function EditObituaryDialog({
   periodicals,
   familyRelationships,
   fileBoxes,
-  batchNumbers
+  batchNumbers,
 }: EditObituaryDialogProps) {
-  console.log('Received obituary data:', obituary);
-  console.log('Received obituary AKA data:', obituary.alsoKnownAs);
-  console.log('Received batch numbers:', batchNumbers);
+  console.log("Received obituary data:", obituary);
+  console.log("Received obituary AKA data:", obituary.alsoKnownAs);
+  console.log("Received batch numbers:", batchNumbers);
 
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<
@@ -228,7 +236,7 @@ export function EditObituaryDialog({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   const [sumChallenge, setSumChallenge] = useState({ a: 0, b: 0 });
-  const [sumAnswer, setSumAnswer] = useState('');
+  const [sumAnswer, setSumAnswer] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [updatedObituary, setUpdatedObituary] = useState<any>(obituary);
   const [role, setRole] = useState<string | null>(null);
@@ -244,59 +252,60 @@ export function EditObituaryDialog({
 
   const [includeOtherFamilyText, setIncludeOtherFamilyText] = useState(false);
 
-  const [isAddBatchNumberDialogOpen, setIsAddBatchNumberDialogOpen] = useState(false);
+  const [isAddBatchNumberDialogOpen, setIsAddBatchNumberDialogOpen] =
+    useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      reference: obituary.reference || '',
-      surname: obituary.surname || '',
+      reference: obituary.reference || "",
+      surname: obituary.surname || "",
       titleId: obituary.titleId || undefined,
-      givenNames: obituary.givenNames || '',
-      maidenName: obituary.maidenName || '',
+      givenNames: obituary.givenNames || "",
+      maidenName: obituary.maidenName || "",
       birthDate: obituary.birthDate ? new Date(obituary.birthDate) : undefined,
       birthCityId: obituary.birthCityId || undefined,
       deathDate: obituary.deathDate ? new Date(obituary.deathDate) : undefined,
       deathCityId: obituary.deathCityId || undefined,
-      burialCemetery: obituary.burialCemetery || '',
+      burialCemetery: obituary.burialCemetery || "",
       cemeteryId: obituary.cemeteryId || undefined,
       periodicalId: obituary.periodicalId || undefined,
       publishDate: obituary.publishDate
         ? new Date(obituary.publishDate)
         : undefined,
-      page: obituary.page || '',
-      column: obituary.column || '',
-      notes: obituary.notes || '',
+      page: obituary.page || "",
+      column: obituary.column || "",
+      notes: obituary.notes || "",
       proofread: obituary.proofread || false,
       proofreadDate: obituary.proofreadDate
         ? new Date(obituary.proofreadDate)
         : null,
-      proofreadBy: obituary.proofreadBy || '',
-      enteredBy: obituary.enteredBy || '',
+      proofreadBy: obituary.proofreadBy || "",
+      enteredBy: obituary.enteredBy || "",
       enteredOn: obituary.enteredOn ? new Date(obituary.enteredOn) : undefined,
-      editedBy: currentUserFullName || '',
+      editedBy: currentUserFullName || "",
       editedOn: new Date(),
       fileBoxId: obituary.fileBoxId || undefined,
       relatives:
         obituary.relatives?.map((relative) => ({
-          surname: relative.surname || '',
-          givenNames: relative.givenNames || '',
-          relationship: relative.relationship || '',
+          surname: relative.surname || "",
+          givenNames: relative.givenNames || "",
+          relationship: relative.relationship || "",
           familyRelationshipId: relative.familyRelationshipId || undefined,
-          predeceased: relative.predeceased || false
+          predeceased: relative.predeceased || false,
         })) || [],
       alsoKnownAs:
         obituary.alsoKnownAs?.map((aka) => ({
-          surname: aka.surname || '',
-          otherNames: aka.otherNames || ''
+          surname: aka.surname || "",
+          otherNames: aka.otherNames || "",
         })) || [],
-      batchNumberId: obituary.batchNumberId || ''
-    }
+      batchNumberId: obituary.batchNumberId || "",
+    },
   });
 
   const hasImages = existingImages.length > 0 || selectedFiles.length > 0;
 
-  const isProofread = form.watch('proofread');
+  const isProofread = form.watch("proofread");
 
   useEffect(() => {
     async function fetchUserData() {
@@ -313,7 +322,7 @@ export function EditObituaryDialog({
       fetchImagesForObituaryAction(obituary.reference).then((images) => {
         const formattedImages = images.map((image, index) => ({
           originalName: image,
-          newName: generateNewFileName(obituary.reference, index, image)
+          newName: generateNewFileName(obituary.reference, index, image),
         }));
         setExistingImages(formattedImages);
       });
@@ -325,7 +334,7 @@ export function EditObituaryDialog({
     index: number,
     fileName: string
   ) => {
-    const extension = fileName.split('.').pop();
+    const extension = fileName.split(".").pop();
     if (index === 0) {
       return `${reference}.${extension}`;
     }
@@ -341,7 +350,7 @@ export function EditObituaryDialog({
         obituary.reference,
         existingImages.length + selectedFiles.length + index,
         file.name
-      )
+      ),
     }));
     setSelectedFiles((prev) => [...prev, ...newFiles]);
   };
@@ -354,9 +363,9 @@ export function EditObituaryDialog({
     setImageToDelete(imageName);
     setSumChallenge({
       a: Math.floor(Math.random() * 10),
-      b: Math.floor(Math.random() * 10)
+      b: Math.floor(Math.random() * 10),
     });
-    setSumAnswer('');
+    setSumAnswer("");
     setIsDeleteDialogOpen(true);
   };
 
@@ -371,19 +380,19 @@ export function EditObituaryDialog({
       );
       setIsDeleteDialogOpen(false);
       setImageToDelete(null);
-      setSumAnswer('');
+      setSumAnswer("");
     }
   };
 
   const handleProofreadChange = (checked: boolean) => {
     if (!hasImages) return;
-    form.setValue('proofread', checked);
+    form.setValue("proofread", checked);
     if (checked) {
-      form.setValue('proofreadDate', new Date());
-      form.setValue('proofreadBy', currentUserFullName || '');
+      form.setValue("proofreadDate", new Date());
+      form.setValue("proofreadBy", currentUserFullName || "");
     } else {
-      form.setValue('proofreadDate', null);
-      form.setValue('proofreadBy', '');
+      form.setValue("proofreadDate", null);
+      form.setValue("proofreadBy", "");
     }
   };
 
@@ -395,34 +404,34 @@ export function EditObituaryDialog({
       // Prepare relatives data without obituaryId
       const relativesData =
         relatives?.map((relative) => ({
-          surname: relative.surname || '',
-          givenNames: relative.givenNames || '',
-          relationship: relative.relationship || '',
+          surname: relative.surname || "",
+          givenNames: relative.givenNames || "",
+          relationship: relative.relationship || "",
           familyRelationshipId: relative.familyRelationshipId || null,
-          predeceased: relative.predeceased
+          predeceased: relative.predeceased,
         })) || [];
 
       // Prepare alsoKnownAs data
       const alsoKnownAsData =
         alsoKnownAs?.map((aka) => ({
-          surname: aka.surname || '',
-          otherNames: aka.otherNames || ''
+          surname: aka.surname || "",
+          otherNames: aka.otherNames || "",
         })) || [];
 
       // Handle new image uploads
       if (selectedFiles.length > 0) {
         const formData = new FormData();
         selectedFiles.forEach((file) => {
-          formData.append('files', file.file, file.newName);
+          formData.append("files", file.file, file.newName);
         });
 
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
         });
 
         if (!uploadResponse.ok) {
-          throw new Error('Failed to upload new images');
+          throw new Error("Failed to upload new images");
         }
       }
 
@@ -435,25 +444,25 @@ export function EditObituaryDialog({
       );
 
       if (!updatedObituary) {
-        throw new Error('Failed to update obituary - no response received');
+        throw new Error("Failed to update obituary - no response received");
       }
 
       await onSave(updatedObituary);
       onClose();
       toast({
-        title: 'Success',
-        description: 'The obituary has been updated successfully.',
-        variant: 'default'
+        title: "Success",
+        description: "The obituary has been updated successfully.",
+        variant: "default",
       });
     } catch (error) {
-      console.error('Error updating obituary:', error);
+      console.error("Error updating obituary:", error);
       toast({
-        title: 'Error',
+        title: "Error",
         description:
           error instanceof Error
             ? `Failed to update obituary: ${error.message}`
-            : 'An unexpected error occurred while updating the obituary',
-        variant: 'destructive'
+            : "An unexpected error occurred while updating the obituary",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -461,8 +470,8 @@ export function EditObituaryDialog({
   };
 
   useEffect(() => {
-    const currentNotes = form.getValues('notes') || '';
-    const familyText = 'See obituary image for other family members.';
+    const currentNotes = form.getValues("notes") || "";
+    const familyText = "See obituary image for other family members.";
     if (currentNotes.includes(familyText)) {
       setIncludeOtherFamilyText(true);
     }
@@ -472,10 +481,10 @@ export function EditObituaryDialog({
     if (obituary.alsoKnownAs?.length) {
       // Force update the form with AKA values
       form.setValue(
-        'alsoKnownAs',
+        "alsoKnownAs",
         obituary.alsoKnownAs.map((aka) => ({
-          surname: aka.surname || '',
-          otherNames: aka.otherNames || ''
+          surname: aka.surname || "",
+          otherNames: aka.otherNames || "",
         }))
       );
     }
@@ -495,16 +504,16 @@ export function EditObituaryDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form 
+          <form
             onSubmit={form.handleSubmit(onSubmit, (errors) => {
               if (errors.deathDate) {
                 toast({
                   title: "Death Date is required",
                   description: "Please select a valid death date",
-                  variant: "destructive"
+                  variant: "destructive",
                 });
               }
-            })} 
+            })}
             className="space-y-4"
           >
             <div className="grid grid-cols-2 gap-4">
@@ -555,7 +564,7 @@ export function EditObituaryDialog({
                     const newTitle = await addTitle(name);
                     setLocalTitles([
                       ...localTitles,
-                      { id: newTitle.id, name: newTitle?.name! }
+                      { id: newTitle.id, name: newTitle?.name! },
                     ]);
                     return { id: newTitle.id, name: newTitle?.name! };
                   }}
@@ -605,14 +614,17 @@ export function EditObituaryDialog({
                   control={form.control}
                   name="birthCityId"
                   label="Birth Place"
-                  placeholder="Select a Place"
+                  placeholder="Select a place"
                   emptyText="No place found."
                   items={localCities.map((city) => ({
-                    ...city,
+                    id: city.id,
+                    name: [city.name, city.province, city.country?.name]
+                      .filter(Boolean)
+                      .join(", "),
                     province: city.province ?? undefined,
                     country: city.country
                       ? { name: city.country.name }
-                      : undefined
+                      : undefined,
                   }))}
                 />
                 <FormField
@@ -633,12 +645,14 @@ export function EditObituaryDialog({
                   placeholder="Select a place"
                   emptyText="No place found."
                   items={localCities.map((city) => ({
-                    ...city,
-                    name: city.name ?? null,
+                    id: city.id,
+                    name: [city.name, city.province, city.country?.name]
+                      .filter(Boolean)
+                      .join(", "),
                     province: city.province ?? undefined,
                     country: city.country
                       ? { name: city.country.name }
-                      : undefined
+                      : undefined,
                   }))}
                 />
                 <ComboboxFormField
@@ -656,9 +670,9 @@ export function EditObituaryDialog({
                           province: cemetery.city.province ?? undefined,
                           country: cemetery.city.country
                             ? { name: cemetery.city.country.name }
-                            : undefined
+                            : undefined,
                         }
-                      : undefined
+                      : undefined,
                   }))}
                 />
               </div>
@@ -667,7 +681,7 @@ export function EditObituaryDialog({
             {/* Also Known As */}
             <div className="space-y-2">
               <FormLabel className="text-xs flex">Also Known As</FormLabel>
-              {form.watch('alsoKnownAs')?.map((_, index) => (
+              {form.watch("alsoKnownAs")?.map((_, index) => (
                 <div key={index} className="flex items-end space-x-2">
                   <FormField
                     control={form.control}
@@ -679,7 +693,7 @@ export function EditObituaryDialog({
                           <Input
                             {...field}
                             className="h-8 text-sm uppercase"
-                            value={field.value || ''}
+                            value={field.value || ""}
                             onChange={(e) => {
                               field.onChange(e.target.value.toUpperCase());
                             }}
@@ -698,16 +712,16 @@ export function EditObituaryDialog({
                           <Input
                             {...field}
                             className="h-8 text-sm capitalize"
-                            value={field.value || ''}
+                            value={field.value || ""}
                             onChange={(e) => {
                               const formatted = e.target.value
-                                .split(' ')
+                                .split(" ")
                                 .map(
                                   (name) =>
                                     name.charAt(0).toUpperCase() +
                                     name.slice(1).toLowerCase()
                                 )
-                                .join(' ');
+                                .join(" ");
                               field.onChange(formatted);
                             }}
                           />
@@ -720,9 +734,9 @@ export function EditObituaryDialog({
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      const alsoKnownAs = form.getValues('alsoKnownAs') || [];
+                      const alsoKnownAs = form.getValues("alsoKnownAs") || [];
                       form.setValue(
-                        'alsoKnownAs',
+                        "alsoKnownAs",
                         alsoKnownAs.filter((_, i) => i !== index)
                       );
                     }}
@@ -737,10 +751,10 @@ export function EditObituaryDialog({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const alsoKnownAs = form.getValues('alsoKnownAs') || [];
-                  form.setValue('alsoKnownAs', [
+                  const alsoKnownAs = form.getValues("alsoKnownAs") || [];
+                  form.setValue("alsoKnownAs", [
                     ...alsoKnownAs,
-                    { surname: '', otherNames: '' }
+                    { surname: "", otherNames: "" },
                   ]);
                 }}
               >
@@ -762,7 +776,7 @@ export function EditObituaryDialog({
                       className="flex items-center justify-between text-sm"
                     >
                       <span>
-                        {image.originalName}{' '}
+                        {image.originalName}{" "}
                         {image.originalName !== image.newName &&
                           `→ ${image.newName}`}
                       </span>
@@ -773,7 +787,7 @@ export function EditObituaryDialog({
                           size="sm"
                           onClick={() =>
                             setSelectedImage({
-                              name: image.newName
+                              name: image.newName,
                             } as BucketItem)
                           }
                         >
@@ -849,32 +863,45 @@ export function EditObituaryDialog({
                   items={localPeriodicals.map((periodical) => ({
                     id: periodical.id,
                     name: periodical.name,
-                    city: periodical.city ? {
-                      name: periodical.city.name || '',
-                      province: periodical.city.province || undefined,
-                      country: periodical.city.country ? { name: periodical.city.country.name } : undefined
-                    } : undefined
+                    city: periodical.city
+                      ? {
+                          name: periodical.city.name || "",
+                          province: periodical.city.province || undefined,
+                          country: periodical.city.country
+                            ? { name: periodical.city.country.name }
+                            : undefined,
+                        }
+                      : undefined,
                   }))}
                   onAddItem={async (name) => {
                     const newPeriodical = await addPeriodical(name);
                     const formattedPeriodical = {
                       id: newPeriodical.id,
-                      name: newPeriodical.name || '',
-                      city: newPeriodical.city ? {
-                        name: newPeriodical.city.name || '',
-                        province: newPeriodical.city.province,
-                        country: newPeriodical.city.country
-                      } : null
+                      name: newPeriodical.name || "",
+                      city: newPeriodical.city
+                        ? {
+                            name: newPeriodical.city.name || "",
+                            province: newPeriodical.city.province,
+                            country: newPeriodical.city.country,
+                          }
+                        : null,
                     };
-                    setLocalPeriodicals([...localPeriodicals, formattedPeriodical]);
+                    setLocalPeriodicals([
+                      ...localPeriodicals,
+                      formattedPeriodical,
+                    ]);
                     return {
                       id: newPeriodical.id,
-                      name: newPeriodical.name || '',
-                      city: newPeriodical.city ? {
-                        name: newPeriodical.city.name || '',
-                        province: newPeriodical.city.province || undefined,
-                        country: newPeriodical.city.country ? { name: newPeriodical.city.country.name } : undefined
-                      } : undefined
+                      name: newPeriodical.name || "",
+                      city: newPeriodical.city
+                        ? {
+                            name: newPeriodical.city.name || "",
+                            province: newPeriodical.city.province || undefined,
+                            country: newPeriodical.city.country
+                              ? { name: newPeriodical.city.country.name }
+                              : undefined,
+                          }
+                        : undefined,
                     };
                   }}
                 />
@@ -923,7 +950,7 @@ export function EditObituaryDialog({
             {/* Relatives */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Relatives</h3>
-              {form.watch('relatives')?.map((relative, index) => (
+              {form.watch("relatives")?.map((relative, index) => (
                 <div key={index} className="flex space-x-2">
                   <FormField
                     control={form.control}
@@ -935,7 +962,7 @@ export function EditObituaryDialog({
                           <Input
                             {...field}
                             className="h-8 text-sm uppercase"
-                            value={field.value || ''}
+                            value={field.value || ""}
                             onChange={(e) => {
                               field.onChange(e.target.value.toUpperCase());
                             }}
@@ -955,18 +982,21 @@ export function EditObituaryDialog({
                           <Input
                             {...field}
                             className="h-8 text-sm"
-                            value={field.value || ''}
+                            value={field.value || ""}
                             onChange={(e) => {
                               const formatted = e.target.value
                                 .split(/(\(|\)|\s+)/) // Split on spaces and brackets
-                                .filter(word => word.trim()) // Remove empty strings
-                                .map(word => {
-                                  if (word === '(' || word === ')') return word;
-                                  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                                .filter((word) => word.trim()) // Remove empty strings
+                                .map((word) => {
+                                  if (word === "(" || word === ")") return word;
+                                  return (
+                                    word.charAt(0).toUpperCase() +
+                                    word.slice(1).toLowerCase()
+                                  );
                                 })
-                                .join(' ')
-                                .replace(/\s*\(\s*/g, ' (') // Clean up spaces around brackets
-                                .replace(/\s*\)\s*/g, ') ')
+                                .join(" ")
+                                .replace(/\s*\(\s*/g, " (") // Clean up spaces around brackets
+                                .replace(/\s*\)\s*/g, ") ")
                                 .trim();
                               field.onChange(formatted);
                             }}
@@ -990,7 +1020,7 @@ export function EditObituaryDialog({
                             <Input
                               {...field}
                               className="h-8 text-sm"
-                              value={field.value || ''}
+                              value={field.value || ""}
                               onChange={(e) => {
                                 const formatted = e.target.value.toUpperCase();
                                 field.onChange(formatted);
@@ -1016,12 +1046,12 @@ export function EditObituaryDialog({
                           {
                             id: newFamilyRelationship.id,
                             name: newFamilyRelationship?.name!,
-                            category: newFamilyRelationship?.category!
-                          }
+                            category: newFamilyRelationship?.category!,
+                          },
                         ]);
                         return {
                           id: newFamilyRelationship.id,
-                          name: newFamilyRelationship?.name!
+                          name: newFamilyRelationship?.name!,
                         };
                       }}
                     />
@@ -1040,7 +1070,7 @@ export function EditObituaryDialog({
                               className="data-[state=checked]:bg-primary"
                             />
                             <span className="text-sm text-muted-foreground">
-                              {field.value ? 'Yes' : 'No'}
+                              {field.value ? "Yes" : "No"}
                             </span>
                           </div>
                         </FormControl>
@@ -1053,9 +1083,9 @@ export function EditObituaryDialog({
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      const relatives = form.getValues('relatives');
+                      const relatives = form.getValues("relatives");
                       relatives?.splice(index, 1);
-                      form.setValue('relatives', relatives || []);
+                      form.setValue("relatives", relatives || []);
                     }}
                     className="h-8 mt-8 hover:bg-destructive/10 text-destructive hover:text-destructive"
                   >
@@ -1068,16 +1098,16 @@ export function EditObituaryDialog({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const relatives = form.getValues('relatives') || [];
-                  form.setValue('relatives', [
+                  const relatives = form.getValues("relatives") || [];
+                  form.setValue("relatives", [
                     ...relatives,
                     {
-                      surname: '',
-                      givenNames: '',
-                      relationship: '',
-                      familyRelationshipId: '',
-                      predeceased: false
-                    }
+                      surname: "",
+                      givenNames: "",
+                      relationship: "",
+                      familyRelationshipId: "",
+                      predeceased: false,
+                    },
                   ]);
                 }}
               >
@@ -1095,23 +1125,23 @@ export function EditObituaryDialog({
                   checked={includeOtherFamilyText}
                   onCheckedChange={(checked) => {
                     setIncludeOtherFamilyText(checked as boolean);
-                    const currentNotes = form.getValues('notes') || '';
+                    const currentNotes = form.getValues("notes") || "";
                     const familyText =
-                      'See obituary image for other family members.';
+                      "See obituary image for other family members.";
 
                     if (checked) {
                       // Add the text on a new line if there's existing content
                       const newNotes = currentNotes
                         ? `${currentNotes}\n${familyText}`
                         : familyText;
-                      form.setValue('notes', newNotes);
+                      form.setValue("notes", newNotes);
                     } else {
                       // Remove the text and any empty lines
                       const newNotes = currentNotes
-                        .split('\n')
+                        .split("\n")
                         .filter((line) => line !== familyText)
-                        .join('\n');
-                      form.setValue('notes', newNotes);
+                        .join("\n");
+                      form.setValue("notes", newNotes);
                     }
                   }}
                 />
@@ -1156,7 +1186,9 @@ export function EditObituaryDialog({
                             handleProofreadChange(checked as boolean);
                           }}
                           disabled={
-                            (role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'PROCESS_MANAGER') ||
+                            (role !== "ADMIN" &&
+                              role !== "PROOFREADER" &&
+                              role !== "PROCESS_MANAGER") ||
                             !hasImages
                           }
                         />
@@ -1173,7 +1205,7 @@ export function EditObituaryDialog({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Proofread Date</FormLabel>
-                      {role === 'ADMIN' || role === 'PROOFREADER' ? (
+                      {role === "ADMIN" || role === "PROOFREADER" ? (
                         <DatePicker
                           date={field.value}
                           setDate={field.onChange}
@@ -1197,7 +1229,7 @@ export function EditObituaryDialog({
                         <Input
                           {...field}
                           className="h-8 text-sm"
-                          disabled={role !== 'ADMIN' && role !== 'PROOFREADER'}
+                          disabled={role !== "ADMIN" && role !== "PROOFREADER"}
                         />
                       </FormControl>
                       <FormMessage />
@@ -1221,7 +1253,7 @@ export function EditObituaryDialog({
                         <Input
                           {...field}
                           className="h-8 text-sm"
-                          disabled={role !== 'ADMIN'}
+                          disabled={role !== "ADMIN"}
                         />
                       </FormControl>
                       <FormMessage />
@@ -1234,7 +1266,7 @@ export function EditObituaryDialog({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Entered On</FormLabel>
-                      {role === 'ADMIN' ? (
+                      {role === "ADMIN" ? (
                         <DatePicker
                           date={field.value}
                           setDate={field.onChange}
@@ -1248,8 +1280,8 @@ export function EditObituaryDialog({
                             field.value
                               ? new Date(field.value)
                                   .toISOString()
-                                  .split('T')[0]
-                              : ''
+                                  .split("T")[0]
+                              : ""
                           }
                         />
                       )}
@@ -1270,7 +1302,7 @@ export function EditObituaryDialog({
                           {...field}
                           className="h-8 text-sm"
                           disabled
-                          value={currentUserFullName || ''}
+                          value={currentUserFullName || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -1283,7 +1315,7 @@ export function EditObituaryDialog({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel className="text-xs">Edited On</FormLabel>
-                      {role === 'ADMIN' ? (
+                      {role === "ADMIN" ? (
                         <DatePicker
                           date={field.value}
                           setDate={field.onChange}
@@ -1293,7 +1325,7 @@ export function EditObituaryDialog({
                           type="date"
                           className="h-8 text-sm"
                           disabled
-                          value={new Date().toISOString().split('T')[0]}
+                          value={new Date().toISOString().split("T")[0]}
                         />
                       )}
                       <FormMessage />
@@ -1309,19 +1341,19 @@ export function EditObituaryDialog({
                   placeholder="Select a batch number"
                   emptyText="No batch numbers found."
                   items={batchNumbers.map((batch) => {
-                    console.log('Processing batch:', batch);
+                    console.log("Processing batch:", batch);
                     return {
                       id: batch.id,
-                      name: `${batch.number} (${batch._count?.obituaries} of ${batch.assignedObituaries} done) Created by ${batch.createdBy?.fullName || 'Unknown'} on ${batch.createdAt.toLocaleDateString()}`
+                      name: `${batch.number} (${batch._count?.obituaries} of ${batch.assignedObituaries} done) Created by ${batch.createdBy?.fullName || "Unknown"} on ${batch.createdAt.toLocaleDateString()}`,
                     };
                   })}
                   onAddItem={async (name) => {
                     const newBatch = await addBatchNumber(name);
-                    console.log('New batch created:', newBatch);
+                    console.log("New batch created:", newBatch);
                     setIsAddBatchNumberDialogOpen(false);
                     return {
                       id: newBatch.id,
-                      name: `${newBatch.number} (0 of ${newBatch.assignedObituaries} done) Created by ${newBatch.createdBy?.fullName || 'Unknown'} on ${newBatch.createdAt.toLocaleDateString()}`
+                      name: `${newBatch.number} (0 of ${newBatch.assignedObituaries} done) Created by ${newBatch.createdBy?.fullName || "Unknown"} on ${newBatch.createdAt.toLocaleDateString()}`,
                     };
                   }}
                 />
@@ -1352,14 +1384,16 @@ export function EditObituaryDialog({
               items={fileBoxes.map((box) => ({
                 id: box.id,
                 name:
-                  box.id === 0 ? 'Not available' : `${box.year} : ${box.number}`
+                  box.id === 0
+                    ? "Not available"
+                    : `${box.year} : ${box.number}`,
               }))}
               onAddItem={async (name) => {
                 toast({
-                  title: 'Cannot add new file box',
+                  title: "Cannot add new file box",
                   description:
-                    'File boxes are managed separately. Please contact an administrator.',
-                  variant: 'destructive'
+                    "File boxes are managed separately. Please contact an administrator.",
+                  variant: "destructive",
                 });
                 const tempId = Date.now();
                 return { id: tempId, name };
@@ -1371,7 +1405,7 @@ export function EditObituaryDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Saving...' : 'Save Changes'}
+                {isLoading ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>
