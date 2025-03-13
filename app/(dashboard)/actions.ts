@@ -1,6 +1,6 @@
-'use server';
+"use server";
 
-import { getObituaryCountForFileBox } from '@/app/(dashboard)/setup/actions';
+import { getObituaryCountForFileBox } from "@/app/(dashboard)/setup/actions";
 import {
   deleteObituaryById,
   getBatchNumbers,
@@ -12,30 +12,30 @@ import {
   getPeriodicals,
   getTitles,
   getUserDataWithClerkId,
-  Obituary
-} from '@/lib/db';
-import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
-import { revalidatePath } from 'next/cache';
-import { deleteImageAction } from './images/minio-actions';
-import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
+  Obituary,
+} from "@/lib/db";
+import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import { revalidatePath } from "next/cache";
+import { deleteImageAction } from "./images/minio-actions";
+import { fetchImagesForObituaryAction } from "./obituary/[reference]/actions";
 
 // Helper function to conditionally revalidate
 const safeRevalidate = () => {
   try {
-    revalidatePath('/');
+    revalidatePath("/");
   } catch (error) {
     // Ignore revalidation errors in API routes
-    console.debug('Skipping revalidation in API route');
+    console.debug("Skipping revalidation in API route");
   }
 };
 
 export async function fetchObituariesAction(
   offset: number = 0,
   limit: number = 5,
-  search: string = ''
+  search: string = ""
 ) {
-  'use server';
+  "use server";
   const { obituaries, totalObituaries } = await getObituaries(
     search,
     offset,
@@ -47,7 +47,7 @@ export async function fetchObituariesAction(
 }
 
 export async function deleteObituary(formData: FormData) {
-  const id = Number(formData.get('id'));
+  const id = Number(formData.get("id"));
 
   // Fetch the obituary to get the reference
   const obituary = await prisma.obituary.findUnique({ where: { id } });
@@ -63,12 +63,12 @@ export async function deleteObituary(formData: FormData) {
 
     // Delete the relatives
     await prisma.relative.deleteMany({
-      where: { obituaryId: id }
+      where: { obituaryId: id },
     });
 
     // Delete the image files from the database
     await prisma.image.deleteMany({
-      where: { name: { startsWith: obituary.reference } }
+      where: { name: { startsWith: obituary.reference } },
     });
 
     // Delete the obituary from the database
@@ -117,7 +117,7 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
       rawPeriodicals,
       rawFamilyRelationships,
       rawFileBoxes,
-      rawBatchNumbers
+      rawBatchNumbers,
     ] = await Promise.all([
       getTitles(),
       getCities(),
@@ -125,7 +125,7 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
       getPeriodicals(),
       getFamilyRelationships(),
       getFileBoxes(),
-      getBatchNumbers()
+      getBatchNumbers(),
     ]);
 
     const titles = rawTitles.filter(
@@ -158,7 +158,9 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
     );
 
     const periodicals = rawPeriodicals.filter(
-      (periodical): periodical is {
+      (
+        periodical
+      ): periodical is {
         id: number;
         name: string;
         city: {
@@ -181,8 +183,16 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
         fileBox.year !== null && fileBox.number !== null
     );
     const batchNumbers = rawBatchNumbers.filter(
-      (batchNumber): batchNumber is { id: string; number: string; createdAt: Date; createdBy: { fullName: string | null }; _count: { obituaries: number }; assignedObituaries: number } =>
-        batchNumber.number !== null && batchNumber.createdBy !== null
+      (
+        batchNumber
+      ): batchNumber is {
+        id: string;
+        number: string;
+        createdAt: Date;
+        createdBy: { fullName: string | null };
+        _count: { obituaries: number };
+        assignedObituaries: number;
+      } => batchNumber.number !== null && batchNumber.createdBy !== null
     );
 
     return {
@@ -192,34 +202,36 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
       periodicals,
       familyRelationships,
       fileBoxes,
-      batchNumbers
+      batchNumbers,
     };
   } catch (error) {
-    console.error('Error in getEditObituaryDialogData:', error);
+    console.error("Error in getEditObituaryDialogData:", error);
     throw error;
   }
 }
 
 export async function generateReference(surname: string): Promise<string> {
-  // Clean the surname to only contain letters
-  const cleanedSurname = surname.replace(/[^A-Za-z]/g, '');
+  // Clean the surname to only contain letters and spaces
+  const cleanedSurname = surname.replace(/[^A-Za-z\s]/g, "");
+
+  // Take exactly the first 4 characters (including spaces) and convert to uppercase
   const prefix = cleanedSurname.slice(0, 4).toUpperCase();
 
   const latestObituary = await prisma.obituary.findFirst({
     where: {
       reference: {
-        startsWith: prefix
-      }
+        startsWith: prefix,
+      },
     },
     orderBy: {
-      reference: 'desc'
-    }
+      reference: "desc",
+    },
   });
 
-  let suffix = '0001';
+  let suffix = "0001";
   if (latestObituary) {
     const latestNumber = parseInt(latestObituary.reference.slice(-4));
-    suffix = (latestNumber + 1).toString().padStart(4, '0');
+    suffix = (latestNumber + 1).toString().padStart(4, "0");
   }
 
   return `${prefix}${suffix}`;
@@ -234,16 +246,16 @@ export async function obituaryExists(
   const formattedSurname = surname.toUpperCase();
   const formattedGivenNames = givenNames
     .toLowerCase()
-    .split(' ')
+    .split(" ")
     .map((name) => name.charAt(0).toUpperCase() + name.slice(1))
-    .join(' ');
+    .join(" ");
 
   const existingObituaries = await prisma.obituary.findMany({
     where: {
       surname: formattedSurname,
       givenNames: formattedGivenNames,
-      deathDate: deathDate
-    }
+      deathDate: deathDate,
+    },
   });
 
   return existingObituaries;
@@ -251,7 +263,7 @@ export async function obituaryExists(
 
 export async function createObituaryAction(
   obituaryData: Prisma.ObituaryCreateInput & {
-    relatives?: Omit<Prisma.RelativeCreateInput, 'Obituary'>[];
+    relatives?: Omit<Prisma.RelativeCreateInput, "Obituary">[];
   }
 ): Promise<Obituary> {
   const { relatives, ...restObituaryData } = obituaryData;
@@ -268,7 +280,7 @@ export async function createObituaryAction(
     const currentYear = new Date().getFullYear();
     const existingBoxes = await prisma.fileBox.findMany({
       where: { year: currentYear },
-      orderBy: { number: 'asc' }
+      orderBy: { number: "asc" },
     });
 
     const newNumber = existingBoxes.length > 0 ? existingBoxes.length + 1 : 1;
@@ -277,17 +289,17 @@ export async function createObituaryAction(
     const newFileBox = await prisma.fileBox.create({
       data: {
         year: currentYear,
-        number: newNumber
-      }
+        number: newNumber,
+      },
     });
 
     fileBoxIdToUse = newFileBox.id; // Use the new file box ID
 
     // Update the open file box ID in settings
     await prisma.settings.upsert({
-      where: { id: 'open_filebox_id' },
+      where: { id: "open_filebox_id" },
       update: { value: newFileBox.id.toString() },
-      create: { id: 'open_filebox_id', value: newFileBox.id.toString() }
+      create: { id: "open_filebox_id", value: newFileBox.id.toString() },
     });
   }
 
@@ -304,8 +316,8 @@ export async function createObituaryAction(
         periodical: undefined,
         title: undefined,
         fileBox: undefined,
-        batchNumber: undefined
-      }
+        batchNumber: undefined,
+      },
     });
 
     // Extract the generated id from the new obituary record
@@ -316,15 +328,15 @@ export async function createObituaryAction(
       await prisma.relative.createMany({
         data: relatives.map((relative) => ({
           obituaryId: newObituaryId,
-          ...relative
-        }))
+          ...relative,
+        })),
       });
     }
 
     // Fetch the final obituary record with the associated relatives
     const finalObituary = await prisma.obituary.findUnique({
       where: { id: newObituaryId },
-      include: { relatives: true }
+      include: { relatives: true },
     });
 
     // Revalidate the path to update the cache
@@ -352,11 +364,11 @@ export async function updateObituaryAction(
 
       // First delete existing relations
       await prisma.relative.deleteMany({
-        where: { obituaryId: id }
+        where: { obituaryId: id },
       });
 
       await prisma.alsoKnownAs.deleteMany({
-        where: { obituaryId: id }
+        where: { obituaryId: id },
       });
 
       // Create new relatives with proper structure
@@ -364,13 +376,13 @@ export async function updateObituaryAction(
         for (const relative of relativesData) {
           await prisma.relative.create({
             data: {
-              surname: relative.surname || '',
-              givenNames: relative.givenNames || '',
-              relationship: relative.relationship || '',
+              surname: relative.surname || "",
+              givenNames: relative.givenNames || "",
+              relationship: relative.relationship || "",
               familyRelationshipId: relative.familyRelationshipId || undefined,
               predeceased: relative.predeceased,
-              obituaryId: id
-            }
+              obituaryId: id,
+            },
           });
         }
       }
@@ -382,17 +394,17 @@ export async function updateObituaryAction(
             data: {
               surname: aka.surname || null,
               otherNames: aka.otherNames || null,
-              obituaryId: id
-            }
+              obituaryId: id,
+            },
           });
         }
       }
 
       // Update the obituary
       const { id: _, ...updateData } = obituaryData;
-      
+
       // Handle batchNumberId specifically
-      if (updateData.batchNumberId === '') {
+      if (updateData.batchNumberId === "") {
         updateData.batchNumberId = null;
       }
 
@@ -401,27 +413,27 @@ export async function updateObituaryAction(
         data: {
           ...updateData,
           // Ensure batchNumberId is properly handled
-          batchNumberId: updateData.batchNumberId || null
+          batchNumberId: updateData.batchNumberId || null,
         },
         include: {
           relatives: true,
-          alsoKnownAs: true
-        }
+          alsoKnownAs: true,
+        },
       });
 
       return updatedObituary;
     });
   } catch (error) {
-    console.error('Server action error:', error);
+    console.error("Server action error:", error);
     throw new Error(
-      error instanceof Error ? error.message : 'Failed to update obituary'
+      error instanceof Error ? error.message : "Failed to update obituary"
     );
   }
 }
 
 export async function deleteRelativeAction(relativeId: number) {
   await prisma.relative.delete({
-    where: { id: relativeId }
+    where: { id: relativeId },
   });
   safeRevalidate();
 }
@@ -430,7 +442,7 @@ export async function addTitle(name: string) {
   return prisma.$transaction(async (prisma) => {
     await prisma.$executeRaw`SELECT setval('title_id_seq', COALESCE((SELECT MAX(id) FROM "Title"), 1));`;
     const newTitle = await prisma.title.create({
-      data: { name }
+      data: { name },
     });
     safeRevalidate();
     return newTitle;
@@ -441,7 +453,7 @@ export async function addCity(name: string) {
   return prisma.$transaction(async (prisma) => {
     await prisma.$executeRaw`SELECT setval('city_id_seq', COALESCE((SELECT MAX(id) FROM "City"), 1));`;
     const newCity = await prisma.city.create({
-      data: { name }
+      data: { name },
     });
     safeRevalidate();
     return newCity;
@@ -453,7 +465,7 @@ export async function addPeriodical(name: string, cityId?: number | null) {
     await prisma.$executeRaw`SELECT setval('periodical_id_seq', COALESCE((SELECT MAX(id) FROM "Periodical"), 1));`;
     const newPeriodical = await prisma.periodical.create({
       data: { name, cityId },
-      include: { city: { include: { country: true } } }
+      include: { city: { include: { country: true } } },
     });
     safeRevalidate();
     return newPeriodical;
@@ -464,7 +476,7 @@ export async function addFileBox(year: number, number: number) {
   return prisma.$transaction(async (prisma) => {
     await prisma.$executeRaw`SELECT setval('filebox_id_seq', COALESCE((SELECT MAX(id) FROM "FileBox"), 1));`;
     const newFileBox = await prisma.fileBox.create({
-      data: { year, number }
+      data: { year, number },
     });
     safeRevalidate();
     return newFileBox;
@@ -482,11 +494,11 @@ export async function generateNewFileNumber(
       surname: surname.toUpperCase(),
       givenNames: givenNames
         .toLowerCase()
-        .split(' ')
+        .split(" ")
         .map((name) => name.charAt(0).toUpperCase() + name.slice(1))
-        .join(' '),
-      deathDate
-    }
+        .join(" "),
+      deathDate,
+    },
   });
 
   if (!existingObituary) {
@@ -498,9 +510,9 @@ export async function generateNewFileNumber(
   const imageFiles = await prisma.image.findMany({
     where: {
       name: {
-        startsWith: baseReference
-      }
-    }
+        startsWith: baseReference,
+      },
+    },
   });
 
   const imageFileExists = imageFiles.length > 0;
@@ -531,10 +543,10 @@ export async function updateObituaryImageNames(obituaryId: number) {
     include: {
       images: {
         orderBy: {
-          name: 'asc'
-        }
-      }
-    }
+          name: "asc",
+        },
+      },
+    },
   });
 
   if (obituary) {
@@ -542,8 +554,8 @@ export async function updateObituaryImageNames(obituaryId: number) {
     await prisma.obituary.update({
       where: { id: obituaryId },
       data: {
-        imageNames: obituary.images.map((img) => img.name)
-      }
+        imageNames: obituary.images.map((img) => img.name),
+      },
     });
   }
 }
@@ -601,40 +613,43 @@ export async function updateObituaryImageNames(obituaryId: number) {
 export async function getOpenFileBoxId(): Promise<number> {
   const setting = await prisma.settings.findUnique({
     where: {
-      id: 'open_filebox_id'
-    }
+      id: "open_filebox_id",
+    },
   });
 
   return setting ? parseInt(setting.value) : 0;
 }
 
 export async function addFamilyRelationship(name: string) {
-  const category = 'Other'; // Default category for new relationships
+  const category = "Other"; // Default category for new relationships
   return await prisma.familyRelationship.create({
     data: {
       name,
-      category
-    }
+      category,
+    },
   });
 }
 
-export async function addBatchNumber(number: string, assignedObituaries: number = 25) {
+export async function addBatchNumber(
+  number: string,
+  assignedObituaries: number = 25
+) {
   const userData = await getUserDataWithClerkId();
-  if (!userData) throw new Error('User not found');
+  if (!userData) throw new Error("User not found");
 
   const newBatch = await prisma.batchNumber.create({
     data: {
       number,
       assignedObituaries,
-      createdById: userData.clerkId
+      createdById: userData.clerkId,
     },
     include: {
       createdBy: {
         select: {
-          fullName: true
-        }
-      }
-    }
+          fullName: true,
+        },
+      },
+    },
   });
 
   return newBatch;
