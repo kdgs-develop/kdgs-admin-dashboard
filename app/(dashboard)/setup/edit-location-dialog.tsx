@@ -41,9 +41,11 @@ import {
 import { Trash2 } from "lucide-react";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Location name is required"),
+  name: z.string().optional(),
   province: z.string().optional(),
-  countryId: z.string().min(1, "Country is required"),
+  countryId: z.string({
+    required_error: "Country is required",
+  }),
 });
 
 type EditLocationDialogProps = {
@@ -121,9 +123,9 @@ function EditLocationDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location Name</FormLabel>
+                  <FormLabel className="text-xs">Name</FormLabel>
                   <FormControl>
-                    <Input {...field} value={field.value || ""} />
+                    <Input {...field} className="h-8 text-sm" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -134,9 +136,9 @@ function EditLocationDialog({
               name="province"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Province/State (Optional)</FormLabel>
+                  <FormLabel className="text-xs">Province/State</FormLabel>
                   <FormControl>
-                    <Input {...field} value={field.value || ""} />
+                    <Input {...field} className="h-8 text-sm" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,10 +149,13 @@ function EditLocationDialog({
               name="countryId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <FormLabel className="text-xs">Country (Required)</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-8 text-sm">
                         <SelectValue placeholder="Select a country" />
                       </SelectTrigger>
                     </FormControl>
