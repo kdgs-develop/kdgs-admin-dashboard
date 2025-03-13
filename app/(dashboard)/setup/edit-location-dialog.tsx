@@ -85,9 +85,9 @@ function EditLocationDialog({
   useEffect(() => {
     if (city) {
       form.reset({
-        name: city.name || "",
-        province: city.province || "",
-        countryId: city.country.id.toString(),
+        name: city?.name || "",
+        province: city?.province || "",
+        countryId: city?.country?.id?.toString() || "",
       });
     }
   }, [city, form]);
