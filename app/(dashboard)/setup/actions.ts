@@ -314,7 +314,10 @@ export async function addCountry(name: string) {
     const newCountry = await prisma.country.create({
       data: { name },
     });
+
+    // Add revalidation for the setup page
     revalidatePath("/");
+
     return newCountry;
   } catch (error) {
     if (error instanceof Error) {

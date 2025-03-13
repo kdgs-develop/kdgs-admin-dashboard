@@ -1,53 +1,102 @@
 import React, { useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Location name is required"),
+  name: z.string().optional(),
   province: z.string().optional(),
-  countryId: z.string().min(1, "Country is required"),
+  countryId: z.string({
+    required_error: "Country is required",
+  }),
 });
 
 type EditLocationDialogProps = {
   isOpen: boolean;
   onClose: () => void;
-  onEditCity: (id: number, name: string | null, province: string | null, countryId: number) => Promise<void>;
+  onEditCity: (
+    id: number,
+    name: string | null,
+    province: string | null,
+    countryId: number
+  ) => Promise<void>;
   onDeleteCity: (id: number) => Promise<void>;
-  city: { id: number; name: string | null; province: string | null; country: { id: number; name: string } } | null;
+  city: {
+    id: number;
+    name: string | null;
+    province: string | null;
+    country: { id: number; name: string };
+  } | null;
   countries: { id: number; name: string }[];
 };
 
-function EditLocationDialog({ isOpen, onClose, onEditCity, onDeleteCity, city, countries }: EditLocationDialogProps) {
+function EditLocationDialog({
+  isOpen,
+  onClose,
+  onEditCity,
+  onDeleteCity,
+  city,
+  countries,
+}: EditLocationDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: city?.name || "",
       province: city?.province || "",
-      countryId: city?.country.id.toString() || "",
+      countryId: city?.country?.id?.toString() || "",
     },
   });
 
   useEffect(() => {
     if (city) {
       form.reset({
-        name: city.name || "",
-        province: city.province || "",
-        countryId: city.country.id.toString(),
+        name: city?.name || "",
+        province: city?.province || "",
+        countryId: city?.country?.id?.toString() || "",
       });
     }
   }, [city, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!city) return;
-    
+
     await onEditCity(
       city.id,
       values.name || null,
@@ -74,9 +123,9 @@ function EditLocationDialog({ isOpen, onClose, onEditCity, onDeleteCity, city, c
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location Name</FormLabel>
+                  <FormLabel className="text-xs">Name</FormLabel>
                   <FormControl>
-                    <Input {...field} value={field.value || ''} />
+                    <Input {...field} className="h-8 text-sm" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -87,9 +136,9 @@ function EditLocationDialog({ isOpen, onClose, onEditCity, onDeleteCity, city, c
               name="province"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Province/State (Optional)</FormLabel>
+                  <FormLabel className="text-xs">Province/State</FormLabel>
                   <FormControl>
-                    <Input {...field} value={field.value || ''} />
+                    <Input {...field} className="h-8 text-sm" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -100,16 +149,22 @@ function EditLocationDialog({ isOpen, onClose, onEditCity, onDeleteCity, city, c
               name="countryId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <FormLabel className="text-xs">Country (Required)</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-8 text-sm">
                         <SelectValue placeholder="Select a country" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {countries.map((country) => (
-                        <SelectItem key={country.id} value={country.id.toString()}>
+                        <SelectItem
+                          key={country.id}
+                          value={country.id.toString()}
+                        >
                           {country.name}
                         </SelectItem>
                       ))}
@@ -131,7 +186,8 @@ function EditLocationDialog({ isOpen, onClose, onEditCity, onDeleteCity, city, c
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the location.
+                      This action cannot be undone. This will permanently delete
+                      the location.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -159,4 +215,4 @@ function EditLocationDialog({ isOpen, onClose, onEditCity, onDeleteCity, city, c
   );
 }
 
-export default EditLocationDialog; 
+export default EditLocationDialog;
