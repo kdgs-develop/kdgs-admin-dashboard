@@ -1,41 +1,41 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   Plus,
-  Search
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
+  Search,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   addCity,
   deleteCity,
   getCitiesWithPagination,
   getCountries,
   searchCities,
-  updateCity
-} from './actions';
-import AddLocationDialog from './add-location-dialog';
-import EditLocationDialog from './edit-location-dialog';
+  updateCity,
+} from "./actions";
+import AddLocationDialog from "./add-location-dialog";
+import EditLocationDialog from "./edit-location-dialog";
 
 export function LocationAdministration() {
   const [cities, setCities] = useState<any[]>([]);
@@ -51,8 +51,8 @@ export function LocationAdministration() {
   const { toast } = useToast();
 
   // Search states
-  const [searchName, setSearchName] = useState('');
-  const [searchProvince, setSearchProvince] = useState('');
+  const [searchName, setSearchName] = useState("");
+  const [searchProvince, setSearchProvince] = useState("");
   const [searchCountryId, setSearchCountryId] = useState<string | undefined>(
     undefined
   );
@@ -73,7 +73,7 @@ export function LocationAdministration() {
         } else {
           const [citiesResult, countriesResult] = await Promise.all([
             getCitiesWithPagination(currentPage),
-            getCountries(1, 100)
+            getCountries(1, 100),
           ]);
           setCities(citiesResult.cities);
           setTotalPages(citiesResult.totalPages);
@@ -81,12 +81,12 @@ export function LocationAdministration() {
         }
       } catch (error) {
         toast({
-          title: 'Error fetching data',
+          title: "Error fetching data",
           description:
             error instanceof Error
               ? error.message
-              : 'An unknown error occurred',
-          variant: 'destructive'
+              : "An unknown error occurred",
+          variant: "destructive",
         });
       }
     }
@@ -97,8 +97,16 @@ export function LocationAdministration() {
     searchName,
     searchProvince,
     searchCountryId,
-    toast
+    toast,
   ]);
+
+  useEffect(() => {
+    async function fetchCountries() {
+      const updatedCountries = await getCountries(1, 1000); // Large pageSize to get all countries
+      setCountries(updatedCountries.countries);
+    }
+    fetchCountries();
+  }, []); // Only fetch once on mount
 
   const handleAddCity = async (
     name: string | null,
@@ -111,15 +119,15 @@ export function LocationAdministration() {
       setCities(result.cities);
       setTotalPages(result.totalPages);
       toast({
-        title: 'Success',
-        description: 'Location added successfully'
+        title: "Success",
+        description: "Location added successfully",
       });
     } catch (error) {
       toast({
-        title: 'Error adding location',
+        title: "Error adding location",
         description:
-          error instanceof Error ? error.message : 'Failed to add location',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "Failed to add location",
+        variant: "destructive",
       });
     }
   };
@@ -136,17 +144,17 @@ export function LocationAdministration() {
       setCities(result.cities);
       setTotalPages(result.totalPages);
       toast({
-        title: 'Success',
-        description: 'Location updated successfully'
+        title: "Success",
+        description: "Location updated successfully",
       });
       setIsEditDialogOpen(false);
       setSelectedCity(null);
     } catch (error) {
       toast({
-        title: 'Error updating location',
+        title: "Error updating location",
         description:
-          error instanceof Error ? error.message : 'Failed to update location',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "Failed to update location",
+        variant: "destructive",
       });
     }
   };
@@ -158,17 +166,17 @@ export function LocationAdministration() {
       setCities(result.cities);
       setTotalPages(result.totalPages);
       toast({
-        title: 'Success',
-        description: 'Location deleted successfully'
+        title: "Success",
+        description: "Location deleted successfully",
       });
       setIsEditDialogOpen(false);
       setSelectedCity(null);
     } catch (error) {
       toast({
-        title: 'Error deleting location',
+        title: "Error deleting location",
         description:
-          error instanceof Error ? error.message : 'Failed to delete location',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "Failed to delete location",
+        variant: "destructive",
       });
     }
   };
@@ -187,10 +195,10 @@ export function LocationAdministration() {
       setTotalPages(result.totalPages);
     } catch (error) {
       toast({
-        title: 'Error searching locations',
+        title: "Error searching locations",
         description:
-          error instanceof Error ? error.message : 'An unknown error occurred',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
       });
     }
   };
@@ -248,9 +256,9 @@ export function LocationAdministration() {
                 onValueChange={setSearchCountryId}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select country" />
+                  <SelectValue placeholder="Select a country" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[200px] overflow-y-auto">
                   <SelectItem value="all">All Countries</SelectItem>
                   {countries.map((country) => (
                     <SelectItem key={country.id} value={country.id.toString()}>
@@ -273,69 +281,67 @@ export function LocationAdministration() {
             </Button>
           </div>
 
-          
-
           {cities.length > 0 && (
             <>
-            <div className="grid gap-2">
-              {cities.map((city) => (
-                <div
-                  key={city.id}
-                  className="p-2 border rounded flex justify-between items-center"
-                >
-                  <div>
-                    <span className="font-medium">
-                      {city.name || ''}
-                    </span>
-                    {city.province && (
-                      <span className="ml-2 text-muted-foreground">
-                        {city.province}
-                      </span>
-                    )}
-                    {city.country && (
-                      <span className="ml-2 text-sm text-muted-foreground">
-                        ({city.country.name})
-                      </span>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedCity(city);
-                      setIsEditDialogOpen(true);
-                    }}
+              <div className="grid gap-2">
+                {cities.map((city) => (
+                  <div
+                    key={city.id}
+                    className="p-2 border rounded flex justify-between items-center"
                   >
-                    Edit
+                    <div>
+                      <span className="font-medium">{city.name || ""}</span>
+                      {city.province && (
+                        <span className="ml-2 text-muted-foreground">
+                          {city.province}
+                        </span>
+                      )}
+                      {city.country && (
+                        <span className="ml-2 text-sm text-muted-foreground">
+                          ({city.country.name})
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedCity(city);
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end items-center">
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="py-2 px-3 text-sm">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
-              ))}
-            </div>
-            <div className="flex justify-end items-center">
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="py-2 px-3 text-sm">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
               </div>
-            </div>
             </>
           )}
 
@@ -347,7 +353,7 @@ export function LocationAdministration() {
             initialValues={{
               name: searchName,
               province: searchProvince,
-              countryId: searchCountryId
+              countryId: searchCountryId,
             }}
           />
 
