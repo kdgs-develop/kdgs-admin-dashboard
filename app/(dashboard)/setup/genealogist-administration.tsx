@@ -482,6 +482,9 @@ export function GenealogistAdministration() {
                                 <SelectItem value="PROOFREADER">
                                   Proofreader
                                 </SelectItem>
+                                <SelectItem value="PROCESS_MANAGER">
+                                  Process Manager
+                                </SelectItem>
                                 <SelectItem value="ADMIN">Admin</SelectItem>
                               </SelectContent>
                             </Select>
