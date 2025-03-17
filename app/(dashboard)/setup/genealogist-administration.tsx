@@ -651,6 +651,9 @@ export function GenealogistAdministration() {
                         <SelectItem value="SCANNER">Scanner</SelectItem>
                         <SelectItem value="INDEXER">Indexer</SelectItem>
                         <SelectItem value="PROOFREADER">Proofreader</SelectItem>
+                        <SelectItem value="PROCESS_MANAGER">
+                          Process Manager
+                        </SelectItem>
                         <SelectItem value="ADMIN">Admin</SelectItem>
                       </SelectContent>
                     </Select>
