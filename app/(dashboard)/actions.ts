@@ -379,7 +379,7 @@ export async function updateObituaryAction(
               surname: relative.surname || "",
               givenNames: relative.givenNames || "",
               relationship: relative.relationship || "",
-              familyRelationshipId: relative.familyRelationshipId || undefined,
+              familyRelationship: relative.familyRelationship || undefined,
               predeceased: relative.predeceased,
               obituaryId: id,
             },
@@ -414,6 +414,18 @@ export async function updateObituaryAction(
           ...updateData,
           // Ensure batchNumberId is properly handled
           batchNumberId: updateData.batchNumberId || null,
+          relatives: {
+            deleteMany: {}, // Delete all existing relatives
+            create: updateData.relatives?.map(
+              (relative: Prisma.RelativeCreateInput) => ({
+                surname: relative.surname,
+                givenNames: relative.givenNames,
+                relationship: relative.relationship,
+                familyRelationship: relative.familyRelationship,
+                predeceased: relative.predeceased,
+              })
+            ),
+          },
         },
         include: {
           relatives: true,

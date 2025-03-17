@@ -1398,7 +1398,6 @@ export function EditObituaryDialog({
                   placeholder="Select a batch number"
                   emptyText="No batch numbers found."
                   items={batchNumbers.map((batch) => {
-                    console.log("Processing batch:", batch);
                     return {
                       id: batch.id,
                       name: `${batch.number} (${batch._count?.obituaries} of ${batch.assignedObituaries} done) Created by ${batch.createdBy?.fullName || "Unknown"} on ${batch.createdAt.toLocaleDateString()}`,
