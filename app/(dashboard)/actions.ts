@@ -379,7 +379,7 @@ export async function updateObituaryAction(
               surname: relative.surname || "",
               givenNames: relative.givenNames || "",
               relationship: relative.relationship || "",
-              familyRelationship: relative.familyRelationship || undefined,
+              familyRelationshipId: relative.familyRelationshipId || null,
               predeceased: relative.predeceased,
               obituaryId: id,
             },
@@ -408,24 +408,16 @@ export async function updateObituaryAction(
         updateData.batchNumberId = null;
       }
 
+      // Make a copy of updateData without relatives
+      const dataToUpdate = { ...updateData };
+      delete dataToUpdate.relatives;
+
       const updatedObituary = await prisma.obituary.update({
         where: { id },
         data: {
-          ...updateData,
+          ...dataToUpdate,
           // Ensure batchNumberId is properly handled
           batchNumberId: updateData.batchNumberId || null,
-          relatives: {
-            deleteMany: {}, // Delete all existing relatives
-            create: updateData.relatives?.map(
-              (relative: Prisma.RelativeCreateInput) => ({
-                surname: relative.surname,
-                givenNames: relative.givenNames,
-                relationship: relative.relationship,
-                familyRelationship: relative.familyRelationship,
-                predeceased: relative.predeceased,
-              })
-            ),
-          },
         },
         include: {
           relatives: true,
