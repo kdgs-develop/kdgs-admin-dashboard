@@ -18,7 +18,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const isTemporaryUnavailable = true;
+  const isTemporaryUnavailable = false;
 
   if (isTemporaryUnavailable) {
     return (
