@@ -6,7 +6,8 @@ const nextConfig = {
       {
         protocol: 'https', // or 'http' if you're not using SSL
         hostname: process.env.MINIO_ENDPOINT,
-        port: process.env.MINIO_PORT,
+        // port: process.env.MINIO_PORT,
+        port: '',
         pathname: '/**',
       },
       {
