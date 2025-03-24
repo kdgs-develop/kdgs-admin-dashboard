@@ -467,7 +467,10 @@ export function EditObituaryDialog({
         throw new Error("Failed to update obituary - no response received");
       }
 
+      // This is the key part - call the onSave callback with the updated obituary
+      // which should trigger the parent component to refresh the list
       await onSave(updatedObituary);
+
       onClose();
       toast({
         title: "Success",
@@ -1314,10 +1317,7 @@ export function EditObituaryDialog({
                         <Input
                           {...field}
                           className="h-8 text-sm"
-                          disabled={
-                            role !== "ADMIN" &&
-                            role !== "ROOT"
-                          }
+                          disabled={role !== "ADMIN" && role !== "ROOT"}
                         />
                       </FormControl>
                       <FormMessage />
