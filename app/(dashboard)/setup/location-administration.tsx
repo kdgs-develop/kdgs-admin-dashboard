@@ -6,7 +6,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
   SelectScrollUpButton,
-  SelectScrollDownButton,
+  SelectScrollDownButton
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -25,7 +25,7 @@ import {
   ChevronRight,
   ChevronUp,
   Plus,
-  Search,
+  Search
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import {
@@ -34,7 +34,7 @@ import {
   getCitiesWithPagination,
   getCountries,
   searchCities,
-  updateCity,
+  updateCity
 } from "./actions";
 import AddLocationDialog from "./add-location-dialog";
 import EditLocationDialog from "./edit-location-dialog";
@@ -70,7 +70,7 @@ export function LocationAdministration() {
       toast({
         title: "Error",
         description: "Failed to fetch countries",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   }, []);
@@ -90,7 +90,7 @@ export function LocationAdministration() {
         } else {
           const [citiesResult, countriesResult] = await Promise.all([
             getCitiesWithPagination(currentPage),
-            getCountries(1, 100),
+            getCountries(1, 100)
           ]);
           setCities(citiesResult.cities);
           setTotalPages(citiesResult.totalPages);
@@ -103,7 +103,7 @@ export function LocationAdministration() {
             error instanceof Error
               ? error.message
               : "An unknown error occurred",
-          variant: "destructive",
+          variant: "destructive"
         });
       }
     }
@@ -114,7 +114,7 @@ export function LocationAdministration() {
     searchName,
     searchProvince,
     searchCountryId,
-    toast,
+    toast
   ]);
 
   const handleAddCity = async (
@@ -129,14 +129,14 @@ export function LocationAdministration() {
       setTotalPages(result.totalPages);
       toast({
         title: "Success",
-        description: "Location added successfully",
+        description: "Location added successfully"
       });
     } catch (error) {
       toast({
         title: "Error adding location",
         description:
           error instanceof Error ? error.message : "Failed to add location",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -154,7 +154,7 @@ export function LocationAdministration() {
       setTotalPages(result.totalPages);
       toast({
         title: "Success",
-        description: "Location updated successfully",
+        description: "Location updated successfully"
       });
       setIsEditDialogOpen(false);
       setSelectedCity(null);
@@ -163,7 +163,7 @@ export function LocationAdministration() {
         title: "Error updating location",
         description:
           error instanceof Error ? error.message : "Failed to update location",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -176,7 +176,7 @@ export function LocationAdministration() {
       setTotalPages(result.totalPages);
       toast({
         title: "Success",
-        description: "Location deleted successfully",
+        description: "Location deleted successfully"
       });
       setIsEditDialogOpen(false);
       setSelectedCity(null);
@@ -185,7 +185,7 @@ export function LocationAdministration() {
         title: "Error deleting location",
         description:
           error instanceof Error ? error.message : "Failed to delete location",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -207,7 +207,7 @@ export function LocationAdministration() {
         title: "Error searching locations",
         description:
           error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -249,21 +249,21 @@ export function LocationAdministration() {
               <Input
                 placeholder="Search by name"
                 value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
+                onChange={e => setSearchName(e.target.value)}
               />
             </div>
             <div className="flex-1">
               <Input
                 placeholder="Search by province"
                 value={searchProvince}
-                onChange={(e) => setSearchProvince(e.target.value)}
+                onChange={e => setSearchProvince(e.target.value)}
               />
             </div>
             <div className="flex-1">
               <Select
                 value={searchCountryId}
                 onValueChange={setSearchCountryId}
-                onOpenChange={(open) => {
+                onOpenChange={open => {
                   setIsCountryDropdownOpen(open);
                   if (open) {
                     refreshCountries();
@@ -275,7 +275,7 @@ export function LocationAdministration() {
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px] overflow-y-auto">
                   <SelectItem value="all">All Countries</SelectItem>
-                  {countries.map((country) => (
+                  {countries.map(country => (
                     <SelectItem key={country.id} value={country.id.toString()}>
                       {country.name}
                     </SelectItem>
@@ -299,7 +299,7 @@ export function LocationAdministration() {
           {cities.length > 0 && (
             <>
               <div className="grid gap-2">
-                {cities.map((city) => (
+                {cities.map(city => (
                   <div
                     key={city.id}
                     className="p-2 border rounded flex justify-between items-center"
@@ -336,7 +336,7 @@ export function LocationAdministration() {
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      setCurrentPage(prev => Math.max(prev - 1, 1))
                     }
                     disabled={currentPage === 1}
                   >
@@ -349,7 +349,7 @@ export function LocationAdministration() {
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      setCurrentPage(prev => Math.min(prev + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
                   >
@@ -365,10 +365,11 @@ export function LocationAdministration() {
             onClose={() => setIsDialogOpen(false)}
             onAddCity={handleAddCity}
             countries={countries}
+            refetchCountries={refreshCountries}
             initialValues={{
               name: searchName,
               province: searchProvince,
-              countryId: searchCountryId,
+              countryId: searchCountryId
             }}
           />
 
