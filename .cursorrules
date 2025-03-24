@@ -26,6 +26,18 @@ Syntax and Formatting
 - Use the "function" keyword for pure functions.
 - Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
 - Use declarative JSX.
+- Follow this prettier format rules on all your responses: {
+  "singleQuote": false,
+  "trailingComma": "none",
+  "semi": true,
+  "tabWidth": 2,
+  "printWidth": 80,
+  "bracketSpacing": true,
+  "jsxSingleQuote": false,
+  "arrowParens": "avoid",
+  "endOfLine": "lf",
+  "useTabs": false
+}
 
 UI and Styling
 
