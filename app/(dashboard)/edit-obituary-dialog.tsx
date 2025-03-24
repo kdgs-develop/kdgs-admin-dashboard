@@ -272,8 +272,8 @@ export function EditObituaryDialog({
       proofreadBy: obituary.proofreadBy || "",
       enteredBy: obituary.enteredBy || "",
       enteredOn: obituary.enteredOn ? new Date(obituary.enteredOn) : undefined,
-      editedBy: currentUserFullName || "",
-      editedOn: new Date(),
+      editedBy: obituary.editedBy || "", // Use the stored value instead of current user
+      editedOn: obituary.editedOn ? new Date(obituary.editedOn) : undefined, // Use the stored date
       fileBoxId: obituary.fileBoxId || undefined,
       relatives:
         obituary.relatives?.map((relative) => ({
@@ -415,6 +415,10 @@ export function EditObituaryDialog({
     setIsLoading(true);
     try {
       const { relatives, alsoKnownAs, ...obituaryData } = values;
+
+      // Set the current user and timestamp for editing right before saving
+      obituaryData.editedBy = currentUserFullName || "";
+      obituaryData.editedOn = new Date();
 
       // Format relatives' names
       const formattedRelatives = relatives?.map((relative) => ({
@@ -1310,7 +1314,10 @@ export function EditObituaryDialog({
                         <Input
                           {...field}
                           className="h-8 text-sm"
-                          disabled={role !== "ADMIN"}
+                          disabled={
+                            role !== "ADMIN" &&
+                            role !== "ROOT"
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -1358,8 +1365,7 @@ export function EditObituaryDialog({
                         <Input
                           {...field}
                           className="h-8 text-sm"
-                          disabled
-                          value={currentUserFullName || ""}
+                          disabled={role !== "ADMIN"}
                         />
                       </FormControl>
                       <FormMessage />
