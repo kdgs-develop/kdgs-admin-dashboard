@@ -272,8 +272,8 @@ export function EditObituaryDialog({
       proofreadBy: obituary.proofreadBy || "",
       enteredBy: obituary.enteredBy || "",
       enteredOn: obituary.enteredOn ? new Date(obituary.enteredOn) : undefined,
-      editedBy: currentUserFullName || "",
-      editedOn: new Date(),
+      editedBy: obituary.editedBy || "", // Use the stored value instead of current user
+      editedOn: obituary.editedOn ? new Date(obituary.editedOn) : undefined, // Use the stored date
       fileBoxId: obituary.fileBoxId || undefined,
       relatives:
         obituary.relatives?.map((relative) => ({
@@ -416,6 +416,10 @@ export function EditObituaryDialog({
     try {
       const { relatives, alsoKnownAs, ...obituaryData } = values;
 
+      // Set the current user and timestamp for editing right before saving
+      obituaryData.editedBy = currentUserFullName || "";
+      obituaryData.editedOn = new Date();
+
       // Format relatives' names
       const formattedRelatives = relatives?.map((relative) => ({
         ...relative,
@@ -463,7 +467,10 @@ export function EditObituaryDialog({
         throw new Error("Failed to update obituary - no response received");
       }
 
+      // This is the key part - call the onSave callback with the updated obituary
+      // which should trigger the parent component to refresh the list
       await onSave(updatedObituary);
+
       onClose();
       toast({
         title: "Success",
@@ -1310,7 +1317,7 @@ export function EditObituaryDialog({
                         <Input
                           {...field}
                           className="h-8 text-sm"
-                          disabled={role !== "ADMIN"}
+                          disabled={role !== "ADMIN" && role !== "ROOT"}
                         />
                       </FormControl>
                       <FormMessage />
@@ -1358,8 +1365,7 @@ export function EditObituaryDialog({
                         <Input
                           {...field}
                           className="h-8 text-sm"
-                          disabled
-                          value={currentUserFullName || ""}
+                          disabled={role !== "ADMIN"}
                         />
                       </FormControl>
                       <FormMessage />
