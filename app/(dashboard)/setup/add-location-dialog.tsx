@@ -1,24 +1,49 @@
 import React, { useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 const formSchema = z.object({
   name: z.string().optional(),
   province: z.string().optional(),
-  countryId: z.string().min(1, "Country is required"),
+  countryId: z.string().min(1, "Country is required")
 });
 
 type AddLocationDialogProps = {
   isOpen: boolean;
   onClose: () => void;
-  onAddCity: (name: string | null, province: string | null, countryId: number) => Promise<void>;
+  onAddCity: (
+    name: string | null,
+    province: string | null,
+    countryId: number
+  ) => Promise<void>;
   countries: { id: number; name: string }[];
+  refetchCountries?: () => Promise<void>;
   initialValues?: {
     name?: string;
     province?: string;
@@ -26,14 +51,21 @@ type AddLocationDialogProps = {
   };
 };
 
-function AddLocationDialog({ isOpen, onClose, onAddCity, countries, initialValues }: AddLocationDialogProps) {
+function AddLocationDialog({
+  isOpen,
+  onClose,
+  onAddCity,
+  countries,
+  refetchCountries,
+  initialValues
+}: AddLocationDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialValues?.name || "",
       province: initialValues?.province || "",
-      countryId: initialValues?.countryId || "",
-    },
+      countryId: initialValues?.countryId || ""
+    }
   });
 
   useEffect(() => {
@@ -41,7 +73,7 @@ function AddLocationDialog({ isOpen, onClose, onAddCity, countries, initialValue
       form.reset({
         name: initialValues.name || "",
         province: initialValues.province || "",
-        countryId: initialValues.countryId || "",
+        countryId: initialValues.countryId || ""
       });
     }
   }, [initialValues, form]);
@@ -99,15 +131,26 @@ function AddLocationDialog({ isOpen, onClose, onAddCity, countries, initialValue
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Country</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    onOpenChange={open => {
+                      if (open && refetchCountries) {
+                        refetchCountries();
+                      }
+                    }}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a country" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {countries.map((country) => (
-                        <SelectItem key={country.id} value={country.id.toString()}>
+                      {countries.map(country => (
+                        <SelectItem
+                          key={country.id}
+                          value={country.id.toString()}
+                        >
                           {country.name}
                         </SelectItem>
                       ))}
@@ -127,4 +170,4 @@ function AddLocationDialog({ isOpen, onClose, onAddCity, countries, initialValue
   );
 }
 
-export default AddLocationDialog; 
+export default AddLocationDialog;
