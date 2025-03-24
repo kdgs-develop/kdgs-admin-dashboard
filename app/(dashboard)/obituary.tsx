@@ -131,6 +131,9 @@ export function Obituary({
           onClose={() => setIsEditDialogOpen(false)}
           onSave={async (updatedObituary) => {
             onUpdate();
+            setTimeout(() => {
+              window.location.reload();
+            }, 100);
             setIsEditDialogOpen(false);
           }}
           {...dialogData}
