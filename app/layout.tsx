@@ -18,7 +18,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const isTemporaryUnavailable = false;
+  const isTemporaryUnavailable = true;
 
   if (isTemporaryUnavailable) {
     return (
@@ -63,9 +63,8 @@ export default function RootLayout({
               {/* Message */}
               <div className="mb-6 text-center">
                 <p className="mb-4 text-slate-600">
-                  We are currently migrating our system to a new host. This
-                  includes upgrading our servers and databases to improve
-                  performance and security.
+                  We are currently upgrading our systems to improve performance
+                  and security.
                 </p>
                 <p className="font-medium text-slate-700">
                   The dashboard will be back online soon.
