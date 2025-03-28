@@ -63,47 +63,47 @@ export async function POST(req: NextRequest) {
       const addPageHeader = (page: PDFPage, pageNumber: number) => {
         const { width, height } = page.getSize();
 
-        // Add title with less vertical space
+        // Make title smaller and position higher
         const title = "Search Results Report";
         page.drawText(title, {
           x: MARGIN,
-          y: height - MARGIN,
-          size: 16,
+          y: height - MARGIN + 5,
+          size: 14,
           font: boldFont
         });
 
-        // Reduce vertical spacing between header elements
+        // Compress vertical spacing between header elements
         page.drawText(`Search Query: ${searchQuery}`, {
           x: MARGIN,
-          y: height - MARGIN - 20,
-          size: 12,
+          y: height - MARGIN - 15,
+          size: 11,
           font: boldFont
         });
 
         page.drawText(`Total Results: ${obituaries.length}`, {
           x: MARGIN,
-          y: height - MARGIN - 35,
-          size: 12,
+          y: height - MARGIN - 28,
+          size: 11,
           font: boldFont
         });
 
         page.drawText(`Page ${pageNumber} of ${totalPages}`, {
           x: MARGIN,
-          y: height - MARGIN - 50,
-          size: 10,
+          y: height - MARGIN - 40,
+          size: 9,
           font: font
         });
 
-        // Draw KDGS logo with adjusted position
+        // Draw KDGS logo with adjusted position (smaller and higher)
         page.drawImage(logoImage, {
-          x: width - 140,
-          y: height - 75,
-          width: 90,
-          height: 45
+          x: width - 135,
+          y: height - 65,
+          width: 85,
+          height: 42
         });
 
         // Add table headers closer to the top content
-        const headerY = height - MARGIN - 80;
+        const headerY = height - MARGIN - 65;
         page.drawText("#", {
           x: COLUMNS.number.x,
           y: headerY,
@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
           font: boldFont
         });
 
-        return height - MARGIN - 95;
+        return height - MARGIN - 80;
       };
 
       const headerY = addPageHeader(page, pageNum + 1);
