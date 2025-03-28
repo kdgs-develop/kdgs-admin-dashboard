@@ -7,8 +7,8 @@ import { PDFDocument, PDFPage, rgb, StandardFonts } from "pdf-lib";
 
 const LETTER_WIDTH = 612;
 const LETTER_HEIGHT = 792;
-const MARGIN = 50;
-const RECORDS_PER_PAGE = 25;
+const MARGIN = 35;
+const RECORDS_PER_PAGE = 30;
 const LINE_HEIGHT = 12;
 const KDGS_LOGO_URL = "https://kdgs-admin-dashboard.vercel.app/kdgs.png";
 const MAX_SURNAME_LENGTH = 15;
@@ -16,15 +16,18 @@ const MAX_GIVEN_NAMES_LENGTH = 15;
 
 // Define column widths and positions
 const COLUMNS = {
-  number: { width: 30, x: MARGIN },
-  reference: { width: 70, x: MARGIN + 30 },
-  surname: { width: 100, x: MARGIN + 100 },
-  givenNames: { width: 100, x: MARGIN + 200 },
-  deathDate: { width: 80, x: MARGIN + 300 },
-  proofread: { width: 40, x: MARGIN + 380 },
-  fileBox: { width: 40, x: MARGIN + 420 },
-  images: { width: 80, x: MARGIN + 460 }
+  number: { width: 25, x: MARGIN },
+  reference: { width: 65, x: MARGIN + 25 },
+  surname: { width: 110, x: MARGIN + 90 },
+  givenNames: { width: 110, x: MARGIN + 200 },
+  deathDate: { width: 75, x: MARGIN + 310 },
+  proofread: { width: 30, x: MARGIN + 385 },
+  fileBox: { width: 40, x: MARGIN + 415 },
+  images: { width: 85, x: MARGIN + 455 }
 };
+
+// Reduce vertical spacing between rows
+const ROW_PADDING = 4; // Reduced from 8 to make rows closer together
 
 export async function POST(req: NextRequest) {
   try {
@@ -60,7 +63,7 @@ export async function POST(req: NextRequest) {
       const addPageHeader = (page: PDFPage, pageNumber: number) => {
         const { width, height } = page.getSize();
 
-        // Add title
+        // Add title with less vertical space
         const title = "Search Results Report";
         page.drawText(title, {
           x: MARGIN,
@@ -69,40 +72,38 @@ export async function POST(req: NextRequest) {
           font: boldFont
         });
 
-        // Add search query info in bold and bigger
+        // Reduce vertical spacing between header elements
         page.drawText(`Search Query: ${searchQuery}`, {
           x: MARGIN,
-          y: height - MARGIN - 25,
+          y: height - MARGIN - 20,
           size: 12,
           font: boldFont
         });
 
-        // Add total results in bold and bigger
         page.drawText(`Total Results: ${obituaries.length}`, {
           x: MARGIN,
-          y: height - MARGIN - 45,
+          y: height - MARGIN - 35,
           size: 12,
           font: boldFont
         });
 
-        // Add page number
         page.drawText(`Page ${pageNumber} of ${totalPages}`, {
           x: MARGIN,
-          y: height - MARGIN - 65,
+          y: height - MARGIN - 50,
           size: 10,
           font: font
         });
 
-        // Draw KDGS logo on the right (adjusted position)
+        // Draw KDGS logo with adjusted position
         page.drawImage(logoImage, {
-          x: width - 150,
-          y: height - 90,
-          width: 100,
-          height: 50
+          x: width - 140,
+          y: height - 75,
+          width: 90,
+          height: 45
         });
 
-        // Add table headers (adjusted position)
-        const headerY = height - MARGIN - 100;
+        // Add table headers closer to the top content
+        const headerY = height - MARGIN - 80;
         page.drawText("#", {
           x: COLUMNS.number.x,
           y: headerY,
@@ -152,7 +153,7 @@ export async function POST(req: NextRequest) {
           font: boldFont
         });
 
-        return height - MARGIN - 120; // Adjusted starting Y position for data
+        return height - MARGIN - 95;
       };
 
       const headerY = addPageHeader(page, pageNum + 1);
@@ -246,7 +247,7 @@ export async function POST(req: NextRequest) {
             page.drawText(obituary.imageNames![0].slice(0, 15), {
               x: COLUMNS.images.x,
               y: yPos,
-              size: 9,
+              size: 8,
               font: font,
               color: rgb(0.4, 0.4, 0.4)
             });
@@ -298,25 +299,27 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        yPos -= rowHeight + 8;
+        // Reduce the vertical padding between rows (changed from 8 to ROW_PADDING)
+        yPos -= rowHeight + ROW_PADDING;
       }
 
       // Add footer
+      const footerY = MARGIN - 5;
       const footerText =
         "Compiled by © 2025 Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8";
       const copyrightText = "Developed by Javier Gongora — Vyoniq Technologies";
 
       page.drawText(footerText, {
         x: MARGIN,
-        y: MARGIN + 15,
-        size: 8,
+        y: footerY + 10,
+        size: 7,
         font: font
       });
 
       page.drawText(copyrightText, {
         x: MARGIN,
-        y: MARGIN,
-        size: 8,
+        y: footerY,
+        size: 7,
         font: font
       });
     }
