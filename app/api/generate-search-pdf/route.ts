@@ -94,10 +94,10 @@ export async function POST(req: NextRequest) {
           font: font
         });
 
-        // Draw KDGS logo with adjusted position (smaller and higher)
+        // Draw KDGS logo with adjusted position (smaller and moved up further)
         page.drawImage(logoImage, {
           x: width - 135,
-          y: height - 65,
+          y: height - 60,
           width: 85,
           height: 42
         });
