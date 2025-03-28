@@ -1,42 +1,46 @@
-import { getObituariesGeneratePDF } from '@/lib/db';
-import minioClient from '@/lib/minio-client';
-import { prisma } from '@/lib/prisma';
-import { format } from 'date-fns';
-import { NextRequest, NextResponse } from 'next/server';
-import { PDFDocument, PDFPage, rgb, StandardFonts } from 'pdf-lib';
+import { getObituariesGeneratePDF } from "@/lib/db";
+import minioClient from "@/lib/minio-client";
+import { prisma } from "@/lib/prisma";
+import { format } from "date-fns";
+import { NextRequest, NextResponse } from "next/server";
+import { PDFDocument, PDFPage, rgb, StandardFonts } from "pdf-lib";
 
 const LETTER_WIDTH = 612;
 const LETTER_HEIGHT = 792;
-const MARGIN = 50;
-const RECORDS_PER_PAGE = 25;
+const MARGIN = 35;
+const RECORDS_PER_PAGE = 30;
 const LINE_HEIGHT = 12;
-const KDGS_LOGO_URL = 'https://kdgs-admin-dashboard.vercel.app/kdgs.png';
-const MAX_SURNAME_LENGTH = 15;
-const MAX_GIVEN_NAMES_LENGTH = 15;
+const KDGS_LOGO_URL = "https://kdgs-admin-dashboard.vercel.app/kdgs.png";
+const MAX_SURNAME_LENGTH = 18;
+const MAX_GIVEN_NAMES_LENGTH = 20;
 
 // Define column widths and positions
 const COLUMNS = {
-  number: { width: 30, x: MARGIN },
-  reference: { width: 70, x: MARGIN + 30 },
-  surname: { width: 100, x: MARGIN + 100 },
-  givenNames: { width: 100, x: MARGIN + 200 },
-  deathDate: { width: 80, x: MARGIN + 300 },
-  proofread: { width: 70, x: MARGIN + 380 },
-  images: { width: 80, x: MARGIN + 450 }
+  number: { width: 25, x: MARGIN },
+  reference: { width: 65, x: MARGIN + 25 },
+  surname: { width: 110, x: MARGIN + 90 },
+  givenNames: { width: 110, x: MARGIN + 200 },
+  deathDate: { width: 75, x: MARGIN + 310 },
+  proofread: { width: 30, x: MARGIN + 385 },
+  fileBox: { width: 40, x: MARGIN + 415 },
+  images: { width: 85, x: MARGIN + 455 }
 };
+
+// Adjust vertical spacing between rows - slightly more than current 4 but less than original 8
+const ROW_PADDING = 6; // Changed from 4 to 6 for a little more spacing between rows
 
 export async function POST(req: NextRequest) {
   try {
     const { searchQuery, userId } = await req.json();
 
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { obituaries } = await getObituariesGeneratePDF(searchQuery);
 
     if (!obituaries.length) {
-      return NextResponse.json({ error: 'No results found' }, { status: 404 });
+      return NextResponse.json({ error: "No results found" }, { status: 404 });
     }
 
     const pdfDoc = await PDFDocument.create();
@@ -44,7 +48,7 @@ export async function POST(req: NextRequest) {
     const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     // Fetch and embed the KDGS logo
-    const logoImageBytes = await fetch(KDGS_LOGO_URL).then((res) =>
+    const logoImageBytes = await fetch(KDGS_LOGO_URL).then(res =>
       res.arrayBuffer()
     );
     const logoImage = await pdfDoc.embedPng(logoImageBytes);
@@ -59,93 +63,97 @@ export async function POST(req: NextRequest) {
       const addPageHeader = (page: PDFPage, pageNumber: number) => {
         const { width, height } = page.getSize();
 
-        // Add title
-        const title = 'Search Results Report';
+        // Make title smaller and position higher
+        const title = "Search Results Report";
         page.drawText(title, {
           x: MARGIN,
-          y: height - MARGIN,
-          size: 16,
+          y: height - MARGIN + 5,
+          size: 14,
           font: boldFont
         });
 
-        // Add search query info in bold and bigger
+        // Compress vertical spacing between header elements
         page.drawText(`Search Query: ${searchQuery}`, {
           x: MARGIN,
-          y: height - MARGIN - 25,
-          size: 12,
+          y: height - MARGIN - 15,
+          size: 11,
           font: boldFont
         });
 
-        // Add total results in bold and bigger
         page.drawText(`Total Results: ${obituaries.length}`, {
           x: MARGIN,
-          y: height - MARGIN - 45,
-          size: 12,
+          y: height - MARGIN - 28,
+          size: 11,
           font: boldFont
         });
 
-        // Add page number
         page.drawText(`Page ${pageNumber} of ${totalPages}`, {
           x: MARGIN,
-          y: height - MARGIN - 65,
-          size: 10,
+          y: height - MARGIN - 40,
+          size: 9,
           font: font
         });
 
-        // Draw KDGS logo on the right (adjusted position)
+        // Draw KDGS logo with adjusted position (smaller and moved up further)
         page.drawImage(logoImage, {
-          x: width - 150,
-          y: height - 90,
-          width: 100,
-          height: 50
+          x: width - 135,
+          y: height - 60,
+          width: 85,
+          height: 42
         });
 
-        // Add table headers (adjusted position)
-        const headerY = height - MARGIN - 100;
-        page.drawText('#', {
+        // Add table headers closer to the top content
+        const headerY = height - MARGIN - 65;
+        page.drawText("#", {
           x: COLUMNS.number.x,
           y: headerY,
           size: 10,
           font: boldFont
         });
-        page.drawText('File #', {
+        page.drawText("File #", {
           x: COLUMNS.reference.x,
           y: headerY,
           size: 10,
           font: boldFont
         });
-        page.drawText('Surname', {
+        page.drawText("Surname", {
           x: COLUMNS.surname.x,
           y: headerY,
           size: 10,
           font: boldFont
         });
-        page.drawText('Given Names', {
+        page.drawText("Given Names", {
           x: COLUMNS.givenNames.x,
           y: headerY,
           size: 10,
           font: boldFont
         });
-        page.drawText('Death Date', {
+        page.drawText("Death Date", {
           x: COLUMNS.deathDate.x,
           y: headerY,
           size: 10,
           font: boldFont
         });
-        page.drawText('Proofread', {
+        page.drawText("PR", {
           x: COLUMNS.proofread.x,
           y: headerY,
           size: 10,
           font: boldFont
         });
-        page.drawText('Images', {
+        page.drawText("Box #", {
+          x: COLUMNS.fileBox.x,
+          y: headerY,
+          size: 10,
+          font: boldFont
+        });
+        page.drawText("Images", {
           x: COLUMNS.images.x,
           y: headerY,
           size: 10,
           font: boldFont
         });
 
-        return height - MARGIN - 120; // Adjusted starting Y position for data
+        return height - MARGIN - 80;
       };
 
       const headerY = addPageHeader(page, pageNum + 1);
@@ -174,7 +182,7 @@ export async function POST(req: NextRequest) {
           font: font
         });
 
-        page.drawText(obituary.reference || '', {
+        page.drawText(obituary.reference || "", {
           x: COLUMNS.reference.x,
           y: rowCenter,
           size: 9,
@@ -182,9 +190,9 @@ export async function POST(req: NextRequest) {
         });
 
         page.drawText(
-          obituary.surname?.[12]
-            ? `${(obituary.surname || '').slice(0, 12)}...`
-            : (obituary.surname || '').slice(0, 12),
+          obituary.surname?.[MAX_SURNAME_LENGTH]
+            ? `${(obituary.surname || "").slice(0, MAX_SURNAME_LENGTH)}...`
+            : (obituary.surname || "").slice(0, MAX_SURNAME_LENGTH),
           {
             x: COLUMNS.surname.x,
             y: rowCenter,
@@ -194,9 +202,9 @@ export async function POST(req: NextRequest) {
         );
 
         page.drawText(
-          obituary.givenNames?.[15]
-            ? `${(obituary.givenNames || '').slice(0, 15)}...`
-            : (obituary.givenNames || '').slice(0, 15),
+          obituary.givenNames?.[MAX_GIVEN_NAMES_LENGTH]
+            ? `${(obituary.givenNames || "").slice(0, MAX_GIVEN_NAMES_LENGTH)}...`
+            : (obituary.givenNames || "").slice(0, MAX_GIVEN_NAMES_LENGTH),
           {
             x: COLUMNS.givenNames.x,
             y: rowCenter,
@@ -206,7 +214,7 @@ export async function POST(req: NextRequest) {
         );
 
         if (obituary.deathDate) {
-          page.drawText(format(new Date(obituary.deathDate), 'yyyy-MM-dd'), {
+          page.drawText(format(new Date(obituary.deathDate), "yyyy-MM-dd"), {
             x: COLUMNS.deathDate.x,
             y: rowCenter,
             size: 9,
@@ -214,8 +222,20 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        page.drawText(obituary.proofread ? 'Yes' : 'No', {
+        page.drawText(obituary.proofread ? "Yes" : "No", {
           x: COLUMNS.proofread.x,
+          y: rowCenter,
+          size: 9,
+          font: font
+        });
+
+        // Add File Box information
+        const fileBoxText =
+          obituary.fileBox?.year !== 0 && obituary.fileBox?.year !== undefined
+            ? `${obituary.fileBox?.year}-${obituary.fileBox?.number}`
+            : "None";
+        page.drawText(fileBoxText, {
+          x: COLUMNS.fileBox.x,
           y: rowCenter,
           size: 9,
           font: font
@@ -252,28 +272,54 @@ export async function POST(req: NextRequest) {
               color: rgb(0.4, 0.4, 0.4)
             });
           }
+          if (obituary.imageNames![3]) {
+            page.drawText(obituary.imageNames![3].slice(0, 15), {
+              x: COLUMNS.images.x,
+              y: yPos - LINE_HEIGHT * 3,
+              size: 8,
+              font: font,
+              color: rgb(0.4, 0.4, 0.4)
+            });
+          }
+          if (obituary.imageNames![4]) {
+            page.drawText(obituary.imageNames![4].slice(0, 15), {
+              x: COLUMNS.images.x,
+              y: yPos - LINE_HEIGHT * 4,
+              size: 8,
+              font: font,
+              color: rgb(0.4, 0.4, 0.4)
+            });
+          }
+        } else {
+          page.drawText("None", {
+            x: COLUMNS.images.x,
+            y: yPos,
+            size: 9,
+            font: font
+          });
         }
 
-        yPos -= rowHeight + 8;
+        // Reduce the vertical padding between rows (changed from 8 to ROW_PADDING)
+        yPos -= rowHeight + ROW_PADDING;
       }
 
-      // Add footer
-      const footerText =
-        'Compiled by © 2025 Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8';
-      const copyrightText =
-        'Developed by Javier Gongora o/a Vyoniq Technologies';
+      // Add footer with dynamic current year
+      const footerY = MARGIN - 5;
+      const currentYear = new Date().getFullYear();
+      const footerText = `Compiled by © ${currentYear} Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8`;
+      const copyrightText = "Developed by Javier Gongora — Vyoniq Technologies";
 
       page.drawText(footerText, {
         x: MARGIN,
-        y: MARGIN + 15,
-        size: 8,
+        y: footerY + 10,
+        size: 7,
         font: font
       });
 
       page.drawText(copyrightText, {
         x: MARGIN,
-        y: MARGIN,
-        size: 8,
+        y: footerY,
+        size: 7,
         font: font
       });
     }
@@ -281,7 +327,7 @@ export async function POST(req: NextRequest) {
     const pdfBytes = await pdfDoc.save();
 
     // Save to MinIO first
-    const sanitizedQuery = searchQuery.replace(/@/g, '').replace(/\s+/g, '-');
+    const sanitizedQuery = searchQuery.replace(/@/g, "").replace(/\s+/g, "-");
     const fileName = `kdgs-report-${sanitizedQuery}-${Date.now()}.pdf`;
     const bucketName = process.env.MINIO_BUCKET_NAME!;
 
@@ -292,12 +338,12 @@ export async function POST(req: NextRequest) {
         Buffer.from(pdfBytes)
       );
     } catch (error) {
-      console.error('Error saving PDF to MinIO:', error);
-      throw new Error('Failed to save report');
+      console.error("Error saving PDF to MinIO:", error);
+      throw new Error("Failed to save report");
     }
 
     // Convert to base64 for immediate download
-    const pdfBase64 = Buffer.from(pdfBytes).toString('base64');
+    const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
     const pdfUrl = `data:application/pdf;base64,${pdfBase64}`;
 
     // Save report record to database
@@ -306,7 +352,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!genealogist) {
-      throw new Error('Genealogist not found');
+      throw new Error("Genealogist not found");
     }
 
     await prisma.report.create({
@@ -314,7 +360,7 @@ export async function POST(req: NextRequest) {
         fileName,
         searchQuery,
         userId,
-        role: genealogist.role || '',
+        role: genealogist.role || "",
         totalResults: obituaries.length
       }
     });
@@ -322,9 +368,9 @@ export async function POST(req: NextRequest) {
     // Return the PDF data URL
     return NextResponse.json({ pdf: pdfUrl });
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    console.error("Error generating PDF:", error);
     return NextResponse.json(
-      { error: (error as Error).message || 'Failed to generate PDF' },
+      { error: (error as Error).message || "Failed to generate PDF" },
       { status: 500 }
     );
   }
