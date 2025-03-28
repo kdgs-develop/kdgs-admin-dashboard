@@ -1,20 +1,23 @@
-'use client';
+"use client";
 
-import { getImageUrlAction, rotateImageAction } from '@/app/(dashboard)/images/minio-actions';
-import { ViewImageDialog } from '@/app/(dashboard)/images/view-image-dialog';
+import {
+  getImageUrlAction,
+  rotateImageAction
+} from "@/app/(dashboard)/images/minio-actions";
+import { ViewImageDialog } from "@/app/(dashboard)/images/view-image-dialog";
 import {
   fetchImagesForObituaryAction,
   getPublicObituaryByHash
-} from '@/app/(dashboard)/obituary/[reference]/actions';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/hooks/use-toast';
-import { Prisma } from '@prisma/client';
-import { Download, Loader2 } from 'lucide-react';
-import { BucketItem } from 'minio';
-import Image from 'next/image';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+} from "@/app/(dashboard)/obituary/[reference]/actions";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "@/hooks/use-toast";
+import { Prisma } from "@prisma/client";
+import { Download, Loader2 } from "lucide-react";
+import { BucketItem } from "minio";
+import Image from "next/image";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type ObituaryWithAllRelations = Prisma.ObituaryGetPayload<{
   include: {
@@ -60,11 +63,11 @@ export default function PublicObituaryPage() {
         `/api/generate-pdf/${obituary?.reference}`
       );
       if (!pdfResponse.ok) {
-        throw new Error('Failed to generate PDF');
+        throw new Error("Failed to generate PDF");
       }
       const pdfBlob = await pdfResponse.blob();
       const pdfUrl = window.URL.createObjectURL(pdfBlob);
-      const pdfLink = document.createElement('a');
+      const pdfLink = document.createElement("a");
       pdfLink.href = pdfUrl;
       pdfLink.download = `obituary_${obituary?.reference}.pdf`;
       pdfLink.click();
@@ -79,7 +82,7 @@ export default function PublicObituaryPage() {
         }
         const imageBlob = await imageResponse.blob();
         const downloadUrl = window.URL.createObjectURL(imageBlob);
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = downloadUrl;
         link.download = imageName;
         link.click();
@@ -87,15 +90,15 @@ export default function PublicObituaryPage() {
       }
 
       toast({
-        title: 'Download Complete',
-        description: 'The obituary PDF and images have been downloaded.'
+        title: "Download Complete",
+        description: "The obituary PDF and images have been downloaded."
       });
     } catch (error) {
-      console.error('Error downloading files:', error);
+      console.error("Error downloading files:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to download files. Please try again.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to download files. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setIsDownloading(false);
@@ -107,7 +110,7 @@ export default function PublicObituaryPage() {
   }
 
   const fullName =
-    `${obituary.title?.name || ''} ${obituary.givenNames || ''} ${obituary.surname || ''}`.trim();
+    `${obituary.title?.name || ""} ${obituary.givenNames || ""} ${obituary.surname || ""}`.trim();
 
   const handleRotate = async (fileName: string) => {
     rotateImageAction(fileName);
@@ -123,7 +126,7 @@ export default function PublicObituaryPage() {
                 Obituary Index Report
               </CardTitle>
               <div className="text-sm text-gray-500 mt-2">
-                <span className="font-semibold">File Number:</span>{' '}
+                <span className="font-semibold">File Number:</span>{" "}
                 {obituary.reference}
               </div>
               <div className="text-sm text-gray-500">
@@ -170,14 +173,15 @@ export default function PublicObituaryPage() {
           Kelowna BC Canada V1Y 9N8
         </p>
         <span className="text-sm text-gray-500">
-          © 2025 Kelowna & District Genealogical Society | Developed by{' '}
+          © {new Date().getFullYear()} Kelowna & District Genealogical Society
+          | Developed by{" "}
           {/* <a
             href="https://vyoniq.com"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline"
           > */}
-            Javier Gongora o/a Vyoniq Technologies
+          Javier Gongora — Vyoniq Technologies
           {/* </a> */}
         </span>
       </footer>
