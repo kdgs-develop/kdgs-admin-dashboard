@@ -11,8 +11,8 @@ const MARGIN = 35;
 const RECORDS_PER_PAGE = 30;
 const LINE_HEIGHT = 12;
 const KDGS_LOGO_URL = "https://kdgs-admin-dashboard.vercel.app/kdgs.png";
-const MAX_SURNAME_LENGTH = 15;
-const MAX_GIVEN_NAMES_LENGTH = 15;
+const MAX_SURNAME_LENGTH = 18;
+const MAX_GIVEN_NAMES_LENGTH = 20;
 
 // Define column widths and positions
 const COLUMNS = {
@@ -190,9 +190,9 @@ export async function POST(req: NextRequest) {
         });
 
         page.drawText(
-          obituary.surname?.[12]
-            ? `${(obituary.surname || "").slice(0, 12)}...`
-            : (obituary.surname || "").slice(0, 12),
+          obituary.surname?.[MAX_SURNAME_LENGTH]
+            ? `${(obituary.surname || "").slice(0, MAX_SURNAME_LENGTH)}...`
+            : (obituary.surname || "").slice(0, MAX_SURNAME_LENGTH),
           {
             x: COLUMNS.surname.x,
             y: rowCenter,
@@ -202,9 +202,9 @@ export async function POST(req: NextRequest) {
         );
 
         page.drawText(
-          obituary.givenNames?.[15]
-            ? `${(obituary.givenNames || "").slice(0, 15)}...`
-            : (obituary.givenNames || "").slice(0, 15),
+          obituary.givenNames?.[MAX_GIVEN_NAMES_LENGTH]
+            ? `${(obituary.givenNames || "").slice(0, MAX_GIVEN_NAMES_LENGTH)}...`
+            : (obituary.givenNames || "").slice(0, MAX_GIVEN_NAMES_LENGTH),
           {
             x: COLUMNS.givenNames.x,
             y: rowCenter,
