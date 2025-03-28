@@ -26,8 +26,8 @@ const COLUMNS = {
   images: { width: 85, x: MARGIN + 455 }
 };
 
-// Reduce vertical spacing between rows
-const ROW_PADDING = 4; // Reduced from 8 to make rows closer together
+// Adjust vertical spacing between rows - slightly more than current 4 but less than original 8
+const ROW_PADDING = 6; // Changed from 4 to 6 for a little more spacing between rows
 
 export async function POST(req: NextRequest) {
   try {
