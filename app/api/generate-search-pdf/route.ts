@@ -303,10 +303,10 @@ export async function POST(req: NextRequest) {
         yPos -= rowHeight + ROW_PADDING;
       }
 
-      // Add footer
+      // Add footer with dynamic current year
       const footerY = MARGIN - 5;
-      const footerText =
-        "Compiled by © 2025 Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8";
+      const currentYear = new Date().getFullYear();
+      const footerText = `Compiled by © ${currentYear} Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8`;
       const copyrightText = "Developed by Javier Gongora — Vyoniq Technologies";
 
       page.drawText(footerText, {
