@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
-import { getImageRotation, ImageWithObituary as ImageType } from '@/lib/db';
-import Image from 'next/image';
-import { BucketItem } from 'minio';
+} from "@/components/ui/dialog";
+import { getImageRotation, ImageWithObituary as ImageType } from "@/lib/db";
+import Image from "next/image";
+import { BucketItem } from "minio";
 
 interface ViewImageDialogProps {
   image: ImageType | BucketItem | null;
@@ -25,7 +25,7 @@ export function ViewImageDialog({
   onRotate
 }: ViewImageDialogProps) {
   const [rotation, setRotation] = useState(0);
-  const [imageUrl, setImageUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [scale, setScale] = useState(1);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -33,6 +33,15 @@ export function ViewImageDialog({
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const lastMousePosition = useRef({ x: 0, y: 0 });
+
+  // Add a calculated scaling factor for rotated images
+  const getAutoScaleFactor = () => {
+    // No additional scaling needed for normal orientation
+    if (rotation % 180 === 0) return 1;
+
+    // For 90° or 270° rotations, apply additional scaling to fit
+    return 0.7; // Reducing to 70% helps fit rotated images
+  };
 
   useEffect(() => {
     async function fetchImageUrl() {
@@ -48,7 +57,7 @@ export function ViewImageDialog({
 
   useEffect(() => {
     if (image && image.name) {
-      getImageRotation(image.name).then((rotation) => {
+      getImageRotation(image.name).then(rotation => {
         setRotation(rotation || 0);
       });
     }
@@ -67,7 +76,8 @@ export function ViewImageDialog({
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isZoomed && imageContainerRef.current) {
       const { clientX, clientY } = e;
-      const { left, top, width, height } = imageContainerRef.current.getBoundingClientRect();
+      const { left, top, width, height } =
+        imageContainerRef.current.getBoundingClientRect();
       const x = ((clientX - left) / width) * 100;
       const y = ((clientY - top) / height) * 100;
       setPosition({ x, y });
@@ -93,20 +103,20 @@ export function ViewImageDialog({
     if (isDragging.current) {
       const dx = e.clientX - lastMousePosition.current.x;
       const dy = e.clientY - lastMousePosition.current.y;
-      setPosition((prev) => ({
+      setPosition(prev => ({
         x: prev.x + (dx / imageContainerRef.current!.clientWidth) * 100,
-        y: prev.y + (dy / imageContainerRef.current!.clientHeight) * 100,
+        y: prev.y + (dy / imageContainerRef.current!.clientHeight) * 100
       }));
       lastMousePosition.current = { x: e.clientX, y: e.clientY };
     }
   };
 
   useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMoveDrag);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener("mousemove", handleMouseMoveDrag);
+    window.addEventListener("mouseup", handleMouseUp);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMoveDrag);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMoveDrag);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, []);
 
@@ -115,21 +125,30 @@ export function ViewImageDialog({
       await onRotate(image.name);
       const newRotation = await getImageRotation(image.name);
       setRotation(newRotation || 0);
+
+      // Always reset zoom and position when rotating
+      setScale(1);
+      setPosition({ x: 50, y: 50 });
+      setIsZoomed(false);
     }
   };
 
   return (
-    <Dialog open={!!image} onOpenChange={() => onClose(image?.name || '')}>
+    <Dialog open={!!image} onOpenChange={() => onClose(image?.name || "")}>
       <DialogContent className="max-w-[90vw] w-full max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{image?.name}</DialogTitle>
           <DialogDescription>View the image.</DialogDescription>
         </DialogHeader>
-        
+
         <div
           ref={imageContainerRef}
-          className="flex-grow relative flex items-center justify-center cursor-zoom-in"
-          style={{ height: 'calc(90vh - 200px)', cursor: isZoomed ? 'zoom-out' : 'zoom-in' }}
+          className={`flex-grow relative flex items-center justify-center ${isZoomed ? "overflow-auto" : "overflow-hidden"}`}
+          style={{
+            height: "calc(90vh - 200px)",
+            cursor: isZoomed ? "grab" : "zoom-in",
+            scrollBehavior: "smooth"
+          }}
           onMouseMove={handleMouseMove}
           onClick={handleZoom}
           onMouseDown={handleMouseDown}
@@ -142,21 +161,33 @@ export function ViewImageDialog({
           ) : (
             imageUrl && (
               <div
+                className="w-full h-full flex items-center justify-center"
                 style={{
-                  transform: `rotate(${rotation}deg) scale(${scale})`,
-                  transformOrigin: `${position.x}% ${position.y}%`,
-                  transition: 'transform 0.3s ease',
-                  position: 'relative',
-                  width: '100%',
-                  height: '100%',
+                  minWidth: isZoomed ? "100%" : "auto",
+                  minHeight: isZoomed ? "100%" : "auto"
                 }}
               >
-                <Image
-                  src={imageUrl}
-                  alt={image?.name || 'Image'}
-                  fill
-                  style={{ objectFit: 'contain' }}
-                />
+                <div
+                  style={{
+                    transform: `rotate(${rotation}deg) scale(${scale * getAutoScaleFactor()})`,
+                    transformOrigin: "center",
+                    maxWidth: Math.abs(rotation % 180) === 90 ? "70%" : "100%",
+                    maxHeight: Math.abs(rotation % 180) === 90 ? "70%" : "100%",
+                    transition: "transform 0.3s ease",
+                    position: "relative",
+                    width: "100%",
+                    height: "100%"
+                  }}
+                >
+                  <Image
+                    src={imageUrl}
+                    alt={image?.name || "Image"}
+                    fill
+                    style={{
+                      objectFit: "contain"
+                    }}
+                  />
+                </div>
               </div>
             )
           )}
@@ -165,7 +196,7 @@ export function ViewImageDialog({
         <div className="flex justify-between mt-4">
           <div className="flex gap-2">
             <Button onClick={handleRotate}>Rotate</Button>
-            <Button 
+            <Button
               onClick={async () => {
                 if (image?.name && imageUrl) {
                   try {
@@ -174,19 +205,19 @@ export function ViewImageDialog({
                     // Create a new blob with the correct filename
                     const newBlob = new Blob([blob], { type: blob.type });
                     const url = window.URL.createObjectURL(newBlob);
-                    const link = document.createElement('a');
+                    const link = document.createElement("a");
                     link.href = url;
                     const fileName = image.name;
-                    console.log('Downloading file:', fileName);
+                    console.log("Downloading file:", fileName);
                     link.download = fileName;
                     // Hide link
-                    link.style.display = 'none';
+                    link.style.display = "none";
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                     window.URL.revokeObjectURL(url);
                   } catch (error) {
-                    console.error('Download error:', error);
+                    console.error("Download error:", error);
                   }
                 }
               }}
@@ -194,7 +225,10 @@ export function ViewImageDialog({
               Download
             </Button>
           </div>
-          <Button variant="destructive" onClick={() => onClose(image?.name || '')}>
+          <Button
+            variant="destructive"
+            onClick={() => onClose(image?.name || "")}
+          >
             Close
           </Button>
         </div>
