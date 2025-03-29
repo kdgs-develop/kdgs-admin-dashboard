@@ -212,10 +212,11 @@ export async function getEditObituaryDialogData(): Promise<EditObituaryDialogDat
 
 export async function generateReference(surname: string): Promise<string> {
   // Clean the surname to only contain letters and spaces
-  const cleanedSurname = surname.replace(/[^A-Za-z\s]/g, "");
+  const cleanedSurname = surname.replace(/[^A-Za-z\s]/g, "").toUpperCase().padEnd(4);
 
   // Take exactly the first 4 characters (including spaces) and convert to uppercase
-  const prefix = cleanedSurname.slice(0, 4).toUpperCase();
+  //
+  const prefix = cleanedSurname.slice(0, 4);
 
   const latestObituary = await prisma.obituary.findFirst({
     where: {
