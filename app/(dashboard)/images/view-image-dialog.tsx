@@ -143,10 +143,12 @@ export function ViewImageDialog({
 
         <div
           ref={imageContainerRef}
-          className="flex-grow relative flex items-center justify-center overflow-hidden"
+          className={`flex-grow relative flex items-center justify-center ${isZoomed ? "overflow-auto" : "overflow-hidden"}`}
           style={{
             height: "calc(90vh - 200px)",
-            cursor: isZoomed ? "zoom-out" : "zoom-in"
+            cursor: isZoomed ? "zoom-out" : "zoom-in",
+            // Add scrolling styles when zoomed
+            scrollBehavior: "smooth"
           }}
           onMouseMove={handleMouseMove}
           onClick={handleZoom}
@@ -159,7 +161,9 @@ export function ViewImageDialog({
             </div>
           ) : (
             imageUrl && (
-              <div className="w-full h-full flex items-center justify-center">
+              <div
+                className={`w-full h-full flex items-center justify-center ${isZoomed ? "min-w-[200%] min-h-[200%]" : ""}`}
+              >
                 <div
                   style={{
                     transform: `rotate(${rotation}deg) scale(${scale * getAutoScaleFactor()})`,
@@ -168,8 +172,8 @@ export function ViewImageDialog({
                     maxHeight: Math.abs(rotation % 180) === 90 ? "70%" : "100%",
                     transition: "transform 0.3s ease",
                     position: "relative",
-                    width: "100%",
-                    height: "100%"
+                    width: isZoomed ? "auto" : "100%",
+                    height: isZoomed ? "auto" : "100%"
                   }}
                 >
                   <Image
