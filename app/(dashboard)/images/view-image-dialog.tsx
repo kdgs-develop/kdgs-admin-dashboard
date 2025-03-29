@@ -146,8 +146,7 @@ export function ViewImageDialog({
           className={`flex-grow relative flex items-center justify-center ${isZoomed ? "overflow-auto" : "overflow-hidden"}`}
           style={{
             height: "calc(90vh - 200px)",
-            cursor: isZoomed ? "zoom-out" : "zoom-in",
-            // Add scrolling styles when zoomed
+            cursor: isZoomed ? "grab" : "zoom-in",
             scrollBehavior: "smooth"
           }}
           onMouseMove={handleMouseMove}
@@ -162,7 +161,11 @@ export function ViewImageDialog({
           ) : (
             imageUrl && (
               <div
-                className={`w-full h-full flex items-center justify-center ${isZoomed ? "min-w-[200%] min-h-[200%]" : ""}`}
+                className="w-full h-full flex items-center justify-center"
+                style={{
+                  minWidth: isZoomed ? "100%" : "auto",
+                  minHeight: isZoomed ? "100%" : "auto"
+                }}
               >
                 <div
                   style={{
@@ -172,8 +175,8 @@ export function ViewImageDialog({
                     maxHeight: Math.abs(rotation % 180) === 90 ? "70%" : "100%",
                     transition: "transform 0.3s ease",
                     position: "relative",
-                    width: isZoomed ? "auto" : "100%",
-                    height: isZoomed ? "auto" : "100%"
+                    width: "100%",
+                    height: "100%"
                   }}
                 >
                   <Image
