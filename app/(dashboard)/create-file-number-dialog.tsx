@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { DatePicker } from '@/components/ui/date-picker';
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -17,47 +17,48 @@ import {
   FormItem,
   FormLabel,
   FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { toast } from '@/hooks/use-toast';
-import { Obituary } from '@/lib/db';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye } from 'lucide-react';
-import { BucketItem } from 'minio';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
+import { Obituary } from "@/lib/db";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye } from "lucide-react";
+import { BucketItem } from "minio";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import {
   createObituaryAction,
   generateNewFileNumber,
   generateReference,
   obituaryExists as obituaryExistsCheck,
   getOpenFileBoxId
-} from './actions';
-import { getImageUrlAction, rotateImageAction } from './images/minio-actions';
-import { ViewImageDialog } from './images/view-image-dialog';
-import { fetchImagesForObituaryAction } from './obituary/[reference]/actions';
-import { getUserData } from '@/lib/db';
+} from "./actions";
+import { getImageUrlAction, rotateImageAction } from "./images/minio-actions";
+import { ViewImageDialog } from "./images/view-image-dialog";
+import { fetchImagesForObituaryAction } from "./obituary/[reference]/actions";
+import { getUserData } from "@/lib/db";
 
 const formSchema = z.object({
+  // do not trim the surname
   surname: z
     .string()
-    .min(1, 'Surname is required')
-    .transform((val) => val.toUpperCase()),
+    .min(1, "Surname is required")
+    .toUpperCase()
+    .transform(val => val.padEnd(4, " "))
+    .transform(val => val.replace(/[^A-Za-z\s]/g, "")),
   givenNames: z
     .string()
-    .min(1, 'Given names are required')
-    .transform((val) =>
+    .min(1, "Given names are required")
+    .transform(val =>
       val
-        .split(' ')
-        .map(
-          (name) => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
-        )
-        .join(' ')
+        .split(" ")
+        .map(name => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase())
+        .join(" ")
     ),
   deathDate: z.date({
-    required_error: 'Death date is required'
-    }),
+    required_error: "Death date is required"
+  }),
   enteredBy: z.string().optional(),
   enteredOn: z.date().optional()
 });
@@ -74,21 +75,23 @@ export function CreateFileNumberDialog({
   onSave
 }: CreateFileNumberDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [fileNumber, setFileNumber] = useState('');
+  const [fileNumber, setFileNumber] = useState("");
   const [obituaryExists, setObituaryExists] = useState(false);
   const [relatedImages, setRelatedImages] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<BucketItem | null>(null);
   const [isViewImageDialogOpen, setIsViewImageDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(null);
+  const [currentUserFullName, setCurrentUserFullName] = useState<string | null>(
+    null
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      surname: '',
-      givenNames: '',
+      surname: "",
+      givenNames: "",
       deathDate: undefined,
-      enteredBy: currentUserFullName || '',
+      enteredBy: currentUserFullName || "",
       enteredOn: new Date()
     }
   });
@@ -96,11 +99,11 @@ export function CreateFileNumberDialog({
   useEffect(() => {
     if (isOpen) {
       form.reset({
-        surname: '',
-        givenNames: '',
+        surname: "",
+        givenNames: "",
         deathDate: undefined
       });
-      setFileNumber('');
+      setFileNumber("");
       setObituaryExists(false);
     }
   }, [isOpen, form]);
@@ -121,10 +124,10 @@ export function CreateFileNumberDialog({
 
       if (!surname || !givenNames || !deathDate) {
         toast({
-          title: 'Missing Information',
+          title: "Missing Information",
           description:
-            'Please fill in all fields before generating a file number.',
-          variant: 'destructive'
+            "Please fill in all fields before generating a file number.",
+          variant: "destructive"
         });
         return;
       }
@@ -155,11 +158,11 @@ export function CreateFileNumberDialog({
       }
       setFileNumber(newFileNumber);
     } catch (error) {
-      console.error('Error generating file number:', error);
+      console.error("Error generating file number:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to generate file number. Please try again.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to generate file number. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setIsGenerating(false);
@@ -197,14 +200,14 @@ export function CreateFileNumberDialog({
     try {
       // Get the current open file box ID
       const openFileBoxId = await getOpenFileBoxId();
-      
+
       if (!obituaryExists) {
         newObituary = await createObituaryAction({
           reference: fileNumber,
           surname: surname,
           givenNames: givenNames,
           deathDate: deathDate,
-          enteredBy: currentUserFullName || '',
+          enteredBy: currentUserFullName || "",
           enteredOn: new Date(),
           fileBox: { connect: { id: openFileBoxId } }
         });
@@ -212,14 +215,14 @@ export function CreateFileNumberDialog({
       onSave(newObituary as Obituary);
       onClose();
       toast({
-        title: obituaryExists ? 'File Number Added' : 'File Number Created',
-        description: `New file number ${fileNumber} has been ${obituaryExists ? 'added to the existing obituary' : 'created'}.`
+        title: obituaryExists ? "File Number Added" : "File Number Created",
+        description: `New file number ${fileNumber} has been ${obituaryExists ? "added to the existing obituary" : "created"}.`
       });
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to create file number. Please try again.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to create file number. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -290,7 +293,7 @@ export function CreateFileNumberDialog({
                           {...field}
                           className="h-8 text-sm"
                           disabled
-                          value={currentUserFullName || ''}
+                          value={currentUserFullName || ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -308,7 +311,7 @@ export function CreateFileNumberDialog({
                           type="date"
                           className="h-8 text-sm"
                           disabled
-                          value={new Date().toISOString().split('T')[0]}
+                          value={new Date().toISOString().split("T")[0]}
                         />
                       </FormControl>
                       <FormMessage />
@@ -328,7 +331,7 @@ export function CreateFileNumberDialog({
                 onClick={handleGenerateFileNumber}
                 disabled={isGenerating}
               >
-                {isGenerating ? 'Generating...' : 'Generate'}
+                {isGenerating ? "Generating..." : "Generate"}
               </Button>
             </div>
             {obituaryExists && (
@@ -350,7 +353,7 @@ export function CreateFileNumberDialog({
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={(e) => handleViewImage(image, e)}
+                            onClick={e => handleViewImage(image, e)}
                           >
                             <Eye className="mr-2 h-4 w-4" />
                             View Image
@@ -364,13 +367,13 @@ export function CreateFileNumberDialog({
                 </div>
               </div>
             )}
-            
+
             <DialogFooter>
               <Button
                 type="submit"
                 disabled={isLoading || !fileNumber || isViewImageDialogOpen}
               >
-                {isLoading ? 'Creating...' : 'Create File Number'}
+                {isLoading ? "Creating..." : "Create File Number"}
               </Button>
             </DialogFooter>
           </form>

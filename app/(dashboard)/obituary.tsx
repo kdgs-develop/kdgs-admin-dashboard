@@ -54,7 +54,7 @@ export function Obituary({
   return (
     <>
       <TableRow>
-        <TableCell>{obituary.reference}</TableCell>
+        <TableCell className="whitespace-pre">{obituary.reference}</TableCell>
         <TableCell>{obituary.surname ?? 'N/A'}</TableCell>
         <TableCell>{obituary.givenNames ?? 'N/A'}</TableCell>
         <TableCell>
