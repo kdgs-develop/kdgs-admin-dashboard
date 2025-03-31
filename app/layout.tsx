@@ -43,7 +43,7 @@ export default function RootLayout({
                     strokeLinejoin="round"
                     className="h-full w-full text-blue-600"
                   >
-                    <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+                    <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6-3v13m6-13l-5.447-2.724A1 1 0 0115 3.618v10.764a1 1 0 01-1.447.894L9 13" />
                   </svg>
                 </div>
               </div>
@@ -55,33 +55,48 @@ export default function RootLayout({
 
               {/* Status Badge */}
               <div className="mb-6 flex justify-center">
-                <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-800">
-                  <span className="mr-1.5 h-2 w-2 rounded-full bg-amber-500"></span>
-                  Temporarily Unavailable
+                <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
+                  <span className="mr-1.5 h-2 w-2 rounded-full bg-blue-500"></span>
+                  We've Moved
                 </span>
               </div>
 
               {/* Message */}
               <div className="mb-6 text-center">
                 <p className="mb-4 text-slate-600">
-                  We are currently upgrading our systems to improve performance
-                  and security.
+                  The KDGS Admin Dashboard has been moved to a more secure host.
                 </p>
-                <p className="font-medium text-slate-700">
-                  The dashboard will be back online soon.
+                <p className="font-medium text-slate-700 mb-4">
+                  Please update your bookmarks to use the new address.
                 </p>
+                <a
+                  href="https://dashboard.kdgs.ca"
+                  className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Go to dashboard.kdgs.ca
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="ml-2 h-4 w-4"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </a>
               </div>
 
-              {/* Progress indicator */}
-              <div className="mb-6">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                  <div className="h-full w-3/4 animate-pulse rounded-full bg-blue-500"></div>
-                </div>
+              {/* Changed to a divider instead of progress indicator */}
+              <div className="mb-6 flex items-center">
+                <div className="flex-grow border-t border-slate-200"></div>
               </div>
 
               {/* Footer */}
               <div className="text-center text-sm text-slate-500">
-                <p>Thank you for your patience!</p>
+                <p>Thank you for visiting!</p>
                 <div className="mt-4 pt-4 border-t border-slate-100">
                   <p className="mb-1">
                     © {new Date().getFullYear()} Kelowna & District
