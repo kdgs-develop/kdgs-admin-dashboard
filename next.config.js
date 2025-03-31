@@ -4,6 +4,12 @@ const nextConfig = {
     remotePatterns: [
       // ... existing patterns
       {
+        protocol: "https",
+        hostname: process.env.MINIO_ENDPOINT,
+        port: "",
+        pathname: "/**"
+      },
+      {
         protocol: "http", // Use http for internal Docker network
         hostname: "minio-lsgcwgcscgowkogk8c8kcgss", // Docker service name
         port: "9000", // Internal Minio port
