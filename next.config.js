@@ -10,12 +10,6 @@ const nextConfig = {
         pathname: "/**"
       },
       {
-        protocol: "http", // Use http for internal Docker network
-        hostname: "minio-lsgcwgcscgowkogk8c8kcgss", // Docker service name
-        port: "9000", // Internal Minio port
-        pathname: "/**"
-      },
-      {
         protocol: "https",
         hostname: "kdgs-admin-dashboard.vercel.app",
         pathname: "/**"
@@ -32,7 +26,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.dashboard.kdgs.ca",
+        hostname: "dashboard-*.kdgs.ca",
         pathname: "/**"
       }
     ]
