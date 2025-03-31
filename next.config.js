@@ -11,7 +11,7 @@ const nextConfig = {
       },
       {
         protocol: "http", // Use http for internal Docker network
-        hostname: "minio", // Docker service name
+        hostname: "minio-lsgcwgcscgowkogk8c8kcgss", // Docker service name
         port: "9000", // Internal Minio port
         pathname: "/**"
       },
