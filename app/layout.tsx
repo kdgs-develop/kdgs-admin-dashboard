@@ -17,7 +17,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const isTemporaryUnavailable = false;
+  // Read from environment variable with a fallback to false
+  const isTemporaryUnavailable =
+    process.env.NEXT_PUBLIC_MAINTENANCE_MODE === "true" || false;
 
   if (isTemporaryUnavailable) {
     return (
