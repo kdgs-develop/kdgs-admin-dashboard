@@ -254,9 +254,9 @@ export function EditObituaryDialog({
     [key: string]: { url: string; rotation: number };
   }>({});
 
-  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [showImagePreview, setShowImagePreview] = useState(true);
 
-  const [splitPosition, setSplitPosition] = useState(40); // Default 40% for form width
+  const [splitPosition, setSplitPosition] = useState(66);
   const resizeRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
