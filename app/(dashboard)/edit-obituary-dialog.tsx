@@ -686,23 +686,23 @@ export function EditObituaryDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {/* Toggle button */}
+          {/* Toggle button - Improved positioning and styling */}
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="absolute top-6 right-6"
+            className="absolute top-6 right-6 border border-border hover:bg-accent hover:text-accent-foreground transition-colors"
             onClick={() => setShowImagePreview(!showImagePreview)}
           >
             {showImagePreview ? (
               <>
-                <ChevronRight className="h-4 w-4 mr-2" />
-                Hide Images
+                <ChevronRight className="h-4 w-4 mr-1" />
+                <span>Hide Images</span>
               </>
             ) : (
               <>
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Show Images
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                <span>Show Images</span>
               </>
             )}
           </Button>
