@@ -52,6 +52,27 @@ export function ViewImageDialog({
     }
   }, [image]);
 
+  const handleZoomIn = () => setScale(s => s + 0.5);
+  const handleZoomOut = () => {
+    setScale(s => {
+      const newScale = s > 1 ? s - 0.5 : 1;
+      if (newScale === 1) {
+        setPosition({ x: 0, y: 0 });
+      }
+      return newScale;
+    });
+  };
+
+  const handleRotate = async () => {
+    if (image && image.name) {
+      await onRotate(image.name);
+      const newRotation = await getImageRotation(image.name);
+      setRotation(newRotation || 0);
+      setScale(1);
+      setPosition({ x: 0, y: 0 });
+    }
+  };
+
   const onMouseDown = (e: React.MouseEvent) => {
     if (scale > 1) {
       setIsDragging(true);
@@ -75,17 +96,6 @@ export function ViewImageDialog({
 
   const onMouseUp = () => {
     setIsDragging(false);
-  };
-
-  const handleRotate = async () => {
-    if (image && image.name) {
-      await onRotate(image.name);
-      const newRotation = await getImageRotation(image.name);
-      setRotation(newRotation || 0);
-
-      // Always reset zoom and position when rotating
-      setScale(1);
-    }
   };
 
   return (
@@ -121,7 +131,10 @@ export function ViewImageDialog({
                   width: "100%",
                   height: "100%",
                   position: "relative",
-                  userSelect: "none"
+                  userSelect: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
                 }}
               >
                 <Image
@@ -141,13 +154,10 @@ export function ViewImageDialog({
 
         <div className="flex justify-between mt-4">
           <div className="flex gap-2">
-            <Button onClick={() => setScale(s => s + 0.5)} variant="secondary">
+            <Button onClick={handleZoomIn} variant="secondary">
               Zoom In
             </Button>
-            <Button
-              onClick={() => setScale(s => (s > 1 ? s - 0.5 : 1))}
-              variant="secondary"
-            >
+            <Button onClick={handleZoomOut} variant="secondary">
               Zoom Out
             </Button>
             <Button onClick={handleRotate}>Rotate</Button>
