@@ -621,124 +621,8 @@ export function EditObituaryDialog({
         className="max-w-[90vw] max-h-[85vh] overflow-hidden p-0 flex"
         autoFocus={false}
       >
-        {/* Image Preview Section */}
-        <div className="w-[70%] bg-muted/20 border-r overflow-y-auto p-4 max-h-[85vh] flex flex-col">
-          <h3 className="text-lg font-semibold mb-4">Image Previews</h3>
-
-          {Object.keys(imageUrls).length === 0 && (
-            <div className="flex-grow flex items-center justify-center text-muted-foreground">
-              No images available for preview
-            </div>
-          )}
-
-          <div className="space-y-6">
-            {[
-              ...existingImages,
-              ...selectedFiles.map(f => ({
-                originalName: f.file.name,
-                newName: f.newName
-              }))
-            ].map((image, idx) => {
-              const imageData = imageUrls[image.newName];
-              return imageData ? (
-                <div key={idx} className="border rounded-md p-2 bg-background">
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="text-sm font-medium truncate max-w-[80%]">
-                      {image.originalName !== image.newName ? (
-                        <>
-                          {image.originalName} → {image.newName}
-                        </>
-                      ) : (
-                        image.newName
-                      )}
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleRotatePreview(image.newName)}
-                        className="h-7 w-7"
-                      >
-                        <RotateCw className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleDownloadPreview(image.newName)}
-                        className="h-7 w-7"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          if (
-                            existingImages.some(
-                              img => img.newName === image.newName
-                            )
-                          ) {
-                            handleDeleteImage(image.newName);
-                          } else {
-                            handleRemoveFile(
-                              selectedFiles.findIndex(
-                                f => f.newName === image.newName
-                              )
-                            );
-                          }
-                        }}
-                        className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div
-                    className="relative bg-background flex items-center justify-center"
-                    style={{
-                      width: "100%",
-                      aspectRatio: "1 / 1",
-                      margin: "0 auto"
-                    }}
-                    onClick={() =>
-                      setSelectedImage({ name: image.newName } as BucketItem)
-                    }
-                  >
-                    <div
-                      style={{
-                        position: "relative",
-                        width: "100%",
-                        height: "100%"
-                      }}
-                    >
-                      <Image
-                        src={imageData.url}
-                        alt={image.newName}
-                        fill
-                        style={{
-                          objectFit: "contain",
-                          transform: `rotate(${imageData.rotation}deg)`,
-                          transition: "transform 0.3s ease"
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  key={idx}
-                  className="border rounded-md p-4 flex items-center justify-center bg-background"
-                  style={{ height: "150px" }}
-                >
-                  <div className="w-6 h-6 border-4 border-t-4 border-gray-200 rounded-full animate-spin"></div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Form Section */}
-        <div className="w-[30%] max-h-[85vh] overflow-y-auto p-6">
+        {/* Form Section - now 40% width */}
+        <div className="w-[40%] max-h-[85vh] overflow-y-auto p-6">
           <DialogHeader>
             <DialogTitle>Edit Obituary</DialogTitle>
             <DialogDescription>
@@ -1648,6 +1532,122 @@ export function EditObituaryDialog({
               </DialogFooter>
             </form>
           </Form>
+        </div>
+
+        {/* Image Preview Section - now 60% width */}
+        <div className="w-[60%] bg-muted/20 border-l overflow-y-auto p-4 max-h-[85vh] flex flex-col">
+          <h3 className="text-lg font-semibold mb-4">Image Previews</h3>
+
+          {Object.keys(imageUrls).length === 0 && (
+            <div className="flex-grow flex items-center justify-center text-muted-foreground">
+              No images available for preview
+            </div>
+          )}
+
+          <div className="space-y-6">
+            {[
+              ...existingImages,
+              ...selectedFiles.map(f => ({
+                originalName: f.file.name,
+                newName: f.newName
+              }))
+            ].map((image, idx) => {
+              const imageData = imageUrls[image.newName];
+              return imageData ? (
+                <div key={idx} className="border rounded-md p-2 bg-background">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="text-sm font-medium truncate max-w-[80%]">
+                      {image.originalName !== image.newName ? (
+                        <>
+                          {image.originalName} → {image.newName}
+                        </>
+                      ) : (
+                        image.newName
+                      )}
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleRotatePreview(image.newName)}
+                        className="h-7 w-7"
+                      >
+                        <RotateCw className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleDownloadPreview(image.newName)}
+                        className="h-7 w-7"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          if (
+                            existingImages.some(
+                              img => img.newName === image.newName
+                            )
+                          ) {
+                            handleDeleteImage(image.newName);
+                          } else {
+                            handleRemoveFile(
+                              selectedFiles.findIndex(
+                                f => f.newName === image.newName
+                              )
+                            );
+                          }
+                        }}
+                        className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div
+                    className="relative bg-background flex items-center justify-center"
+                    style={{
+                      width: "100%",
+                      aspectRatio: "1 / 1",
+                      margin: "0 auto"
+                    }}
+                    onClick={() =>
+                      setSelectedImage({ name: image.newName } as BucketItem)
+                    }
+                  >
+                    <div
+                      style={{
+                        position: "relative",
+                        width: "100%",
+                        height: "100%"
+                      }}
+                    >
+                      <Image
+                        src={imageData.url}
+                        alt={image.newName}
+                        fill
+                        style={{
+                          objectFit: "contain",
+                          transform: `rotate(${imageData.rotation}deg)`,
+                          transition: "transform 0.3s ease"
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  key={idx}
+                  className="border rounded-md p-4 flex items-center justify-center bg-background"
+                  style={{ height: "150px" }}
+                >
+                  <div className="w-6 h-6 border-4 border-t-4 border-gray-200 rounded-full animate-spin"></div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </DialogContent>
 
