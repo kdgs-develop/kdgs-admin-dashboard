@@ -4,24 +4,39 @@ const nextConfig = {
     remotePatterns: [
       // ... existing patterns
       {
-        protocol: 'https', // or 'http' if you're not using SSL
+        protocol: "https",
         hostname: process.env.MINIO_ENDPOINT,
-        // port: process.env.MINIO_PORT,
-        port: '',
-        pathname: '/**',
+        port: "",
+        pathname: "/**"
       },
       {
-        protocol: 'https',
-        hostname: 'kdgs-admin-dashboard.vercel.app',
-        pathname: '/**',
+        protocol: "http", // Use http for internal Docker network
+        hostname: "minio-lsgcwgcscgowkogk8c8kcgss", // Docker service name
+        port: "9000", // Internal Minio port
+        pathname: "/**"
       },
       {
-        protocol: 'https',
-        hostname: 'kdgs-admin-dashboard-*.vercel.app',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "kdgs-admin-dashboard.vercel.app",
+        pathname: "/**"
       },
-    ],
-  },
+      {
+        protocol: "https",
+        hostname: "kdgs-admin-dashboard-*.vercel.app",
+        pathname: "/**"
+      },
+      {
+        protocol: "https",
+        hostname: "dashboard.kdgs.ca",
+        pathname: "/**"
+      },
+      {
+        protocol: "https",
+        hostname: "*.dashboard.kdgs.ca",
+        pathname: "/**"
+      }
+    ]
+  }
 };
 
 module.exports = nextConfig;
