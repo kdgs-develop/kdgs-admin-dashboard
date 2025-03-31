@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { BucketItem } from "minio";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import {
@@ -255,6 +255,10 @@ export function EditObituaryDialog({
   }>({});
 
   const [showImagePreview, setShowImagePreview] = useState(false);
+
+  const [splitPosition, setSplitPosition] = useState(40); // Default 40% for form width
+  const resizeRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -624,15 +628,55 @@ export function EditObituaryDialog({
     }
   };
 
+  const startResize = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+
+      const startX = e.clientX;
+      const startWidth = splitPosition;
+
+      const onMouseMove = (moveEvent: MouseEvent) => {
+        if (!dialogRef.current) return;
+
+        // Calculate how far the mouse has moved
+        const dialogWidth = dialogRef.current.getBoundingClientRect().width;
+        const deltaX = moveEvent.clientX - startX;
+        const deltaPercentage = (deltaX / dialogWidth) * 100;
+
+        // Update width as a percentage (constrained between 30% and 70%)
+        const newWidth = Math.max(
+          30,
+          Math.min(70, startWidth + deltaPercentage)
+        );
+        setSplitPosition(newWidth);
+      };
+
+      const onMouseUp = () => {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+      };
+
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    },
+    [splitPosition]
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         className="max-w-[90vw] max-h-[85vh] overflow-hidden p-0 flex"
         autoFocus={false}
+        ref={dialogRef}
       >
-        {/* Form Section - takes full width when preview is hidden */}
+        {/* Form Section */}
         <div
-          className={`${showImagePreview ? "w-[40%]" : "w-full"} max-h-[85vh] overflow-y-auto p-6 relative`}
+          className={
+            showImagePreview
+              ? "overflow-y-auto p-6"
+              : "w-full overflow-y-auto p-6"
+          }
+          style={showImagePreview ? { width: `${splitPosition}%` } : undefined}
         >
           <DialogHeader>
             <DialogTitle>Edit Obituary</DialogTitle>
@@ -642,7 +686,7 @@ export function EditObituaryDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {/* Toggle button for image preview */}
+          {/* Toggle button */}
           <Button
             type="button"
             variant="outline"
@@ -1567,9 +1611,21 @@ export function EditObituaryDialog({
           </Form>
         </div>
 
-        {/* Image Preview Section - conditionally rendered */}
+        {/* Resize handle - only shown when the preview is visible */}
         {showImagePreview && (
-          <div className="w-[60%] bg-muted/20 border-l overflow-y-auto p-4 max-h-[85vh] flex flex-col">
+          <div
+            ref={resizeRef}
+            className="w-1 hover:w-2 bg-border hover:bg-primary cursor-col-resize flex-shrink-0"
+            onMouseDown={startResize}
+          />
+        )}
+
+        {/* Image Preview Section */}
+        {showImagePreview && (
+          <div
+            className="overflow-y-auto p-4 border-l bg-muted/20 flex flex-col"
+            style={{ width: `calc(100% - ${splitPosition}%)` }}
+          >
             <h3 className="text-lg font-semibold mb-4">Image Previews</h3>
 
             {Object.keys(imageUrls).length === 0 && (
