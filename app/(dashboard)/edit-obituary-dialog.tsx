@@ -669,7 +669,7 @@ export function EditObituaryDialog({
         autoFocus={false}
         ref={dialogRef}
       >
-        {/* Form Section - with improved styling */}
+        {/* Form Section */}
         <div
           className={
             showImagePreview
@@ -686,26 +686,19 @@ export function EditObituaryDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {/* Toggle button - Positioned in header for better visibility */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="absolute top-6 right-6 bg-primary/5 hover:bg-primary/10 transition-colors"
-            onClick={() => setShowImagePreview(!showImagePreview)}
-          >
-            {showImagePreview ? (
-              <>
-                <ChevronRight className="h-4 w-4 mr-1" />
-                <span>Hide Images</span>
-              </>
-            ) : (
-              <>
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                <span>Show Images</span>
-              </>
-            )}
-          </Button>
+          {/* Show Images button - only visible when images are hidden */}
+          {!showImagePreview && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="absolute top-6 right-16 bg-background text-xs px-2 h-7"
+              onClick={() => setShowImagePreview(true)}
+            >
+              <ChevronLeft className="h-3.5 w-3.5 mr-1" />
+              <span>Show Images</span>
+            </Button>
+          )}
 
           <Form {...form}>
             <form
@@ -1645,7 +1638,21 @@ export function EditObituaryDialog({
             className="overflow-y-auto p-4 border-l bg-muted/20 flex flex-col"
             style={{ width: `calc(100% - ${splitPosition}%)` }}
           >
-            <h3 className="text-lg font-semibold mb-4">Image Previews</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Image Previews</h3>
+
+              {/* Repositioned Hide Images button */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mr-2 text-xs px-2 h-7 bg-background border-border"
+                onClick={() => setShowImagePreview(!showImagePreview)}
+              >
+                <ChevronRight className="h-3.5 w-3.5 mr-1" />
+                <span>Hide</span>
+              </Button>
+            </div>
 
             {Object.keys(imageUrls).length === 0 && (
               <div className="flex-grow flex items-center justify-center text-muted-foreground">
