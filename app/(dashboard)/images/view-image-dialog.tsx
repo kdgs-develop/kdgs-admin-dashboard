@@ -28,24 +28,13 @@ export function ViewImageDialog({
   const [imageUrl, setImageUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [scale, setScale] = useState(1);
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [position, setPosition] = useState({ x: 50, y: 50 }); // Centered by default
-  const imageContainerRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
-  const lastMousePosition = useRef({ x: 0, y: 0 });
-
-  // Add a calculated scaling factor for rotated images
-  const getAutoScaleFactor = () => {
-    // No additional scaling needed for normal orientation
-    if (rotation % 180 === 0) return 1;
-
-    // For 90° or 270° rotations, apply additional scaling to fit
-    return 0.7; // Reducing to 70% helps fit rotated images
-  };
+  const [isDragging, setIsDragging] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const lastPosition = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     async function fetchImageUrl() {
-      if (image && image.name) {
+      if (image?.name) {
         setIsLoading(true);
         const url = await getImageUrl(image.name);
         setImageUrl(url);
@@ -63,74 +52,50 @@ export function ViewImageDialog({
     }
   }, [image]);
 
-  const handleZoom = () => {
-    if (isZoomed) {
-      setScale(1); // Reset scale to 1
-      setPosition({ x: 50, y: 50 }); // Reset position to center
-    } else {
-      setScale(2); // Zoom in
-    }
-    setIsZoomed(!isZoomed);
+  const handleZoomIn = () => setScale(s => s + 0.5);
+  const handleZoomOut = () => {
+    setScale(s => {
+      const newScale = s > 1 ? s - 0.5 : 1;
+      if (newScale === 1) {
+        setPosition({ x: 0, y: 0 });
+      }
+      return newScale;
+    });
   };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isZoomed && imageContainerRef.current) {
-      const { clientX, clientY } = e;
-      const { left, top, width, height } =
-        imageContainerRef.current.getBoundingClientRect();
-      const x = ((clientX - left) / width) * 100;
-      const y = ((clientY - top) / height) * 100;
-      setPosition({ x, y });
-    }
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (isZoomed) {
-      isDragging.current = true;
-      lastMousePosition.current = { x: e.clientX, y: e.clientY };
-    }
-  };
-
-  const handleMouseUp = () => {
-    isDragging.current = false;
-  };
-
-  const handleMouseLeave = () => {
-    isDragging.current = false;
-  };
-
-  const handleMouseMoveDrag = (e: MouseEvent) => {
-    if (isDragging.current) {
-      const dx = e.clientX - lastMousePosition.current.x;
-      const dy = e.clientY - lastMousePosition.current.y;
-      setPosition(prev => ({
-        x: prev.x + (dx / imageContainerRef.current!.clientWidth) * 100,
-        y: prev.y + (dy / imageContainerRef.current!.clientHeight) * 100
-      }));
-      lastMousePosition.current = { x: e.clientX, y: e.clientY };
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMoveDrag);
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMoveDrag);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
 
   const handleRotate = async () => {
     if (image && image.name) {
       await onRotate(image.name);
       const newRotation = await getImageRotation(image.name);
       setRotation(newRotation || 0);
-
-      // Always reset zoom and position when rotating
       setScale(1);
-      setPosition({ x: 50, y: 50 });
-      setIsZoomed(false);
+      setPosition({ x: 0, y: 0 });
     }
+  };
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (scale > 1) {
+      setIsDragging(true);
+      lastPosition.current = { x: e.clientX, y: e.clientY };
+    }
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && scale > 1) {
+      const deltaX = e.clientX - lastPosition.current.x;
+      const deltaY = e.clientY - lastPosition.current.y;
+
+      setPosition(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+
+      lastPosition.current = { x: e.clientX, y: e.clientY };
+    }
+  };
+
+  const onMouseUp = () => {
+    setIsDragging(false);
   };
 
   return (
@@ -142,59 +107,59 @@ export function ViewImageDialog({
         </DialogHeader>
 
         <div
-          ref={imageContainerRef}
-          className={`flex-grow relative flex items-center justify-center ${isZoomed ? "overflow-auto" : "overflow-hidden"}`}
+          className="flex-grow relative"
           style={{
             height: "calc(90vh - 200px)",
-            cursor: isZoomed ? "grab" : "zoom-in",
-            scrollBehavior: "smooth"
+            cursor: scale > 1 ? "grab" : "default",
+            overflow: "hidden"
           }}
-          onMouseMove={handleMouseMove}
-          onClick={handleZoom}
-          onMouseDown={handleMouseDown}
-          onMouseLeave={handleMouseLeave}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
         >
           {isLoading ? (
-            <div className="flex items-center justify-center">
-              <div className="w-8 h-8 border-4 border-t-4 border-gray-200 rounded-full animate-spin"></div>
+            <div className="flex items-center justify-center h-full">
+              <div className="w-8 h-8 border-4 border-t-4 border-gray-200 rounded-full animate-spin" />
             </div>
           ) : (
-            imageUrl && (
+            <div className="w-full h-full flex items-center justify-center">
               <div
-                className="w-full h-full flex items-center justify-center"
                 style={{
-                  minWidth: isZoomed ? "100%" : "auto",
-                  minHeight: isZoomed ? "100%" : "auto"
+                  transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg) scale(${scale})`,
+                  transformOrigin: "center",
+                  width: "100%",
+                  height: "100%",
+                  position: "relative",
+                  userSelect: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
                 }}
               >
-                <div
+                <Image
+                  src={imageUrl}
+                  alt={image?.name || "Image"}
+                  fill
                   style={{
-                    transform: `rotate(${rotation}deg) scale(${scale * getAutoScaleFactor()})`,
-                    transformOrigin: "center",
-                    maxWidth: Math.abs(rotation % 180) === 90 ? "70%" : "100%",
-                    maxHeight: Math.abs(rotation % 180) === 90 ? "70%" : "100%",
-                    transition: "transform 0.3s ease",
-                    position: "relative",
-                    width: "100%",
-                    height: "100%"
+                    objectFit: "contain",
+                    pointerEvents: "none"
                   }}
-                >
-                  <Image
-                    src={imageUrl}
-                    alt={image?.name || "Image"}
-                    fill
-                    style={{
-                      objectFit: "contain"
-                    }}
-                  />
-                </div>
+                  draggable={false}
+                />
               </div>
-            )
+            </div>
           )}
         </div>
 
         <div className="flex justify-between mt-4">
           <div className="flex gap-2">
+            <Button onClick={handleZoomIn} variant="secondary">
+              Zoom In
+            </Button>
+            <Button onClick={handleZoomOut} variant="secondary">
+              Zoom Out
+            </Button>
             <Button onClick={handleRotate}>Rotate</Button>
             <Button
               onClick={async () => {
