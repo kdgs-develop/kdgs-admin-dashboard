@@ -669,7 +669,7 @@ export function EditObituaryDialog({
         autoFocus={false}
         ref={dialogRef}
       >
-        {/* Form Section */}
+        {/* Form Section - with improved styling */}
         <div
           className={
             showImagePreview
@@ -678,7 +678,7 @@ export function EditObituaryDialog({
           }
           style={showImagePreview ? { width: `${splitPosition}%` } : undefined}
         >
-          <DialogHeader>
+          <DialogHeader className="mb-6">
             <DialogTitle>Edit Obituary</DialogTitle>
             <DialogDescription>
               Make changes to the obituary details here. Click save when you're
@@ -686,12 +686,12 @@ export function EditObituaryDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {/* Toggle button - Improved positioning and styling */}
+          {/* Toggle button - Positioned in header for better visibility */}
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="absolute top-6 right-6 border border-border hover:bg-accent hover:text-accent-foreground transition-colors"
+            className="absolute top-6 right-6 bg-primary/5 hover:bg-primary/10 transition-colors"
             onClick={() => setShowImagePreview(!showImagePreview)}
           >
             {showImagePreview ? (
@@ -718,443 +718,27 @@ export function EditObituaryDialog({
                   });
                 }
               })}
-              className="space-y-4"
+              className="space-y-8"
             >
-              <div className="grid grid-cols-2 gap-4">
-                {/* Personal Information */}
-                <h3 className="text-lg font-semibold col-span-2">
+              {/* Personal Information - Enhanced section with better visual separation */}
+              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
                   Personal Information
                 </h3>
-                <div className="space-y-2">
-                  <FormField
-                    control={form.control}
-                    name="reference"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">File Number</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            className="h-8 text-sm"
-                            readOnly
-                            disabled
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="surname"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">Surname</FormLabel>
-                        <FormControl>
-                          <Input {...field} className="h-8 text-sm uppercase" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <ComboboxFormField
-                    control={form.control}
-                    name="titleId"
-                    label="Title"
-                    placeholder="Select a title"
-                    emptyText="No title found."
-                    items={localTitles}
-                    onAddItem={async name => {
-                      const newTitle = await addTitle(name);
-                      setLocalTitles([
-                        ...localTitles,
-                        { id: newTitle.id, name: newTitle?.name! }
-                      ]);
-                      return { id: newTitle.id, name: newTitle?.name! };
-                    }}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="givenNames"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">Given Names</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            className="h-8 text-sm"
-                            onChange={e => {
-                              const formatted = e.target.value
-                                .split(" ")
-                                .map(word => {
-                                  if (word.startsWith("(")) {
-                                    // Capitalize after opening parenthesis
-                                    return (
-                                      "(" +
-                                      word.charAt(1).toUpperCase() +
-                                      word.slice(2)
-                                    );
-                                  }
-                                  // Capitalize first letter of each word, keep rest as typed
-                                  return (
-                                    word.charAt(0).toUpperCase() + word.slice(1)
-                                  );
-                                })
-                                .join(" ");
-                              field.onChange(formatted);
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="maidenName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">Maiden Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} className="h-8 text-sm uppercase" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Dates and Location Information */}
-                <div className="space-y-2">
-                  <FormField
-                    control={form.control}
-                    name="birthDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-xs">Birth Date</FormLabel>
-                        <DatePicker
-                          date={field.value}
-                          setDate={field.onChange}
-                        />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <ComboboxFormField
-                    control={form.control}
-                    name="birthCityId"
-                    label="Birth Place"
-                    placeholder="Select a place"
-                    emptyText="No place found."
-                    items={localCities.map(city => ({
-                      id: city.id,
-                      name: [city.name, city.province, city.country?.name]
-                        .filter(Boolean)
-                        .join(", "),
-                      province: city.province ?? undefined,
-                      country: city.country
-                        ? { name: city.country.name }
-                        : undefined
-                    }))}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="deathDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-xs">Death Date</FormLabel>
-                        <DatePicker
-                          date={field.value}
-                          setDate={field.onChange}
-                        />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <ComboboxFormField
-                    control={form.control}
-                    name="deathCityId"
-                    label="Death Place"
-                    placeholder="Select a place"
-                    emptyText="No place found."
-                    items={localCities.map(city => ({
-                      id: city.id,
-                      name: [city.name, city.province, city.country?.name]
-                        .filter(Boolean)
-                        .join(", "),
-                      province: city.province ?? undefined,
-                      country: city.country
-                        ? { name: city.country.name }
-                        : undefined
-                    }))}
-                  />
-                  <ComboboxFormField
-                    control={form.control}
-                    name="cemeteryId"
-                    label="Interment Place"
-                    placeholder="Select an interment place"
-                    emptyText="No interment place found."
-                    items={cemeteries.map(cemetery => ({
-                      id: cemetery.id,
-                      name: cemetery.name,
-                      city: cemetery.city
-                        ? {
-                            name: cemetery.city.name,
-                            province: cemetery.city.province ?? undefined,
-                            country: cemetery.city.country
-                              ? { name: cemetery.city.country.name }
-                              : undefined
-                          }
-                        : undefined
-                    }))}
-                  />
-                </div>
-              </div>
-
-              {/* Also Known As */}
-              <div className="space-y-2">
-                <FormLabel className="text-xs flex">Also Known As</FormLabel>
-                {form.watch("alsoKnownAs")?.map((_, index) => (
-                  <div key={index} className="flex items-end space-x-2">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                  <div className="space-y-4">
                     <FormField
                       control={form.control}
-                      name={`alsoKnownAs.${index}.surname`}
+                      name="reference"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs">Surname</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              className="h-8 text-sm uppercase"
-                              value={field.value || ""}
-                              onChange={e => {
-                                field.onChange(e.target.value.toUpperCase());
-                              }}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`alsoKnownAs.${index}.otherNames`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Other Names</FormLabel>
+                          <FormLabel className="text-xs">File Number</FormLabel>
                           <FormControl>
                             <Input
                               {...field}
                               className="h-8 text-sm"
-                              value={field.value || ""}
-                              onChange={e => {
-                                const formatted = e.target.value
-                                  .split(/(\([^)]+\))/) // Split on parentheses content
-                                  .map(part => {
-                                    if (
-                                      part.startsWith("(") &&
-                                      part.endsWith(")")
-                                    ) {
-                                      // Keep everything inside parentheses exactly as typed
-                                      return part;
-                                    }
-                                    // Only capitalize words outside parentheses, preserve spaces
-                                    return part
-                                      .split(" ")
-                                      .map(word => {
-                                        if (!word) return word; // Preserve empty strings (spaces)
-                                        return (
-                                          word.charAt(0).toUpperCase() +
-                                          word.slice(1).toLowerCase()
-                                        );
-                                      })
-                                      .join(" "); // Join with single space to preserve user's spacing
-                                  })
-                                  .join(""); // Join without adding any extra spaces
-                                field.onChange(formatted);
-                              }}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        const alsoKnownAs = form.getValues("alsoKnownAs") || [];
-                        form.setValue(
-                          "alsoKnownAs",
-                          alsoKnownAs.filter((_, i) => i !== index)
-                        );
-                      }}
-                      className="hover:bg-destructive/10 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const alsoKnownAs = form.getValues("alsoKnownAs") || [];
-                    form.setValue("alsoKnownAs", [
-                      ...alsoKnownAs,
-                      { surname: "", otherNames: "" }
-                    ]);
-                  }}
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Also Known As
-                </Button>
-              </div>
-
-              {/* Obituary Files - Now just the upload functionality, previews moved to sidebar */}
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Files</h3>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    ref={fileInputRef}
-                    multiple
-                    className="hidden"
-                    id="file-upload"
-                  />
-                  <Button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    Add New Image File
-                  </Button>
-                </div>
-              </div>
-
-              {/* Publication Information */}
-              <div className="grid grid-cols-2 gap-4">
-                <h3 className="text-lg font-semibold col-span-2">
-                  Publication Information
-                </h3>
-                <div className="space-y-2">
-                  <ComboboxFormField
-                    control={form.control}
-                    name="periodicalId"
-                    label="Publication"
-                    placeholder="Select a periodical"
-                    emptyText="No periodical found."
-                    items={localPeriodicals.map(periodical => ({
-                      id: periodical.id,
-                      name: periodical.name,
-                      city: periodical.city
-                        ? {
-                            name: periodical.city.name || "",
-                            province: periodical.city.province || undefined,
-                            country: periodical.city.country
-                              ? { name: periodical.city.country.name }
-                              : undefined
-                          }
-                        : undefined
-                    }))}
-                    onAddItem={async name => {
-                      const newPeriodical = await addPeriodical(name);
-                      const formattedPeriodical = {
-                        id: newPeriodical.id,
-                        name: newPeriodical.name || "",
-                        city: newPeriodical.city
-                          ? {
-                              name: newPeriodical.city.name || "",
-                              province: newPeriodical.city.province,
-                              country: newPeriodical.city.country
-                            }
-                          : null
-                      };
-                      setLocalPeriodicals([
-                        ...localPeriodicals,
-                        formattedPeriodical
-                      ]);
-                      return {
-                        id: newPeriodical.id,
-                        name: newPeriodical.name || "",
-                        city: newPeriodical.city
-                          ? {
-                              name: newPeriodical.city.name || "",
-                              province:
-                                newPeriodical.city.province || undefined,
-                              country: newPeriodical.city.country
-                                ? { name: newPeriodical.city.country.name }
-                                : undefined
-                            }
-                          : undefined
-                      };
-                    }}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="publishDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-xs">Publish Date</FormLabel>
-                        <DatePicker
-                          date={field.value}
-                          setDate={field.onChange}
-                        />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="-mt-2">
-                  <FormField
-                    control={form.control}
-                    name="page"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">Page</FormLabel>
-                        <FormControl>
-                          <Input {...field} className="h-8 text-sm" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="column"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">Column</FormLabel>
-                        <FormControl>
-                          <Input {...field} className="h-8 text-sm" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              {/* Relatives */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Relatives</h3>
-                {form.watch("relatives")?.map((relative, index) => (
-                  <div key={index} className="flex space-x-2">
-                    <FormField
-                      control={form.control}
-                      name={`relatives.${index}.surname`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Surname</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              className="h-8 text-sm uppercase"
-                              value={field.value || ""}
-                              onChange={e => {
-                                field.onChange(e.target.value.toUpperCase());
-                              }}
+                              readOnly
+                              disabled
                             />
                           </FormControl>
                           <FormMessage />
@@ -1163,7 +747,41 @@ export function EditObituaryDialog({
                     />
                     <FormField
                       control={form.control}
-                      name={`relatives.${index}.givenNames`}
+                      name="surname"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Surname</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className="h-8 text-sm uppercase"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <ComboboxFormField
+                      control={form.control}
+                      name="titleId"
+                      label="Title"
+                      placeholder="Select a title"
+                      emptyText="No title found."
+                      items={localTitles}
+                      onAddItem={async name => {
+                        const newTitle = await addTitle(name);
+                        setLocalTitles([
+                          ...localTitles,
+                          { id: newTitle.id, name: newTitle?.name! }
+                        ]);
+                        return { id: newTitle.id, name: newTitle?.name! };
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="givenNames"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-xs">Given Names</FormLabel>
@@ -1171,20 +789,17 @@ export function EditObituaryDialog({
                             <Input
                               {...field}
                               className="h-8 text-sm"
-                              value={field.value || ""}
                               onChange={e => {
                                 const formatted = e.target.value
                                   .split(" ")
                                   .map(word => {
                                     if (word.startsWith("(")) {
-                                      // Capitalize after opening parenthesis
                                       return (
                                         "(" +
                                         word.charAt(1).toUpperCase() +
                                         word.slice(2)
                                       );
                                     }
-                                    // Capitalize first letter of each word, keep rest as typed
                                     return (
                                       word.charAt(0).toUpperCase() +
                                       word.slice(1)
@@ -1199,16 +814,155 @@ export function EditObituaryDialog({
                         </FormItem>
                       )}
                     />
-                    {!form.getValues(
-                      `relatives.${index}.familyRelationshipId`
-                    ) && form.getValues(`relatives.${index}.relationship`) ? (
+                    <FormField
+                      control={form.control}
+                      name="maidenName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Maiden Name</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className="h-8 text-sm uppercase"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Dates and Location Information */}
+              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                  Dates and Location
+                </h3>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="birthDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel className="text-xs">Birth Date</FormLabel>
+                          <DatePicker
+                            date={field.value}
+                            setDate={field.onChange}
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <ComboboxFormField
+                      control={form.control}
+                      name="birthCityId"
+                      label="Birth Place"
+                      placeholder="Select a place"
+                      emptyText="No place found."
+                      items={localCities.map(city => ({
+                        id: city.id,
+                        name: [city.name, city.province, city.country?.name]
+                          .filter(Boolean)
+                          .join(", "),
+                        province: city.province ?? undefined,
+                        country: city.country
+                          ? { name: city.country.name }
+                          : undefined
+                      }))}
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="deathDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel className="text-xs">Death Date</FormLabel>
+                          <DatePicker
+                            date={field.value}
+                            setDate={field.onChange}
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <ComboboxFormField
+                      control={form.control}
+                      name="deathCityId"
+                      label="Death Place"
+                      placeholder="Select a place"
+                      emptyText="No place found."
+                      items={localCities.map(city => ({
+                        id: city.id,
+                        name: [city.name, city.province, city.country?.name]
+                          .filter(Boolean)
+                          .join(", "),
+                        province: city.province ?? undefined,
+                        country: city.country
+                          ? { name: city.country.name }
+                          : undefined
+                      }))}
+                    />
+                    <ComboboxFormField
+                      control={form.control}
+                      name="cemeteryId"
+                      label="Interment Place"
+                      placeholder="Select an interment place"
+                      emptyText="No interment place found."
+                      items={cemeteries.map(cemetery => ({
+                        id: cemetery.id,
+                        name: cemetery.name,
+                        city: cemetery.city
+                          ? {
+                              name: cemetery.city.name,
+                              province: cemetery.city.province ?? undefined,
+                              country: cemetery.city.country
+                                ? { name: cemetery.city.country.name }
+                                : undefined
+                            }
+                          : undefined
+                      }))}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Also Known As */}
+              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                  Also Known As
+                </h3>
+                <div className="space-y-4">
+                  {form.watch("alsoKnownAs")?.map((_, index) => (
+                    <div key={index} className="flex items-end space-x-2">
                       <FormField
                         control={form.control}
-                        name={`relatives.${index}.relationship`}
+                        name={`alsoKnownAs.${index}.surname`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Surname</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                className="h-8 text-sm uppercase"
+                                value={field.value || ""}
+                                onChange={e => {
+                                  field.onChange(e.target.value.toUpperCase());
+                                }}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`alsoKnownAs.${index}.otherNames`}
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-xs">
-                              Relationship
+                              Other Names
                             </FormLabel>
                             <FormControl>
                               <Input
@@ -1216,8 +970,29 @@ export function EditObituaryDialog({
                                 className="h-8 text-sm"
                                 value={field.value || ""}
                                 onChange={e => {
-                                  const formatted =
-                                    e.target.value.toUpperCase();
+                                  const formatted = e.target.value
+                                    .split(/(\([^)]+\))/) // Split on parentheses content
+                                    .map(part => {
+                                      if (
+                                        part.startsWith("(") &&
+                                        part.endsWith(")")
+                                      ) {
+                                        // Keep everything inside parentheses exactly as typed
+                                        return part;
+                                      }
+                                      // Only capitalize words outside parentheses, preserve spaces
+                                      return part
+                                        .split(" ")
+                                        .map(word => {
+                                          if (!word) return word; // Preserve empty strings (spaces)
+                                          return (
+                                            word.charAt(0).toUpperCase() +
+                                            word.slice(1).toLowerCase()
+                                          );
+                                        })
+                                        .join(" "); // Join with single space to preserve user's spacing
+                                    })
+                                    .join(""); // Join without adding any extra spaces
                                   field.onChange(formatted);
                                 }}
                               />
@@ -1225,95 +1000,335 @@ export function EditObituaryDialog({
                           </FormItem>
                         )}
                       />
-                    ) : (
-                      <ComboboxFormField
-                        control={form.control}
-                        name={`relatives.${index}.familyRelationshipId`}
-                        label="Relationship"
-                        placeholder="Select a relationship"
-                        emptyText="No relationship found."
-                        items={localFamilyRelationships}
-                        onAddItem={async name => {
-                          const newFamilyRelationship =
-                            await addFamilyRelationship(name);
-                          setLocalFamilyRelationships([
-                            ...localFamilyRelationships,
-                            {
-                              id: newFamilyRelationship.id,
-                              name: newFamilyRelationship?.name!,
-                              category: newFamilyRelationship?.category!
-                            }
-                          ]);
-                          return {
-                            id: newFamilyRelationship.id,
-                            name: newFamilyRelationship?.name!
-                          };
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const alsoKnownAs =
+                            form.getValues("alsoKnownAs") || [];
+                          form.setValue(
+                            "alsoKnownAs",
+                            alsoKnownAs.filter((_, i) => i !== index)
+                          );
                         }}
-                      />
-                    )}
+                        className="hover:bg-destructive/10 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const alsoKnownAs = form.getValues("alsoKnownAs") || [];
+                      form.setValue("alsoKnownAs", [
+                        ...alsoKnownAs,
+                        { surname: "", otherNames: "" }
+                      ]);
+                    }}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Also Known As
+                  </Button>
+                </div>
+              </div>
+
+              {/* Publication Information */}
+              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                  Publication Information
+                </h3>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                  <div className="space-y-4">
+                    <ComboboxFormField
+                      control={form.control}
+                      name="periodicalId"
+                      label="Publication"
+                      placeholder="Select a periodical"
+                      emptyText="No periodical found."
+                      items={localPeriodicals.map(periodical => ({
+                        id: periodical.id,
+                        name: periodical.name,
+                        city: periodical.city
+                          ? {
+                              name: periodical.city.name || "",
+                              province: periodical.city.province || undefined,
+                              country: periodical.city.country
+                                ? { name: periodical.city.country.name }
+                                : undefined
+                            }
+                          : undefined
+                      }))}
+                      onAddItem={async name => {
+                        const newPeriodical = await addPeriodical(name);
+                        const formattedPeriodical = {
+                          id: newPeriodical.id,
+                          name: newPeriodical.name || "",
+                          city: newPeriodical.city
+                            ? {
+                                name: newPeriodical.city.name || "",
+                                province: newPeriodical.city.province,
+                                country: newPeriodical.city.country
+                              }
+                            : null
+                        };
+                        setLocalPeriodicals([
+                          ...localPeriodicals,
+                          formattedPeriodical
+                        ]);
+                        return {
+                          id: newPeriodical.id,
+                          name: newPeriodical.name || "",
+                          city: newPeriodical.city
+                            ? {
+                                name: newPeriodical.city.name || "",
+                                province:
+                                  newPeriodical.city.province || undefined,
+                                country: newPeriodical.city.country
+                                  ? { name: newPeriodical.city.country.name }
+                                  : undefined
+                              }
+                            : undefined
+                        };
+                      }}
+                    />
                     <FormField
                       control={form.control}
-                      name={`relatives.${index}.predeceased`}
+                      name="publishDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel className="text-xs">
+                            Publish Date
+                          </FormLabel>
+                          <DatePicker
+                            date={field.value}
+                            setDate={field.onChange}
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="-mt-2">
+                    <FormField
+                      control={form.control}
+                      name="page"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs">Predeceased</FormLabel>
+                          <FormLabel className="text-xs">Page</FormLabel>
                           <FormControl>
-                            <div className="h-8 rounded-md border border-input bg-background px-3 flex items-center space-x-2">
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                className="data-[state=checked]:bg-primary"
-                              />
-                              <span className="text-sm text-muted-foreground">
-                                {field.value ? "Yes" : "No"}
-                              </span>
-                            </div>
+                            <Input {...field} className="h-8 text-sm" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        const relatives = form.getValues("relatives");
-                        relatives?.splice(index, 1);
-                        form.setValue("relatives", relatives || []);
-                      }}
-                      className="h-8 mt-8 hover:bg-destructive/10 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <FormField
+                      control={form.control}
+                      name="column"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Column</FormLabel>
+                          <FormControl>
+                            <Input {...field} className="h-8 text-sm" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const relatives = form.getValues("relatives") || [];
-                    form.setValue("relatives", [
-                      ...relatives,
-                      {
-                        surname: "",
-                        givenNames: "",
-                        relationship: "",
-                        familyRelationshipId: "",
-                        predeceased: false
-                      }
-                    ]);
-                  }}
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Relative
-                </Button>
+                </div>
+              </div>
+
+              {/* Relatives */}
+              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                  Relatives
+                </h3>
+                <div className="space-y-4">
+                  {form.watch("relatives")?.map((relative, index) => (
+                    <div key={index} className="flex space-x-2">
+                      <FormField
+                        control={form.control}
+                        name={`relatives.${index}.surname`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Surname</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                className="h-8 text-sm uppercase"
+                                value={field.value || ""}
+                                onChange={e => {
+                                  field.onChange(e.target.value.toUpperCase());
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`relatives.${index}.givenNames`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">
+                              Given Names
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                className="h-8 text-sm"
+                                value={field.value || ""}
+                                onChange={e => {
+                                  const formatted = e.target.value
+                                    .split(" ")
+                                    .map(word => {
+                                      if (word.startsWith("(")) {
+                                        // Capitalize after opening parenthesis
+                                        return (
+                                          "(" +
+                                          word.charAt(1).toUpperCase() +
+                                          word.slice(2)
+                                        );
+                                      }
+                                      // Capitalize first letter of each word, keep rest as typed
+                                      return (
+                                        word.charAt(0).toUpperCase() +
+                                        word.slice(1)
+                                      );
+                                    })
+                                    .join(" ");
+                                  field.onChange(formatted);
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {!form.getValues(
+                        `relatives.${index}.familyRelationshipId`
+                      ) && form.getValues(`relatives.${index}.relationship`) ? (
+                        <FormField
+                          control={form.control}
+                          name={`relatives.${index}.relationship`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">
+                                Relationship
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  className="h-8 text-sm"
+                                  value={field.value || ""}
+                                  onChange={e => {
+                                    const formatted =
+                                      e.target.value.toUpperCase();
+                                    field.onChange(formatted);
+                                  }}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      ) : (
+                        <ComboboxFormField
+                          control={form.control}
+                          name={`relatives.${index}.familyRelationshipId`}
+                          label="Relationship"
+                          placeholder="Select a relationship"
+                          emptyText="No relationship found."
+                          items={localFamilyRelationships}
+                          onAddItem={async name => {
+                            const newFamilyRelationship =
+                              await addFamilyRelationship(name);
+                            setLocalFamilyRelationships([
+                              ...localFamilyRelationships,
+                              {
+                                id: newFamilyRelationship.id,
+                                name: newFamilyRelationship?.name!,
+                                category: newFamilyRelationship?.category!
+                              }
+                            ]);
+                            return {
+                              id: newFamilyRelationship.id,
+                              name: newFamilyRelationship?.name!
+                            };
+                          }}
+                        />
+                      )}
+                      <FormField
+                        control={form.control}
+                        name={`relatives.${index}.predeceased`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">
+                              Predeceased
+                            </FormLabel>
+                            <FormControl>
+                              <div className="h-8 rounded-md border border-input bg-background px-3 flex items-center space-x-2">
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-primary"
+                                />
+                                <span className="text-sm text-muted-foreground">
+                                  {field.value ? "Yes" : "No"}
+                                </span>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const relatives = form.getValues("relatives");
+                          relatives?.splice(index, 1);
+                          form.setValue("relatives", relatives || []);
+                        }}
+                        className="h-8 mt-8 hover:bg-destructive/10 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const relatives = form.getValues("relatives") || [];
+                      form.setValue("relatives", [
+                        ...relatives,
+                        {
+                          surname: "",
+                          givenNames: "",
+                          relationship: "",
+                          familyRelationshipId: "",
+                          predeceased: false
+                        }
+                      ]);
+                    }}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Relative
+                  </Button>
+                </div>
               </div>
 
               {/* Additional Information */}
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">
+              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
                   Additional Information
                 </h3>
                 <div className="flex items-center space-x-2 mb-2">
@@ -1365,8 +1380,8 @@ export function EditObituaryDialog({
               </div>
 
               {/* Proofread Information */}
-              <div className="grid grid-cols-2 gap-4">
-                <h3 className="text-lg font-semibold col-span-2">
+              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
                   Proofread Information
                 </h3>
                 <div className="col-span-2">
@@ -1441,8 +1456,10 @@ export function EditObituaryDialog({
               </div>
 
               {/* Metadata */}
-              <div className="grid grid-cols-2 gap-4">
-                <h3 className="text-lg font-semibold col-span-2">Metadata</h3>
+              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                  Metadata
+                </h3>
                 <div className="space-y-2">
                   <FormField
                     control={form.control}
@@ -1571,35 +1588,37 @@ export function EditObituaryDialog({
               </div>
 
               {/* File Box */}
-              <h3 className="text-lg font-semibold col-span-2">
-                Document Storage
-              </h3>
-              <ComboboxFormField
-                control={form.control}
-                name="fileBoxId"
-                label="File Box"
-                placeholder="Select a file box"
-                emptyText="No file box found."
-                items={fileBoxes.map(box => ({
-                  id: box.id,
-                  name:
-                    box.id === 0
-                      ? "Not available"
-                      : `${box.year} : ${box.number}`
-                }))}
-                onAddItem={async name => {
-                  toast({
-                    title: "Cannot add new file box",
-                    description:
-                      "File boxes are managed separately. Please contact an administrator.",
-                    variant: "destructive"
-                  });
-                  const tempId = Date.now();
-                  return { id: tempId, name };
-                }}
-              />
+              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                  Document Storage
+                </h3>
+                <ComboboxFormField
+                  control={form.control}
+                  name="fileBoxId"
+                  label="File Box"
+                  placeholder="Select a file box"
+                  emptyText="No file box found."
+                  items={fileBoxes.map(box => ({
+                    id: box.id,
+                    name:
+                      box.id === 0
+                        ? "Not available"
+                        : `${box.year} : ${box.number}`
+                  }))}
+                  onAddItem={async name => {
+                    toast({
+                      title: "Cannot add new file box",
+                      description:
+                        "File boxes are managed separately. Please contact an administrator.",
+                      variant: "destructive"
+                    });
+                    const tempId = Date.now();
+                    return { id: tempId, name };
+                  }}
+                />
+              </div>
 
-              <DialogFooter className="flex justify-end space-x-2 pt-4">
+              <DialogFooter className="flex justify-end space-x-2 pt-6">
                 <Button type="button" variant="outline" onClick={onClose}>
                   Cancel
                 </Button>
