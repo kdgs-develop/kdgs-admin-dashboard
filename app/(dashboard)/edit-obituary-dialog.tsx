@@ -662,8 +662,63 @@ export function EditObituaryDialog({
     [splitPosition]
   );
 
+  // Add this to handle form reset when dialog closes
+  const handleClose = () => {
+    // Reset form to original values
+    form.reset({
+      reference: obituary.reference || "",
+      surname: obituary.surname || "",
+      titleId: obituary.titleId || undefined,
+      givenNames: obituary.givenNames || "",
+      maidenName: obituary.maidenName || "",
+      birthDate: obituary.birthDate ? new Date(obituary.birthDate) : undefined,
+      birthCityId: obituary.birthCityId || undefined,
+      deathDate: obituary.deathDate ? new Date(obituary.deathDate) : undefined,
+      deathCityId: obituary.deathCityId || undefined,
+      burialCemetery: obituary.burialCemetery || "",
+      cemeteryId: obituary.cemeteryId || undefined,
+      periodicalId: obituary.periodicalId || undefined,
+      publishDate: obituary.publishDate
+        ? new Date(obituary.publishDate)
+        : undefined,
+      page: obituary.page || "",
+      column: obituary.column || "",
+      notes: obituary.notes || "",
+      proofread: obituary.proofread || false,
+      proofreadDate: obituary.proofreadDate
+        ? new Date(obituary.proofreadDate)
+        : null,
+      proofreadBy: obituary.proofreadBy || "",
+      enteredBy: obituary.enteredBy || "",
+      enteredOn: obituary.enteredOn ? new Date(obituary.enteredOn) : undefined,
+      editedBy: obituary.editedBy || "",
+      editedOn: obituary.editedOn ? new Date(obituary.editedOn) : undefined,
+      fileBoxId: obituary.fileBoxId || undefined,
+      relatives:
+        obituary.relatives?.map(relative => ({
+          surname: relative.surname || "",
+          givenNames: relative.givenNames || "",
+          relationship: relative.relationship || "",
+          familyRelationshipId: relative.familyRelationshipId || undefined,
+          predeceased: relative.predeceased || false
+        })) || [],
+      alsoKnownAs:
+        obituary.alsoKnownAs?.map(aka => ({
+          surname: aka.surname || "",
+          otherNames: aka.otherNames || ""
+        })) || [],
+      batchNumberId: obituary.batchNumberId || ""
+    });
+
+    // Also reset selected files
+    setSelectedFiles([]);
+
+    // Call the original onClose
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
         className="max-w-[90vw] max-h-[85vh] overflow-hidden p-0 flex"
         autoFocus={false}
@@ -1660,7 +1715,7 @@ export function EditObituaryDialog({
               </div>
 
               <DialogFooter className="flex justify-end space-x-2 pt-6">
-                <Button type="button" variant="outline" onClick={onClose}>
+                <Button type="button" variant="outline" onClick={handleClose}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isLoading}>
