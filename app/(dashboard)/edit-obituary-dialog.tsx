@@ -62,15 +62,7 @@ const formSchema = z.object({
     .optional()
     .transform(val => val?.toUpperCase()),
   titleId: z.number().nullable().optional(),
-  givenNames: z
-    .string()
-    .optional()
-    .transform(val =>
-      val
-        ?.split(" ")
-        .map(name => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase())
-        .join(" ")
-    ),
+  givenNames: z.string().optional(),
   maidenName: z
     .string()
     .optional()
@@ -122,18 +114,7 @@ const formSchema = z.object({
           .string()
           .nullable()
           .transform(val => val?.toUpperCase()),
-        otherNames: z
-          .string()
-          .nullable()
-          .transform(val =>
-            val
-              ?.split(" ")
-              .map(
-                name =>
-                  name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
-              )
-              .join(" ")
-          )
+        otherNames: z.string().nullable()
       })
     )
     .optional()
@@ -401,31 +382,6 @@ export function EditObituaryDialog({
     }
   };
 
-  const formatName = (name: string) => {
-    return name
-      .split(/(\([^)]+\))/)
-      .map(part => {
-        if (part.startsWith("(") && part.endsWith(")")) {
-          // Handle text within brackets
-          const innerText = part.slice(1, -1);
-          return `(${innerText
-            .split(" ")
-            .map(
-              word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-            )
-            .join(" ")})`;
-        }
-        // Handle text outside brackets
-        return part
-          .split(" ")
-          .map(
-            word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          )
-          .join(" ");
-      })
-      .join("");
-  };
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
@@ -452,7 +408,7 @@ export function EditObituaryDialog({
       // Format relatives' names
       const formattedRelatives = relatives?.map(relative => ({
         ...relative,
-        givenNames: relative.givenNames ? formatName(relative.givenNames) : null
+        givenNames: relative.givenNames || null
       }));
 
       // Prepare alsoKnownAs data
@@ -834,29 +790,7 @@ export function EditObituaryDialog({
                         <FormItem>
                           <FormLabel className="text-xs">Given Names</FormLabel>
                           <FormControl>
-                            <Input
-                              {...field}
-                              className="h-8 text-sm"
-                              onChange={e => {
-                                const formatted = e.target.value
-                                  .split(" ")
-                                  .map(word => {
-                                    if (word.startsWith("(")) {
-                                      return (
-                                        "(" +
-                                        word.charAt(1).toUpperCase() +
-                                        word.slice(2)
-                                      );
-                                    }
-                                    return (
-                                      word.charAt(0).toUpperCase() +
-                                      word.slice(1)
-                                    );
-                                  })
-                                  .join(" ");
-                                field.onChange(formatted);
-                              }}
-                            />
+                            <Input {...field} className="h-8 text-sm" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1017,32 +951,6 @@ export function EditObituaryDialog({
                                 {...field}
                                 className="h-8 text-sm"
                                 value={field.value || ""}
-                                onChange={e => {
-                                  const formatted = e.target.value
-                                    .split(/(\([^)]+\))/) // Split on parentheses content
-                                    .map(part => {
-                                      if (
-                                        part.startsWith("(") &&
-                                        part.endsWith(")")
-                                      ) {
-                                        // Keep everything inside parentheses exactly as typed
-                                        return part;
-                                      }
-                                      // Only capitalize words outside parentheses, preserve spaces
-                                      return part
-                                        .split(" ")
-                                        .map(word => {
-                                          if (!word) return word; // Preserve empty strings (spaces)
-                                          return (
-                                            word.charAt(0).toUpperCase() +
-                                            word.slice(1).toLowerCase()
-                                          );
-                                        })
-                                        .join(" "); // Join with single space to preserve user's spacing
-                                    })
-                                    .join(""); // Join without adding any extra spaces
-                                  field.onChange(formatted);
-                                }}
                               />
                             </FormControl>
                           </FormItem>
@@ -1280,27 +1188,6 @@ export function EditObituaryDialog({
                                 {...field}
                                 className="h-8 text-sm"
                                 value={field.value || ""}
-                                onChange={e => {
-                                  const formatted = e.target.value
-                                    .split(" ")
-                                    .map(word => {
-                                      if (word.startsWith("(")) {
-                                        // Capitalize after opening parenthesis
-                                        return (
-                                          "(" +
-                                          word.charAt(1).toUpperCase() +
-                                          word.slice(2)
-                                        );
-                                      }
-                                      // Capitalize first letter of each word, keep rest as typed
-                                      return (
-                                        word.charAt(0).toUpperCase() +
-                                        word.slice(1)
-                                      );
-                                    })
-                                    .join(" ");
-                                  field.onChange(formatted);
-                                }}
                               />
                             </FormControl>
                             <FormMessage />
@@ -1669,17 +1556,21 @@ export function EditObituaryDialog({
                       };
                     }}
                   />
-                  <div className="pt-6">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsAddBatchNumberDialogOpen(true)}
-                      className="h-8 mt-1"
-                    >
-                      <PlusCircle className="h-3 w-3 mr-2" />
-                      Create new batch number
-                    </Button>
-                  </div>
+                  {(role === "ROOT" ||
+                    role === "ADMIN" ||
+                    role === "PROCESS_MANAGER") && (
+                    <div className="pt-6">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsAddBatchNumberDialogOpen(true)}
+                        className="h-8 mt-1"
+                      >
+                        <PlusCircle className="h-3 w-3 mr-2" />
+                        Create new batch number
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1688,30 +1579,58 @@ export function EditObituaryDialog({
                 <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
                   Document Storage
                 </h3>
-                <ComboboxFormField
-                  control={form.control}
-                  name="fileBoxId"
-                  label="File Box"
-                  placeholder="Select a file box"
-                  emptyText="No file box found."
-                  items={fileBoxes.map(box => ({
-                    id: box.id,
-                    name:
-                      box.id === 0
-                        ? "Not available"
-                        : `${box.year} : ${box.number}`
-                  }))}
-                  onAddItem={async name => {
-                    toast({
-                      title: "Cannot add new file box",
-                      description:
-                        "File boxes are managed separately. Please contact an administrator.",
-                      variant: "destructive"
-                    });
-                    const tempId = Date.now();
-                    return { id: tempId, name };
-                  }}
-                />
+                {role === "ROOT" ||
+                role === "ADMIN" ||
+                role === "PROCESS_MANAGER" ? (
+                  <ComboboxFormField
+                    control={form.control}
+                    name="fileBoxId"
+                    label="File Box"
+                    placeholder="Select a file box"
+                    emptyText="No file box found."
+                    items={fileBoxes.map(box => ({
+                      id: box.id,
+                      name:
+                        box.id === 0
+                          ? "Not available"
+                          : `${box.year} : ${box.number}`
+                    }))}
+                    onAddItem={async name => {
+                      toast({
+                        title: "Cannot add new file box",
+                        description:
+                          "File boxes are managed separately. Please contact an administrator.",
+                        variant: "destructive"
+                      });
+                      const tempId = Date.now();
+                      return { id: tempId, name };
+                    }}
+                  />
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="fileBoxId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">File Box</FormLabel>
+                        <FormControl>
+                          <Input
+                            value={
+                              field.value
+                                ? fileBoxes.find(box => box.id === field.value)
+                                  ? `${fileBoxes.find(box => box.id === field.value)?.year} : ${fileBoxes.find(box => box.id === field.value)?.number}`
+                                  : "Not available"
+                                : "Not assigned"
+                            }
+                            className="h-8 text-sm"
+                            disabled
+                            readOnly
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               <DialogFooter className="flex justify-end space-x-2 pt-6">
