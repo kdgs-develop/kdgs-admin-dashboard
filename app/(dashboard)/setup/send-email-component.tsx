@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import emailjs from '@emailjs/browser';
-import { toast } from '@/hooks/use-toast';
+import { useEffect, useState } from "react";
+import emailjs from "@emailjs/browser";
+import { toast } from "@/hooks/use-toast";
 
 interface SendEmailProps {
   to: string;
@@ -12,7 +12,13 @@ interface SendEmailProps {
   isResend: boolean;
 }
 
-export function SendEmailComponent({ to, name, password, role, isResend }: SendEmailProps) {
+export function SendEmailComponent({
+  to,
+  name,
+  password,
+  role,
+  isResend
+}: SendEmailProps) {
   const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
@@ -21,11 +27,12 @@ export function SendEmailComponent({ to, name, password, role, isResend }: SendE
     const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
 
     if (!publicKey || !serviceId || !templateId) {
-      console.error('EmailJS configuration is incomplete');
+      console.error("EmailJS configuration is incomplete");
       toast({
-        title: 'Email Configuration Error',
-        description: 'The email service is not properly configured. Please contact the administrator.',
-        variant: 'destructive'
+        title: "Email Configuration Error",
+        description:
+          "The email service is not properly configured. Please contact the administrator.",
+        variant: "destructive"
       });
       return;
     }
@@ -44,25 +51,25 @@ export function SendEmailComponent({ to, name, password, role, isResend }: SendE
         password: password,
         role: role,
         dashboard_url: process.env.NEXT_PUBLIC_DASHBOARD_URL,
-        is_resend: isResend,
+        is_resend: isResend
       };
 
       const result = await emailjs.send(serviceId, templateId, templateParams);
 
-      if (result.text !== 'OK') {
-        throw new Error('Failed to send email');
+      if (result.text !== "OK") {
+        throw new Error("Failed to send email");
       }
 
       toast({
-        title: isResend ? 'Password reset email sent' : 'Welcome email sent',
-        description: 'The email has been sent successfully.'
+        title: isResend ? "Password reset email sent" : "Welcome email sent",
+        description: "The email has been sent successfully."
       });
     } catch (error) {
-      console.error('Error sending email:', error);
+      console.error("Error sending email:", error);
       toast({
-        title: 'Error sending email',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive'
+        title: "Error sending email",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive"
       });
     } finally {
       setIsSending(false);
