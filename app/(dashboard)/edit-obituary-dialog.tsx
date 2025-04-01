@@ -62,9 +62,7 @@ const formSchema = z.object({
     .optional()
     .transform(val => val?.toUpperCase()),
   titleId: z.number().nullable().optional(),
-  givenNames: z
-    .string()
-    .optional(),
+  givenNames: z.string().optional(),
   maidenName: z
     .string()
     .optional()
@@ -116,18 +114,7 @@ const formSchema = z.object({
           .string()
           .nullable()
           .transform(val => val?.toUpperCase()),
-        otherNames: z
-          .string()
-          .nullable()
-          .transform(val =>
-            val
-              ?.split(" ")
-              .map(
-                name =>
-                  name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
-              )
-              .join(" ")
-          )
+        otherNames: z.string().nullable()
       })
     )
     .optional()
@@ -803,10 +790,7 @@ export function EditObituaryDialog({
                         <FormItem>
                           <FormLabel className="text-xs">Given Names</FormLabel>
                           <FormControl>
-                            <Input
-                              {...field}
-                              className="h-8 text-sm"
-                            />
+                            <Input {...field} className="h-8 text-sm" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -967,32 +951,6 @@ export function EditObituaryDialog({
                                 {...field}
                                 className="h-8 text-sm"
                                 value={field.value || ""}
-                                onChange={e => {
-                                  const formatted = e.target.value
-                                    .split(/(\([^)]+\))/) // Split on parentheses content
-                                    .map(part => {
-                                      if (
-                                        part.startsWith("(") &&
-                                        part.endsWith(")")
-                                      ) {
-                                        // Keep everything inside parentheses exactly as typed
-                                        return part;
-                                      }
-                                      // Only capitalize words outside parentheses, preserve spaces
-                                      return part
-                                        .split(" ")
-                                        .map(word => {
-                                          if (!word) return word; // Preserve empty strings (spaces)
-                                          return (
-                                            word.charAt(0).toUpperCase() +
-                                            word.slice(1).toLowerCase()
-                                          );
-                                        })
-                                        .join(" "); // Join with single space to preserve user's spacing
-                                    })
-                                    .join(""); // Join without adding any extra spaces
-                                  field.onChange(formatted);
-                                }}
                               />
                             </FormControl>
                           </FormItem>
