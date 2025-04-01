@@ -64,13 +64,7 @@ const formSchema = z.object({
   titleId: z.number().nullable().optional(),
   givenNames: z
     .string()
-    .optional()
-    .transform(val =>
-      val
-        ?.split(" ")
-        .map(name => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase())
-        .join(" ")
-    ),
+    .optional(),
   maidenName: z
     .string()
     .optional()
@@ -401,31 +395,6 @@ export function EditObituaryDialog({
     }
   };
 
-  const formatName = (name: string) => {
-    return name
-      .split(/(\([^)]+\))/)
-      .map(part => {
-        if (part.startsWith("(") && part.endsWith(")")) {
-          // Handle text within brackets
-          const innerText = part.slice(1, -1);
-          return `(${innerText
-            .split(" ")
-            .map(
-              word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-            )
-            .join(" ")})`;
-        }
-        // Handle text outside brackets
-        return part
-          .split(" ")
-          .map(
-            word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          )
-          .join(" ");
-      })
-      .join("");
-  };
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
@@ -452,7 +421,7 @@ export function EditObituaryDialog({
       // Format relatives' names
       const formattedRelatives = relatives?.map(relative => ({
         ...relative,
-        givenNames: relative.givenNames ? formatName(relative.givenNames) : null
+        givenNames: relative.givenNames || null
       }));
 
       // Prepare alsoKnownAs data
@@ -837,25 +806,6 @@ export function EditObituaryDialog({
                             <Input
                               {...field}
                               className="h-8 text-sm"
-                              onChange={e => {
-                                const formatted = e.target.value
-                                  .split(" ")
-                                  .map(word => {
-                                    if (word.startsWith("(")) {
-                                      return (
-                                        "(" +
-                                        word.charAt(1).toUpperCase() +
-                                        word.slice(2)
-                                      );
-                                    }
-                                    return (
-                                      word.charAt(0).toUpperCase() +
-                                      word.slice(1)
-                                    );
-                                  })
-                                  .join(" ");
-                                field.onChange(formatted);
-                              }}
                             />
                           </FormControl>
                           <FormMessage />
