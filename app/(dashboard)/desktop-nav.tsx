@@ -54,7 +54,7 @@ export function DesktopNav({ role }: DesktopNavProps) {
                 isOpen ? 'opacity-100' : 'opacity-0'
               )}
             >
-              K&DGS
+              KDGS
             </span>
           </Link>
         </div>
