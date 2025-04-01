@@ -43,7 +43,8 @@ import {
   addFamilyRelationship,
   addPeriodical,
   addTitle,
-  updateObituaryAction
+  updateObituaryAction,
+  getOpenFileBoxId
 } from "./actions";
 import { AddBatchNumberDialog } from "./add-batch-number-dialog";
 import {
@@ -241,6 +242,8 @@ export function EditObituaryDialog({
   const resizeRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  const [openFileBoxId, setOpenFileBoxId] = useState<number | null>(null);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -300,7 +303,17 @@ export function EditObituaryDialog({
       setCurrentUserFullName(fetchedUserData?.fullName!);
     }
 
+    async function fetchOpenFileBoxId() {
+      try {
+        const id = await getOpenFileBoxId();
+        setOpenFileBoxId(id);
+      } catch (error) {
+        console.error("Error fetching open file box ID:", error);
+      }
+    }
+
     fetchUserData();
+    fetchOpenFileBoxId();
   }, []);
 
   useEffect(() => {
@@ -1588,13 +1601,19 @@ export function EditObituaryDialog({
                     label="File Box"
                     placeholder="Select a file box"
                     emptyText="No file box found."
-                    items={fileBoxes.map(box => ({
-                      id: box.id,
-                      name:
-                        box.id === 0
-                          ? "Not available"
-                          : `${box.year} : ${box.number}`
-                    }))}
+                    items={fileBoxes
+                      .filter(
+                        box =>
+                          box.id === obituary.fileBoxId ||
+                          box.id === openFileBoxId
+                      )
+                      .map(box => ({
+                        id: box.id,
+                        name:
+                          box.id === 0
+                            ? "Not available"
+                            : `${box.year} : ${box.number}${box.id === openFileBoxId ? " (Current Open Box)" : ""}`
+                      }))}
                     onAddItem={async name => {
                       toast({
                         title: "Cannot add new file box",
@@ -1618,7 +1637,7 @@ export function EditObituaryDialog({
                             value={
                               field.value
                                 ? fileBoxes.find(box => box.id === field.value)
-                                  ? `${fileBoxes.find(box => box.id === field.value)?.year} : ${fileBoxes.find(box => box.id === field.value)?.number}`
+                                  ? `${fileBoxes.find(box => box.id === field.value)?.year} : ${fileBoxes.find(box => box.id === field.value)?.number}${field.value === openFileBoxId ? " (Current Open Box)" : ""}`
                                   : "Not available"
                                 : "Not assigned"
                             }
