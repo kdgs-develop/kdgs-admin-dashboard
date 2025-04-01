@@ -1188,27 +1188,6 @@ export function EditObituaryDialog({
                                 {...field}
                                 className="h-8 text-sm"
                                 value={field.value || ""}
-                                onChange={e => {
-                                  const formatted = e.target.value
-                                    .split(" ")
-                                    .map(word => {
-                                      if (word.startsWith("(")) {
-                                        // Capitalize after opening parenthesis
-                                        return (
-                                          "(" +
-                                          word.charAt(1).toUpperCase() +
-                                          word.slice(2)
-                                        );
-                                      }
-                                      // Capitalize first letter of each word, keep rest as typed
-                                      return (
-                                        word.charAt(0).toUpperCase() +
-                                        word.slice(1)
-                                      );
-                                    })
-                                    .join(" ");
-                                  field.onChange(formatted);
-                                }}
                               />
                             </FormControl>
                             <FormMessage />
