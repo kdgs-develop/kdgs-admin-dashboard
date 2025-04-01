@@ -1556,17 +1556,21 @@ export function EditObituaryDialog({
                       };
                     }}
                   />
-                  <div className="pt-6">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsAddBatchNumberDialogOpen(true)}
-                      className="h-8 mt-1"
-                    >
-                      <PlusCircle className="h-3 w-3 mr-2" />
-                      Create new batch number
-                    </Button>
-                  </div>
+                  {(role === "ROOT" ||
+                    role === "ADMIN" ||
+                    role === "PROCESS_MANAGER") && (
+                    <div className="pt-6">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsAddBatchNumberDialogOpen(true)}
+                        className="h-8 mt-1"
+                      >
+                        <PlusCircle className="h-3 w-3 mr-2" />
+                        Create new batch number
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
