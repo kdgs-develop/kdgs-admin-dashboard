@@ -1579,30 +1579,58 @@ export function EditObituaryDialog({
                 <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
                   Document Storage
                 </h3>
-                <ComboboxFormField
-                  control={form.control}
-                  name="fileBoxId"
-                  label="File Box"
-                  placeholder="Select a file box"
-                  emptyText="No file box found."
-                  items={fileBoxes.map(box => ({
-                    id: box.id,
-                    name:
-                      box.id === 0
-                        ? "Not available"
-                        : `${box.year} : ${box.number}`
-                  }))}
-                  onAddItem={async name => {
-                    toast({
-                      title: "Cannot add new file box",
-                      description:
-                        "File boxes are managed separately. Please contact an administrator.",
-                      variant: "destructive"
-                    });
-                    const tempId = Date.now();
-                    return { id: tempId, name };
-                  }}
-                />
+                {role === "ROOT" ||
+                role === "ADMIN" ||
+                role === "PROCESS_MANAGER" ? (
+                  <ComboboxFormField
+                    control={form.control}
+                    name="fileBoxId"
+                    label="File Box"
+                    placeholder="Select a file box"
+                    emptyText="No file box found."
+                    items={fileBoxes.map(box => ({
+                      id: box.id,
+                      name:
+                        box.id === 0
+                          ? "Not available"
+                          : `${box.year} : ${box.number}`
+                    }))}
+                    onAddItem={async name => {
+                      toast({
+                        title: "Cannot add new file box",
+                        description:
+                          "File boxes are managed separately. Please contact an administrator.",
+                        variant: "destructive"
+                      });
+                      const tempId = Date.now();
+                      return { id: tempId, name };
+                    }}
+                  />
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="fileBoxId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">File Box</FormLabel>
+                        <FormControl>
+                          <Input
+                            value={
+                              field.value
+                                ? fileBoxes.find(box => box.id === field.value)
+                                  ? `${fileBoxes.find(box => box.id === field.value)?.year} : ${fileBoxes.find(box => box.id === field.value)?.number}`
+                                  : "Not available"
+                                : "Not assigned"
+                            }
+                            className="h-8 text-sm"
+                            disabled
+                            readOnly
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               <DialogFooter className="flex justify-end space-x-2 pt-6">
