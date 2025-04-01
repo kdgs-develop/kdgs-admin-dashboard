@@ -1611,6 +1611,54 @@ export function EditObituaryDialog({
                 />
               </div>
 
+              {/* Obituary Files */}
+              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                  Obituary Images
+                </h3>
+                <div className="space-y-4">
+                  {selectedFiles.length > 0 && (
+                    <div className="mb-2 space-y-2">
+                      {selectedFiles.map((fileItem, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between text-sm"
+                        >
+                          <span>
+                            {fileItem.file.name} → {fileItem.newName}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveFile(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      ref={fileInputRef}
+                      multiple
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Add New Image File
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               <DialogFooter className="flex justify-end space-x-2 pt-6">
                 <Button type="button" variant="outline" onClick={onClose}>
                   Cancel
