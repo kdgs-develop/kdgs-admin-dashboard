@@ -74,14 +74,12 @@ export function ViewImageDialog({
   };
 
   const onMouseDown = (e: React.MouseEvent) => {
-    if (scale > 1) {
-      setIsDragging(true);
-      lastPosition.current = { x: e.clientX, y: e.clientY };
-    }
+    setIsDragging(true);
+    lastPosition.current = { x: e.clientX, y: e.clientY };
   };
 
   const onMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && scale > 1) {
+    if (isDragging) {
       const deltaX = e.clientX - lastPosition.current.x;
       const deltaY = e.clientY - lastPosition.current.y;
 
@@ -110,7 +108,7 @@ export function ViewImageDialog({
           className="flex-grow relative"
           style={{
             height: "calc(90vh - 200px)",
-            cursor: scale > 1 ? "grab" : "default",
+            cursor: isDragging ? "grabbing" : "grab",
             overflow: "hidden"
           }}
           onMouseDown={onMouseDown}
