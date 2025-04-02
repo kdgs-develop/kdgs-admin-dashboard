@@ -1,37 +1,40 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandItem,
   CommandList
-} from '@/components/ui/command';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger
-} from '@/components/ui/popover';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/popover";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import {
   Check,
   ChevronDown,
   ChevronsUpDown,
   ChevronUp,
   Plus,
-  Search
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Loader2
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   addCemetery,
   deleteCemetery,
@@ -39,9 +42,9 @@ import {
   getCities,
   searchCemeteries,
   updateCemetery
-} from './actions';
-import { AddCemeteryDialog } from './add-cemetery-dialog';
-import { EditCemeteryDialog } from './edit-cemetery-dialog';
+} from "./actions";
+import { AddCemeteryDialog } from "./add-cemetery-dialog";
+import { EditCemeteryDialog } from "./edit-cemetery-dialog";
 
 // Add this type for better type safety
 type City = {
@@ -59,21 +62,23 @@ export function CemeteryAdministration() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   // Search states
-  const [searchName, setSearchName] = useState('');
+  const [searchName, setSearchName] = useState("");
   const [searchCityId, setSearchCityId] = useState<string | undefined>(
     undefined
   );
 
   const [openCitySelect, setOpenCitySelect] = useState(false);
-  const [citySearch, setCitySearch] = useState('');
+  const [citySearch, setCitySearch] = useState("");
   const [filteredCities, setFilteredCities] = useState<City[]>([]);
 
   useEffect(() => {
     async function fetchData() {
       try {
+        setIsLoading(true);
         const [cemeteriesResult, citiesResult] = await Promise.all([
           getCemeteriesWithPagination(currentPage),
           getCities()
@@ -83,17 +88,22 @@ export function CemeteryAdministration() {
         setCities(citiesResult);
       } catch (error) {
         toast({
-          title: 'Error fetching data',
+          title: "Error fetching data",
           description:
             error instanceof Error
               ? error.message
-              : 'An unknown error occurred',
-          variant: 'destructive'
+              : "An unknown error occurred",
+          variant: "destructive"
         });
+      } finally {
+        setIsLoading(false);
       }
     }
-    fetchData();
-  }, [currentPage, toast]);
+
+    if (isExpanded) {
+      fetchData();
+    }
+  }, [currentPage, toast, isExpanded]);
 
   // Safe filtering effect
   useEffect(() => {
@@ -104,10 +114,10 @@ export function CemeteryAdministration() {
 
     if (citySearch) {
       setFilteredCities(
-        cities.filter((city) => {
+        cities.filter(city => {
           if (!city) return false;
-          const cityName = (city?.name ?? '').toLowerCase();
-          const countryName = (city?.country?.name ?? '').toLowerCase();
+          const cityName = (city?.name ?? "").toLowerCase();
+          const countryName = (city?.country?.name ?? "").toLowerCase();
           const searchTerm = citySearch.toLowerCase();
           return (
             cityName.includes(searchTerm) || countryName.includes(searchTerm)
@@ -126,15 +136,15 @@ export function CemeteryAdministration() {
       setCemeteries(result.cemeteries);
       setTotalPages(result.totalPages);
       toast({
-        title: 'Success',
-        description: 'Cemetery added successfully'
+        title: "Success",
+        description: "Cemetery added successfully"
       });
     } catch (error) {
       toast({
-        title: 'Error adding cemetery',
+        title: "Error adding cemetery",
         description:
-          error instanceof Error ? error.message : 'Failed to add cemetery',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "Failed to add cemetery",
+        variant: "destructive"
       });
     }
   };
@@ -150,17 +160,17 @@ export function CemeteryAdministration() {
       setCemeteries(result.cemeteries);
       setTotalPages(result.totalPages);
       toast({
-        title: 'Success',
-        description: 'Cemetery updated successfully'
+        title: "Success",
+        description: "Cemetery updated successfully"
       });
       setIsEditDialogOpen(false);
       setSelectedCemetery(null);
     } catch (error) {
       toast({
-        title: 'Error updating cemetery',
+        title: "Error updating cemetery",
         description:
-          error instanceof Error ? error.message : 'Failed to update cemetery',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "Failed to update cemetery",
+        variant: "destructive"
       });
     }
   };
@@ -172,37 +182,41 @@ export function CemeteryAdministration() {
       setCemeteries(result.cemeteries);
       setTotalPages(result.totalPages);
       toast({
-        title: 'Success',
-        description: 'Cemetery deleted successfully'
+        title: "Success",
+        description: "Cemetery deleted successfully"
       });
       setIsEditDialogOpen(false);
       setSelectedCemetery(null);
     } catch (error) {
       toast({
-        title: 'Error deleting cemetery',
+        title: "Error deleting cemetery",
         description:
-          error instanceof Error ? error.message : 'Failed to delete cemetery',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "Failed to delete cemetery",
+        variant: "destructive"
       });
     }
   };
 
   const handleSearch = async () => {
     try {
+      setIsLoading(true);
       const result = await searchCemeteries(
         searchName || undefined,
         searchCityId ? parseInt(searchCityId) : undefined,
-        currentPage
+        1 // Always start at page 1 when searching
       );
       setCemeteries(result.cemeteries);
       setTotalPages(result.totalPages);
+      setCurrentPage(1); // Reset current page to 1
     } catch (error) {
       toast({
-        title: 'Error searching cemeteries',
+        title: "Error searching cemeteries",
         description:
-          error instanceof Error ? error.message : 'An unknown error occurred',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -235,7 +249,7 @@ export function CemeteryAdministration() {
               <Input
                 placeholder="Search by name"
                 value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
+                onChange={e => setSearchName(e.target.value)}
               />
             </div>
             <div className="flex-1">
@@ -249,9 +263,9 @@ export function CemeteryAdministration() {
                   >
                     {searchCityId
                       ? (cities?.find(
-                          (city) => city?.id?.toString() === searchCityId
-                        )?.name ?? 'Unnamed')
-                      : 'All Cities'}
+                          city => city?.id?.toString() === searchCityId
+                        )?.name ?? "Unnamed")
+                      : "All Cities"}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -261,7 +275,7 @@ export function CemeteryAdministration() {
                       <Input
                         placeholder="Search city..."
                         value={citySearch}
-                        onChange={(e) => setCitySearch(e.target.value)}
+                        onChange={e => setCitySearch(e.target.value)}
                         className="border-none focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     </div>
@@ -273,19 +287,19 @@ export function CemeteryAdministration() {
                             value="all-cities"
                             onSelect={() => {
                               setSearchCityId(undefined);
-                              setCitySearch('');
+                              setCitySearch("");
                               setOpenCitySelect(false);
                             }}
                           >
                             <Check
                               className={cn(
-                                'mr-2 h-4 w-4',
-                                !searchCityId ? 'opacity-100' : 'opacity-0'
+                                "mr-2 h-4 w-4",
+                                !searchCityId ? "opacity-100" : "opacity-0"
                               )}
                             />
                             All Cities
                           </CommandItem>
-                          {(filteredCities || []).map((city) => {
+                          {(filteredCities || []).map(city => {
                             if (!city?.id) return null;
                             return (
                               <CommandItem
@@ -293,22 +307,22 @@ export function CemeteryAdministration() {
                                 value={city.id.toString()}
                                 onSelect={() => {
                                   setSearchCityId(city.id?.toString());
-                                  setCitySearch('');
+                                  setCitySearch("");
                                   setOpenCitySelect(false);
                                 }}
                               >
                                 <Check
                                   className={cn(
-                                    'mr-2 h-4 w-4',
+                                    "mr-2 h-4 w-4",
                                     searchCityId === city.id?.toString()
-                                      ? 'opacity-100'
-                                      : 'opacity-0'
+                                      ? "opacity-100"
+                                      : "opacity-0"
                                   )}
                                 />
-                                {city.name ?? 'Unnamed'}{' '}
+                                {city.name ?? "Unnamed"}{" "}
                                 {city.country?.name
                                   ? `(${city.country.name})`
-                                  : ''}
+                                  : ""}
                               </CommandItem>
                             );
                           })}
@@ -319,8 +333,16 @@ export function CemeteryAdministration() {
                 </PopoverContent>
               </Popover>
             </div>
-            <Button onClick={handleSearch} variant="secondary">
-              <Search className="mr-2 h-4 w-4" />
+            <Button
+              onClick={handleSearch}
+              variant="secondary"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="mr-2 h-4 w-4" />
+              )}
               Search
             </Button>
             <Button onClick={() => setIsDialogOpen(true)} variant="outline">
@@ -329,46 +351,67 @@ export function CemeteryAdministration() {
             </Button>
           </div>
 
-          
-
           {/* Cemetery List */}
           {cemeteries.length > 0 && (
             <>
-            <div className="grid gap-2">
-              {cemeteries.map((cemetery) => (
-                <div
-                  key={cemetery.id}
-                  className="p-2 border rounded flex justify-between items-center"
-                >
-                  <div>
-                    <span className="font-medium">
-                      {cemetery.name || 'Unnamed'}
-                    </span>
-                    {cemetery.city && (
-                      <span className="ml-2 text-sm text-muted-foreground">
-                        ({cemetery.city.name}
-                        {cemetery.city.province &&
-                          `, ${cemetery.city.province}`}
-                        {cemetery.city.country?.name &&
-                          `, ${cemetery.city.country.name}`}
-                        )
-                      </span>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedCemetery(cemetery);
-                      setIsEditDialogOpen(true);
-                    }}
+              <div className="grid gap-2">
+                {cemeteries.map(cemetery => (
+                  <div
+                    key={cemetery.id}
+                    className="p-2 border rounded flex justify-between items-center"
                   >
-                    Edit
-                  </Button>
-                </div>
-              ))}
-            </div>
+                    <div>
+                      <span className="font-medium">
+                        {cemetery.name || "Unnamed"}
+                      </span>
+                      {cemetery.city && (
+                        <span className="ml-2 text-sm text-muted-foreground">
+                          ({cemetery.city.name}
+                          {cemetery.city.province &&
+                            `, ${cemetery.city.province}`}
+                          {cemetery.city.country?.name &&
+                            `, ${cemetery.city.country.name}`}
+                          )
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedCemetery(cemetery);
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                ))}
+              </div>
 
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1 || isLoading}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="py-2 px-3 text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages || isLoading}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </>
           )}
 
