@@ -808,9 +808,11 @@ export function EditObituaryDialog({
                               className="h-8 text-sm"
                               onChange={e => {
                                 const value = e.target.value;
-                                const capitalized =
-                                  value.charAt(0).toUpperCase() +
-                                  value.slice(1);
+                                const capitalized = value.replace(
+                                  /(^|\()(.)/g,
+                                  (_, prefix, char) =>
+                                    prefix + char.toUpperCase()
+                                );
                                 field.onChange(capitalized);
                               }}
                             />
@@ -976,9 +978,11 @@ export function EditObituaryDialog({
                                 value={field.value || ""}
                                 onChange={e => {
                                   const value = e.target.value;
-                                  const capitalized =
-                                    value.charAt(0).toUpperCase() +
-                                    value.slice(1);
+                                  const capitalized = value.replace(
+                                    /(^|\()(.)/g,
+                                    (_, prefix, char) =>
+                                      prefix + char.toUpperCase()
+                                  );
                                   field.onChange(capitalized);
                                 }}
                               />
@@ -1220,9 +1224,11 @@ export function EditObituaryDialog({
                                 value={field.value || ""}
                                 onChange={e => {
                                   const value = e.target.value;
-                                  const capitalized =
-                                    value.charAt(0).toUpperCase() +
-                                    value.slice(1);
+                                  const capitalized = value.replace(
+                                    /(^|\()(.)/g,
+                                    (_, prefix, char) =>
+                                      prefix + char.toUpperCase()
+                                  );
                                   field.onChange(capitalized);
                                 }}
                               />
