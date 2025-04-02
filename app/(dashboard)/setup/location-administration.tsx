@@ -51,6 +51,7 @@ export function LocationAdministration() {
   const [totalPages, setTotalPages] = useState(1);
   const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
+  const [isDataFetched, setIsDataFetched] = useState(false);
 
   // Search states
   const [searchName, setSearchName] = useState("");
@@ -73,9 +74,13 @@ export function LocationAdministration() {
         variant: "destructive"
       });
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
+    // Only run this effect when expanded or when page/search changes while expanded
+    if (!isExpanded) return;
+
+    // First expansion - initially fetch data
     async function fetchData() {
       try {
         if (isSearchMode) {
@@ -96,6 +101,7 @@ export function LocationAdministration() {
           setTotalPages(citiesResult.totalPages);
           setCountries(countriesResult.countries);
         }
+        setIsDataFetched(true);
       } catch (error) {
         toast({
           title: "Error fetching data",
@@ -107,8 +113,10 @@ export function LocationAdministration() {
         });
       }
     }
+
     fetchData();
   }, [
+    isExpanded,
     currentPage,
     isSearchMode,
     searchName,
@@ -124,9 +132,17 @@ export function LocationAdministration() {
   ) => {
     try {
       const newCity = await addCity(name, province, countryId);
-      const result = await getCitiesWithPagination(currentPage);
-      setCities(result.cities);
-      setTotalPages(result.totalPages);
+
+      // Only refetch if the component is expanded
+      if (isExpanded) {
+        const result = await getCitiesWithPagination(1);
+        setCities(result.cities);
+        setTotalPages(result.totalPages);
+        // Reset to page 1 after adding
+        setCurrentPage(1);
+        setIsSearchMode(false);
+      }
+
       toast({
         title: "Success",
         description: "Location added successfully"
@@ -149,9 +165,14 @@ export function LocationAdministration() {
   ) => {
     try {
       await updateCity(id, name, province, countryId);
-      const result = await getCitiesWithPagination(currentPage);
-      setCities(result.cities);
-      setTotalPages(result.totalPages);
+
+      // Only refetch if the component is expanded
+      if (isExpanded) {
+        const result = await getCitiesWithPagination(currentPage);
+        setCities(result.cities);
+        setTotalPages(result.totalPages);
+      }
+
       toast({
         title: "Success",
         description: "Location updated successfully"
@@ -171,9 +192,14 @@ export function LocationAdministration() {
   const handleDeleteCity = async (id: number) => {
     try {
       await deleteCity(id);
-      const result = await getCitiesWithPagination(currentPage);
-      setCities(result.cities);
-      setTotalPages(result.totalPages);
+
+      // Only refetch if the component is expanded
+      if (isExpanded) {
+        const result = await getCitiesWithPagination(currentPage);
+        setCities(result.cities);
+        setTotalPages(result.totalPages);
+      }
+
       toast({
         title: "Success",
         description: "Location deleted successfully"
@@ -191,6 +217,9 @@ export function LocationAdministration() {
   };
 
   const handleSearch = async () => {
+    // Only search if expanded
+    if (!isExpanded) return;
+
     try {
       setCurrentPage(1);
       setIsSearchMode(true);
@@ -212,11 +241,30 @@ export function LocationAdministration() {
     }
   };
 
-  const handleOpenAddDialog = () => {
-    setIsDialogOpen(true);
+  const handleClearSearch = async () => {
+    // Only reset if expanded
+    if (!isExpanded) return;
+
+    setSearchName("");
+    setSearchProvince("");
+    setSearchCountryId(undefined);
+    setIsSearchMode(false);
+    setCurrentPage(1);
+
+    try {
+      const result = await getCitiesWithPagination(1);
+      setCities(result.cities);
+      setTotalPages(result.totalPages);
+    } catch (error) {
+      toast({
+        title: "Error clearing search",
+        description: "Could not reset the search results",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleOpenAddDialogWithSearch = () => {
+  const handleOpenAddDialog = () => {
     setIsDialogOpen(true);
   };
 
@@ -288,15 +336,28 @@ export function LocationAdministration() {
               Search
             </Button>
             <Button
-              onClick={() => handleOpenAddDialogWithSearch()}
+              onClick={handleClearSearch}
               variant="outline"
+              disabled={
+                !isSearchMode &&
+                searchName === "" &&
+                searchProvince === "" &&
+                !searchCountryId
+              }
             >
+              Reset
+            </Button>
+            <Button onClick={handleOpenAddDialog} variant="outline">
               <Plus className="mr-2 h-4 w-4" />
               Add New
             </Button>
           </div>
 
-          {cities.length > 0 && (
+          {!isDataFetched ? (
+            <div className="py-8 text-center text-muted-foreground">
+              Loading...
+            </div>
+          ) : cities.length > 0 ? (
             <>
               <div className="grid gap-2">
                 {cities.map(city => (
@@ -320,7 +381,8 @@ export function LocationAdministration() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
+                      onClick={e => {
+                        e.stopPropagation();
                         setSelectedCity(city);
                         setIsEditDialogOpen(true);
                       }}
@@ -358,6 +420,10 @@ export function LocationAdministration() {
                 </div>
               </div>
             </>
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">
+              No locations found
+            </div>
           )}
 
           <AddLocationDialog
