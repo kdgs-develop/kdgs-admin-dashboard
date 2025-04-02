@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,12 +11,12 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 import { getCitiesByCountryId } from "./actions";
 
 interface CityData {
   id: number;
-  name: string;
+  name: string | null;
   province?: string | null;
 }
 
@@ -36,8 +36,13 @@ export function RelatedCitiesDialog({
 }: RelatedCitiesDialogProps) {
   const [cities, setCities] = useState<CityData[]>([]);
   const [cityCount, setCityCount] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showCities, setShowCities] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen && country) {
+      loadCities();
+    }
+  }, [isOpen, country]);
 
   const loadCities = async () => {
     if (!country) return;
@@ -47,7 +52,6 @@ export function RelatedCitiesDialog({
       const data = await getCitiesByCountryId(country.id);
       setCities(data.cities);
       setCityCount(data.count);
-      setShowCities(true);
     } catch (error) {
       console.error("Error loading cities:", error);
     } finally {
@@ -56,33 +60,46 @@ export function RelatedCitiesDialog({
   };
 
   const handleClose = () => {
-    setShowCities(false);
     setCities([]);
     setCityCount(null);
     onClose();
+  };
+
+  const downloadCitiesList = () => {
+    if (!cities.length || !country) return;
+
+    // Create formatted content
+    const content = [
+      `Cities in ${country.name}`,
+      `Total: ${cities.length}`,
+      "",
+      ...cities.map(city => {
+        const cityName = city.name || "Unnamed";
+        return city.province ? `${cityName}, ${city.province}` : cityName;
+      })
+    ].join("\n");
+
+    // Create the download link
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${country.name.replace(/\s+/g, "_")}_cities.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Related Cities for {country?.name || ""}</DialogTitle>
+          <DialogTitle>Cities in {country?.name || ""}</DialogTitle>
           <DialogDescription>
-            {!showCities &&
-              !isLoading &&
-              cityCount === null &&
-              "Click 'Show Cities' to view all cities related to this country."}
-            {cityCount !== null &&
-              `This country has ${cityCount} related cities.`}
-            {isLoading && "Loading city data..."}
+            {cityCount !== null && `Showing ${cityCount} cities.`}
           </DialogDescription>
         </DialogHeader>
-
-        {!showCities && !isLoading && (
-          <div className="flex justify-center py-4">
-            <Button onClick={loadCities}>Show Cities</Button>
-          </div>
-        )}
 
         {isLoading && (
           <div className="flex justify-center py-8">
@@ -90,27 +107,44 @@ export function RelatedCitiesDialog({
           </div>
         )}
 
-        {showCities && cities.length > 0 && (
-          <ScrollArea className="max-h-[300px] pr-4">
-            <div className="space-y-2">
-              {cities.map(city => (
-                <div key={city.id} className="p-2 border rounded">
-                  <div className="font-medium">{city.name || "Unnamed"}</div>
-                  {city.province && (
-                    <div className="text-sm text-muted-foreground">
-                      {city.province}
-                    </div>
-                  )}
+        {!isLoading && (
+          <>
+            {cities.length > 0 ? (
+              <>
+                <div className="flex justify-end mb-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadCitiesList}
+                    className="flex items-center gap-1"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download List
+                  </Button>
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
-        )}
-
-        {showCities && cities.length === 0 && (
-          <div className="text-center py-4 text-muted-foreground">
-            No cities found for this country.
-          </div>
+                <ScrollArea className="max-h-[300px] pr-4">
+                  <div className="space-y-2">
+                    {cities.map(city => (
+                      <div key={city.id} className="p-2 border rounded">
+                        <div className="font-medium">
+                          {city.name || "Unnamed"}
+                        </div>
+                        {city.province && (
+                          <div className="text-sm text-muted-foreground">
+                            {city.province}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </>
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                No cities found for this country.
+              </div>
+            )}
+          </>
         )}
 
         <DialogFooter className="mt-4">
