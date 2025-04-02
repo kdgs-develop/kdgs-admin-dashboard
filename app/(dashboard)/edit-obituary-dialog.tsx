@@ -803,7 +803,19 @@ export function EditObituaryDialog({
                         <FormItem>
                           <FormLabel className="text-xs">Given Names</FormLabel>
                           <FormControl>
-                            <Input {...field} className="h-8 text-sm" />
+                            <Input
+                              {...field}
+                              className="h-8 text-sm"
+                              onChange={e => {
+                                const value = e.target.value;
+                                const capitalized = value.replace(
+                                  /(^|\()(.)/g,
+                                  (_, prefix, char) =>
+                                    prefix + char.toUpperCase()
+                                );
+                                field.onChange(capitalized);
+                              }}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -964,6 +976,15 @@ export function EditObituaryDialog({
                                 {...field}
                                 className="h-8 text-sm"
                                 value={field.value || ""}
+                                onChange={e => {
+                                  const value = e.target.value;
+                                  const capitalized = value.replace(
+                                    /(^|\()(.)/g,
+                                    (_, prefix, char) =>
+                                      prefix + char.toUpperCase()
+                                  );
+                                  field.onChange(capitalized);
+                                }}
                               />
                             </FormControl>
                           </FormItem>
@@ -1201,6 +1222,15 @@ export function EditObituaryDialog({
                                 {...field}
                                 className="h-8 text-sm"
                                 value={field.value || ""}
+                                onChange={e => {
+                                  const value = e.target.value;
+                                  const capitalized = value.replace(
+                                    /(^|\()(.)/g,
+                                    (_, prefix, char) =>
+                                      prefix + char.toUpperCase()
+                                  );
+                                  field.onChange(capitalized);
+                                }}
                               />
                             </FormControl>
                             <FormMessage />
