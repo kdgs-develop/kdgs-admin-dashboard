@@ -70,7 +70,7 @@ export function RelatedCitiesDialog({
 
     // Create formatted content
     const content = [
-      `Cities in ${country.name}`,
+      `Locations in ${country.name}`,
       `Total: ${cities.length}`,
       "",
       ...cities.map(city => {
@@ -95,9 +95,9 @@ export function RelatedCitiesDialog({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Cities in {country?.name || ""}</DialogTitle>
+          <DialogTitle>Locations in {country?.name || ""}</DialogTitle>
           <DialogDescription>
-            {cityCount !== null && `Showing ${cityCount} cities.`}
+            {cityCount !== null && `Showing ${cityCount} locations.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -128,7 +128,7 @@ export function RelatedCitiesDialog({
               </ScrollArea>
             ) : (
               <div className="text-center py-4 text-muted-foreground">
-                No cities found for this country.
+                No locations found for this country.
               </div>
             )}
           </>
