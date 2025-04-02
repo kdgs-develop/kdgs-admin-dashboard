@@ -26,7 +26,8 @@ import {
   addCountry,
   searchCountries,
   updateCountry,
-  deleteCountry
+  deleteCountry,
+  getCitiesByCountryId
 } from "./actions";
 import { Input } from "@/components/ui/input";
 import AddCountryDialog from "./add-country-dialog";
@@ -62,12 +63,23 @@ export function CountryAdministration() {
     name: string;
   } | null>(null);
   const [isRelatedDialogOpen, setIsRelatedDialogOpen] = useState(false);
+  const [cityCounts, setCityCounts] = useState<Record<number, number>>({});
 
   const fetchCountries = async (page: number) => {
     setIsLoading(true);
     try {
       const data = await getCountries(page, itemsPerPage);
       setCountryData(data);
+
+      // Fetch city counts for each country
+      const counts: Record<number, number> = {};
+      await Promise.all(
+        data.countries.map(async country => {
+          const cityData = await getCitiesByCountryId(country.id);
+          counts[country.id] = cityData.count;
+        })
+      );
+      setCityCounts(counts);
     } catch (error) {
       toast({
         title: "Error fetching countries",
@@ -246,7 +258,12 @@ export function CountryAdministration() {
                           }}
                         >
                           <LinkIcon className="h-4 w-4 mr-1" />
-                          Related Entries
+                          Related Cities{" "}
+                          {cityCounts[country.id] !== undefined && (
+                            <span className="ml-1">
+                              ({cityCounts[country.id]})
+                            </span>
+                          )}
                         </Button>
                         <Button
                           variant="ghost"
