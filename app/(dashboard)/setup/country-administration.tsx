@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Card,
@@ -6,15 +6,33 @@ import {
   CardDescription,
   CardHeader,
   CardTitle
-} from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus, Search, Edit, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { getCountries, addCountry, searchCountries, updateCountry, deleteCountry } from './actions';
-import { Input } from '@/components/ui/input';
-import AddCountryDialog from './add-country-dialog';
-import EditCountryDialog from './edit-country-dialog';
+} from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Plus,
+  Search,
+  Edit,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  LinkIcon
+} from "lucide-react";
+import {
+  getCountries,
+  addCountry,
+  searchCountries,
+  updateCountry,
+  deleteCountry,
+  getCitiesByCountryId
+} from "./actions";
+import { Input } from "@/components/ui/input";
+import AddCountryDialog from "./add-country-dialog";
+import EditCountryDialog from "./edit-country-dialog";
+import { RelatedCitiesDialog } from "./related-cities-dialog";
 
 interface CountryData {
   countries: { id: number; name: string }[];
@@ -29,25 +47,45 @@ export function CountryAdministration() {
     totalPages: 0
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchName, setSearchName] = useState('');
+  const [searchName, setSearchName] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<{ id: number; name: string } | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [isLoading, setIsLoading] = useState(false);
+  const [relatedCountry, setRelatedCountry] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const [isRelatedDialogOpen, setIsRelatedDialogOpen] = useState(false);
+  const [cityCounts, setCityCounts] = useState<Record<number, number>>({});
 
   const fetchCountries = async (page: number) => {
     setIsLoading(true);
     try {
       const data = await getCountries(page, itemsPerPage);
       setCountryData(data);
+
+      // Fetch city counts for each country
+      const counts: Record<number, number> = {};
+      await Promise.all(
+        data.countries.map(async country => {
+          const cityData = await getCitiesByCountryId(country.id);
+          counts[country.id] = cityData.count;
+        })
+      );
+      setCityCounts(counts);
     } catch (error) {
       toast({
-        title: 'Error fetching countries',
-        description: error instanceof Error ? error.message : 'An unknown error occurred',
-        variant: 'destructive'
+        title: "Error fetching countries",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -71,18 +109,19 @@ export function CountryAdministration() {
       const results = await searchCountries(searchName, 1, itemsPerPage);
       setCountryData(results);
       setCurrentPage(1);
-      
+
       if (results.totalCount === 0) {
         toast({
-          title: 'No results found',
-          description: `No countries found matching "${searchName}"`,
+          title: "No results found",
+          description: `No countries found matching "${searchName}"`
         });
       }
     } catch (error) {
       toast({
-        title: 'Error searching countries',
-        description: error instanceof Error ? error.message : 'An unknown error occurred',
-        variant: 'destructive'
+        title: "Error searching countries",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
       });
     }
   };
@@ -91,74 +130,75 @@ export function CountryAdministration() {
     try {
       const newCountry = await addCountry(name);
       toast({
-        title: 'Success',
-        description: 'Country added successfully',
+        title: "Success",
+        description: "Country added successfully"
       });
       await fetchCountries(1);
       setCurrentPage(1);
     } catch (error) {
       toast({
-        title: 'Error adding country',
-        description: error instanceof Error ? error.message : 'Failed to add country',
-        variant: 'destructive'
+        title: "Error adding country",
+        description:
+          error instanceof Error ? error.message : "Failed to add country",
+        variant: "destructive"
       });
     }
   };
 
   const handleEditCountry = async (name: string) => {
     if (!selectedCountry) return;
-    
+
     try {
       await updateCountry(selectedCountry.id, name);
       toast({
-        title: 'Success',
-        description: 'Country updated successfully',
+        title: "Success",
+        description: "Country updated successfully"
       });
       setIsEditDialogOpen(false);
       setSelectedCountry(null);
       fetchCountries(currentPage);
     } catch (error) {
       toast({
-        title: 'Error updating country',
-        description: error instanceof Error ? error.message : 'Failed to update country',
-        variant: 'destructive'
+        title: "Error updating country",
+        description:
+          error instanceof Error ? error.message : "Failed to update country",
+        variant: "destructive"
       });
     }
   };
 
   const handleDeleteCountry = async (id: number) => {
     if (!selectedCountry) return;
-    
+
     try {
       await deleteCountry(id);
       toast({
-        title: 'Success',
-        description: 'Country deleted successfully',
+        title: "Success",
+        description: "Country deleted successfully"
       });
       setIsEditDialogOpen(false);
       setSelectedCountry(null);
       fetchCountries(currentPage);
     } catch (error) {
       toast({
-        title: 'Error deleting country',
-        description: error instanceof Error ? error.message : 'Failed to delete country',
-        variant: 'destructive'
+        title: "Error deleting country",
+        description:
+          error instanceof Error ? error.message : "Failed to delete country",
+        variant: "destructive"
       });
     }
   };
 
   return (
     <Card>
-      <CardHeader 
+      <CardHeader
         className="cursor-pointer flex flex-row items-center justify-between"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div>
           <CardTitle>Country Management</CardTitle>
           {!isExpanded && (
-            <CardDescription>
-              Click to manage countries
-            </CardDescription>
+            <CardDescription>Click to manage countries</CardDescription>
           )}
         </div>
         <Button variant="ghost" size="icon">
@@ -176,11 +216,11 @@ export function CountryAdministration() {
               <Input
                 placeholder="Search by name"
                 value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
+                onChange={e => setSearchName(e.target.value)}
               />
             </div>
-            <Button 
-              onClick={handleSearch} 
+            <Button
+              onClick={handleSearch}
               variant="secondary"
               disabled={isLoading}
             >
@@ -202,22 +242,40 @@ export function CountryAdministration() {
               <div className="mt-4">
                 <h3 className="text-sm font-medium mb-2">Found Countries:</h3>
                 <div className="space-y-2">
-                  {countryData.countries.map((country) => (
-                    <div 
-                      key={country.id} 
+                  {countryData.countries.map(country => (
+                    <div
+                      key={country.id}
                       className="p-3 border rounded flex justify-between items-center hover:bg-accent"
                     >
                       <span className="text-sm">{country.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedCountry(country);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setRelatedCountry(country);
+                            setIsRelatedDialogOpen(true);
+                          }}
+                        >
+                          <LinkIcon className="h-4 w-4 mr-1" />
+                          Related Cities{" "}
+                          {cityCounts[country.id] !== undefined && (
+                            <span className="ml-1">
+                              ({cityCounts[country.id]})
+                            </span>
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedCountry(country);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -238,7 +296,11 @@ export function CountryAdministration() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, countryData.totalPages))}
+                  onClick={() =>
+                    setCurrentPage(prev =>
+                      Math.min(prev + 1, countryData.totalPages)
+                    )
+                  }
                   disabled={currentPage === countryData.totalPages}
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -264,8 +326,17 @@ export function CountryAdministration() {
             onDeleteCountry={handleDeleteCountry}
             country={selectedCountry}
           />
+
+          <RelatedCitiesDialog
+            isOpen={isRelatedDialogOpen}
+            onClose={() => {
+              setIsRelatedDialogOpen(false);
+              setRelatedCountry(null);
+            }}
+            country={relatedCountry}
+          />
         </CardContent>
       )}
     </Card>
   );
-} 
+}
