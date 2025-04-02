@@ -1505,7 +1505,11 @@ export async function getCitiesByCountryId(countryId: number) {
     });
 
     return {
-      cities,
+      cities: cities as {
+        id: number;
+        name: string | null;
+        province: string | null;
+      }[],
       count
     };
   } catch (error) {
