@@ -6,7 +6,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +20,7 @@ import {
   getOpenFileBoxId,
   searchFileBoxes,
   setOpenFileBoxId,
-  updateFileBox,
+  updateFileBox
 } from "./actions";
 import AddFileBoxDialog from "./add-filebox-dialog";
 import EditFileBoxDialog from "./edit-filebox-dialog";
@@ -43,56 +43,76 @@ export function FileBoxAdministration() {
   const [currentOpenFileBoxId, setCurrentOpenFileBoxId] = useState<
     number | null
   >(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDataFetched, setIsDataFetched] = useState(false);
 
+  // Only fetch data when component is expanded and data hasn't been fetched yet
   useEffect(() => {
-    async function fetchFileBoxes() {
-      try {
-        const fetchedFileBoxes = await getFileBoxes();
-        const fileBoxesWithCounts = await Promise.all(
-          fetchedFileBoxes.map(async (box) => {
-            const count = await getObituaryCountForFileBox(box.id);
-            return { ...box, obituaryCount: count };
-          })
-        );
-        setFileBoxes(fileBoxesWithCounts);
-      } catch (error) {
-        toast({
-          title: "Error fetching file boxes",
-          description:
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred",
-          variant: "destructive",
-        });
-      }
+    if (isExpanded && !isDataFetched) {
+      fetchData();
     }
+  }, [isExpanded, isDataFetched]);
 
-    async function fetchCurrentOpenFileBox() {
-      try {
-        const openFileBoxId = await getOpenFileBoxId();
-        setCurrentOpenFileBoxId(openFileBoxId);
-      } catch (error) {
-        toast({
-          title: "Error fetching current open file box",
-          description:
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred",
-          variant: "destructive",
-        });
-      }
+  const fetchData = async () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    try {
+      await fetchFileBoxes();
+      await fetchCurrentOpenFileBox();
+      setIsDataFetched(true);
+    } catch (error) {
+      toast({
+        title: "Error fetching data",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    fetchFileBoxes();
-    fetchCurrentOpenFileBox();
-  }, [toast]);
+  const fetchFileBoxes = async () => {
+    try {
+      const fetchedFileBoxes = await getFileBoxes();
+      const fileBoxesWithCounts = await Promise.all(
+        fetchedFileBoxes.map(async box => {
+          const count = await getObituaryCountForFileBox(box.id);
+          return { ...box, obituaryCount: count };
+        })
+      );
+      setFileBoxes(fileBoxesWithCounts);
+    } catch (error) {
+      toast({
+        title: "Error fetching file boxes",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const fetchCurrentOpenFileBox = async () => {
+    try {
+      const openFileBoxId = await getOpenFileBoxId();
+      setCurrentOpenFileBoxId(openFileBoxId);
+    } catch (error) {
+      toast({
+        title: "Error fetching current open file box",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
+      });
+    }
+  };
 
   const handleSearch = async () => {
     if (!searchYear && !searchNumber) {
       toast({
         title: "Search Error",
         description: "Please enter a year or number to search",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
@@ -103,7 +123,7 @@ export function FileBoxAdministration() {
         searchNumber ? parseInt(searchNumber) : undefined
       );
       const resultsWithCounts = await Promise.all(
-        results.map(async (box) => {
+        results.map(async box => {
           const count = await getObituaryCountForFileBox(box.id);
           return { ...box, obituaryCount: count };
         })
@@ -114,7 +134,7 @@ export function FileBoxAdministration() {
         title: "Error searching file boxes",
         description:
           error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -128,21 +148,18 @@ export function FileBoxAdministration() {
       await setOpenFileBoxId(newFileBox.id);
       setCurrentOpenFileBoxId(newFileBox.id);
 
-      setFileBoxes((prev) => [
-        ...prev,
-        { ...newFileBox, obituaryCount: count },
-      ]);
+      setFileBoxes(prev => [...prev, { ...newFileBox, obituaryCount: count }]);
 
       toast({
         title: "Success",
-        description: "New file box created and set as current",
+        description: "New file box created and set as current"
       });
     } catch (error) {
       toast({
         title: "Error adding file box",
         description:
           error instanceof Error ? error.message : "Failed to add file box",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -157,8 +174,8 @@ export function FileBoxAdministration() {
         number
       );
       const count = await getObituaryCountForFileBox(updatedFileBox.id);
-      setFileBoxes((prev) =>
-        prev.map((box) =>
+      setFileBoxes(prev =>
+        prev.map(box =>
           box.id === selectedFileBox.id
             ? { ...updatedFileBox, obituaryCount: count }
             : box
@@ -166,7 +183,7 @@ export function FileBoxAdministration() {
       );
       toast({
         title: "Success",
-        description: "File box updated successfully",
+        description: "File box updated successfully"
       });
       setIsEditDialogOpen(false);
       setSelectedFileBox(null);
@@ -175,7 +192,7 @@ export function FileBoxAdministration() {
         title: "Error updating file box",
         description:
           error instanceof Error ? error.message : "Failed to update file box",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -185,10 +202,10 @@ export function FileBoxAdministration() {
 
     try {
       await deleteFileBox(id);
-      setFileBoxes((prev) => prev.filter((box) => box.id !== id));
+      setFileBoxes(prev => prev.filter(box => box.id !== id));
       toast({
         title: "Success",
-        description: "File box deleted successfully",
+        description: "File box deleted successfully"
       });
       setIsEditDialogOpen(false);
       setSelectedFileBox(null);
@@ -197,13 +214,31 @@ export function FileBoxAdministration() {
         title: "Error deleting file box",
         description:
           error instanceof Error ? error.message : "Failed to delete file box",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
 
   const handleOpenDialog = () => {
     setIsDialogOpen(true);
+  };
+
+  const handleRefreshData = async () => {
+    setIsLoading(true);
+    try {
+      await fetchFileBoxes();
+      setSearchYear("");
+      setSearchNumber("");
+    } catch (error) {
+      toast({
+        title: "Error fetching file boxes",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -235,7 +270,7 @@ export function FileBoxAdministration() {
               <Input
                 placeholder="Search by year"
                 value={searchYear}
-                onChange={(e) => setSearchYear(e.target.value)}
+                onChange={e => setSearchYear(e.target.value)}
                 type="number"
               />
             </div>
@@ -243,7 +278,7 @@ export function FileBoxAdministration() {
               <Input
                 placeholder="Search by number"
                 value={searchNumber}
-                onChange={(e) => setSearchNumber(e.target.value)}
+                onChange={e => setSearchNumber(e.target.value)}
                 type="number"
               />
             </div>
@@ -252,30 +287,9 @@ export function FileBoxAdministration() {
               Search
             </Button>
             <Button
-              onClick={async () => {
-                try {
-                  const fetchedFileBoxes = await getFileBoxes();
-                  const fileBoxesWithCounts = await Promise.all(
-                    fetchedFileBoxes.map(async (box) => {
-                      const count = await getObituaryCountForFileBox(box.id);
-                      return { ...box, obituaryCount: count };
-                    })
-                  );
-                  setFileBoxes(fileBoxesWithCounts);
-                  setSearchYear("");
-                  setSearchNumber("");
-                } catch (error) {
-                  toast({
-                    title: "Error fetching file boxes",
-                    description:
-                      error instanceof Error
-                        ? error.message
-                        : "An unknown error occurred",
-                    variant: "destructive",
-                  });
-                }
-              }}
+              onClick={handleRefreshData}
               variant="secondary"
+              disabled={isLoading}
             >
               Show All
             </Button>
@@ -285,11 +299,15 @@ export function FileBoxAdministration() {
             </Button>
           </div>
 
-          {fileBoxes.length > 0 && (
+          {isLoading ? (
+            <div className="py-4 text-center text-muted-foreground">
+              Loading data...
+            </div>
+          ) : fileBoxes.length > 0 ? (
             <div className="mt-4">
               <h3 className="text-sm font-medium mb-2">Found File Boxes:</h3>
               <div className="grid grid-cols-3 gap-2">
-                {fileBoxes.map((box) => {
+                {fileBoxes.map(box => {
                   return (
                     <div
                       key={box.id}
@@ -331,7 +349,7 @@ export function FileBoxAdministration() {
                                 setCurrentOpenFileBoxId(box.id);
                                 toast({
                                   title: "Success",
-                                  description: "File box set as open",
+                                  description: "File box set as open"
                                 });
                               } catch (error) {
                                 toast({
@@ -340,7 +358,7 @@ export function FileBoxAdministration() {
                                     error instanceof Error
                                       ? error.message
                                       : "An unknown error occurred",
-                                  variant: "destructive",
+                                  variant: "destructive"
                                 });
                               }
                             }}
@@ -354,6 +372,10 @@ export function FileBoxAdministration() {
                   );
                 })}
               </div>
+            </div>
+          ) : (
+            <div className="py-4 text-center text-muted-foreground">
+              No file boxes found
             </div>
           )}
 
