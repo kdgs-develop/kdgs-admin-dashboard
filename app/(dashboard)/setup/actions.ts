@@ -26,7 +26,7 @@ export async function createGenealogist({
   email,
   phone,
   role,
-  password,
+  password
 }: CreateGenealogistParams) {
   try {
     // Create user in Clerk (without phone number)
@@ -34,7 +34,7 @@ export async function createGenealogist({
       firstName,
       lastName,
       emailAddress: [email],
-      password,
+      password
     });
 
     // Create user in our database (including phone number)
@@ -43,8 +43,8 @@ export async function createGenealogist({
         fullName: `${firstName} ${lastName}`,
         phone,
         clerkId: clerkUser.id,
-        role: role as Role,
-      },
+        role: role as Role
+      }
     });
 
     return { ...genealogist, email };
@@ -78,19 +78,19 @@ export async function getGenealogists() {
         clerkId: true,
         fullName: true,
         phone: true,
-        role: true,
-      },
+        role: true
+      }
     });
 
     const genealogistsWithEmail = await Promise.all(
-      genealogists.map(async (genealogist) => {
+      genealogists.map(async genealogist => {
         try {
           const clerkUser = await clerkClient().users.getUser(
             genealogist.clerkId
           );
           return {
             ...genealogist,
-            email: clerkUser.emailAddresses[0]?.emailAddress || "",
+            email: clerkUser.emailAddresses[0]?.emailAddress || ""
           };
         } catch (error) {
           // If Clerk user not found, return genealogist with empty email
@@ -99,14 +99,14 @@ export async function getGenealogists() {
           );
           return {
             ...genealogist,
-            email: "",
+            email: ""
           };
         }
       })
     );
 
     // Filter out genealogists with empty emails
-    return genealogistsWithEmail.filter((g) => g.email);
+    return genealogistsWithEmail.filter(g => g.email);
   } catch (error) {
     console.error("Error fetching genealogists:", error);
     throw error;
@@ -116,7 +116,7 @@ export async function getGenealogists() {
 export async function updateGenealogist({
   id,
   phone,
-  role,
+  role
 }: UpdateGenealogistParams) {
   try {
     const genealogist = await prisma.genealogist.findUnique({ where: { id } });
@@ -127,14 +127,14 @@ export async function updateGenealogist({
       where: { id },
       data: {
         phone,
-        role: role as Role,
-      },
+        role: role as Role
+      }
     });
 
     // Update user role in Clerk if it has changed
     if (role) {
       await clerkClient().users.updateUser(genealogist.clerkId, {
-        publicMetadata: { role },
+        publicMetadata: { role }
       });
     }
 
@@ -154,7 +154,7 @@ export async function updateGenealogistPassword(
     if (!genealogist) throw new Error("Genealogist not found");
 
     await clerkClient().users.updateUser(genealogist.clerkId, {
-      password: newPassword,
+      password: newPassword
     });
 
     return true;
@@ -170,13 +170,13 @@ export async function getCities(): Promise<
   try {
     const cities = await prisma.city.findMany({
       include: {
-        country: true,
+        country: true
       },
       orderBy: {
         country: {
-          name: "asc",
-        },
-      },
+          name: "asc"
+        }
+      }
     });
 
     return cities as Prisma.CityGetPayload<{ include: { country: true } }>[];
@@ -198,9 +198,9 @@ export async function addCity(
         AND: [
           { name: name }, // This will match null with null
           { province: province }, // This will match null with null
-          { countryId: countryId },
-        ],
-      },
+          { countryId: countryId }
+        ]
+      }
     });
 
     if (existingCity) {
@@ -214,11 +214,11 @@ export async function addCity(
       data: {
         name,
         province,
-        countryId,
+        countryId
       },
       include: {
-        country: true,
-      },
+        country: true
+      }
     });
 
     revalidatePath("/");
@@ -227,7 +227,7 @@ export async function addCity(
       id: newCity.id,
       name: newCity.name,
       province: newCity.province,
-      country: { name: newCity.country?.name ?? "" },
+      country: { name: newCity.country?.name ?? "" }
     };
   } catch (error) {
     console.error("Error adding new city:", error);
@@ -249,14 +249,14 @@ export async function getCountries(page: number = 1, pageSize: number = 5) {
       orderBy: { name: "asc" },
       select: {
         id: true,
-        name: true,
-      },
+        name: true
+      }
     });
 
     return {
       countries,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize)
     };
   } catch (error) {
     console.error("Error fetching countries:", error);
@@ -273,8 +273,8 @@ export async function searchCountries(
     const where: Prisma.CountryWhereInput = {
       name: {
         contains: searchTerm,
-        mode: Prisma.QueryMode.insensitive,
-      },
+        mode: Prisma.QueryMode.insensitive
+      }
     };
 
     const totalCount = await prisma.country.count({ where });
@@ -286,14 +286,14 @@ export async function searchCountries(
       orderBy: { name: "asc" },
       select: {
         id: true,
-        name: true,
-      },
+        name: true
+      }
     });
 
     return {
       countries,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize)
     };
   } catch (error) {
     console.error("Error searching countries:", error);
@@ -304,7 +304,7 @@ export async function searchCountries(
 export async function addCountry(name: string) {
   try {
     const existing = await prisma.country.findFirst({
-      where: { name: { equals: name, mode: "insensitive" } },
+      where: { name: { equals: name, mode: "insensitive" } }
     });
 
     if (existing) {
@@ -312,7 +312,7 @@ export async function addCountry(name: string) {
     }
 
     const newCountry = await prisma.country.create({
-      data: { name },
+      data: { name }
     });
 
     // Add revalidation for the setup page
@@ -331,8 +331,8 @@ export async function getFileBoxes() {
   try {
     const fileBoxes = await prisma.fileBox.findMany({
       orderBy: {
-        year: "desc",
-      },
+        year: "desc"
+      }
     });
     return fileBoxes;
   } catch (error) {
@@ -348,7 +348,7 @@ export async function searchFileBoxes(year?: number, number?: number) {
 
     const fileBoxes = await prisma.fileBox.findMany({
       where: whereClause,
-      orderBy: [{ year: "desc" }, { number: "asc" }],
+      orderBy: [{ year: "desc" }, { number: "asc" }]
     });
     return fileBoxes;
   } catch (error) {
@@ -362,8 +362,8 @@ export async function addFileBox(year: number, number: number) {
     // First check if the file box already exists
     const existing = await prisma.fileBox.findFirst({
       where: {
-        AND: [{ year }, { number }],
-      },
+        AND: [{ year }, { number }]
+      }
     });
 
     if (existing) {
@@ -375,8 +375,8 @@ export async function addFileBox(year: number, number: number) {
     const fileBox = await prisma.fileBox.create({
       data: {
         year,
-        number,
-      },
+        number
+      }
     });
     return fileBox;
   } catch (error) {
@@ -397,9 +397,9 @@ export async function updateFileBox(id: number, year: number, number: number) {
         AND: [
           { year },
           { number },
-          { NOT: { id } }, // Exclude the current file box
-        ],
-      },
+          { NOT: { id } } // Exclude the current file box
+        ]
+      }
     });
 
     if (existing) {
@@ -412,8 +412,8 @@ export async function updateFileBox(id: number, year: number, number: number) {
       where: { id },
       data: {
         year,
-        number,
-      },
+        number
+      }
     });
     return fileBox;
   } catch (error) {
@@ -431,7 +431,7 @@ export async function deleteFileBox(id: number) {
     // Check if the file box is being used by any obituaries
     const fileBox = await prisma.fileBox.findUnique({
       where: { id },
-      include: { obituaries: { select: { id: true } } },
+      include: { obituaries: { select: { id: true } } }
     });
 
     if (fileBox?.obituaries.length) {
@@ -441,7 +441,7 @@ export async function deleteFileBox(id: number) {
     }
 
     await prisma.fileBox.delete({
-      where: { id },
+      where: { id }
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -461,14 +461,14 @@ export async function getCountriesWithPagination(
       skip: (page - 1) * pageSize,
       take: pageSize,
       orderBy: {
-        name: "asc",
-      },
+        name: "asc"
+      }
     });
 
     return {
       countries,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize)
     };
   } catch (error) {
     console.error("Error fetching countries:", error);
@@ -480,7 +480,7 @@ export async function deleteCountry(id: number) {
   try {
     // Check if the country is being used by any cities
     const citiesUsingCountry = await prisma.city.count({
-      where: { countryId: id },
+      where: { countryId: id }
     });
 
     if (citiesUsingCountry > 0) {
@@ -488,7 +488,7 @@ export async function deleteCountry(id: number) {
     }
 
     await prisma.country.delete({
-      where: { id },
+      where: { id }
     });
     revalidatePath("/");
   } catch (error) {
@@ -503,8 +503,8 @@ export async function updateCountry(id: number, name: string) {
   try {
     const existing = await prisma.country.findFirst({
       where: {
-        AND: [{ name: { equals: name, mode: "insensitive" } }, { NOT: { id } }],
-      },
+        AND: [{ name: { equals: name, mode: "insensitive" } }, { NOT: { id } }]
+      }
     });
 
     if (existing) {
@@ -513,7 +513,7 @@ export async function updateCountry(id: number, name: string) {
 
     const country = await prisma.country.update({
       where: { id },
-      data: { name },
+      data: { name }
     });
     revalidatePath("/");
     return country;
@@ -535,17 +535,17 @@ export async function getCitiesWithPagination(
       skip: (page - 1) * pageSize,
       take: pageSize,
       orderBy: {
-        name: "asc",
+        name: "asc"
       },
       include: {
-        country: true,
-      },
+        country: true
+      }
     });
 
     return {
       cities,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize)
     };
   } catch (error) {
     console.error("Error fetching cities:", error);
@@ -565,11 +565,11 @@ export async function updateCity(
       data: {
         name,
         province,
-        countryId,
+        countryId
       },
       include: {
-        country: true,
-      },
+        country: true
+      }
     });
     return city;
   } catch (error) {
@@ -588,8 +588,8 @@ export async function deleteCity(id: number) {
       include: {
         obituaries_birthCityId: { select: { id: true } },
         obituaries_deathCityId: { select: { id: true } },
-        cemeteries: { select: { id: true } },
-      },
+        cemeteries: { select: { id: true } }
+      }
     });
 
     if (
@@ -603,7 +603,7 @@ export async function deleteCity(id: number) {
     }
 
     await prisma.city.delete({
-      where: { id },
+      where: { id }
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -626,14 +626,14 @@ export async function searchCities(
     if (name) {
       where.name = {
         contains: name,
-        mode: "insensitive",
+        mode: "insensitive"
       };
     }
 
     if (province) {
       where.province = {
         contains: province,
-        mode: "insensitive",
+        mode: "insensitive"
       };
     }
 
@@ -651,19 +651,19 @@ export async function searchCities(
         {
           name: {
             sort: "asc",
-            nulls: "first", // This will put empty names at the beginning
-          },
-        },
+            nulls: "first" // This will put empty names at the beginning
+          }
+        }
       ],
       include: {
-        country: true,
-      },
+        country: true
+      }
     });
 
     return {
       cities,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize)
     };
   } catch (error) {
     console.error("Error searching cities:", error);
@@ -681,21 +681,21 @@ export async function getCemeteriesWithPagination(
       skip: (page - 1) * pageSize,
       take: pageSize,
       orderBy: {
-        name: "asc",
+        name: "asc"
       },
       include: {
         city: {
           include: {
-            country: true,
-          },
-        },
-      },
+            country: true
+          }
+        }
+      }
     });
 
     return {
       cemeteries,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize)
     };
   } catch (error) {
     console.error("Error fetching cemeteries:", error);
@@ -715,7 +715,7 @@ export async function searchCemeteries(
     if (name) {
       where.name = {
         contains: name,
-        mode: "insensitive",
+        mode: "insensitive"
       };
     }
 
@@ -730,21 +730,21 @@ export async function searchCemeteries(
       skip: (page - 1) * pageSize,
       take: pageSize,
       orderBy: {
-        name: "asc",
+        name: "asc"
       },
       include: {
         city: {
           include: {
-            country: true,
-          },
-        },
-      },
+            country: true
+          }
+        }
+      }
     });
 
     return {
       cemeteries,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize)
     };
   } catch (error) {
     console.error("Error searching cemeteries:", error);
@@ -757,15 +757,15 @@ export async function addCemetery(name: string | null, cityId: number | null) {
     const cemetery = await prisma.cemetery.create({
       data: {
         name,
-        cityId,
+        cityId
       },
       include: {
         city: {
           include: {
-            country: true,
-          },
-        },
-      },
+            country: true
+          }
+        }
+      }
     });
     return cemetery;
   } catch (error) {
@@ -786,15 +786,15 @@ export async function updateCemetery(
       where: { id },
       data: {
         name,
-        cityId,
+        cityId
       },
       include: {
         city: {
           include: {
-            country: true,
-          },
-        },
-      },
+            country: true
+          }
+        }
+      }
     });
     return cemetery;
   } catch (error) {
@@ -811,8 +811,8 @@ export async function deleteCemetery(id: number) {
     const cemetery = await prisma.cemetery.findUnique({
       where: { id },
       include: {
-        obituaries: { select: { id: true } },
-      },
+        obituaries: { select: { id: true } }
+      }
     });
 
     if (cemetery?.obituaries.length) {
@@ -822,7 +822,7 @@ export async function deleteCemetery(id: number) {
     }
 
     await prisma.cemetery.delete({
-      where: { id },
+      where: { id }
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -845,21 +845,21 @@ export async function getPeriodicals(page: number = 1, pageSize: number = 5) {
         url: true,
         city: {
           include: {
-            country: true,
-          },
+            country: true
+          }
         },
         _count: {
           select: {
-            obituaries: true,
-          },
-        },
-      },
+            obituaries: true
+          }
+        }
+      }
     });
 
     return {
       periodicals,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize)
     };
   } catch (error) {
     console.error("Error fetching periodicals:", error);
@@ -876,8 +876,8 @@ export async function searchPeriodicals(
     const where: Prisma.PeriodicalWhereInput = {
       name: {
         contains: searchTerm,
-        mode: Prisma.QueryMode.insensitive,
-      },
+        mode: Prisma.QueryMode.insensitive
+      }
     };
 
     const totalCount = await prisma.periodical.count({ where });
@@ -893,21 +893,21 @@ export async function searchPeriodicals(
         url: true,
         city: {
           include: {
-            country: true,
-          },
+            country: true
+          }
         },
         _count: {
           select: {
-            obituaries: true,
-          },
-        },
-      },
+            obituaries: true
+          }
+        }
+      }
     });
 
     return {
       periodicals,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize)
     };
   } catch (error) {
     console.error("Error searching periodicals:", error);
@@ -924,9 +924,9 @@ export async function addPeriodical(
     where: {
       name: {
         equals: name,
-        mode: "insensitive",
-      },
-    },
+        mode: "insensitive"
+      }
+    }
   });
 
   if (existing) {
@@ -937,15 +937,15 @@ export async function addPeriodical(
     data: {
       name,
       url: url || null,
-      cityId: cityId || null,
+      cityId: cityId || null
     },
     include: {
       city: {
         include: {
-          country: true,
-        },
-      },
-    },
+          country: true
+        }
+      }
+    }
   });
 
   revalidatePath("/");
@@ -960,8 +960,8 @@ export async function updatePeriodical(
 ) {
   const existing = await prisma.periodical.findFirst({
     where: {
-      AND: [{ name: { equals: name, mode: "insensitive" } }, { NOT: { id } }],
-    },
+      AND: [{ name: { equals: name, mode: "insensitive" } }, { NOT: { id } }]
+    }
   });
 
   if (existing) {
@@ -973,15 +973,15 @@ export async function updatePeriodical(
     data: {
       name,
       url: url || null,
-      cityId: cityId || null,
+      cityId: cityId || null
     },
     include: {
       city: {
         include: {
-          country: true,
-        },
-      },
-    },
+          country: true
+        }
+      }
+    }
   });
 
   revalidatePath("/");
@@ -992,7 +992,7 @@ export async function deletePeriodical(id: number) {
   try {
     // Check if the periodical is being used by any obituaries
     const obituariesUsingPeriodical = await prisma.obituary.count({
-      where: { periodicalId: id },
+      where: { periodicalId: id }
     });
 
     if (obituariesUsingPeriodical > 0) {
@@ -1002,7 +1002,7 @@ export async function deletePeriodical(id: number) {
     }
 
     await prisma.periodical.delete({
-      where: { id },
+      where: { id }
     });
     revalidatePath("/");
   } catch (error) {
@@ -1022,14 +1022,14 @@ export async function getTitles(page: number = 1, pageSize: number = 5) {
       orderBy: { name: "asc" },
       select: {
         id: true,
-        name: true,
-      },
+        name: true
+      }
     });
 
     return {
       titles,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize)
     };
   } catch (error) {
     console.error("Error fetching titles:", error);
@@ -1046,8 +1046,8 @@ export async function searchTitles(
     const where: Prisma.TitleWhereInput = {
       name: {
         contains: searchTerm,
-        mode: Prisma.QueryMode.insensitive,
-      },
+        mode: Prisma.QueryMode.insensitive
+      }
     };
 
     const totalCount = await prisma.title.count({ where });
@@ -1059,14 +1059,14 @@ export async function searchTitles(
       orderBy: { name: "asc" },
       select: {
         id: true,
-        name: true,
-      },
+        name: true
+      }
     });
 
     return {
       titles,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
+      totalPages: Math.ceil(totalCount / pageSize)
     };
   } catch (error) {
     console.error("Error searching titles:", error);
@@ -1077,7 +1077,7 @@ export async function searchTitles(
 export async function addTitle(name: string) {
   try {
     const existing = await prisma.title.findFirst({
-      where: { name: { equals: name, mode: "insensitive" } },
+      where: { name: { equals: name, mode: "insensitive" } }
     });
 
     if (existing) {
@@ -1085,7 +1085,7 @@ export async function addTitle(name: string) {
     }
 
     const newTitle = await prisma.title.create({
-      data: { name },
+      data: { name }
     });
     revalidatePath("/");
     return newTitle;
@@ -1101,8 +1101,8 @@ export async function updateTitle(id: number, name: string) {
   try {
     const existing = await prisma.title.findFirst({
       where: {
-        AND: [{ name: { equals: name, mode: "insensitive" } }, { NOT: { id } }],
-      },
+        AND: [{ name: { equals: name, mode: "insensitive" } }, { NOT: { id } }]
+      }
     });
 
     if (existing) {
@@ -1111,7 +1111,7 @@ export async function updateTitle(id: number, name: string) {
 
     const title = await prisma.title.update({
       where: { id },
-      data: { name },
+      data: { name }
     });
     revalidatePath("/");
     return title;
@@ -1126,7 +1126,7 @@ export async function updateTitle(id: number, name: string) {
 export async function deleteTitle(id: number) {
   try {
     const obituariesUsingTitle = await prisma.obituary.count({
-      where: { titleId: id },
+      where: { titleId: id }
     });
 
     if (obituariesUsingTitle > 0) {
@@ -1134,7 +1134,7 @@ export async function deleteTitle(id: number) {
     }
 
     await prisma.title.delete({
-      where: { id },
+      where: { id }
     });
     revalidatePath("/");
   } catch (error) {
@@ -1151,8 +1151,8 @@ export async function getObituaryCountForFileBox(
   try {
     const count = await prisma.obituary.count({
       where: {
-        fileBoxId: fileBoxId,
-      },
+        fileBoxId: fileBoxId
+      }
     });
     return count;
   } catch (error) {
@@ -1164,8 +1164,8 @@ export async function getObituaryCountForFileBox(
 export async function getOpenFileBoxId(): Promise<number> {
   const setting = await prisma.settings.findUnique({
     where: {
-      id: "open_filebox_id",
-    },
+      id: "open_filebox_id"
+    }
   });
 
   return setting ? parseInt(setting.value) : 0; // Return 0 if no setting found
@@ -1175,15 +1175,15 @@ export async function setOpenFileBoxId(id: number) {
   try {
     await prisma.settings.upsert({
       where: {
-        id: "open_filebox_id",
+        id: "open_filebox_id"
       },
       update: {
-        value: id.toString(),
+        value: id.toString()
       },
       create: {
         id: "open_filebox_id",
-        value: id.toString(),
-      },
+        value: id.toString()
+      }
     });
     return true;
   } catch (error) {
@@ -1198,15 +1198,15 @@ export async function getRelationships(page: number, perPage: number) {
     prisma.familyRelationship.findMany({
       skip,
       take: perPage,
-      orderBy: { name: "asc" },
+      orderBy: { name: "asc" }
     }),
-    prisma.familyRelationship.count(),
+    prisma.familyRelationship.count()
   ]);
 
   return {
     relationships,
     totalCount,
-    totalPages: Math.ceil(totalCount / perPage),
+    totalPages: Math.ceil(totalCount / perPage)
   };
 }
 
@@ -1221,33 +1221,33 @@ export async function searchRelationships(
       where: {
         name: {
           contains: searchTerm,
-          mode: "insensitive",
-        },
+          mode: "insensitive"
+        }
       },
       skip,
       take: perPage,
-      orderBy: { name: "asc" },
+      orderBy: { name: "asc" }
     }),
     prisma.familyRelationship.count({
       where: {
         name: {
           contains: searchTerm,
-          mode: "insensitive",
-        },
-      },
-    }),
+          mode: "insensitive"
+        }
+      }
+    })
   ]);
 
   return {
     relationships,
     totalCount,
-    totalPages: Math.ceil(totalCount / perPage),
+    totalPages: Math.ceil(totalCount / perPage)
   };
 }
 
 export async function addRelationship(name: string, category: string) {
   const existing = await prisma.familyRelationship.findFirst({
-    where: { name: { equals: name, mode: "insensitive" } },
+    where: { name: { equals: name, mode: "insensitive" } }
   });
 
   if (existing) {
@@ -1255,7 +1255,7 @@ export async function addRelationship(name: string, category: string) {
   }
 
   const relationship = await prisma.familyRelationship.create({
-    data: { name, category },
+    data: { name, category }
   });
   revalidatePath("/");
   return relationship;
@@ -1268,8 +1268,8 @@ export async function updateRelationship(
 ) {
   const existing = await prisma.familyRelationship.findFirst({
     where: {
-      AND: [{ name: { equals: name, mode: "insensitive" } }, { NOT: { id } }],
-    },
+      AND: [{ name: { equals: name, mode: "insensitive" } }, { NOT: { id } }]
+    }
   });
 
   if (existing) {
@@ -1278,7 +1278,7 @@ export async function updateRelationship(
 
   const relationship = await prisma.familyRelationship.update({
     where: { id },
-    data: { name, category },
+    data: { name, category }
   });
   revalidatePath("/");
   return relationship;
@@ -1286,7 +1286,7 @@ export async function updateRelationship(
 
 export async function deleteRelationship(id: string) {
   await prisma.familyRelationship.delete({
-    where: { id },
+    where: { id }
   });
   revalidatePath("/");
 }
@@ -1304,20 +1304,20 @@ export async function getBatchNumbers(page: number, itemsPerPage: number) {
         include: {
           createdBy: {
             select: {
-              fullName: true,
-            },
+              fullName: true
+            }
           },
           _count: {
             select: {
-              obituaries: true,
-            },
-          },
+              obituaries: true
+            }
+          }
         },
         orderBy: {
-          createdAt: "desc",
-        },
+          createdAt: "desc"
+        }
       }),
-      prisma.batchNumber.count(),
+      prisma.batchNumber.count()
     ]);
 
     console.log(
@@ -1328,7 +1328,7 @@ export async function getBatchNumbers(page: number, itemsPerPage: number) {
     return {
       batchNumbers,
       totalCount,
-      totalPages: Math.ceil(totalCount / itemsPerPage),
+      totalPages: Math.ceil(totalCount / itemsPerPage)
     };
   } catch (error) {
     console.error("Error in getBatchNumbers:", error);
@@ -1349,39 +1349,39 @@ export async function searchBatchNumbers(
         where: {
           number: {
             contains: searchTerm,
-            mode: "insensitive",
-          },
+            mode: "insensitive"
+          }
         },
         skip,
         take: itemsPerPage,
         orderBy: {
-          createdAt: "desc",
+          createdAt: "desc"
         },
         include: {
           createdBy: {
             select: {
-              fullName: true,
-            },
+              fullName: true
+            }
           },
           _count: {
-            select: { obituaries: true },
-          },
-        },
+            select: { obituaries: true }
+          }
+        }
       }),
       prisma.batchNumber.count({
         where: {
           number: {
             contains: searchTerm,
-            mode: "insensitive",
-          },
-        },
-      }),
+            mode: "insensitive"
+          }
+        }
+      })
     ]);
 
     return {
       batchNumbers,
       totalCount,
-      totalPages: Math.ceil(totalCount / itemsPerPage),
+      totalPages: Math.ceil(totalCount / itemsPerPage)
     };
   } catch (error) {
     console.error("Error in searchBatchNumbers:", error);
@@ -1399,15 +1399,15 @@ export async function updateBatchNumber(
       where: { id },
       data: {
         number,
-        assignedObituaries,
+        assignedObituaries
       },
       include: {
         createdBy: {
           select: {
-            fullName: true,
-          },
-        },
-      },
+            fullName: true
+          }
+        }
+      }
     });
 
     return updatedBatchNumber;
@@ -1422,12 +1422,12 @@ export async function deleteBatchNumber(id: string) {
     // First, remove the batch number reference from any obituaries
     await prisma.obituary.updateMany({
       where: { batchNumberId: id },
-      data: { batchNumberId: null },
+      data: { batchNumberId: null }
     });
 
     // Then delete the batch number
     await prisma.batchNumber.delete({
-      where: { id },
+      where: { id }
     });
   } catch (error) {
     console.error("Error in deleteBatchNumber:", error);
@@ -1441,14 +1441,14 @@ export async function cleanupOrphanedGenealogists() {
       select: {
         id: true,
         clerkId: true,
-        fullName: true,
-      },
+        fullName: true
+      }
     });
 
     const cleanupResults = {
       total: genealogists.length,
       cleaned: 0,
-      details: [] as string[],
+      details: [] as string[]
     };
 
     for (const genealogist of genealogists) {
@@ -1458,12 +1458,12 @@ export async function cleanupOrphanedGenealogists() {
         if ((error as any).status === 404) {
           // First, delete all reports associated with this genealogist
           await prisma.report.deleteMany({
-            where: { userId: genealogist.clerkId },
+            where: { userId: genealogist.clerkId }
           });
 
           // Then delete the genealogist
           await prisma.genealogist.delete({
-            where: { id: genealogist.id },
+            where: { id: genealogist.id }
           });
 
           cleanupResults.cleaned++;
@@ -1479,5 +1479,37 @@ export async function cleanupOrphanedGenealogists() {
   } catch (error) {
     console.error("Error cleaning up orphaned genealogists:", error);
     throw error;
+  }
+}
+
+export async function getCitiesByCountryId(countryId: number) {
+  try {
+    const cities = await prisma.city.findMany({
+      where: {
+        countryId: countryId
+      },
+      orderBy: {
+        name: "asc"
+      },
+      select: {
+        id: true,
+        name: true,
+        province: true
+      }
+    });
+
+    const count = await prisma.city.count({
+      where: {
+        countryId: countryId
+      }
+    });
+
+    return {
+      cities,
+      count
+    };
+  } catch (error) {
+    console.error("Error fetching cities by country:", error);
+    throw new Error("Failed to fetch cities by country");
   }
 }
