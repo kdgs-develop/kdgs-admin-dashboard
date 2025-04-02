@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import {
   ChevronDown,
   ChevronLeft,
@@ -19,17 +19,17 @@ import {
   Loader2,
   Plus,
   Search
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   addRelationship,
   deleteRelationship,
   getRelationships,
   searchRelationships,
   updateRelationship
-} from './actions';
-import AddRelationshipDialog from './add-relationship-dialog';
-import EditRelationshipDialog from './edit-relationship-dialog';
+} from "./actions";
+import AddRelationshipDialog from "./add-relationship-dialog";
+import EditRelationshipDialog from "./edit-relationship-dialog";
 
 interface RelationshipData {
   relationships: { id: string; name: string; category: string }[];
@@ -44,7 +44,7 @@ export function RelationshipAdministration() {
     totalPages: 0
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchName, setSearchName] = useState('');
+  const [searchName, setSearchName] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedRelationship, setSelectedRelationship] = useState<{
     id: string;
@@ -56,13 +56,14 @@ export function RelationshipAdministration() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [isLoading, setIsLoading] = useState(false);
+  const [isDataFetched, setIsDataFetched] = useState(false);
 
   const fetchRelationships = async (page: number) => {
     setIsLoading(true);
     try {
       const data = await getRelationships(page, itemsPerPage);
       setRelationshipData({
-        relationships: data.relationships.map((r) => ({
+        relationships: data.relationships.map(r => ({
           id: r.id,
           name: r.name,
           category: r.category
@@ -70,14 +71,15 @@ export function RelationshipAdministration() {
         totalCount: data.totalCount,
         totalPages: data.totalPages
       });
+      setIsDataFetched(true);
     } catch (error) {
       toast({
-        title: 'Error fetching relationships',
+        title: "Error fetching relationships",
         description:
           error instanceof Error
             ? error.message
-            : 'Failed to fetch relationships',
-        variant: 'destructive'
+            : "Failed to fetch relationships",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -91,6 +93,8 @@ export function RelationshipAdministration() {
   }, [currentPage, isExpanded]);
 
   const handleSearch = async () => {
+    if (!isExpanded) return;
+
     setIsLoading(true);
     try {
       if (!searchName.trim()) {
@@ -101,7 +105,7 @@ export function RelationshipAdministration() {
 
       const results = await searchRelationships(searchName, 1, itemsPerPage);
       setRelationshipData({
-        relationships: results.relationships.map((r) => ({
+        relationships: results.relationships.map(r => ({
           id: r.id,
           name: r.name,
           category: r.category
@@ -112,12 +116,12 @@ export function RelationshipAdministration() {
       setCurrentPage(1);
     } catch (error) {
       toast({
-        title: 'Error searching relationships',
+        title: "Error searching relationships",
         description:
           error instanceof Error
             ? error.message
-            : 'Failed to search relationships',
-        variant: 'destructive'
+            : "Failed to search relationships",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -128,16 +132,18 @@ export function RelationshipAdministration() {
     try {
       await addRelationship(name, category);
       toast({
-        title: 'Success',
-        description: 'Relationship added successfully'
+        title: "Success",
+        description: "Relationship added successfully"
       });
-      fetchRelationships(currentPage);
+      if (isExpanded) {
+        fetchRelationships(currentPage);
+      }
     } catch (error) {
       toast({
-        title: 'Error adding relationship',
+        title: "Error adding relationship",
         description:
-          error instanceof Error ? error.message : 'Failed to add relationship',
-        variant: 'destructive'
+          error instanceof Error ? error.message : "Failed to add relationship",
+        variant: "destructive"
       });
     }
   };
@@ -152,20 +158,22 @@ export function RelationshipAdministration() {
     try {
       await updateRelationship(id, name, category);
       toast({
-        title: 'Success',
-        description: 'Relationship updated successfully'
+        title: "Success",
+        description: "Relationship updated successfully"
       });
       setIsEditDialogOpen(false);
       setSelectedRelationship(null);
-      fetchRelationships(currentPage);
+      if (isExpanded) {
+        fetchRelationships(currentPage);
+      }
     } catch (error) {
       toast({
-        title: 'Error updating relationship',
+        title: "Error updating relationship",
         description:
           error instanceof Error
             ? error.message
-            : 'Failed to update relationship',
-        variant: 'destructive'
+            : "Failed to update relationship",
+        variant: "destructive"
       });
     }
   };
@@ -176,29 +184,46 @@ export function RelationshipAdministration() {
     try {
       await deleteRelationship(id);
       toast({
-        title: 'Success',
-        description: 'Relationship deleted successfully'
+        title: "Success",
+        description: "Relationship deleted successfully"
       });
       setIsEditDialogOpen(false);
       setSelectedRelationship(null);
-      fetchRelationships(currentPage);
+      if (isExpanded) {
+        fetchRelationships(currentPage);
+      }
     } catch (error) {
       toast({
-        title: 'Error deleting relationship',
+        title: "Error deleting relationship",
         description:
           error instanceof Error
             ? error.message
-            : 'Failed to delete relationship',
-        variant: 'destructive'
+            : "Failed to delete relationship",
+        variant: "destructive"
       });
     }
+  };
+
+  const handleToggleExpanded = () => {
+    const newExpandedState = !isExpanded;
+    setIsExpanded(newExpandedState);
+
+    // If expanding and data hasn't been fetched yet, the useEffect will handle it
+  };
+
+  const handleClearSearch = async () => {
+    if (!isExpanded) return;
+
+    setSearchName("");
+    await fetchRelationships(1);
+    setCurrentPage(1);
   };
 
   return (
     <Card>
       <CardHeader
         className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggleExpanded}
       >
         <div>
           <CardTitle>Family Relationship Management</CardTitle>
@@ -223,7 +248,7 @@ export function RelationshipAdministration() {
               <Input
                 placeholder="Search by relationship name"
                 value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
+                onChange={e => setSearchName(e.target.value)}
               />
             </div>
             <Button
@@ -238,20 +263,35 @@ export function RelationshipAdministration() {
               )}
               Search
             </Button>
-            <Button onClick={() => setIsDialogOpen(true)} variant="outline">
+            <Button
+              onClick={handleClearSearch}
+              variant="outline"
+              disabled={isLoading || !searchName.trim()}
+            >
+              Reset
+            </Button>
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              variant="outline"
+              disabled={isLoading}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add New
             </Button>
           </div>
 
-          {relationshipData.relationships.length > 0 && (
+          {isLoading && !isDataFetched ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : relationshipData.relationships.length > 0 ? (
             <>
               <div className="mt-4">
                 <h3 className="text-sm font-medium mb-2">
                   Found Relationships:
                 </h3>
                 <div className="space-y-2">
-                  {relationshipData.relationships.map((relationship) => (
+                  {relationshipData.relationships.map(relationship => (
                     <div
                       key={relationship.id}
                       className="p-3 border rounded flex justify-between items-center hover:bg-accent"
@@ -260,7 +300,8 @@ export function RelationshipAdministration() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
+                        onClick={e => {
+                          e.stopPropagation();
                           setSelectedRelationship(relationship);
                           setIsEditDialogOpen(true);
                         }}
@@ -276,31 +317,35 @@ export function RelationshipAdministration() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1 || isLoading}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="py-2 px-3 text-sm">
-                  Page {currentPage} of {relationshipData.totalPages}
+                  Page {currentPage} of {relationshipData.totalPages || 1}
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    setCurrentPage((prev) =>
+                    setCurrentPage(prev =>
                       Math.min(prev + 1, relationshipData.totalPages)
                     )
                   }
-                  disabled={currentPage === relationshipData.totalPages}
+                  disabled={
+                    currentPage === relationshipData.totalPages || isLoading
+                  }
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </>
-          )}
+          ) : isDataFetched ? (
+            <div className="py-8 text-center text-muted-foreground">
+              No relationships found
+            </div>
+          ) : null}
 
           <AddRelationshipDialog
             isOpen={isDialogOpen}
