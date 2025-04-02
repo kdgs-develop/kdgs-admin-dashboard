@@ -297,7 +297,7 @@ export function CountryAdministration() {
                           }}
                         >
                           <LinkIcon className="h-4 w-4 mr-1" />
-                          Related Cities{" "}
+                          Related Locations{" "}
                           {cityCounts[country.id] !== undefined && (
                             <span className="ml-1">
                               ({cityCounts[country.id]})
