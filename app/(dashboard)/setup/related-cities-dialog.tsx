@@ -110,35 +110,22 @@ export function RelatedCitiesDialog({
         {!isLoading && (
           <>
             {cities.length > 0 ? (
-              <>
-                <div className="flex justify-end mb-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={downloadCitiesList}
-                    className="flex items-center gap-1"
-                  >
-                    <Download className="h-4 w-4" />
-                    Download List
-                  </Button>
-                </div>
-                <ScrollArea className="max-h-[300px] pr-4">
-                  <div className="space-y-2">
-                    {cities.map(city => (
-                      <div key={city.id} className="p-2 border rounded">
-                        <div className="font-medium">
-                          {city.name || "Unnamed"}
-                        </div>
-                        {city.province && (
-                          <div className="text-sm text-muted-foreground">
-                            {city.province}
-                          </div>
-                        )}
+              <ScrollArea className="max-h-[300px] pr-4">
+                <div className="space-y-2">
+                  {cities.map(city => (
+                    <div key={city.id} className="p-2 border rounded">
+                      <div className="font-medium">
+                        {city.name || "Unnamed"}
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </>
+                      {city.province && (
+                        <div className="text-sm text-muted-foreground">
+                          {city.province}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
             ) : (
               <div className="text-center py-4 text-muted-foreground">
                 No cities found for this country.
@@ -147,11 +134,24 @@ export function RelatedCitiesDialog({
           </>
         )}
 
-        <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={handleClose}>
+        <div className="mt-4 flex justify-between items-center w-full">
+          {!isLoading && cities.length > 0 ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={downloadCitiesList}
+              className="flex items-center gap-1"
+            >
+              <Download className="h-4 w-4" />
+              Download List
+            </Button>
+          ) : (
+            <div></div>
+          )}
+          <Button variant="secondary" onClick={handleClose}>
             Close
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
