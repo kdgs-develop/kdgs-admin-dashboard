@@ -436,19 +436,6 @@ export function GenealogistAdministration() {
             </div>
           ) : (
             <div className="space-y-8">
-              <div className="flex justify-end mb-4">
-                <Button
-                  onClick={handleManualCleanup}
-                  variant="outline"
-                  className="text-sm"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : null}
-                  Update Genealogists List
-                </Button>
-              </div>
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
@@ -591,7 +578,7 @@ export function GenealogistAdministration() {
                       )}
                     />
                   </div>
-                  <div className="flex justify-end mt-4 space-x-2">
+                  <div className="flex justify-end mt-8 space-x-2">
                     <Button
                       onClick={handleManualCleanup}
                       variant="outline"
