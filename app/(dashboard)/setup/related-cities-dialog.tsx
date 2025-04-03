@@ -113,13 +113,16 @@ export function RelatedCitiesDialog({
               <ScrollArea className="max-h-[300px] pr-4">
                 <div className="space-y-2">
                   {cities.map(city => (
-                    <div key={city.id} className="p-2 border rounded">
+                    <div
+                      key={city.id}
+                      className="p-2 border rounded border-l-4 border-l-slate-300"
+                    >
                       <div className="font-medium">
                         {city.name || "Unnamed"}
                       </div>
                       {city.province && (
-                        <div className="text-sm text-muted-foreground">
-                          {city.province}
+                        <div className="text-sm text-muted-foreground mt-1">
+                          <span>{city.province}</span>
                         </div>
                       )}
                     </div>
