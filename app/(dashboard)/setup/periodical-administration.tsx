@@ -105,7 +105,7 @@ export function PeriodicalAdministration() {
   useEffect(() => {
     // Only fetch when expanded
     if (isExpanded) {
-      async function fetchData() {
+      const fetchData = async () => {
         setIsLoading(true);
         try {
           const [periodicalsResult, citiesResult] = await Promise.all([
@@ -138,7 +138,7 @@ export function PeriodicalAdministration() {
         } finally {
           setIsLoading(false);
         }
-      }
+      };
       fetchData();
     }
   }, [currentPage, isExpanded, toast]);
