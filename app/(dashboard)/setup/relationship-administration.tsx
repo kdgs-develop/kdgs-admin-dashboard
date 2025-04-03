@@ -342,22 +342,21 @@ export function RelationshipAdministration() {
                         </span>
                       </div>
                       <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setRelatedRelationship(relationship);
-                            setIsRelatedDialogOpen(true);
-                          }}
-                        >
-                          <LinkIcon className="h-4 w-4 mr-1" />
-                          {obituaryCounts[relationship.id] !== undefined ? (
-                            <>{obituaryCounts[relationship.id]} obituaries</>
-                          ) : (
-                            "View obituaries"
-                          )}
-                        </Button>
+                        {obituaryCounts[relationship.id] > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1 px-2 text-xs bg-purple-50 hover:bg-purple-100 border-purple-200"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setRelatedRelationship(relationship);
+                              setIsRelatedDialogOpen(true);
+                            }}
+                          >
+                            <LinkIcon className="h-3 w-3" />
+                            {obituaryCounts[relationship.id]} Obituaries
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
