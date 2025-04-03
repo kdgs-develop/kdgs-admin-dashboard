@@ -223,6 +223,14 @@ export function CountryAdministration() {
     }
   };
 
+  const handleClearSearch = async () => {
+    if (!isExpanded) return;
+
+    setSearchName("");
+    await fetchCountries(1);
+    setCurrentPage(1);
+  };
+
   return (
     <Card>
       <CardHeader
@@ -264,6 +272,13 @@ export function CountryAdministration() {
                 <Search className="mr-2 h-4 w-4" />
               )}
               Search
+            </Button>
+            <Button
+              onClick={handleClearSearch}
+              variant="outline"
+              disabled={isLoading || !searchName.trim()}
+            >
+              Reset
             </Button>
             <Button onClick={() => setIsDialogOpen(true)} variant="outline">
               <Plus className="mr-2 h-4 w-4" />
