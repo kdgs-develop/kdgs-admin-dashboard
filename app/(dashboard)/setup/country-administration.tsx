@@ -223,6 +223,14 @@ export function CountryAdministration() {
     }
   };
 
+  const handleClearSearch = async () => {
+    if (!isExpanded) return;
+
+    setSearchName("");
+    await fetchCountries(1);
+    setCurrentPage(1);
+  };
+
   return (
     <Card>
       <CardHeader
@@ -265,6 +273,13 @@ export function CountryAdministration() {
               )}
               Search
             </Button>
+            <Button
+              onClick={handleClearSearch}
+              variant="outline"
+              disabled={isLoading || !searchName.trim()}
+            >
+              Reset
+            </Button>
             <Button onClick={() => setIsDialogOpen(true)} variant="outline">
               <Plus className="mr-2 h-4 w-4" />
               Add New
@@ -286,24 +301,22 @@ export function CountryAdministration() {
                       className="p-3 border rounded flex justify-between items-center hover:bg-accent"
                     >
                       <span className="text-sm">{country.name}</span>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setRelatedCountry(country);
-                            setIsRelatedDialogOpen(true);
-                          }}
-                        >
-                          <LinkIcon className="h-4 w-4 mr-1" />
-                          Related Locations{" "}
-                          {cityCounts[country.id] !== undefined && (
-                            <span className="ml-1">
-                              ({cityCounts[country.id]})
-                            </span>
-                          )}
-                        </Button>
+                      <div className="flex items-center gap-2">
+                        {cityCounts[country.id] > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1 px-2 text-xs bg-slate-50 hover:bg-slate-100 border-slate-200"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setRelatedCountry(country);
+                              setIsRelatedDialogOpen(true);
+                            }}
+                          >
+                            <LinkIcon className="h-3 w-3" />
+                            {cityCounts[country.id]} Locations
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"

@@ -25,7 +25,8 @@ import {
   ChevronRight,
   ChevronUp,
   Plus,
-  Search
+  Search,
+  LinkIcon
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import {
@@ -34,10 +35,12 @@ import {
   getCitiesWithPagination,
   getCountries,
   searchCities,
-  updateCity
+  updateCity,
+  getObituariesByCityId
 } from "./actions";
 import AddLocationDialog from "./add-location-dialog";
 import EditLocationDialog from "./edit-location-dialog";
+import { RelatedObituariesDialog } from "./related-obituaries-dialog";
 
 export function LocationAdministration() {
   const [cities, setCities] = useState<any[]>([]);
@@ -61,6 +64,23 @@ export function LocationAdministration() {
   );
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+
+  // Related obituaries states
+  const [relatedCity, setRelatedCity] = useState<{
+    id: number;
+    name: string | null;
+  } | null>(null);
+  const [isRelatedDialogOpen, setIsRelatedDialogOpen] = useState(false);
+  const [obituaryCounts, setObituaryCounts] = useState<
+    Record<
+      number,
+      {
+        birthCount: number;
+        deathCount: number;
+        totalCount: number;
+      }
+    >
+  >({});
 
   const refreshCountries = useCallback(async () => {
     try {
@@ -92,6 +112,9 @@ export function LocationAdministration() {
           );
           setCities(result.cities);
           setTotalPages(result.totalPages);
+
+          // Fetch obituary counts for each city
+          await fetchObituaryCounts(result.cities);
         } else {
           const [citiesResult, countriesResult] = await Promise.all([
             getCitiesWithPagination(currentPage),
@@ -100,6 +123,9 @@ export function LocationAdministration() {
           setCities(citiesResult.cities);
           setTotalPages(citiesResult.totalPages);
           setCountries(countriesResult.countries);
+
+          // Fetch obituary counts for each city
+          await fetchObituaryCounts(citiesResult.cities);
         }
         setIsDataFetched(true);
       } catch (error) {
@@ -125,6 +151,35 @@ export function LocationAdministration() {
     toast
   ]);
 
+  const fetchObituaryCounts = async (citiesList: any[]) => {
+    try {
+      const counts: Record<
+        number,
+        {
+          birthCount: number;
+          deathCount: number;
+          totalCount: number;
+        }
+      > = {};
+
+      await Promise.all(
+        citiesList.map(async city => {
+          if (city.id) {
+            const data = await getObituariesByCityId(city.id);
+            counts[city.id] = {
+              birthCount: data.birthCount,
+              deathCount: data.deathCount,
+              totalCount: data.totalCount
+            };
+          }
+        })
+      );
+      setObituaryCounts(counts);
+    } catch (error) {
+      console.error("Error fetching obituary counts:", error);
+    }
+  };
+
   const handleAddCity = async (
     name: string | null,
     province: string | null,
@@ -141,6 +196,9 @@ export function LocationAdministration() {
         // Reset to page 1 after adding
         setCurrentPage(1);
         setIsSearchMode(false);
+
+        // Fetch obituary counts for new data
+        await fetchObituaryCounts(result.cities);
       }
 
       toast({
@@ -171,6 +229,9 @@ export function LocationAdministration() {
         const result = await getCitiesWithPagination(currentPage);
         setCities(result.cities);
         setTotalPages(result.totalPages);
+
+        // Fetch obituary counts for updated data
+        await fetchObituaryCounts(result.cities);
       }
 
       toast({
@@ -198,6 +259,9 @@ export function LocationAdministration() {
         const result = await getCitiesWithPagination(currentPage);
         setCities(result.cities);
         setTotalPages(result.totalPages);
+
+        // Fetch obituary counts for updated data
+        await fetchObituaryCounts(result.cities);
       }
 
       toast({
@@ -231,6 +295,9 @@ export function LocationAdministration() {
       );
       setCities(result.cities);
       setTotalPages(result.totalPages);
+
+      // Fetch obituary counts for search results
+      await fetchObituaryCounts(result.cities);
     } catch (error) {
       toast({
         title: "Error searching locations",
@@ -255,6 +322,9 @@ export function LocationAdministration() {
       const result = await getCitiesWithPagination(1);
       setCities(result.cities);
       setTotalPages(result.totalPages);
+
+      // Fetch obituary counts for new data
+      await fetchObituaryCounts(result.cities);
     } catch (error) {
       toast({
         title: "Error clearing search",
@@ -378,17 +448,39 @@ export function LocationAdministration() {
                         </span>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={e => {
-                        e.stopPropagation();
-                        setSelectedCity(city);
-                        setIsEditDialogOpen(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
+                    <div className="flex space-x-2">
+                      {obituaryCounts[city.id] !== undefined &&
+                        obituaryCounts[city.id].totalCount > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1 px-2 text-xs bg-amber-50 hover:bg-amber-100 border-amber-200"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setRelatedCity({
+                                id: city.id,
+                                name: city.name
+                              });
+                              setIsRelatedDialogOpen(true);
+                            }}
+                          >
+                            <LinkIcon className="h-3 w-3" />
+                            {obituaryCounts[city.id].birthCount} Birth,{" "}
+                            {obituaryCounts[city.id].deathCount} Death
+                          </Button>
+                        )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setSelectedCity(city);
+                          setIsEditDialogOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -449,6 +541,15 @@ export function LocationAdministration() {
             onDeleteCity={handleDeleteCity}
             city={selectedCity}
             countries={countries}
+          />
+
+          <RelatedObituariesDialog
+            isOpen={isRelatedDialogOpen}
+            onClose={() => {
+              setIsRelatedDialogOpen(false);
+              setRelatedCity(null);
+            }}
+            city={relatedCity}
           />
         </CardContent>
       )}

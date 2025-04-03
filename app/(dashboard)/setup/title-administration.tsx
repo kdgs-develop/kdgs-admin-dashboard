@@ -18,18 +18,21 @@ import {
   ChevronUp,
   ChevronLeft,
   ChevronRight,
-  Loader2
+  Loader2,
+  FileText
 } from "lucide-react";
 import {
   getTitles,
   addTitle,
   searchTitles,
   updateTitle,
-  deleteTitle
+  deleteTitle,
+  getObituariesByTitleId
 } from "./actions";
 import { Input } from "@/components/ui/input";
 import AddTitleDialog from "./add-title-dialog";
 import EditTitleDialog from "./edit-title-dialog";
+import { RelatedTitleObituariesDialog } from "./related-title-obituaries-dialog";
 
 interface TitleData {
   titles: { id: number; name: string | null }[];
@@ -56,6 +59,14 @@ export function TitleAdministration() {
   const itemsPerPage = 5;
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
+  const [obituaryCounts, setObituaryCounts] = useState<Record<number, number>>(
+    {}
+  );
+  const [isRelatedDialogOpen, setIsRelatedDialogOpen] = useState(false);
+  const [relatedTitle, setRelatedTitle] = useState<{
+    id: number;
+    name: string | null;
+  } | null>(null);
 
   const fetchTitles = async (page: number) => {
     setIsLoading(true);
@@ -63,6 +74,10 @@ export function TitleAdministration() {
       const data = await getTitles(page, itemsPerPage);
       setTitleData(data);
       setIsDataFetched(true);
+
+      if (data.titles.length > 0) {
+        fetchObituaryCounts(data.titles);
+      }
     } catch (error) {
       toast({
         title: "Error fetching titles",
@@ -73,6 +88,24 @@ export function TitleAdministration() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchObituaryCounts = async (
+    titlesList: { id: number; name: string | null }[]
+  ) => {
+    const counts: Record<number, number> = {};
+
+    for (const title of titlesList) {
+      try {
+        const result = await getObituariesByTitleId(title.id);
+        counts[title.id] = result.count;
+      } catch (error) {
+        console.error(`Error fetching count for title ${title.id}:`, error);
+        counts[title.id] = 0;
+      }
+    }
+
+    setObituaryCounts(counts);
   };
 
   useEffect(() => {
@@ -95,6 +128,12 @@ export function TitleAdministration() {
       const results = await searchTitles(searchName, 1, itemsPerPage);
       setTitleData(results);
       setCurrentPage(1);
+
+      if (results.titles.length > 0) {
+        fetchObituaryCounts(results.titles);
+      } else {
+        setObituaryCounts({});
+      }
 
       if (results.totalCount === 0) {
         toast({
@@ -201,6 +240,14 @@ export function TitleAdministration() {
     setCurrentPage(1);
   };
 
+  const handleOpenRelatedObituaries = (title: {
+    id: number;
+    name: string | null;
+  }) => {
+    setRelatedTitle(title);
+    setIsRelatedDialogOpen(true);
+  };
+
   return (
     <Card>
       <CardHeader
@@ -277,17 +324,33 @@ export function TitleAdministration() {
                       className="p-3 border rounded flex justify-between items-center hover:bg-accent"
                     >
                       <span className="text-sm">{title.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setSelectedTitle(title);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {obituaryCounts[title.id] > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleOpenRelatedObituaries(title);
+                            }}
+                          >
+                            <FileText className="h-3 w-3" />
+                            {obituaryCounts[title.id]} Obituaries
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setSelectedTitle(title);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -341,6 +404,15 @@ export function TitleAdministration() {
             onEditTitle={handleEditTitle}
             onDeleteTitle={handleDeleteTitle}
             title={selectedTitle as { id: number; name: string } | null}
+          />
+
+          <RelatedTitleObituariesDialog
+            isOpen={isRelatedDialogOpen}
+            onClose={() => {
+              setIsRelatedDialogOpen(false);
+              setRelatedTitle(null);
+            }}
+            title={relatedTitle}
           />
         </CardContent>
       )}

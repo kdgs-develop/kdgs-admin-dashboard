@@ -441,7 +441,7 @@ export function GenealogistAdministration() {
                   onSubmit={form.handleSubmit(onSubmit)}
                   className="space-y-4"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-md bg-card">
                     <FormField
                       control={form.control}
                       name="firstName"
@@ -547,6 +547,7 @@ export function GenealogistAdministration() {
                               type="button"
                               variant="outline"
                               onClick={generateSecurePassword}
+                              className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 text-xs"
                             >
                               Generate
                             </Button>
@@ -555,6 +556,7 @@ export function GenealogistAdministration() {
                                 <Input
                                   placeholder="Password"
                                   type={showPassword ? "text" : "password"}
+                                  className="pr-10 focus-visible:ring-1 focus-visible:ring-primary/50"
                                   {...field}
                                 />
                               </FormControl>
@@ -562,13 +564,13 @@ export function GenealogistAdministration() {
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="absolute right-0 top-0 h-full"
+                                className="absolute right-0 top-0 h-full opacity-70 hover:opacity-100"
                                 onClick={togglePasswordVisibility}
                               >
                                 {showPassword ? (
-                                  <EyeOff className="h-4 w-4" />
+                                  <EyeOff className="h-4 w-4 text-muted-foreground" />
                                 ) : (
-                                  <Eye className="h-4 w-4" />
+                                  <Eye className="h-4 w-4 text-muted-foreground" />
                                 )}
                               </Button>
                             </div>
@@ -578,11 +580,11 @@ export function GenealogistAdministration() {
                       )}
                     />
                   </div>
-                  <div className="flex justify-end mt-8 space-x-2">
+                  <div className="flex justify-end mt-8 space-x-3">
                     <Button
                       onClick={handleManualCleanup}
                       variant="outline"
-                      className="text-sm"
+                      className="text-sm border-slate-200 hover:bg-slate-100"
                       disabled={isLoading}
                     >
                       {isLoading ? (
@@ -592,7 +594,7 @@ export function GenealogistAdministration() {
                     </Button>
                     <Button
                       type="submit"
-                      className="w-full md:w-auto"
+                      className="w-full md:w-auto bg-primary hover:bg-primary/90"
                       variant="default"
                       disabled={isLoading}
                     >
@@ -602,28 +604,58 @@ export function GenealogistAdministration() {
                 </form>
               </Form>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto border rounded-md">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-muted/50">
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead className="font-medium">Name</TableHead>
+                      <TableHead className="font-medium">Email</TableHead>
+                      <TableHead className="font-medium">Phone</TableHead>
+                      <TableHead className="font-medium">Role</TableHead>
+                      <TableHead className="font-medium">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {genealogists.map(genealogist => (
-                      <TableRow key={genealogist.id}>
-                        <TableCell>{genealogist.fullName || "N/A"}</TableCell>
+                      <TableRow
+                        key={genealogist.id}
+                        className="hover:bg-muted/50 transition-colors"
+                      >
+                        <TableCell className="font-medium">
+                          {genealogist.fullName || "N/A"}
+                        </TableCell>
                         <TableCell>{genealogist.email}</TableCell>
                         <TableCell>{genealogist.phone || "N/A"}</TableCell>
-                        <TableCell>{genealogist.role || "N/A"}</TableCell>
+                        <TableCell>
+                          {genealogist.role ? (
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                genealogist.role === "ADMIN"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : genealogist.role === "VIEWER"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : genealogist.role === "SCANNER"
+                                      ? "bg-green-100 text-green-800"
+                                      : genealogist.role === "INDEXER"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : genealogist.role === "PROOFREADER"
+                                          ? "bg-orange-100 text-orange-800"
+                                          : genealogist.role ===
+                                              "PROCESS_MANAGER"
+                                            ? "bg-indigo-100 text-indigo-800"
+                                            : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {genealogist.role}
+                            </span>
+                          ) : (
+                            "N/A"
+                          )}
+                        </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
                               onClick={e => {
                                 e.stopPropagation();
@@ -633,6 +665,7 @@ export function GenealogistAdministration() {
                                 genealogist.email ===
                                   "kdgs.develop@gmail.com" || isLoading
                               }
+                              className="h-8 w-8 p-0"
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
@@ -647,11 +680,12 @@ export function GenealogistAdministration() {
                                 genealogist.email ===
                                   "kdgs.develop@gmail.com" || isLoading
                               }
+                              className="text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
                             >
                               Send New Password
                             </Button>
                             <Button
-                              variant="destructive"
+                              variant="outline"
                               size="sm"
                               onClick={e => {
                                 e.stopPropagation();
@@ -661,6 +695,7 @@ export function GenealogistAdministration() {
                                 genealogist.email ===
                                   "kdgs.develop@gmail.com" || isLoading
                               }
+                              className="text-xs text-red-600 bg-red-50 hover:bg-red-100 border-red-200"
                             >
                               Delete
                             </Button>
