@@ -437,25 +437,24 @@ export function PeriodicalAdministration() {
                         </span>
                       </div>
                       <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setRelatedPeriodical({
-                              id: periodical.id,
-                              name: periodical.name
-                            });
-                            setIsRelatedDialogOpen(true);
-                          }}
-                        >
-                          <LinkIcon className="h-4 w-4 mr-1" />
-                          {obituaryCounts[periodical.id] !== undefined ? (
-                            <>{obituaryCounts[periodical.id]} obituaries</>
-                          ) : (
-                            "View obituaries"
-                          )}
-                        </Button>
+                        {obituaryCounts[periodical.id] > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setRelatedPeriodical({
+                                id: periodical.id,
+                                name: periodical.name
+                              });
+                              setIsRelatedDialogOpen(true);
+                            }}
+                          >
+                            <LinkIcon className="h-3 w-3" />
+                            {obituaryCounts[periodical.id]} Obituaries
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
