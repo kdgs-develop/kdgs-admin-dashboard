@@ -1517,3 +1517,136 @@ export async function getCitiesByCountryId(countryId: number) {
     throw new Error("Failed to fetch cities by country");
   }
 }
+
+export async function getObituariesByBirthCityId(cityId: number) {
+  try {
+    const obituaries = await prisma.obituary.findMany({
+      where: {
+        birthCityId: cityId
+      },
+      orderBy: {
+        surname: "asc"
+      },
+      select: {
+        id: true,
+        reference: true,
+        surname: true,
+        givenNames: true,
+        birthDate: true,
+        title: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+
+    const count = await prisma.obituary.count({
+      where: {
+        birthCityId: cityId
+      }
+    });
+
+    return {
+      obituaries,
+      count
+    };
+  } catch (error) {
+    console.error("Error fetching obituaries by birth city:", error);
+    throw new Error("Failed to fetch obituaries by birth city");
+  }
+}
+
+export async function getObituariesByCityId(cityId: number) {
+  try {
+    // Get obituaries where the city is the birth city
+    const birthCityObituaries = await prisma.obituary.findMany({
+      where: {
+        birthCityId: cityId
+      },
+      orderBy: {
+        surname: "asc"
+      },
+      select: {
+        id: true,
+        reference: true,
+        surname: true,
+        givenNames: true,
+        birthDate: true,
+        deathDate: true,
+        title: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+
+    // Get obituaries where the city is the death city
+    const deathCityObituaries = await prisma.obituary.findMany({
+      where: {
+        deathCityId: cityId
+      },
+      orderBy: {
+        surname: "asc"
+      },
+      select: {
+        id: true,
+        reference: true,
+        surname: true,
+        givenNames: true,
+        birthDate: true,
+        deathDate: true,
+        title: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+
+    // Add a type flag to each obituary to indicate if it's birth or death city
+    const birthCityWithType = birthCityObituaries.map(obit => ({
+      ...obit,
+      relationType: "birth" as const
+    }));
+
+    const deathCityWithType = deathCityObituaries.map(obit => ({
+      ...obit,
+      relationType: "death" as const
+    }));
+
+    // Combine both arrays without deduplication
+    const combinedObituaries = [...birthCityWithType, ...deathCityWithType];
+
+    // Sort the combined results by surname and then by reference for consistent ordering
+    combinedObituaries.sort((a, b) => {
+      const surnameA = a.surname || "";
+      const surnameB = b.surname || "";
+
+      // First sort by surname
+      const surnameCompare = surnameA.localeCompare(surnameB);
+      if (surnameCompare !== 0) return surnameCompare;
+
+      // If surnames are the same, sort by reference
+      return a.reference.localeCompare(b.reference);
+    });
+
+    // Count birth and death separately
+    const birthCount = birthCityObituaries.length;
+    const deathCount = deathCityObituaries.length;
+
+    // Total count is the sum of both arrays
+    const totalCount = birthCount + deathCount;
+
+    return {
+      obituaries: combinedObituaries,
+      birthCount,
+      deathCount,
+      totalCount
+    };
+  } catch (error) {
+    console.error("Error fetching obituaries by city:", error);
+    throw new Error("Failed to fetch obituaries by city");
+  }
+}
