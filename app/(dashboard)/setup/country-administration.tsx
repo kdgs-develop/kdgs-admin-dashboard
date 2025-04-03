@@ -58,6 +58,7 @@ export function CountryAdministration() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [isLoading, setIsLoading] = useState(false);
+  const [isDataFetched, setIsDataFetched] = useState(false);
   const [relatedCountry, setRelatedCountry] = useState<{
     id: number;
     name: string;
@@ -66,10 +67,13 @@ export function CountryAdministration() {
   const [cityCounts, setCityCounts] = useState<Record<number, number>>({});
 
   const fetchCountries = async (page: number) => {
+    if (isLoading) return;
+
     setIsLoading(true);
     try {
       const data = await getCountries(page, itemsPerPage);
       setCountryData(data);
+      setIsDataFetched(true);
 
       // Fetch city counts for each country
       const counts: Record<number, number> = {};
@@ -93,28 +97,40 @@ export function CountryAdministration() {
   };
 
   useEffect(() => {
-    if (isExpanded) {
+    if (isExpanded && (currentPage > 1 || !isDataFetched)) {
       fetchCountries(currentPage);
     }
   }, [currentPage, isExpanded]);
 
   const handleSearch = async () => {
-    if (!searchName) {
-      await fetchCountries(1);
-      setCurrentPage(1);
-      return;
-    }
+    if (!isExpanded) return;
 
+    setIsLoading(true);
     try {
-      const results = await searchCountries(searchName, 1, itemsPerPage);
-      setCountryData(results);
-      setCurrentPage(1);
+      if (!searchName) {
+        await fetchCountries(1);
+        setCurrentPage(1);
+      } else {
+        const results = await searchCountries(searchName, 1, itemsPerPage);
+        setCountryData(results);
+        setCurrentPage(1);
 
-      if (results.totalCount === 0) {
-        toast({
-          title: "No results found",
-          description: `No countries found matching "${searchName}"`
-        });
+        // Also fetch city counts for search results
+        const counts: Record<number, number> = {};
+        await Promise.all(
+          results.countries.map(async country => {
+            const cityData = await getCitiesByCountryId(country.id);
+            counts[country.id] = cityData.count;
+          })
+        );
+        setCityCounts(counts);
+
+        if (results.totalCount === 0) {
+          toast({
+            title: "No results found",
+            description: `No countries found matching "${searchName}"`
+          });
+        }
       }
     } catch (error) {
       toast({
@@ -123,6 +139,8 @@ export function CountryAdministration() {
           error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -133,8 +151,10 @@ export function CountryAdministration() {
         title: "Success",
         description: "Country added successfully"
       });
-      await fetchCountries(1);
-      setCurrentPage(1);
+      if (isExpanded) {
+        await fetchCountries(1);
+        setCurrentPage(1);
+      }
     } catch (error) {
       toast({
         title: "Error adding country",
@@ -156,7 +176,9 @@ export function CountryAdministration() {
       });
       setIsEditDialogOpen(false);
       setSelectedCountry(null);
-      fetchCountries(currentPage);
+      if (isExpanded) {
+        fetchCountries(currentPage);
+      }
     } catch (error) {
       toast({
         title: "Error updating country",
@@ -178,7 +200,9 @@ export function CountryAdministration() {
       });
       setIsEditDialogOpen(false);
       setSelectedCountry(null);
-      fetchCountries(currentPage);
+      if (isExpanded) {
+        fetchCountries(currentPage);
+      }
     } catch (error) {
       toast({
         title: "Error deleting country",
@@ -189,11 +213,21 @@ export function CountryAdministration() {
     }
   };
 
+  const handleToggleExpand = () => {
+    const newExpandedState = !isExpanded;
+    setIsExpanded(newExpandedState);
+
+    // If expanding and no data has been fetched yet, fetch data
+    if (newExpandedState && !isDataFetched) {
+      fetchCountries(currentPage);
+    }
+  };
+
   return (
     <Card>
       <CardHeader
         className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggleExpand}
       >
         <div>
           <CardTitle>Country Management</CardTitle>
@@ -237,7 +271,11 @@ export function CountryAdministration() {
             </Button>
           </div>
 
-          {countryData.countries.length > 0 && (
+          {isLoading && countryData.countries.length === 0 ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : countryData.countries.length > 0 ? (
             <>
               <div className="mt-4">
                 <h3 className="text-sm font-medium mb-2">Found Countries:</h3>
@@ -252,13 +290,14 @@ export function CountryAdministration() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
+                          onClick={e => {
+                            e.stopPropagation();
                             setRelatedCountry(country);
                             setIsRelatedDialogOpen(true);
                           }}
                         >
                           <LinkIcon className="h-4 w-4 mr-1" />
-                          Related Cities{" "}
+                          Related Locations{" "}
                           {cityCounts[country.id] !== undefined && (
                             <span className="ml-1">
                               ({cityCounts[country.id]})
@@ -268,7 +307,8 @@ export function CountryAdministration() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => {
+                          onClick={e => {
+                            e.stopPropagation();
                             setSelectedCountry(country);
                             setIsEditDialogOpen(true);
                           }}
@@ -286,12 +326,12 @@ export function CountryAdministration() {
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
+                  disabled={currentPage === 1 || isLoading}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="py-2 px-3 text-sm">
-                  Page {currentPage} of {countryData.totalPages}
+                  Page {currentPage} of {countryData.totalPages || 1}
                 </span>
                 <Button
                   variant="outline"
@@ -301,13 +341,21 @@ export function CountryAdministration() {
                       Math.min(prev + 1, countryData.totalPages)
                     )
                   }
-                  disabled={currentPage === countryData.totalPages}
+                  disabled={
+                    currentPage === countryData.totalPages ||
+                    countryData.totalPages === 0 ||
+                    isLoading
+                  }
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </>
-          )}
+          ) : !isLoading && isDataFetched ? (
+            <div className="py-8 text-center text-muted-foreground">
+              No countries found
+            </div>
+          ) : null}
 
           <AddCountryDialog
             isOpen={isDialogOpen}

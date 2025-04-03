@@ -63,6 +63,7 @@ export function CemeteryAdministration() {
   const [totalPages, setTotalPages] = useState(1);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDataFetched, setIsDataFetched] = useState(false);
   const { toast } = useToast();
 
   // Search states
@@ -75,35 +76,36 @@ export function CemeteryAdministration() {
   const [citySearch, setCitySearch] = useState("");
   const [filteredCities, setFilteredCities] = useState<City[]>([]);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        setIsLoading(true);
-        const [cemeteriesResult, citiesResult] = await Promise.all([
-          getCemeteriesWithPagination(currentPage),
-          getCities()
-        ]);
-        setCemeteries(cemeteriesResult.cemeteries);
-        setTotalPages(cemeteriesResult.totalPages);
-        setCities(citiesResult);
-      } catch (error) {
-        toast({
-          title: "Error fetching data",
-          description:
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  async function fetchData() {
+    if (isLoading) return;
 
+    try {
+      setIsLoading(true);
+      const [cemeteriesResult, citiesResult] = await Promise.all([
+        getCemeteriesWithPagination(currentPage),
+        getCities()
+      ]);
+      setCemeteries(cemeteriesResult.cemeteries);
+      setTotalPages(cemeteriesResult.totalPages);
+      setCities(citiesResult);
+      setIsDataFetched(true);
+    } catch (error) {
+      toast({
+        title: "Error fetching data",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
     if (isExpanded) {
       fetchData();
     }
-  }, [currentPage, toast, isExpanded]);
+  }, [currentPage, isExpanded]);
 
   // Safe filtering effect
   useEffect(() => {
@@ -131,10 +133,14 @@ export function CemeteryAdministration() {
 
   const handleAddCemetery = async (name: string | null, cityId: number) => {
     try {
-      const newCemetery = await addCemetery(name, cityId);
-      const result = await getCemeteriesWithPagination(currentPage);
-      setCemeteries(result.cemeteries);
-      setTotalPages(result.totalPages);
+      await addCemetery(name, cityId);
+
+      if (isExpanded) {
+        const result = await getCemeteriesWithPagination(currentPage);
+        setCemeteries(result.cemeteries);
+        setTotalPages(result.totalPages);
+      }
+
       toast({
         title: "Success",
         description: "Cemetery added successfully"
@@ -156,9 +162,13 @@ export function CemeteryAdministration() {
   ) => {
     try {
       await updateCemetery(id, name, cityId);
-      const result = await getCemeteriesWithPagination(currentPage);
-      setCemeteries(result.cemeteries);
-      setTotalPages(result.totalPages);
+
+      if (isExpanded) {
+        const result = await getCemeteriesWithPagination(currentPage);
+        setCemeteries(result.cemeteries);
+        setTotalPages(result.totalPages);
+      }
+
       toast({
         title: "Success",
         description: "Cemetery updated successfully"
@@ -178,9 +188,13 @@ export function CemeteryAdministration() {
   const handleDeleteCemetery = async (id: number) => {
     try {
       await deleteCemetery(id);
-      const result = await getCemeteriesWithPagination(currentPage);
-      setCemeteries(result.cemeteries);
-      setTotalPages(result.totalPages);
+
+      if (isExpanded) {
+        const result = await getCemeteriesWithPagination(currentPage);
+        setCemeteries(result.cemeteries);
+        setTotalPages(result.totalPages);
+      }
+
       toast({
         title: "Success",
         description: "Cemetery deleted successfully"
@@ -198,6 +212,8 @@ export function CemeteryAdministration() {
   };
 
   const handleSearch = async () => {
+    if (!isExpanded) return;
+
     try {
       setIsLoading(true);
       const result = await searchCemeteries(
@@ -220,11 +236,41 @@ export function CemeteryAdministration() {
     }
   };
 
+  const handleToggleExpanded = () => {
+    const newExpandedState = !isExpanded;
+    setIsExpanded(newExpandedState);
+
+    // If expanding and data hasn't been fetched yet, we'll let the useEffect trigger the fetch
+  };
+
+  const handleClearSearch = async () => {
+    if (!isExpanded) return;
+
+    setSearchName("");
+    setSearchCityId(undefined);
+
+    try {
+      setIsLoading(true);
+      const result = await getCemeteriesWithPagination(1);
+      setCemeteries(result.cemeteries);
+      setTotalPages(result.totalPages);
+      setCurrentPage(1); // Reset to page 1
+    } catch (error) {
+      toast({
+        title: "Error clearing search",
+        description: "Failed to reset search results",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader
         className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggleExpanded}
       >
         <div>
           <CardTitle>Interment Place Management</CardTitle>
@@ -345,14 +391,29 @@ export function CemeteryAdministration() {
               )}
               Search
             </Button>
-            <Button onClick={() => setIsDialogOpen(true)} variant="outline">
+            <Button
+              onClick={handleClearSearch}
+              variant="outline"
+              disabled={isLoading || (!searchName && !searchCityId)}
+            >
+              Reset
+            </Button>
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              variant="outline"
+              disabled={isLoading}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add New
             </Button>
           </div>
 
           {/* Cemetery List */}
-          {cemeteries.length > 0 && (
+          {isLoading && !isDataFetched ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : cemeteries.length > 0 ? (
             <>
               <div className="grid gap-2">
                 {cemeteries.map(cemetery => (
@@ -378,7 +439,8 @@ export function CemeteryAdministration() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
+                      onClick={e => {
+                        e.stopPropagation();
                         setSelectedCemetery(cemetery);
                         setIsEditDialogOpen(true);
                       }}
@@ -399,7 +461,7 @@ export function CemeteryAdministration() {
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <span className="py-2 px-3 text-sm">
-                  Page {currentPage} of {totalPages}
+                  Page {currentPage} of {totalPages || 1}
                 </span>
                 <Button
                   variant="outline"
@@ -413,7 +475,11 @@ export function CemeteryAdministration() {
                 </Button>
               </div>
             </>
-          )}
+          ) : isDataFetched ? (
+            <div className="py-8 text-center text-muted-foreground">
+              No interment places found
+            </div>
+          ) : null}
 
           <AddCemeteryDialog
             isOpen={isDialogOpen}
