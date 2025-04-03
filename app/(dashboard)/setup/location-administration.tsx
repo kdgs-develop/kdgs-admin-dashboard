@@ -449,28 +449,26 @@ export function LocationAdministration() {
                       )}
                     </div>
                     <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setRelatedCity({
-                            id: city.id,
-                            name: city.name
-                          });
-                          setIsRelatedDialogOpen(true);
-                        }}
-                      >
-                        <LinkIcon className="h-4 w-4 mr-1" />
-                        {obituaryCounts[city.id] !== undefined ? (
-                          <>
-                            {obituaryCounts[city.id].birthCount} birth location,{" "}
-                            {obituaryCounts[city.id].deathCount} death location
-                          </>
-                        ) : (
-                          "View related entries"
+                      {obituaryCounts[city.id] !== undefined &&
+                        obituaryCounts[city.id].totalCount > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1 px-2 text-xs bg-amber-50 hover:bg-amber-100 border-amber-200"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setRelatedCity({
+                                id: city.id,
+                                name: city.name
+                              });
+                              setIsRelatedDialogOpen(true);
+                            }}
+                          >
+                            <LinkIcon className="h-3 w-3" />
+                            {obituaryCounts[city.id].birthCount} Birth,{" "}
+                            {obituaryCounts[city.id].deathCount} Death
+                          </Button>
                         )}
-                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
