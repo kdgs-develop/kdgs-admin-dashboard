@@ -154,10 +154,10 @@ export function RelatedObituariesDialog({
                   {obituaries.map(obituary => (
                     <div
                       key={`${obituary.id}-${obituary.relationType}`}
-                      className={`p-2 border rounded ${
+                      className={`p-2 border rounded border-l-4 ${
                         obituary.relationType === "birth"
-                          ? "border-l-4 border-l-blue-300"
-                          : "border-l-4 border-l-amber-300"
+                          ? "border-l-blue-300"
+                          : "border-l-amber-300"
                       }`}
                     >
                       <div className="flex justify-between items-center">
@@ -171,10 +171,11 @@ export function RelatedObituariesDialog({
                             .join(" ") || "Unknown"}
                         </div>
                         <Badge
-                          variant={
+                          variant="outline"
+                          className={
                             obituary.relationType === "birth"
-                              ? "secondary"
-                              : "outline"
+                              ? "bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
+                              : "bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800"
                           }
                         >
                           {obituary.relationType === "birth" ? (
@@ -188,31 +189,37 @@ export function RelatedObituariesDialog({
                           )}
                         </Badge>
                       </div>
-                      <div className="flex justify-between text-sm text-muted-foreground mt-1">
+
+                      <div className="text-sm text-muted-foreground mt-1">
                         <span>Ref: {obituary.reference}</span>
-                        <span>
-                          {obituary.relationType === "birth" ? (
-                            obituary.birthDate ? (
-                              <>
+                        {(obituary.birthDate || obituary.deathDate) && (
+                          <div className="flex items-center mt-1">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            {obituary.relationType === "birth" ? (
+                              obituary.birthDate ? (
+                                <span>
+                                  Birth:{" "}
+                                  {format(
+                                    new Date(obituary.birthDate),
+                                    "yyyy-MM-dd"
+                                  )}
+                                </span>
+                              ) : (
+                                <span>No birth date</span>
+                              )
+                            ) : obituary.deathDate ? (
+                              <span>
+                                Death:{" "}
                                 {format(
-                                  new Date(obituary.birthDate),
+                                  new Date(obituary.deathDate),
                                   "yyyy-MM-dd"
                                 )}
-                              </>
+                              </span>
                             ) : (
-                              "No birth date"
-                            )
-                          ) : obituary.deathDate ? (
-                            <>
-                              {format(
-                                new Date(obituary.deathDate),
-                                "yyyy-MM-dd"
-                              )}
-                            </>
-                          ) : (
-                            "No death date"
-                          )}
-                        </span>
+                              <span>No death date</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
