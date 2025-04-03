@@ -1704,7 +1704,9 @@ export async function getObituariesByRelationshipId(relationshipId: string) {
     });
 
     // Get the unique obituary IDs
-    const obituaryIds = [...new Set(relatives.map(rel => rel.obituaryId))];
+    const obituaryIds = Array.from(
+      new Set(relatives.map(rel => rel.obituaryId))
+    );
 
     // Fetch the full obituary details for these IDs
     const obituaries = await prisma.obituary.findMany({
