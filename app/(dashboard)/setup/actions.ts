@@ -1795,3 +1795,43 @@ export async function getObituariesByCemeteryId(cemeteryId: number) {
     throw new Error("Failed to fetch obituaries by cemetery");
   }
 }
+
+export async function getObituariesByTitleId(titleId: number) {
+  try {
+    const obituaries = await prisma.obituary.findMany({
+      where: {
+        titleId: titleId
+      },
+      orderBy: {
+        surname: "asc"
+      },
+      select: {
+        id: true,
+        reference: true,
+        surname: true,
+        givenNames: true,
+        birthDate: true,
+        deathDate: true,
+        title: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+
+    const count = await prisma.obituary.count({
+      where: {
+        titleId: titleId
+      }
+    });
+
+    return {
+      obituaries,
+      count
+    };
+  } catch (error) {
+    console.error("Error fetching obituaries by title:", error);
+    throw new Error("Failed to fetch obituaries by title");
+  }
+}
