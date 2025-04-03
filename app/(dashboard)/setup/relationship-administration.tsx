@@ -18,7 +18,8 @@ import {
   Edit,
   Loader2,
   Plus,
-  Search
+  Search,
+  LinkIcon
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -26,10 +27,12 @@ import {
   deleteRelationship,
   getRelationships,
   searchRelationships,
-  updateRelationship
+  updateRelationship,
+  getObituariesByRelationshipId
 } from "./actions";
 import AddRelationshipDialog from "./add-relationship-dialog";
 import EditRelationshipDialog from "./edit-relationship-dialog";
+import { RelatedRelationshipObituariesDialog } from "./related-relationship-obituaries-dialog";
 
 interface RelationshipData {
   relationships: { id: string; name: string; category: string }[];
@@ -57,6 +60,15 @@ export function RelationshipAdministration() {
   const itemsPerPage = 5;
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
+  const [obituaryCounts, setObituaryCounts] = useState<Record<string, number>>(
+    {}
+  );
+  const [isRelatedDialogOpen, setIsRelatedDialogOpen] = useState(false);
+  const [relatedRelationship, setRelatedRelationship] = useState<{
+    id: string;
+    name: string;
+    category: string;
+  } | null>(null);
 
   const fetchRelationships = async (page: number) => {
     setIsLoading(true);
@@ -72,6 +84,9 @@ export function RelationshipAdministration() {
         totalPages: data.totalPages
       });
       setIsDataFetched(true);
+
+      // Fetch obituary counts for each relationship
+      await fetchObituaryCounts(data.relationships);
     } catch (error) {
       toast({
         title: "Error fetching relationships",
@@ -83,6 +98,27 @@ export function RelationshipAdministration() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchObituaryCounts = async (
+    relationshipsList: { id: string; name: string; category: string }[]
+  ) => {
+    try {
+      const counts: Record<string, number> = {};
+
+      await Promise.all(
+        relationshipsList.map(async relationship => {
+          if (relationship.id) {
+            const data = await getObituariesByRelationshipId(relationship.id);
+            counts[relationship.id] = data.count;
+          }
+        })
+      );
+
+      setObituaryCounts(counts);
+    } catch (error) {
+      console.error("Error fetching obituary counts:", error);
     }
   };
 
@@ -114,6 +150,9 @@ export function RelationshipAdministration() {
         totalPages: results.totalPages
       });
       setCurrentPage(1);
+
+      // Fetch obituary counts for search results
+      await fetchObituaryCounts(results.relationships);
     } catch (error) {
       toast({
         title: "Error searching relationships",
@@ -296,18 +335,41 @@ export function RelationshipAdministration() {
                       key={relationship.id}
                       className="p-3 border rounded flex justify-between items-center hover:bg-accent"
                     >
-                      <span className="text-sm">{relationship.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setSelectedRelationship(relationship);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center">
+                        <span className="text-sm">{relationship.name}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          ({relationship.category})
+                        </span>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setRelatedRelationship(relationship);
+                            setIsRelatedDialogOpen(true);
+                          }}
+                        >
+                          <LinkIcon className="h-4 w-4 mr-1" />
+                          {obituaryCounts[relationship.id] !== undefined ? (
+                            <>{obituaryCounts[relationship.id]} obituaries</>
+                          ) : (
+                            "View obituaries"
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setSelectedRelationship(relationship);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -376,6 +438,15 @@ export function RelationshipAdministration() {
                 category: selectedRelationship.category
               }
             }
+          />
+
+          <RelatedRelationshipObituariesDialog
+            isOpen={isRelatedDialogOpen}
+            onClose={() => {
+              setIsRelatedDialogOpen(false);
+              setRelatedRelationship(null);
+            }}
+            relationship={relatedRelationship}
           />
         </CardContent>
       )}
