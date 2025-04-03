@@ -18,7 +18,8 @@ import {
   Edit,
   Loader2,
   Plus,
-  Search
+  Search,
+  LinkIcon
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -27,11 +28,13 @@ import {
   getCities,
   getPeriodicals,
   searchPeriodicals,
-  updatePeriodical
+  updatePeriodical,
+  getObituariesByPeriodicalId
 } from "./actions";
 import AddPeriodicalDialog from "./add-periodical-dialog";
 import EditPeriodicalDialog from "./edit-periodical-dialog";
 import { CityWithRelations, PeriodicalWithRelations } from "@/types/prisma";
+import { RelatedPeriodicalObituariesDialog } from "./related-periodical-obituaries-dialog";
 
 interface PeriodicalData {
   periodicals: PeriodicalWithRelations[];
@@ -58,24 +61,39 @@ export function PeriodicalAdministration() {
   const itemsPerPage = 5;
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
+  const [obituaryCounts, setObituaryCounts] = useState<Record<number, number>>(
+    {}
+  );
+
+  // Related obituaries states
+  const [relatedPeriodical, setRelatedPeriodical] = useState<{
+    id: number;
+    name: string | null;
+  } | null>(null);
+  const [isRelatedDialogOpen, setIsRelatedDialogOpen] = useState(false);
 
   const fetchPeriodicals = async (page: number) => {
     setIsLoading(true);
     try {
       const data = await getPeriodicals(page, itemsPerPage);
+      const periodicals = data.periodicals.map(p => ({
+        id: p.id,
+        name: p.name,
+        url: p.url,
+        cityId: p.city?.id || null,
+        city: p.city || null,
+        _count: p._count
+      }));
+
       setPeriodicalData({
-        periodicals: data.periodicals.map(p => ({
-          id: p.id,
-          name: p.name,
-          url: p.url,
-          cityId: p.city?.id || null,
-          city: p.city || null,
-          _count: p._count
-        })),
+        periodicals,
         totalCount: data.totalCount,
         totalPages: data.totalPages
       });
       setIsDataFetched(true);
+
+      // Fetch obituary counts for each periodical
+      await fetchObituaryCounts(periodicals);
     } catch (error) {
       toast({
         title: "Error fetching periodicals",
@@ -85,6 +103,27 @@ export function PeriodicalAdministration() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchObituaryCounts = async (
+    periodicalsList: PeriodicalWithRelations[]
+  ) => {
+    try {
+      const counts: Record<number, number> = {};
+
+      await Promise.all(
+        periodicalsList.map(async periodical => {
+          if (periodical.id) {
+            const data = await getObituariesByPeriodicalId(periodical.id);
+            counts[periodical.id] = data.count;
+          }
+        })
+      );
+
+      setObituaryCounts(counts);
+    } catch (error) {
+      console.error("Error fetching obituary counts:", error);
     }
   };
 
@@ -112,20 +151,26 @@ export function PeriodicalAdministration() {
             getPeriodicals(currentPage, itemsPerPage),
             getCities()
           ]);
+
+          const periodicals = periodicalsResult.periodicals.map(p => ({
+            id: p.id,
+            name: p.name,
+            url: p.url,
+            cityId: p.city?.id || null,
+            city: p.city || null,
+            _count: p._count
+          }));
+
           setPeriodicalData({
-            periodicals: periodicalsResult.periodicals.map(p => ({
-              id: p.id,
-              name: p.name,
-              url: p.url,
-              cityId: p.city?.id || null,
-              city: p.city || null,
-              _count: p._count
-            })),
+            periodicals,
             totalCount: periodicalsResult.totalCount,
             totalPages: periodicalsResult.totalPages
           });
           setCities(citiesResult);
           setIsDataFetched(true);
+
+          // Fetch obituary counts
+          await fetchObituaryCounts(periodicals);
         } catch (error) {
           toast({
             title: "Error fetching data",
@@ -155,19 +200,24 @@ export function PeriodicalAdministration() {
     setIsLoading(true);
     try {
       const results = await searchPeriodicals(searchName, 1, itemsPerPage);
+      const periodicals = results.periodicals.map(p => ({
+        id: p.id,
+        name: p.name || "",
+        url: p.url || "",
+        cityId: p.city?.id || null,
+        city: p.city || null,
+        _count: p._count
+      }));
+
       setPeriodicalData({
-        periodicals: results.periodicals.map(p => ({
-          id: p.id,
-          name: p.name || "",
-          url: p.url || "",
-          cityId: p.city?.id || null,
-          city: p.city || null,
-          _count: p._count
-        })),
+        periodicals,
         totalCount: results.totalCount,
         totalPages: results.totalPages
       });
       setCurrentPage(1);
+
+      // Fetch obituary counts for search results
+      await fetchObituaryCounts(periodicals);
 
       if (results.totalCount === 0) {
         toast({
@@ -385,28 +435,39 @@ export function PeriodicalAdministration() {
                             </>
                           )}
                         </span>
-
-                        {periodical._count?.obituaries !== undefined && (
-                          <span
-                            title="Number of obituaries"
-                            className="text-muted-foreground text-xs"
-                          >
-                            {" "}
-                            ({periodical._count.obituaries} obituaries)
-                          </span>
-                        )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setSelectedPeriodical(periodical);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setRelatedPeriodical({
+                              id: periodical.id,
+                              name: periodical.name
+                            });
+                            setIsRelatedDialogOpen(true);
+                          }}
+                        >
+                          <LinkIcon className="h-4 w-4 mr-1" />
+                          {obituaryCounts[periodical.id] !== undefined ? (
+                            <>{obituaryCounts[periodical.id]} obituaries</>
+                          ) : (
+                            "View obituaries"
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setSelectedPeriodical(periodical);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -465,6 +526,15 @@ export function PeriodicalAdministration() {
             onDeletePeriodical={handleDeletePeriodical}
             periodical={selectedPeriodical as PeriodicalWithRelations | null}
             cities={cities}
+          />
+
+          <RelatedPeriodicalObituariesDialog
+            isOpen={isRelatedDialogOpen}
+            onClose={() => {
+              setIsRelatedDialogOpen(false);
+              setRelatedPeriodical(null);
+            }}
+            periodical={relatedPeriodical}
           />
         </CardContent>
       )}
