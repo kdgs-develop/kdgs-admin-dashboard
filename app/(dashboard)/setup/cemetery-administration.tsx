@@ -32,7 +32,8 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Loader2
+  Loader2,
+  FileText
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -41,10 +42,13 @@ import {
   getCemeteriesWithPagination,
   getCities,
   searchCemeteries,
-  updateCemetery
+  updateCemetery,
+  getObituariesByCemeteryId
 } from "./actions";
 import { AddCemeteryDialog } from "./add-cemetery-dialog";
 import { EditCemeteryDialog } from "./edit-cemetery-dialog";
+import { RelatedCemeteryObituariesDialog } from "./related-cemetery-obituaries-dialog";
+import { Badge } from "@/components/ui/badge";
 
 // Add this type for better type safety
 type City = {
@@ -76,6 +80,13 @@ export function CemeteryAdministration() {
   const [citySearch, setCitySearch] = useState("");
   const [filteredCities, setFilteredCities] = useState<City[]>([]);
 
+  // Obituary states
+  const [obituaryCounts, setObituaryCounts] = useState<Record<number, number>>(
+    {}
+  );
+  const [isRelatedDialogOpen, setIsRelatedDialogOpen] = useState(false);
+  const [relatedCemetery, setRelatedCemetery] = useState<any>(null);
+
   async function fetchData() {
     if (isLoading) return;
 
@@ -89,6 +100,10 @@ export function CemeteryAdministration() {
       setTotalPages(cemeteriesResult.totalPages);
       setCities(citiesResult);
       setIsDataFetched(true);
+
+      if (cemeteriesResult.cemeteries.length > 0) {
+        fetchObituaryCounts(cemeteriesResult.cemeteries);
+      }
     } catch (error) {
       toast({
         title: "Error fetching data",
@@ -100,6 +115,25 @@ export function CemeteryAdministration() {
       setIsLoading(false);
     }
   }
+
+  const fetchObituaryCounts = async (cemeteriesList: any[]) => {
+    const counts: Record<number, number> = {};
+
+    for (const cemetery of cemeteriesList) {
+      try {
+        const result = await getObituariesByCemeteryId(cemetery.id);
+        counts[cemetery.id] = result.count;
+      } catch (error) {
+        console.error(
+          `Error fetching count for cemetery ${cemetery.id}:`,
+          error
+        );
+        counts[cemetery.id] = 0;
+      }
+    }
+
+    setObituaryCounts(counts);
+  };
 
   useEffect(() => {
     if (isExpanded) {
@@ -139,6 +173,7 @@ export function CemeteryAdministration() {
         const result = await getCemeteriesWithPagination(currentPage);
         setCemeteries(result.cemeteries);
         setTotalPages(result.totalPages);
+        fetchObituaryCounts(result.cemeteries);
       }
 
       toast({
@@ -167,6 +202,7 @@ export function CemeteryAdministration() {
         const result = await getCemeteriesWithPagination(currentPage);
         setCemeteries(result.cemeteries);
         setTotalPages(result.totalPages);
+        fetchObituaryCounts(result.cemeteries);
       }
 
       toast({
@@ -193,6 +229,7 @@ export function CemeteryAdministration() {
         const result = await getCemeteriesWithPagination(currentPage);
         setCemeteries(result.cemeteries);
         setTotalPages(result.totalPages);
+        fetchObituaryCounts(result.cemeteries);
       }
 
       toast({
@@ -224,6 +261,12 @@ export function CemeteryAdministration() {
       setCemeteries(result.cemeteries);
       setTotalPages(result.totalPages);
       setCurrentPage(1); // Reset current page to 1
+
+      if (result.cemeteries.length > 0) {
+        fetchObituaryCounts(result.cemeteries);
+      } else {
+        setObituaryCounts({});
+      }
     } catch (error) {
       toast({
         title: "Error searching cemeteries",
@@ -255,6 +298,12 @@ export function CemeteryAdministration() {
       setCemeteries(result.cemeteries);
       setTotalPages(result.totalPages);
       setCurrentPage(1); // Reset to page 1
+
+      if (result.cemeteries.length > 0) {
+        fetchObituaryCounts(result.cemeteries);
+      } else {
+        setObituaryCounts({});
+      }
     } catch (error) {
       toast({
         title: "Error clearing search",
@@ -264,6 +313,11 @@ export function CemeteryAdministration() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleOpenRelatedObituaries = (cemetery: any) => {
+    setRelatedCemetery(cemetery);
+    setIsRelatedDialogOpen(true);
   };
 
   return (
@@ -436,17 +490,33 @@ export function CemeteryAdministration() {
                         </span>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={e => {
-                        e.stopPropagation();
-                        setSelectedCemetery(cemetery);
-                        setIsEditDialogOpen(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {obituaryCounts[cemetery.id] > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-1 px-2 text-xs bg-green-50 hover:bg-green-100 border-green-200"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleOpenRelatedObituaries(cemetery);
+                          }}
+                        >
+                          <FileText className="h-3 w-3" />
+                          {obituaryCounts[cemetery.id]} Obituaries
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setSelectedCemetery(cemetery);
+                          setIsEditDialogOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -502,6 +572,15 @@ export function CemeteryAdministration() {
             onDeleteCemetery={handleDeleteCemetery}
             cemetery={selectedCemetery}
             cities={cities}
+          />
+
+          <RelatedCemeteryObituariesDialog
+            isOpen={isRelatedDialogOpen}
+            onClose={() => {
+              setIsRelatedDialogOpen(false);
+              setRelatedCemetery(null);
+            }}
+            cemetery={relatedCemetery}
           />
         </CardContent>
       )}
