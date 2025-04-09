@@ -226,7 +226,8 @@ export async function GET(
     const currentYear = new Date().getFullYear();
     const copyrightText = `© ${currentYear} Kelowna & District Genealogical Society`;
     const websiteText = "kdgs.ca";
-    const developerText = "| Developed by Javier Gongora — Vyoniq Technologies";
+    const developerText =
+      " | Developed by Javier Gongora — Vyoniq Technologies";
 
     // Draw regular text in black
     drawText(copyrightText, 50, height - 30, 8);
