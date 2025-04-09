@@ -3,7 +3,14 @@ import minioClient from "@/lib/minio-client";
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
 import { NextRequest, NextResponse } from "next/server";
-import { PDFDocument, PDFPage, rgb, StandardFonts } from "pdf-lib";
+import {
+  PDFDocument,
+  PDFPage,
+  rgb,
+  StandardFonts,
+  PDFName,
+  PDFString
+} from "pdf-lib";
 
 const LETTER_WIDTH = 612;
 const LETTER_HEIGHT = 792;
@@ -306,22 +313,67 @@ export async function POST(req: NextRequest) {
       // Add footer with dynamic current year
       const footerY = MARGIN - 5;
       const currentYear = new Date().getFullYear();
-      const footerText = `Compiled by © ${currentYear} Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8`;
-      const copyrightText = "Developed by Javier Gongora — Vyoniq Technologies";
 
-      page.drawText(footerText, {
+      // Footer parts - matching the format from generate-pdf/[reference]/route.ts
+      const copyrightText = `© ${currentYear} Kelowna & District Genealogical Society`;
+      const websiteText = "kdgs.ca";
+      const developerText =
+        " | Developed by Javier Gongora — Vyoniq Technologies";
+
+      // Draw copyright text in black
+      page.drawText(copyrightText, {
         x: MARGIN,
         y: footerY + 10,
         size: 7,
         font: font
       });
 
-      page.drawText(copyrightText, {
-        x: MARGIN,
-        y: footerY,
+      // Calculate position for website text
+      const copyrightWidth = font.widthOfTextAtSize(copyrightText + " ", 7);
+      const websiteWidth = font.widthOfTextAtSize(websiteText, 7);
+
+      // Draw website text in blue
+      page.drawText(websiteText, {
+        x: MARGIN + copyrightWidth,
+        y: footerY + 10,
+        size: 7,
+        font: font,
+        color: rgb(0, 0, 1) // Blue color
+      });
+
+      // Draw developer text in black
+      page.drawText(developerText, {
+        x: MARGIN + copyrightWidth + websiteWidth,
+        y: footerY + 10,
         size: 7,
         font: font
       });
+
+      // Create hyperlink annotation
+      const hyperlinkAnnotation = {
+        Type: "Annot",
+        Subtype: "Link",
+        Rect: [
+          MARGIN + copyrightWidth, // x1
+          footerY + 5, // y1
+          MARGIN + copyrightWidth + websiteWidth, // x2
+          footerY + 15 // y2
+        ],
+        Border: [0, 0, 0],
+        A: {
+          Type: "Action",
+          S: "URI",
+          URI: PDFString.of("https://kdgs.ca")
+        }
+      };
+
+      // Register the annotation and add it to the page
+      const annot = pdfDoc.context.register(
+        pdfDoc.context.obj(hyperlinkAnnotation)
+      );
+
+      // Simply set annotations - no need to worry about existing ones in this case
+      page.node.set(PDFName.of("Annots"), pdfDoc.context.obj([annot]));
     }
 
     const pdfBytes = await pdfDoc.save();

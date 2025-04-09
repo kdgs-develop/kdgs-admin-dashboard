@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts, PDFName, PDFString } from "pdf-lib";
 
 export async function GET(
   request: Request,
@@ -222,11 +222,61 @@ export async function GET(
     drawKeyValuePair("Notes", obituary?.notes || "", currentY);
     currentY += 25;
 
-    // Footer
-    const footerText = `Compiled by © ${new Date().getFullYear()} Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8`;
-    const copyrightText = "Developed by Javier Gongora — Vyoniq Technologies";
-    drawText(footerText, 50, height - 30, 8);
-    drawText(copyrightText, 50, height - 15, 8);
+    // Footer parts
+    const currentYear = new Date().getFullYear();
+    const copyrightText = `© ${currentYear} Kelowna & District Genealogical Society`;
+    const websiteText = "kdgs.ca";
+    const developerText =
+      " | Developed by Javier Gongora — Vyoniq Technologies";
+
+    // Draw regular text in black
+    drawText(copyrightText, 50, height - 30, 8);
+
+    // Calculate position for website text
+    const copyrightWidth = font.widthOfTextAtSize(copyrightText + " ", 8);
+    const websiteWidth = font.widthOfTextAtSize(websiteText, 8);
+
+    // Draw website text in blue
+    page.drawText(websiteText, {
+      x: 50 + copyrightWidth,
+      y: 30, // In PDF coordinates, y is from bottom
+      size: 8,
+      font: font,
+      color: rgb(0, 0, 1) // Blue color
+    });
+
+    // Draw the developer text in black
+    page.drawText(developerText, {
+      x: 50 + copyrightWidth + websiteWidth,
+      y: 30, // In PDF coordinates, y is from bottom
+      size: 8,
+      font: font,
+      color: black
+    });
+
+    // Create hyperlink annotation
+    const hyperlinkAnnotation = {
+      Type: "Annot",
+      Subtype: "Link",
+      Rect: [
+        50 + copyrightWidth, // x1
+        25, // y1
+        50 + copyrightWidth + websiteWidth, // x2
+        35 // y2
+      ],
+      Border: [0, 0, 0],
+      A: {
+        Type: "Action",
+        S: "URI",
+        URI: PDFString.of("https://kdgs.ca")
+      }
+    };
+
+    // Register the annotation and add it to the page
+    const annot = pdfDoc.context.register(
+      pdfDoc.context.obj(hyperlinkAnnotation)
+    );
+    page.node.set(PDFName.of("Annots"), pdfDoc.context.obj([annot]));
 
     const pdfBytes = await pdfDoc.save();
 
