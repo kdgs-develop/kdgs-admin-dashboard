@@ -226,7 +226,7 @@ export function LocationAdministration() {
 
       await Promise.all(
         citiesList.map(async city => {
-          if (city.id) {
+          if (city.id !== undefined && city.id !== null) {
             const data = await getObituariesByCityId(city.id);
             counts[city.id] = {
               birthCount: data.birthCount,
@@ -251,7 +251,7 @@ export function LocationAdministration() {
 
       await Promise.all(
         citiesList.map(async city => {
-          if (city.id) {
+          if (city.id !== undefined && city.id !== null) {
             const data = await getCemeteriesByCityId(city.id);
             counts[city.id] = data.count;
           }
@@ -272,7 +272,7 @@ export function LocationAdministration() {
 
       await Promise.all(
         citiesList.map(async city => {
-          if (city.id) {
+          if (city.id !== undefined && city.id !== null) {
             const data = await getPeriodicalsByCityId(city.id);
             counts[city.id] = data.count;
           }
@@ -598,6 +598,8 @@ export function LocationAdministration() {
 
                       {/* Only show relation buttons when not loading */}
                       {!isLoadingObituaryCounts &&
+                        city.id !== undefined &&
+                        city.id !== null &&
                         obituaryCounts[city.id] !== undefined &&
                         obituaryCounts[city.id].totalCount > 0 && (
                           <Button
@@ -619,6 +621,8 @@ export function LocationAdministration() {
                           </Button>
                         )}
                       {!isLoadingCemeteryCounts &&
+                        city.id !== undefined &&
+                        city.id !== null &&
                         cemeteryCounts[city.id] !== undefined &&
                         cemeteryCounts[city.id] > 0 && (
                           <Button
@@ -639,6 +643,8 @@ export function LocationAdministration() {
                           </Button>
                         )}
                       {!isLoadingPeriodicalCounts &&
+                        city.id !== undefined &&
+                        city.id !== null &&
                         periodicalCounts[city.id] !== undefined &&
                         periodicalCounts[city.id] > 0 && (
                           <Button
