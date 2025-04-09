@@ -1878,3 +1878,46 @@ export async function getCemeteriesByCityId(cityId: number) {
     throw new Error("Failed to fetch cemeteries by city");
   }
 }
+
+export async function getPeriodicalsByCityId(cityId: number) {
+  try {
+    // Get all periodicals associated with this city
+    const periodicals = await prisma.periodical.findMany({
+      where: {
+        cityId: cityId
+      },
+      orderBy: {
+        name: "asc"
+      },
+      select: {
+        id: true,
+        name: true,
+        url: true,
+        _count: {
+          select: {
+            obituaries: true
+          }
+        }
+      }
+    });
+
+    // Get total count of periodicals
+    const totalCount = periodicals.length;
+
+    // Transform the data to include the count
+    const periodicalsWithCounts = periodicals.map(periodical => ({
+      id: periodical.id,
+      name: periodical.name,
+      url: periodical.url,
+      obituaryCount: periodical._count.obituaries
+    }));
+
+    return {
+      periodicals: periodicalsWithCounts,
+      count: totalCount
+    };
+  } catch (error) {
+    console.error("Error fetching periodicals by city:", error);
+    throw new Error("Failed to fetch periodicals by city");
+  }
+}
