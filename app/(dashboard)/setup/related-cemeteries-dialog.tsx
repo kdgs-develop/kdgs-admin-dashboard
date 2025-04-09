@@ -70,11 +70,11 @@ export function RelatedCemeteriesDialog({
 
     // Create formatted content
     const content = [
-      `Cemeteries Located in ${city.name || "Unknown City"}`,
-      `Total: ${cemeteryCount} cemeteries`,
+      `Interments Located in ${city.name || "Unknown Location"}`,
+      `Total: ${cemeteryCount} interments`,
       "",
       ...cemeteries.map(cemetery => {
-        return `${cemetery.name || "Unnamed Cemetery"} (${cemetery.obituaryCount} obituaries)`;
+        return `${cemetery.name || "Unnamed Interment"} (${cemetery.obituaryCount} obituaries)`;
       })
     ].join("\n");
 
@@ -95,11 +95,11 @@ export function RelatedCemeteriesDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            Cemeteries in {city?.name || "Unknown City"}
+            Interments in {city?.name || "Unknown City"}
           </DialogTitle>
           <DialogDescription>
             {cemeteryCount > 0 &&
-              `Showing ${cemeteryCount} cemeteries in this location`}
+              `Showing ${cemeteryCount} interments in this location`}
           </DialogDescription>
         </DialogHeader>
 
@@ -140,7 +140,7 @@ export function RelatedCemeteriesDialog({
               </ScrollArea>
             ) : (
               <div className="text-center py-4 text-muted-foreground">
-                No cemeteries found in this location.
+                No interments found in this location.
               </div>
             )}
           </>
