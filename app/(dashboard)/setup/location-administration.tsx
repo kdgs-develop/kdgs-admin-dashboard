@@ -525,7 +525,7 @@ export function LocationAdministration() {
                             }}
                           >
                             <Building className="h-3 w-3" />
-                            {cemeteryCounts[city.id]} Cemeteries
+                            {cemeteryCounts[city.id]} Interments
                           </Button>
                         )}
                       <Button
