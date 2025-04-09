@@ -27,7 +27,8 @@ import {
   Plus,
   Search,
   LinkIcon,
-  Building
+  Building,
+  Newspaper
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import {
@@ -38,12 +39,14 @@ import {
   searchCities,
   updateCity,
   getObituariesByCityId,
-  getCemeteriesByCityId
+  getCemeteriesByCityId,
+  getPeriodicalsByCityId
 } from "./actions";
 import AddLocationDialog from "./add-location-dialog";
 import EditLocationDialog from "./edit-location-dialog";
 import { RelatedObituariesDialog } from "./related-obituaries-dialog";
 import { RelatedCemeteriesDialog } from "./related-cemeteries-dialog";
+import { RelatedPeriodicalsDialog } from "./related-periodicals-dialog";
 
 export function LocationAdministration() {
   const [cities, setCities] = useState<any[]>([]);
@@ -95,6 +98,16 @@ export function LocationAdministration() {
     {}
   );
 
+  // Related periodicals states
+  const [periodicalRelatedCity, setPeriodicalRelatedCity] = useState<{
+    id: number;
+    name: string | null;
+  } | null>(null);
+  const [isPeriodicalsDialogOpen, setIsPeriodicalsDialogOpen] = useState(false);
+  const [periodicalCounts, setPeriodicalCounts] = useState<
+    Record<number, number>
+  >({});
+
   const refreshCountries = useCallback(async () => {
     try {
       const updatedCountries = await getCountries(1, 1000);
@@ -126,10 +139,10 @@ export function LocationAdministration() {
           setCities(result.cities);
           setTotalPages(result.totalPages);
 
-          // Fetch obituary counts for each city
+          // Fetch counts for each city
           await fetchObituaryCounts(result.cities);
-          // Fetch cemetery counts for each city
           await fetchCemeteryCounts(result.cities);
+          await fetchPeriodicalCounts(result.cities);
         } else {
           const [citiesResult, countriesResult] = await Promise.all([
             getCitiesWithPagination(currentPage),
@@ -139,10 +152,10 @@ export function LocationAdministration() {
           setTotalPages(citiesResult.totalPages);
           setCountries(countriesResult.countries);
 
-          // Fetch obituary counts for each city
+          // Fetch counts for each city
           await fetchObituaryCounts(citiesResult.cities);
-          // Fetch cemetery counts for each city
           await fetchCemeteryCounts(citiesResult.cities);
+          await fetchPeriodicalCounts(citiesResult.cities);
         }
         setIsDataFetched(true);
       } catch (error) {
@@ -215,6 +228,24 @@ export function LocationAdministration() {
     }
   };
 
+  const fetchPeriodicalCounts = async (citiesList: any[]) => {
+    try {
+      const counts: Record<number, number> = {};
+
+      await Promise.all(
+        citiesList.map(async city => {
+          if (city.id) {
+            const data = await getPeriodicalsByCityId(city.id);
+            counts[city.id] = data.count;
+          }
+        })
+      );
+      setPeriodicalCounts(counts);
+    } catch (error) {
+      console.error("Error fetching periodical counts:", error);
+    }
+  };
+
   const handleAddCity = async (
     name: string | null,
     province: string | null,
@@ -232,9 +263,10 @@ export function LocationAdministration() {
         setCurrentPage(1);
         setIsSearchMode(false);
 
-        // Fetch obituary counts for new data
+        // Fetch counts for new data
         await fetchObituaryCounts(result.cities);
         await fetchCemeteryCounts(result.cities);
+        await fetchPeriodicalCounts(result.cities);
       }
 
       toast({
@@ -266,9 +298,10 @@ export function LocationAdministration() {
         setCities(result.cities);
         setTotalPages(result.totalPages);
 
-        // Fetch obituary counts for updated data
+        // Fetch counts for updated data
         await fetchObituaryCounts(result.cities);
         await fetchCemeteryCounts(result.cities);
+        await fetchPeriodicalCounts(result.cities);
       }
 
       toast({
@@ -297,9 +330,10 @@ export function LocationAdministration() {
         setCities(result.cities);
         setTotalPages(result.totalPages);
 
-        // Fetch obituary counts for updated data
+        // Fetch counts for updated data
         await fetchObituaryCounts(result.cities);
         await fetchCemeteryCounts(result.cities);
+        await fetchPeriodicalCounts(result.cities);
       }
 
       toast({
@@ -334,9 +368,10 @@ export function LocationAdministration() {
       setCities(result.cities);
       setTotalPages(result.totalPages);
 
-      // Fetch obituary counts for search results
+      // Fetch counts for search results
       await fetchObituaryCounts(result.cities);
       await fetchCemeteryCounts(result.cities);
+      await fetchPeriodicalCounts(result.cities);
     } catch (error) {
       toast({
         title: "Error searching locations",
@@ -362,9 +397,10 @@ export function LocationAdministration() {
       setCities(result.cities);
       setTotalPages(result.totalPages);
 
-      // Fetch obituary counts for new data
+      // Fetch counts for new data
       await fetchObituaryCounts(result.cities);
       await fetchCemeteryCounts(result.cities);
+      await fetchPeriodicalCounts(result.cities);
     } catch (error) {
       toast({
         title: "Error clearing search",
@@ -528,6 +564,25 @@ export function LocationAdministration() {
                             {cemeteryCounts[city.id]} Interments
                           </Button>
                         )}
+                      {periodicalCounts[city.id] !== undefined &&
+                        periodicalCounts[city.id] > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setPeriodicalRelatedCity({
+                                id: city.id,
+                                name: city.name
+                              });
+                              setIsPeriodicalsDialogOpen(true);
+                            }}
+                          >
+                            <Newspaper className="h-3 w-3" />
+                            {periodicalCounts[city.id]} Publications
+                          </Button>
+                        )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -618,6 +673,15 @@ export function LocationAdministration() {
               setCemeteryRelatedCity(null);
             }}
             city={cemeteryRelatedCity}
+          />
+
+          <RelatedPeriodicalsDialog
+            isOpen={isPeriodicalsDialogOpen}
+            onClose={() => {
+              setIsPeriodicalsDialogOpen(false);
+              setPeriodicalRelatedCity(null);
+            }}
+            city={periodicalRelatedCity}
           />
         </CardContent>
       )}
