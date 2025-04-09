@@ -31,7 +31,9 @@ import {
   RotateCw,
   Download,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ZoomIn,
+  ZoomOut
 } from "lucide-react";
 import { BucketItem } from "minio";
 import Image from "next/image";
@@ -233,8 +235,18 @@ export function EditObituaryDialog({
     useState(false);
 
   const [imageUrls, setImageUrls] = useState<{
-    [key: string]: { url: string; rotation: number };
+    [key: string]: {
+      url: string;
+      rotation: number;
+      scale: number;
+      position: { x: number; y: number };
+      isDragging: boolean;
+    };
   }>({});
+
+  const lastDragPosition = useRef<{ [key: string]: { x: number; y: number } }>(
+    {}
+  );
 
   const [showImagePreview, setShowImagePreview] = useState(true);
 
@@ -512,15 +524,28 @@ export function EditObituaryDialog({
   // Load image URLs and rotations when images change
   useEffect(() => {
     const loadImageUrls = async () => {
-      const newImageUrls: { [key: string]: { url: string; rotation: number } } =
-        {};
+      const newImageUrls: {
+        [key: string]: {
+          url: string;
+          rotation: number;
+          scale: number;
+          position: { x: number; y: number };
+          isDragging: boolean;
+        };
+      } = {};
 
       // Load existing images
       for (const image of existingImages) {
         try {
           const url = await getImageUrlAction(image.newName);
           const rotation = await getImageRotation(image.newName);
-          newImageUrls[image.newName] = { url, rotation: rotation || 0 };
+          newImageUrls[image.newName] = {
+            url,
+            rotation: rotation || 0,
+            scale: 1,
+            position: { x: 0, y: 0 },
+            isDragging: false
+          };
         } catch (error) {
           console.error(`Error loading image ${image.newName}:`, error);
         }
@@ -530,7 +555,13 @@ export function EditObituaryDialog({
       for (const fileItem of selectedFiles) {
         try {
           const url = URL.createObjectURL(fileItem.file);
-          newImageUrls[fileItem.newName] = { url, rotation: 0 };
+          newImageUrls[fileItem.newName] = {
+            url,
+            rotation: 0,
+            scale: 1,
+            position: { x: 0, y: 0 },
+            isDragging: false
+          };
         } catch (error) {
           console.error(`Error creating URL for ${fileItem.newName}:`, error);
         }
@@ -684,6 +715,95 @@ export function EditObituaryDialog({
 
     // Call the original onClose
     onClose();
+  };
+
+  const handleZoomIn = (imageName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setImageUrls(prev => {
+      const currentScale = prev[imageName]?.scale || 1;
+      return {
+        ...prev,
+        [imageName]: { ...prev[imageName], scale: currentScale + 0.25 }
+      };
+    });
+  };
+
+  const handleZoomOut = (imageName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setImageUrls(prev => {
+      const currentScale = prev[imageName]?.scale || 1;
+      const newScale = Math.max(0.5, currentScale - 0.25);
+
+      // Reset position if scale is back to 1
+      const newPosition =
+        newScale <= 1 ? { x: 0, y: 0 } : prev[imageName]?.position;
+
+      return {
+        ...prev,
+        [imageName]: {
+          ...prev[imageName],
+          scale: newScale,
+          position: newPosition
+        }
+      };
+    });
+  };
+
+  const handleDragStart = (imageName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Only enable dragging if zoomed in
+    if ((imageUrls[imageName]?.scale || 1) <= 1) return;
+
+    lastDragPosition.current[imageName] = { x: e.clientX, y: e.clientY };
+
+    setImageUrls(prev => ({
+      ...prev,
+      [imageName]: { ...prev[imageName], isDragging: true }
+    }));
+  };
+
+  const handleDragMove = (imageName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!imageUrls[imageName]?.isDragging) return;
+
+    const lastPos = lastDragPosition.current[imageName] || {
+      x: e.clientX,
+      y: e.clientY
+    };
+    const deltaX = e.clientX - lastPos.x;
+    const deltaY = e.clientY - lastPos.y;
+
+    lastDragPosition.current[imageName] = { x: e.clientX, y: e.clientY };
+
+    setImageUrls(prev => {
+      const currentPos = prev[imageName]?.position || { x: 0, y: 0 };
+      return {
+        ...prev,
+        [imageName]: {
+          ...prev[imageName],
+          position: {
+            x: currentPos.x + deltaX,
+            y: currentPos.y + deltaY
+          }
+        }
+      };
+    });
+  };
+
+  const handleDragEnd = (imageName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setImageUrls(prev => ({
+      ...prev,
+      [imageName]: { ...prev[imageName], isDragging: false }
+    }));
   };
 
   return (
@@ -1731,6 +1851,22 @@ export function EditObituaryDialog({
                         <Button
                           size="icon"
                           variant="ghost"
+                          onClick={e => handleZoomIn(image.newName, e)}
+                          className="h-7 w-7"
+                        >
+                          <ZoomIn className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={e => handleZoomOut(image.newName, e)}
+                          className="h-7 w-7"
+                        >
+                          <ZoomOut className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
                           onClick={() => handleRotatePreview(image.newName)}
                           className="h-7 w-7"
                         >
@@ -1775,16 +1911,24 @@ export function EditObituaryDialog({
                         aspectRatio: "1 / 1",
                         margin: "0 auto"
                       }}
-                      onClick={() =>
-                        setSelectedImage({ name: image.newName } as BucketItem)
-                      }
                     >
                       <div
                         style={{
                           position: "relative",
                           width: "100%",
-                          height: "100%"
+                          height: "100%",
+                          cursor:
+                            imageData.scale > 1
+                              ? imageData.isDragging
+                                ? "grabbing"
+                                : "grab"
+                              : "default",
+                          overflow: "hidden"
                         }}
+                        onMouseDown={e => handleDragStart(image.newName, e)}
+                        onMouseMove={e => handleDragMove(image.newName, e)}
+                        onMouseUp={e => handleDragEnd(image.newName, e)}
+                        onMouseLeave={e => handleDragEnd(image.newName, e)}
                       >
                         <Image
                           src={imageData.url}
@@ -1792,8 +1936,11 @@ export function EditObituaryDialog({
                           fill
                           style={{
                             objectFit: "contain",
-                            transform: `rotate(${imageData.rotation}deg)`,
-                            transition: "transform 0.3s ease"
+                            transform: `translate(${imageData.position?.x || 0}px, ${imageData.position?.y || 0}px) rotate(${imageData.rotation}deg) scale(${imageData.scale})`,
+                            transition: imageData.isDragging
+                              ? "none"
+                              : "transform 0.3s ease",
+                            pointerEvents: "none"
                           }}
                         />
                       </div>
