@@ -1,22 +1,25 @@
-'use client';
+"use client";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from '@/hooks/use-toast';
-import { Prisma } from '@prisma/client';
-import { ArrowLeft, Download, Eye, Loader2, Share2 } from 'lucide-react';
-import { BucketItem } from 'minio';
-import Image from 'next/image';
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { getImageUrlAction, rotateImageAction } from '../../images/minio-actions';
-import { ViewImageDialog } from '../../images/view-image-dialog';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "@/hooks/use-toast";
+import { Prisma } from "@prisma/client";
+import { ArrowLeft, Download, Eye, Loader2, Share2 } from "lucide-react";
+import { BucketItem } from "minio";
+import Image from "next/image";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import {
+  getImageUrlAction,
+  rotateImageAction
+} from "../../images/minio-actions";
+import { ViewImageDialog } from "../../images/view-image-dialog";
 import {
   fetchImagesForObituaryAction,
   fetchObituaryByReferenceAction,
   generatePublicHashAction
-} from './actions';
+} from "./actions";
 
 type ObituaryWithAllRelations = Prisma.ObituaryGetPayload<{
   include: {
@@ -24,21 +27,21 @@ type ObituaryWithAllRelations = Prisma.ObituaryGetPayload<{
     alsoKnownAs: true;
     birthCity: {
       include: {
-        country: true
-      }
+        country: true;
+      };
     };
     deathCity: {
       include: {
-        country: true
-      }
+        country: true;
+      };
     };
     cemetery: true;
     periodical: true;
     fileBox: true;
     relatives: {
       include: {
-        familyRelationship: true
-      }
+        familyRelationship: true;
+      };
     };
   };
 }>;
@@ -57,8 +60,8 @@ export default function ObituaryPage() {
   useEffect(() => {
     if (reference) {
       const decodedReference = decodeURIComponent(reference as string);
-      
-      fetchObituaryByReferenceAction(decodedReference).then((data) => {
+
+      fetchObituaryByReferenceAction(decodedReference).then(data => {
         if (data) {
           setObituary(data as ObituaryWithAllRelations);
         }
@@ -71,15 +74,17 @@ export default function ObituaryPage() {
     setIsDownloading(true);
     try {
       const decodedReference = decodeURIComponent(reference as string);
-      
+
       // Download PDF
-      const pdfResponse = await fetch(`/api/generate-pdf/${encodeURIComponent(decodedReference)}`);
+      const pdfResponse = await fetch(
+        `/api/generate-pdf/${encodeURIComponent(decodedReference)}`
+      );
       if (!pdfResponse.ok) {
-        throw new Error('Failed to generate PDF');
+        throw new Error("Failed to generate PDF");
       }
       const pdfBlob = await pdfResponse.blob();
       const pdfUrl = window.URL.createObjectURL(pdfBlob);
-      const pdfLink = document.createElement('a');
+      const pdfLink = document.createElement("a");
       pdfLink.href = pdfUrl;
       pdfLink.download = `obituary_${decodedReference}.pdf`;
       pdfLink.click();
@@ -94,7 +99,7 @@ export default function ObituaryPage() {
         }
         const imageBlob = await imageResponse.blob();
         const downloadUrl = window.URL.createObjectURL(imageBlob);
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = downloadUrl;
         link.download = imageName;
         link.click();
@@ -102,15 +107,15 @@ export default function ObituaryPage() {
       }
 
       toast({
-        title: 'Download Complete',
-        description: 'The obituary PDF and images have been downloaded.'
+        title: "Download Complete",
+        description: "The obituary PDF and images have been downloaded."
       });
     } catch (error) {
-      console.error('Error downloading files:', error);
+      console.error("Error downloading files:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to download files. Please try again.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to download files. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setIsDownloading(false);
@@ -124,14 +129,14 @@ export default function ObituaryPage() {
       const publicLink = `${window.location.origin}/public/obituary/${hash}`;
       await navigator.clipboard.writeText(publicLink);
       toast({
-        title: 'Link Copied',
-        description: 'Public link has been copied to clipboard.'
+        title: "Link Copied",
+        description: "Public link has been copied to clipboard."
       });
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to generate public link.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to generate public link.",
+        variant: "destructive"
       });
     } finally {
       setIsSharing(false);
@@ -143,7 +148,7 @@ export default function ObituaryPage() {
   }
 
   const fullName =
-    `${obituary.title?.name || ''} ${obituary.givenNames || ''} ${obituary.surname || ''}`.trim();
+    `${obituary.title?.name || ""} ${obituary.givenNames || ""} ${obituary.surname || ""}`.trim();
 
   const handleRotate = async (fileName: string) => {
     rotateImageAction(fileName);
@@ -159,7 +164,7 @@ export default function ObituaryPage() {
                 Obituary Index Report
               </CardTitle>
               <div className="text-sm text-gray-500 mt-2">
-                <span className="font-semibold">File Number:</span>{' '}
+                <span className="font-semibold">File Number:</span>{" "}
                 {obituary.reference}
               </div>
               <div className="text-sm text-gray-500">
@@ -185,30 +190,30 @@ export default function ObituaryPage() {
               <dl className="space-y-2">
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">Title:</dt>
-                  <dd className="w-2/3">{obituary.title?.name || 'N/A'}</dd>
+                  <dd className="w-2/3">{obituary.title?.name || ""}</dd>
                 </div>
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">
                     Given Names:
                   </dt>
-                  <dd className="w-2/3">{obituary.givenNames || 'N/A'}</dd>
+                  <dd className="w-2/3">{obituary.givenNames || ""}</dd>
                 </div>
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">Surname:</dt>
-                  <dd className="w-2/3">{obituary.surname || 'N/A'}</dd>
+                  <dd className="w-2/3">{obituary.surname || ""}</dd>
                 </div>
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">
                     Maiden Name:
                   </dt>
-                  <dd className="w-2/3">{obituary.maidenName || 'N/A'}</dd>
+                  <dd className="w-2/3">{obituary.maidenName || ""}</dd>
                 </div>
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">
                     Birth Date:
                   </dt>
                   <dd className="w-2/3">
-                    {obituary.birthDate?.toISOString().split('T')[0] || 'N/A'}
+                    {obituary.birthDate?.toISOString().split("T")[0] || ""}
                   </dd>
                 </div>
                 <div className="flex">
@@ -216,9 +221,11 @@ export default function ObituaryPage() {
                     Place of Birth:
                   </dt>
                   <dd className="w-2/3">
-                    {obituary.birthCity?.name || 'N/A'},{' '}
-                    {obituary.birthCity?.province || 'N/A'},{' '}
-                    {obituary.birthCity?.country?.name || 'N/A'}
+                    {obituary.birthCity?.name || ""}
+                    {obituary.birthCity?.name ? ", " : ""}
+                    {obituary.birthCity?.province || ""}
+                    {obituary.birthCity?.province ? ", " : ""}
+                    {obituary.birthCity?.country?.name || ""}
                   </dd>
                 </div>
                 <div className="flex">
@@ -226,7 +233,7 @@ export default function ObituaryPage() {
                     Death Date:
                   </dt>
                   <dd className="w-2/3">
-                    {obituary.deathDate?.toISOString().split('T')[0] || 'N/A'}
+                    {obituary.deathDate?.toISOString().split("T")[0] || ""}
                   </dd>
                 </div>
                 <div className="flex">
@@ -234,9 +241,11 @@ export default function ObituaryPage() {
                     Place of Death:
                   </dt>
                   <dd className="w-2/3">
-                    {obituary.deathCity?.name || 'N/A'},{' '}
-                    {obituary.deathCity?.province || 'N/A'},{' '}
-                    {obituary.deathCity?.country?.name || 'N/A'}
+                    {obituary.deathCity?.name || ""}
+                    {obituary.deathCity?.name ? ", " : ""}
+                    {obituary.deathCity?.province || ""}
+                    {obituary.deathCity?.province ? ", " : ""}
+                    {obituary.deathCity?.country?.name || ""}
                   </dd>
                 </div>
               </dl>
@@ -253,14 +262,13 @@ export default function ObituaryPage() {
                         AKA {index + 1}:
                       </dt>
                       <dd className="w-2/3">
-                        {`${aka.surname || ''} ${aka.otherNames || ''}`.trim() ||
-                          'N/A'}
+                        {`${aka.surname || ""} ${aka.otherNames || ""}`.trim()}
                       </dd>
                     </div>
                   ))}
                 </dl>
               ) : (
-                <p>N/A</p>
+                <p></p>
               )}
             </section>
             <section>
@@ -269,21 +277,21 @@ export default function ObituaryPage() {
               </h2>
               {obituary.relatives.length > 0 ? (
                 <dl className="space-y-2">
-                  {obituary.relatives
-                    .map((relative, index) => (
-                      <div key={index} className="flex">
-                        <dt className="font-medium text-gray-600 w-1/3">
-                          {relative.familyRelationship?.name || relative.relationship}:
-                        </dt>
-                        <dd className="w-2/3">
-                          {`${relative.givenNames || ''} ${relative.surname || ''} ${relative.predeceased ? '(Predeceased)' : ''}`.trim() ||
-                            'N/A'}
-                        </dd>
-                      </div>
-                    ))}
+                  {obituary.relatives.map((relative, index) => (
+                    <div key={index} className="flex">
+                      <dt className="font-medium text-gray-600 w-1/3">
+                        {relative.familyRelationship?.name ||
+                          relative.relationship}
+                        :
+                      </dt>
+                      <dd className="w-2/3">
+                        {`${relative.givenNames || ""} ${relative.surname || ""} ${relative.predeceased ? "(Predeceased)" : ""}`.trim()}
+                      </dd>
+                    </div>
+                  ))}
                 </dl>
               ) : (
-                <p>N/A</p>
+                <p></p>
               )}
             </section>
             <section>
@@ -295,25 +303,23 @@ export default function ObituaryPage() {
                   <dt className="font-medium text-gray-600 w-1/3">
                     Periodical:
                   </dt>
-                  <dd className="w-2/3">
-                    {obituary.periodical?.name || 'N/A'}
-                  </dd>
+                  <dd className="w-2/3">{obituary.periodical?.name || ""}</dd>
                 </div>
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">
                     Publish Date:
                   </dt>
                   <dd className="w-2/3">
-                    {obituary.publishDate?.toISOString().split('T')[0] || 'N/A'}
+                    {obituary.publishDate?.toISOString().split("T")[0] || ""}
                   </dd>
                 </div>
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">Page:</dt>
-                  <dd className="w-2/3">{obituary.page || 'N/A'}</dd>
+                  <dd className="w-2/3">{obituary.page || ""}</dd>
                 </div>
                 <div className="flex">
                   <dt className="font-medium text-gray-600 w-1/3">Column:</dt>
-                  <dd className="w-2/3">{obituary.column || 'N/A'}</dd>
+                  <dd className="w-2/3">{obituary.column || ""}</dd>
                 </div>
               </dl>
             </section>
@@ -328,9 +334,9 @@ export default function ObituaryPage() {
                   </dt>
                   <dd className="w-2/3">
                     <Badge
-                      variant={obituary.proofread ? 'default' : 'secondary'}
+                      variant={obituary.proofread ? "default" : "secondary"}
                     >
-                      {obituary.proofread ? 'Yes' : 'No'}
+                      {obituary.proofread ? "Yes" : "No"}
                     </Badge>
                   </dd>
                 </div>
@@ -348,7 +354,7 @@ export default function ObituaryPage() {
               </h2>
               {images.length > 0 ? (
                 <ul className="space-y-2">
-                  {images.map((image) => (
+                  {images.map(image => (
                     <li
                       key={image}
                       className="flex items-center justify-between"

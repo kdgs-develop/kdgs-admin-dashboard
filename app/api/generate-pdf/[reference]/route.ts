@@ -117,37 +117,49 @@ export async function GET(
     // Personal Information
     drawSectionHeader("Personal Information", currentY);
     currentY += 25;
-    drawKeyValuePair("Title", obituary.title?.name || "N/A", currentY);
+    drawKeyValuePair("Title", obituary.title?.name || "", currentY);
     currentY += 15;
-    drawKeyValuePair("Given Names", obituary.givenNames || "N/A", currentY);
+    drawKeyValuePair("Given Names", obituary.givenNames || "", currentY);
     currentY += 15;
-    drawKeyValuePair("Surname", obituary.surname || "N/A", currentY);
+    drawKeyValuePair("Surname", obituary.surname || "", currentY);
     currentY += 15;
-    drawKeyValuePair("Maiden Name", obituary.maidenName || "N/A", currentY);
+    drawKeyValuePair("Maiden Name", obituary.maidenName || "", currentY);
     currentY += 15;
     drawKeyValuePair(
       "Birth Date",
-      obituary.birthDate?.toDateString() || "N/A",
+      obituary.birthDate?.toDateString() || "",
       currentY
     );
     currentY += 15;
-    drawKeyValuePair(
-      "Place of Birth",
-      `${obituary.birthCity?.name || "N/A"}, ${obituary.birthCity?.province || "N/A"}, ${obituary.birthCity?.country?.name || "N/A"}`,
-      currentY
-    );
+
+    // Handle place of birth with conditional commas
+    const birthPlace = [
+      obituary.birthCity?.name || "",
+      obituary.birthCity?.province || "",
+      obituary.birthCity?.country?.name || ""
+    ]
+      .filter(Boolean)
+      .join(", ");
+    drawKeyValuePair("Place of Birth", birthPlace, currentY);
+
     currentY += 15;
     drawKeyValuePair(
       "Death Date",
-      obituary.deathDate?.toDateString() || "N/A",
+      obituary.deathDate?.toDateString() || "",
       currentY
     );
     currentY += 15;
-    drawKeyValuePair(
-      "Place of Death",
-      `${obituary.deathCity?.name || "N/A"}, ${obituary.deathCity?.province || "N/A"}, ${obituary.deathCity?.country?.name || "N/A"}`,
-      currentY
-    );
+
+    // Handle place of death with conditional commas
+    const deathPlace = [
+      obituary.deathCity?.name || "",
+      obituary.deathCity?.province || "",
+      obituary.deathCity?.country?.name || ""
+    ]
+      .filter(Boolean)
+      .join(", ");
+    drawKeyValuePair("Place of Death", deathPlace, currentY);
+
     currentY += 25;
 
     // Also Known As
@@ -157,13 +169,13 @@ export async function GET(
       obituary.alsoKnownAs.forEach((aka, index) => {
         drawKeyValuePair(
           `AKA ${index + 1}`,
-          `${aka.surname || ""} ${aka.otherNames || ""}`,
+          `${aka.surname || ""} ${aka.otherNames || ""}`.trim(),
           currentY
         );
         currentY += 15;
       });
     } else {
-      drawKeyValuePair("AKA", "N/A", currentY);
+      drawKeyValuePair("AKA", "", currentY);
       currentY += 15;
     }
     currentY += 10;
@@ -174,14 +186,14 @@ export async function GET(
     if (obituary.relatives.length > 0) {
       obituary.relatives.forEach(relative => {
         drawKeyValuePair(
-          relative.familyRelationship?.name || relative.relationship || "N/A",
-          `${relative.givenNames || ""} ${relative.surname || ""} ${relative.predeceased ? "(Predeceased)" : ""}`,
+          relative.familyRelationship?.name || relative.relationship || "",
+          `${relative.givenNames || ""} ${relative.surname || ""} ${relative.predeceased ? "(Predeceased)" : ""}`.trim(),
           currentY
         );
         currentY += 15;
       });
     } else {
-      drawKeyValuePair("Relatives", "N/A", currentY);
+      drawKeyValuePair("Relatives", "", currentY);
       currentY += 15;
     }
     currentY += 10;
@@ -189,21 +201,17 @@ export async function GET(
     // Publication Details
     drawSectionHeader("Publication Details", currentY);
     currentY += 25;
-    drawKeyValuePair(
-      "Periodical",
-      obituary.periodical?.name || "N/A",
-      currentY
-    );
+    drawKeyValuePair("Periodical", obituary.periodical?.name || "", currentY);
     currentY += 15;
     drawKeyValuePair(
       "Publish Date",
-      obituary.publishDate?.toDateString() || "N/A",
+      obituary.publishDate?.toDateString() || "",
       currentY
     );
     currentY += 15;
-    drawKeyValuePair("Page", obituary.page || "N/A", currentY);
+    drawKeyValuePair("Page", obituary.page || "", currentY);
     currentY += 15;
-    drawKeyValuePair("Column", obituary.column || "N/A", currentY);
+    drawKeyValuePair("Column", obituary.column || "", currentY);
     currentY += 25;
 
     // Additional Information
@@ -211,7 +219,7 @@ export async function GET(
     currentY += 25;
     drawKeyValuePair("Proofread", obituary.proofread ? "Yes" : "No", currentY);
     currentY += 15;
-    drawKeyValuePair("Notes", obituary?.notes || "N/A", currentY);
+    drawKeyValuePair("Notes", obituary?.notes || "", currentY);
     currentY += 25;
 
     // Footer
