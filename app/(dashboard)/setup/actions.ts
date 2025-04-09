@@ -1837,3 +1837,87 @@ export async function getObituariesByTitleId(titleId: number) {
     throw new Error("Failed to fetch obituaries by title");
   }
 }
+
+export async function getCemeteriesByCityId(cityId: number) {
+  try {
+    // Get all cemeteries associated with this city
+    const cemeteries = await prisma.cemetery.findMany({
+      where: {
+        cityId: cityId
+      },
+      orderBy: {
+        name: "asc"
+      },
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            obituaries: true
+          }
+        }
+      }
+    });
+
+    // Get total count of cemeteries
+    const totalCount = cemeteries.length;
+
+    // Transform the data to include the count
+    const cemeteriesWithCounts = cemeteries.map(cemetery => ({
+      id: cemetery.id,
+      name: cemetery.name,
+      obituaryCount: cemetery._count.obituaries
+    }));
+
+    return {
+      cemeteries: cemeteriesWithCounts,
+      count: totalCount
+    };
+  } catch (error) {
+    console.error("Error fetching cemeteries by city:", error);
+    throw new Error("Failed to fetch cemeteries by city");
+  }
+}
+
+export async function getPeriodicalsByCityId(cityId: number) {
+  try {
+    // Get all periodicals associated with this city
+    const periodicals = await prisma.periodical.findMany({
+      where: {
+        cityId: cityId
+      },
+      orderBy: {
+        name: "asc"
+      },
+      select: {
+        id: true,
+        name: true,
+        url: true,
+        _count: {
+          select: {
+            obituaries: true
+          }
+        }
+      }
+    });
+
+    // Get total count of periodicals
+    const totalCount = periodicals.length;
+
+    // Transform the data to include the count
+    const periodicalsWithCounts = periodicals.map(periodical => ({
+      id: periodical.id,
+      name: periodical.name,
+      url: periodical.url,
+      obituaryCount: periodical._count.obituaries
+    }));
+
+    return {
+      periodicals: periodicalsWithCounts,
+      count: totalCount
+    };
+  } catch (error) {
+    console.error("Error fetching periodicals by city:", error);
+    throw new Error("Failed to fetch periodicals by city");
+  }
+}

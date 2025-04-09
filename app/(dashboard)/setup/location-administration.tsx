@@ -26,9 +26,12 @@ import {
   ChevronUp,
   Plus,
   Search,
-  LinkIcon
+  LinkIcon,
+  Building,
+  Newspaper,
+  Loader2
 } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   addCity,
   deleteCity,
@@ -36,11 +39,15 @@ import {
   getCountries,
   searchCities,
   updateCity,
-  getObituariesByCityId
+  getObituariesByCityId,
+  getCemeteriesByCityId,
+  getPeriodicalsByCityId
 } from "./actions";
 import AddLocationDialog from "./add-location-dialog";
 import EditLocationDialog from "./edit-location-dialog";
 import { RelatedObituariesDialog } from "./related-obituaries-dialog";
+import { RelatedCemeteriesDialog } from "./related-cemeteries-dialog";
+import { RelatedPeriodicalsDialog } from "./related-periodicals-dialog";
 
 export function LocationAdministration() {
   const [cities, setCities] = useState<any[]>([]);
@@ -82,6 +89,42 @@ export function LocationAdministration() {
     >
   >({});
 
+  // Related cemeteries states
+  const [cemeteryRelatedCity, setCemeteryRelatedCity] = useState<{
+    id: number;
+    name: string | null;
+  } | null>(null);
+  const [isCemeteriesDialogOpen, setIsCemeteriesDialogOpen] = useState(false);
+  const [cemeteryCounts, setCemeteryCounts] = useState<Record<number, number>>(
+    {}
+  );
+
+  // Related periodicals states
+  const [periodicalRelatedCity, setPeriodicalRelatedCity] = useState<{
+    id: number;
+    name: string | null;
+  } | null>(null);
+  const [isPeriodicalsDialogOpen, setIsPeriodicalsDialogOpen] = useState(false);
+  const [periodicalCounts, setPeriodicalCounts] = useState<
+    Record<number, number>
+  >({});
+
+  // Loading states for relations
+  const [isLoadingObituaryCounts, setIsLoadingObituaryCounts] = useState(false);
+  const [isLoadingCemeteryCounts, setIsLoadingCemeteryCounts] = useState(false);
+  const [isLoadingPeriodicalCounts, setIsLoadingPeriodicalCounts] =
+    useState(false);
+
+  // Add local search state separate from the search that's sent to the server
+  const [localSearchName, setLocalSearchName] = useState("");
+  const [localSearchProvince, setLocalSearchProvince] = useState("");
+  const [localSearchCountryId, setLocalSearchCountryId] = useState<
+    string | undefined
+  >(undefined);
+
+  // Flag to track if we should fetch relations
+  const shouldFetchRelations = useRef(false);
+
   const refreshCountries = useCallback(async () => {
     try {
       const updatedCountries = await getCountries(1, 1000);
@@ -97,7 +140,7 @@ export function LocationAdministration() {
   }, [toast]);
 
   useEffect(() => {
-    // Only run this effect when expanded or when page/search changes while expanded
+    // Only run this effect when expanded or when page changes while expanded
     if (!isExpanded) return;
 
     // First expansion - initially fetch data
@@ -113,8 +156,13 @@ export function LocationAdministration() {
           setCities(result.cities);
           setTotalPages(result.totalPages);
 
-          // Fetch obituary counts for each city
-          await fetchObituaryCounts(result.cities);
+          // Only fetch relations when flag is true
+          if (shouldFetchRelations.current) {
+            await fetchObituaryCounts(result.cities);
+            await fetchCemeteryCounts(result.cities);
+            await fetchPeriodicalCounts(result.cities);
+            shouldFetchRelations.current = false;
+          }
         } else {
           const [citiesResult, countriesResult] = await Promise.all([
             getCitiesWithPagination(currentPage),
@@ -124,8 +172,13 @@ export function LocationAdministration() {
           setTotalPages(citiesResult.totalPages);
           setCountries(countriesResult.countries);
 
-          // Fetch obituary counts for each city
-          await fetchObituaryCounts(citiesResult.cities);
+          // Only fetch relations when flag is true
+          if (shouldFetchRelations.current) {
+            await fetchObituaryCounts(citiesResult.cities);
+            await fetchCemeteryCounts(citiesResult.cities);
+            await fetchPeriodicalCounts(citiesResult.cities);
+            shouldFetchRelations.current = false;
+          }
         }
         setIsDataFetched(true);
       } catch (error) {
@@ -140,6 +193,7 @@ export function LocationAdministration() {
       }
     }
 
+    // Always fetch data when expanded or on page changes
     fetchData();
   }, [
     isExpanded,
@@ -151,8 +205,16 @@ export function LocationAdministration() {
     toast
   ]);
 
+  // Initial load - set flag to fetch relations
+  useEffect(() => {
+    if (isExpanded && !isDataFetched) {
+      shouldFetchRelations.current = true;
+    }
+  }, [isExpanded, isDataFetched]);
+
   const fetchObituaryCounts = async (citiesList: any[]) => {
     try {
+      setIsLoadingObituaryCounts(true);
       const counts: Record<
         number,
         {
@@ -177,6 +239,50 @@ export function LocationAdministration() {
       setObituaryCounts(counts);
     } catch (error) {
       console.error("Error fetching obituary counts:", error);
+    } finally {
+      setIsLoadingObituaryCounts(false);
+    }
+  };
+
+  const fetchCemeteryCounts = async (citiesList: any[]) => {
+    try {
+      setIsLoadingCemeteryCounts(true);
+      const counts: Record<number, number> = {};
+
+      await Promise.all(
+        citiesList.map(async city => {
+          if (city.id) {
+            const data = await getCemeteriesByCityId(city.id);
+            counts[city.id] = data.count;
+          }
+        })
+      );
+      setCemeteryCounts(counts);
+    } catch (error) {
+      console.error("Error fetching cemetery counts:", error);
+    } finally {
+      setIsLoadingCemeteryCounts(false);
+    }
+  };
+
+  const fetchPeriodicalCounts = async (citiesList: any[]) => {
+    try {
+      setIsLoadingPeriodicalCounts(true);
+      const counts: Record<number, number> = {};
+
+      await Promise.all(
+        citiesList.map(async city => {
+          if (city.id) {
+            const data = await getPeriodicalsByCityId(city.id);
+            counts[city.id] = data.count;
+          }
+        })
+      );
+      setPeriodicalCounts(counts);
+    } catch (error) {
+      console.error("Error fetching periodical counts:", error);
+    } finally {
+      setIsLoadingPeriodicalCounts(false);
     }
   };
 
@@ -197,8 +303,10 @@ export function LocationAdministration() {
         setCurrentPage(1);
         setIsSearchMode(false);
 
-        // Fetch obituary counts for new data
+        // Fetch counts for new data
         await fetchObituaryCounts(result.cities);
+        await fetchCemeteryCounts(result.cities);
+        await fetchPeriodicalCounts(result.cities);
       }
 
       toast({
@@ -230,8 +338,10 @@ export function LocationAdministration() {
         setCities(result.cities);
         setTotalPages(result.totalPages);
 
-        // Fetch obituary counts for updated data
+        // Fetch counts for updated data
         await fetchObituaryCounts(result.cities);
+        await fetchCemeteryCounts(result.cities);
+        await fetchPeriodicalCounts(result.cities);
       }
 
       toast({
@@ -260,8 +370,10 @@ export function LocationAdministration() {
         setCities(result.cities);
         setTotalPages(result.totalPages);
 
-        // Fetch obituary counts for updated data
+        // Fetch counts for updated data
         await fetchObituaryCounts(result.cities);
+        await fetchCemeteryCounts(result.cities);
+        await fetchPeriodicalCounts(result.cities);
       }
 
       toast({
@@ -284,20 +396,33 @@ export function LocationAdministration() {
     // Only search if expanded
     if (!isExpanded) return;
 
+    // Update the actual search parameters from local state
+    setSearchName(localSearchName);
+    setSearchProvince(localSearchProvince);
+    setSearchCountryId(localSearchCountryId);
+    setCurrentPage(1);
+    setIsSearchMode(true);
+
+    // Set flag to fetch relations on next render
+    shouldFetchRelations.current = true;
+
     try {
-      setCurrentPage(1);
-      setIsSearchMode(true);
       const result = await searchCities(
-        searchName || undefined,
-        searchProvince || undefined,
-        searchCountryId ? parseInt(searchCountryId) : undefined,
+        localSearchName || undefined,
+        localSearchProvince || undefined,
+        localSearchCountryId ? parseInt(localSearchCountryId) : undefined,
         1
       );
       setCities(result.cities);
       setTotalPages(result.totalPages);
 
-      // Fetch obituary counts for search results
+      // Fetch relations inline for immediate response
       await fetchObituaryCounts(result.cities);
+      await fetchCemeteryCounts(result.cities);
+      await fetchPeriodicalCounts(result.cities);
+
+      // Reset flag since we've fetched
+      shouldFetchRelations.current = false;
     } catch (error) {
       toast({
         title: "Error searching locations",
@@ -312,19 +437,31 @@ export function LocationAdministration() {
     // Only reset if expanded
     if (!isExpanded) return;
 
+    // Reset both local and actual search state
+    setLocalSearchName("");
+    setLocalSearchProvince("");
+    setLocalSearchCountryId(undefined);
     setSearchName("");
     setSearchProvince("");
     setSearchCountryId(undefined);
     setIsSearchMode(false);
     setCurrentPage(1);
 
+    // Set flag to fetch relations on next render
+    shouldFetchRelations.current = true;
+
     try {
       const result = await getCitiesWithPagination(1);
       setCities(result.cities);
       setTotalPages(result.totalPages);
 
-      // Fetch obituary counts for new data
+      // Fetch relations inline for immediate response
       await fetchObituaryCounts(result.cities);
+      await fetchCemeteryCounts(result.cities);
+      await fetchPeriodicalCounts(result.cities);
+
+      // Reset flag since we've fetched
+      shouldFetchRelations.current = false;
     } catch (error) {
       toast({
         title: "Error clearing search",
@@ -366,21 +503,21 @@ export function LocationAdministration() {
             <div className="flex-1">
               <Input
                 placeholder="Search by name"
-                value={searchName}
-                onChange={e => setSearchName(e.target.value)}
+                value={localSearchName}
+                onChange={e => setLocalSearchName(e.target.value)}
               />
             </div>
             <div className="flex-1">
               <Input
                 placeholder="Search by province"
-                value={searchProvince}
-                onChange={e => setSearchProvince(e.target.value)}
+                value={localSearchProvince}
+                onChange={e => setLocalSearchProvince(e.target.value)}
               />
             </div>
             <div className="flex-1">
               <Select
-                value={searchCountryId}
-                onValueChange={setSearchCountryId}
+                value={localSearchCountryId}
+                onValueChange={setLocalSearchCountryId}
                 onOpenChange={open => {
                   setIsCountryDropdownOpen(open);
                   if (open) {
@@ -410,9 +547,9 @@ export function LocationAdministration() {
               variant="outline"
               disabled={
                 !isSearchMode &&
-                searchName === "" &&
-                searchProvince === "" &&
-                !searchCountryId
+                localSearchName === "" &&
+                localSearchProvince === "" &&
+                !localSearchCountryId
               }
             >
               Reset
@@ -449,7 +586,19 @@ export function LocationAdministration() {
                       )}
                     </div>
                     <div className="flex space-x-2">
-                      {obituaryCounts[city.id] !== undefined &&
+                      {/* Show loading state for relations */}
+                      {(isLoadingObituaryCounts ||
+                        isLoadingCemeteryCounts ||
+                        isLoadingPeriodicalCounts) && (
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Loading relations...
+                        </div>
+                      )}
+
+                      {/* Only show relation buttons when not loading */}
+                      {!isLoadingObituaryCounts &&
+                        obituaryCounts[city.id] !== undefined &&
                         obituaryCounts[city.id].totalCount > 0 && (
                           <Button
                             variant="outline"
@@ -467,6 +616,46 @@ export function LocationAdministration() {
                             <LinkIcon className="h-3 w-3" />
                             {obituaryCounts[city.id].birthCount} Birth,{" "}
                             {obituaryCounts[city.id].deathCount} Death
+                          </Button>
+                        )}
+                      {!isLoadingCemeteryCounts &&
+                        cemeteryCounts[city.id] !== undefined &&
+                        cemeteryCounts[city.id] > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1 px-2 text-xs bg-purple-50 hover:bg-purple-100 border-purple-200"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setCemeteryRelatedCity({
+                                id: city.id,
+                                name: city.name
+                              });
+                              setIsCemeteriesDialogOpen(true);
+                            }}
+                          >
+                            <Building className="h-3 w-3" />
+                            {cemeteryCounts[city.id]} Interments
+                          </Button>
+                        )}
+                      {!isLoadingPeriodicalCounts &&
+                        periodicalCounts[city.id] !== undefined &&
+                        periodicalCounts[city.id] > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
+                            onClick={e => {
+                              e.stopPropagation();
+                              setPeriodicalRelatedCity({
+                                id: city.id,
+                                name: city.name
+                              });
+                              setIsPeriodicalsDialogOpen(true);
+                            }}
+                          >
+                            <Newspaper className="h-3 w-3" />
+                            {periodicalCounts[city.id]} Publications
                           </Button>
                         )}
                       <Button
@@ -525,9 +714,9 @@ export function LocationAdministration() {
             countries={countries}
             refetchCountries={refreshCountries}
             initialValues={{
-              name: searchName,
-              province: searchProvince,
-              countryId: searchCountryId
+              name: localSearchName,
+              province: localSearchProvince,
+              countryId: localSearchCountryId
             }}
           />
 
@@ -550,6 +739,24 @@ export function LocationAdministration() {
               setRelatedCity(null);
             }}
             city={relatedCity}
+          />
+
+          <RelatedCemeteriesDialog
+            isOpen={isCemeteriesDialogOpen}
+            onClose={() => {
+              setIsCemeteriesDialogOpen(false);
+              setCemeteryRelatedCity(null);
+            }}
+            city={cemeteryRelatedCity}
+          />
+
+          <RelatedPeriodicalsDialog
+            isOpen={isPeriodicalsDialogOpen}
+            onClose={() => {
+              setIsPeriodicalsDialogOpen(false);
+              setPeriodicalRelatedCity(null);
+            }}
+            city={periodicalRelatedCity}
           />
         </CardContent>
       )}
