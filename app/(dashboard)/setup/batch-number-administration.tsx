@@ -48,6 +48,7 @@ interface BatchNumberData {
     _count?: { obituaries: number };
     assignedObituaries: number;
     latestEditDate: Date | null;
+    latestEditorName: string | null;
   }[];
   totalCount: number;
   totalPages: number;
@@ -67,6 +68,7 @@ export function BatchNumberAdministration() {
     number: string;
     assignedObituaries: number;
     latestEditDate?: Date | null;
+    latestEditorName?: string | null;
   } | null>(null);
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -78,9 +80,9 @@ export function BatchNumberAdministration() {
     "all" | "complete" | "incomplete"
   >("all");
   const [isFilterLoading, setIsFilterLoading] = useState(false);
-  const [sortOrder, setSortOrder] = useState<"createdAt" | "number">(
-    "createdAt"
-  );
+  const [sortOrder, setSortOrder] = useState<
+    "createdAt" | "number" | "latestEditDate"
+  >("createdAt");
 
   const fetchBatchNumbers = async (page: number) => {
     if (isLoading) return;
@@ -376,7 +378,9 @@ export function BatchNumberAdministration() {
                 <div className="text-sm font-medium mb-1">Sort By</div>
                 <Select
                   value={sortOrder}
-                  onValueChange={(value: "createdAt" | "number") => {
+                  onValueChange={(
+                    value: "createdAt" | "number" | "latestEditDate"
+                  ) => {
                     setSortOrder(value);
                     // Reset to first page when changing sort order
                     setCurrentPage(1);
@@ -390,6 +394,9 @@ export function BatchNumberAdministration() {
                       Creation Date (newest first)
                     </SelectItem>
                     <SelectItem value="number">Batch Number</SelectItem>
+                    <SelectItem value="latestEditDate">
+                      Latest Updated (newest first)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -422,6 +429,11 @@ export function BatchNumberAdministration() {
                           <div className="mt-1 text-xs text-muted-foreground">
                             Last updated:{" "}
                             {new Date(batch.latestEditDate).toLocaleString()}
+                            {batch.latestEditorName && (
+                              <span className="ml-1 text-xs font-semibold text-primary">
+                                by {batch.latestEditorName}
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
