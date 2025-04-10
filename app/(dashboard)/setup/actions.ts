@@ -1295,7 +1295,8 @@ export async function getBatchNumbers(
   page: number,
   itemsPerPage: number,
   completionStatus?: "all" | "complete" | "incomplete",
-  sortOrder: "createdAt" | "number" | "latestEditDate" = "createdAt"
+  sortOrder: "createdAt" | "number" | "latestEditDate" = "createdAt",
+  editorRoleFilter: string = "all"
 ) {
   try {
     const skip = (page - 1) * itemsPerPage;
@@ -1402,6 +1403,13 @@ export async function getBatchNumbers(
       );
     }
 
+    // Filter by editor role if specified
+    if (editorRoleFilter !== "all") {
+      filteredBatchNumbers = filteredBatchNumbers.filter(
+        batch => batch.latestEditorRole === editorRoleFilter
+      );
+    }
+
     // Apply pagination after filtering
     const paginatedBatchNumbers = filteredBatchNumbers.slice(
       skip,
@@ -1425,7 +1433,8 @@ export async function searchBatchNumbers(
   page: number,
   itemsPerPage: number,
   completionStatus?: "all" | "complete" | "incomplete",
-  sortOrder: "createdAt" | "number" | "latestEditDate" = "createdAt"
+  sortOrder: "createdAt" | "number" | "latestEditDate" = "createdAt",
+  editorRoleFilter: string = "all"
 ) {
   try {
     const skip = (page - 1) * itemsPerPage;
@@ -1533,6 +1542,13 @@ export async function searchBatchNumbers(
     } else if (completionStatus === "incomplete") {
       filteredBatchNumbers = sortedBatchNumbers.filter(
         batch => batch._count.obituaries !== batch.assignedObituaries
+      );
+    }
+
+    // Filter by editor role if specified
+    if (editorRoleFilter !== "all") {
+      filteredBatchNumbers = filteredBatchNumbers.filter(
+        batch => batch.latestEditorRole === editorRoleFilter
       );
     }
 
