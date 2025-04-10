@@ -1300,7 +1300,7 @@ export async function getBatchNumbers(
   try {
     const skip = (page - 1) * itemsPerPage;
 
-    // Get batch numbers with their obituary counts
+    // Get batch numbers with their obituary counts and latest edit date
     const batchNumbersWithCounts = await prisma.batchNumber.findMany({
       include: {
         createdBy: {
@@ -1312,6 +1312,15 @@ export async function getBatchNumbers(
           select: {
             obituaries: true
           }
+        },
+        obituaries: {
+          orderBy: {
+            editedOn: "desc"
+          },
+          take: 1,
+          select: {
+            editedOn: true
+          }
         }
       },
       orderBy: {
@@ -1319,14 +1328,28 @@ export async function getBatchNumbers(
       }
     });
 
+    // Map the results to include latestEditDate
+    const batchNumbersWithLatestEdit = batchNumbersWithCounts.map(batch => {
+      // Get the latest edit date if there are any obituaries
+      const latestEditDate =
+        batch.obituaries.length > 0 ? batch.obituaries[0].editedOn : null;
+
+      // Return the batch without the obituaries array but with latestEditDate
+      const { obituaries, ...batchWithoutObituaries } = batch;
+      return {
+        ...batchWithoutObituaries,
+        latestEditDate
+      };
+    });
+
     // Filter based on completion status
-    let filteredBatchNumbers = batchNumbersWithCounts;
+    let filteredBatchNumbers = batchNumbersWithLatestEdit;
     if (completionStatus === "complete") {
-      filteredBatchNumbers = batchNumbersWithCounts.filter(
+      filteredBatchNumbers = batchNumbersWithLatestEdit.filter(
         batch => batch._count.obituaries === batch.assignedObituaries
       );
     } else if (completionStatus === "incomplete") {
-      filteredBatchNumbers = batchNumbersWithCounts.filter(
+      filteredBatchNumbers = batchNumbersWithLatestEdit.filter(
         batch => batch._count.obituaries !== batch.assignedObituaries
       );
     }
@@ -1359,7 +1382,7 @@ export async function searchBatchNumbers(
   try {
     const skip = (page - 1) * itemsPerPage;
 
-    // First get all batch numbers matching the search term with their counts
+    // First get all batch numbers matching the search term with their counts and latest edit date
     const batchNumbersWithCounts = await prisma.batchNumber.findMany({
       where: {
         number: {
@@ -1378,18 +1401,41 @@ export async function searchBatchNumbers(
         },
         _count: {
           select: { obituaries: true }
+        },
+        obituaries: {
+          orderBy: {
+            editedOn: "desc"
+          },
+          take: 1,
+          select: {
+            editedOn: true
+          }
         }
       }
     });
 
+    // Map the results to include latestEditDate
+    const batchNumbersWithLatestEdit = batchNumbersWithCounts.map(batch => {
+      // Get the latest edit date if there are any obituaries
+      const latestEditDate =
+        batch.obituaries.length > 0 ? batch.obituaries[0].editedOn : null;
+
+      // Return the batch without the obituaries array but with latestEditDate
+      const { obituaries, ...batchWithoutObituaries } = batch;
+      return {
+        ...batchWithoutObituaries,
+        latestEditDate
+      };
+    });
+
     // Filter based on completion status
-    let filteredBatchNumbers = batchNumbersWithCounts;
+    let filteredBatchNumbers = batchNumbersWithLatestEdit;
     if (completionStatus === "complete") {
-      filteredBatchNumbers = batchNumbersWithCounts.filter(
+      filteredBatchNumbers = batchNumbersWithLatestEdit.filter(
         batch => batch._count.obituaries === batch.assignedObituaries
       );
     } else if (completionStatus === "incomplete") {
-      filteredBatchNumbers = batchNumbersWithCounts.filter(
+      filteredBatchNumbers = batchNumbersWithLatestEdit.filter(
         batch => batch._count.obituaries !== batch.assignedObituaries
       );
     }
