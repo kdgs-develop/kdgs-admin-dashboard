@@ -623,8 +623,8 @@ export function LocationAdministration() {
           </div>
 
           {!isDataFetched ? (
-            <div className="py-8 text-center text-muted-foreground">
-              Loading...
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : cities.length > 0 ? (
             <>
