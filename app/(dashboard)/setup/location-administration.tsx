@@ -116,6 +116,9 @@ export function LocationAdministration() {
   const [isLoadingPeriodicalCounts, setIsLoadingPeriodicalCounts] =
     useState(false);
 
+  // Add array to track loading city IDs
+  const [loadingCityIds, setLoadingCityIds] = useState<number[]>([]);
+
   // Add local search state separate from the search that's sent to the server
   const [localSearchName, setLocalSearchName] = useState("");
   const [localSearchProvince, setLocalSearchProvince] = useState("");
@@ -160,9 +163,7 @@ export function LocationAdministration() {
 
           // Only fetch relations when flag is true
           if (shouldFetchRelations.current) {
-            await fetchObituaryCounts(result.cities);
-            await fetchCemeteryCounts(result.cities);
-            await fetchPeriodicalCounts(result.cities);
+            await fetchRelationData(result.cities);
             shouldFetchRelations.current = false;
           }
         } else {
@@ -176,9 +177,7 @@ export function LocationAdministration() {
 
           // Only fetch relations when flag is true
           if (shouldFetchRelations.current) {
-            await fetchObituaryCounts(citiesResult.cities);
-            await fetchCemeteryCounts(citiesResult.cities);
-            await fetchPeriodicalCounts(citiesResult.cities);
+            await fetchRelationData(citiesResult.cities);
             shouldFetchRelations.current = false;
           }
         }
@@ -214,6 +213,58 @@ export function LocationAdministration() {
       shouldFetchRelations.current = true;
     }
   }, [isExpanded, isDataFetched]);
+
+  const fetchRelationData = async (citiesList: any[]) => {
+    try {
+      // Mark all cities as loading
+      setLoadingCityIds(citiesList.map(city => city.id).filter(Boolean));
+
+      // Process each city individually to show results as they come in
+      for (const city of citiesList) {
+        if (city.id !== undefined && city.id !== null) {
+          try {
+            // Fetch all three relation types in parallel for each city
+            const [obituaryData, cemeteryData, periodicalData] =
+              await Promise.all([
+                getObituariesByCityId(city.id),
+                getCemeteriesByCityId(city.id),
+                getPeriodicalsByCityId(city.id)
+              ]);
+
+            // Update the counts for this specific city
+            setObituaryCounts(prev => ({
+              ...prev,
+              [city.id]: {
+                birthCount: obituaryData.birthCount,
+                deathCount: obituaryData.deathCount,
+                totalCount: obituaryData.totalCount
+              }
+            }));
+
+            setCemeteryCounts(prev => ({
+              ...prev,
+              [city.id]: cemeteryData.count
+            }));
+
+            setPeriodicalCounts(prev => ({
+              ...prev,
+              [city.id]: periodicalData.count
+            }));
+          } catch (error) {
+            console.error(
+              `Error fetching relations for city ${city.id}:`,
+              error
+            );
+          } finally {
+            // Remove this city from loading state
+            setLoadingCityIds(prev => prev.filter(id => id !== city.id));
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching relation data:", error);
+    }
+  };
 
   const fetchObituaryCounts = async (citiesList: any[]) => {
     try {
@@ -307,9 +358,7 @@ export function LocationAdministration() {
         setIsSearchMode(false);
 
         // Fetch counts for new data
-        await fetchObituaryCounts(result.cities);
-        await fetchCemeteryCounts(result.cities);
-        await fetchPeriodicalCounts(result.cities);
+        await fetchRelationData(result.cities);
       }
 
       toast({
@@ -342,9 +391,7 @@ export function LocationAdministration() {
         setTotalPages(result.totalPages);
 
         // Fetch counts for updated data
-        await fetchObituaryCounts(result.cities);
-        await fetchCemeteryCounts(result.cities);
-        await fetchPeriodicalCounts(result.cities);
+        await fetchRelationData(result.cities);
       }
 
       toast({
@@ -374,9 +421,7 @@ export function LocationAdministration() {
         setTotalPages(result.totalPages);
 
         // Fetch counts for updated data
-        await fetchObituaryCounts(result.cities);
-        await fetchCemeteryCounts(result.cities);
-        await fetchPeriodicalCounts(result.cities);
+        await fetchRelationData(result.cities);
       }
 
       toast({
@@ -421,9 +466,7 @@ export function LocationAdministration() {
       setTotalPages(result.totalPages);
 
       // Fetch relations inline for immediate response
-      await fetchObituaryCounts(result.cities);
-      await fetchCemeteryCounts(result.cities);
-      await fetchPeriodicalCounts(result.cities);
+      await fetchRelationData(result.cities);
 
       // Reset flag since we've fetched
       shouldFetchRelations.current = false;
@@ -460,9 +503,7 @@ export function LocationAdministration() {
       setTotalPages(result.totalPages);
 
       // Fetch relations inline for immediate response
-      await fetchObituaryCounts(result.cities);
-      await fetchCemeteryCounts(result.cities);
-      await fetchPeriodicalCounts(result.cities);
+      await fetchRelationData(result.cities);
 
       // Reset flag since we've fetched
       shouldFetchRelations.current = false;
@@ -478,10 +519,22 @@ export function LocationAdministration() {
   const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(Number(value));
     setCurrentPage(1); // Reset to page 1 when changing items per page
+
+    // Set flag to fetch relations for the new set of items
+    if (isExpanded) {
+      shouldFetchRelations.current = true;
+    }
   };
 
   const handleOpenAddDialog = () => {
     setIsDialogOpen(true);
+  };
+
+  // Add a function to handle page changes
+  const handlePageChange = (newPage: number) => {
+    // Set the flag to fetch relations for the new page
+    shouldFetchRelations.current = true;
+    setCurrentPage(newPage);
   };
 
   return (
@@ -596,17 +649,15 @@ export function LocationAdministration() {
                     </div>
                     <div className="flex space-x-2">
                       {/* Show loading state for relations */}
-                      {(isLoadingObituaryCounts ||
-                        isLoadingCemeteryCounts ||
-                        isLoadingPeriodicalCounts) && (
-                        <div className="flex items-center text-xs text-muted-foreground">
+                      {loadingCityIds.includes(city.id) && (
+                        <span className="text-xs text-muted-foreground flex items-center">
                           <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                           Loading relations...
-                        </div>
+                        </span>
                       )}
 
                       {/* Only show relation buttons when not loading */}
-                      {!isLoadingObituaryCounts &&
+                      {!loadingCityIds.includes(city.id) &&
                         city.id !== undefined &&
                         city.id !== null &&
                         obituaryCounts[city.id] !== undefined &&
@@ -629,7 +680,7 @@ export function LocationAdministration() {
                             {obituaryCounts[city.id].deathCount} Death
                           </Button>
                         )}
-                      {!isLoadingCemeteryCounts &&
+                      {!loadingCityIds.includes(city.id) &&
                         city.id !== undefined &&
                         city.id !== null &&
                         cemeteryCounts[city.id] !== undefined &&
@@ -651,7 +702,7 @@ export function LocationAdministration() {
                             {cemeteryCounts[city.id]} Interments
                           </Button>
                         )}
-                      {!isLoadingPeriodicalCounts &&
+                      {!loadingCityIds.includes(city.id) &&
                         city.id !== undefined &&
                         city.id !== null &&
                         periodicalCounts[city.id] !== undefined &&
@@ -711,7 +762,7 @@ export function LocationAdministration() {
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      setCurrentPage(prev => Math.max(prev - 1, 1))
+                      handlePageChange(Math.max(currentPage - 1, 1))
                     }
                     disabled={currentPage === 1}
                   >
@@ -724,7 +775,7 @@ export function LocationAdministration() {
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                      handlePageChange(Math.min(currentPage + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
                   >
