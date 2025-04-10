@@ -374,7 +374,7 @@ export function BatchNumberAdministration() {
               </div>
               <div className="md:col-span-3">
                 <div className="text-sm font-medium mb-1">
-                  Filter by Editor Role
+                  Filter by Last Editor Role
                 </div>
                 <Select
                   value={editorRoleFilter}
