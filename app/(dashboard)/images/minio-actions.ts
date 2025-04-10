@@ -1,12 +1,12 @@
-'use server';
+"use server";
 
-import { ImageWithObituary } from '@/lib/db';
-import minioClient from '@/lib/minio-client';
-import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
-import { BucketItem } from 'minio';
-import { updateObituaryImageNames } from '../actions';
-import { OrderField } from './image-table'; // Adjust the path as necessary
+import { ImageWithObituary } from "@/lib/db";
+import minioClient from "@/lib/minio-client";
+import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import { BucketItem } from "minio";
+import { updateObituaryImageNames } from "../actions";
+import { OrderField } from "./image-table"; // Adjust the path as necessary
 
 interface SortableBucketItem {
   name?: string;
@@ -22,7 +22,7 @@ export async function fetchImagesAction(
   imagesPerPage: number,
   searchQuery: string,
   orderBy: OrderField,
-  obituaryFilter: 'all' | 'has' | 'no'
+  obituaryFilter: "all" | "has" | "no"
 ): Promise<{
   images: ImageWithObituary[];
   hasMore: boolean;
@@ -33,30 +33,30 @@ export async function fetchImagesAction(
 
   const query = {
     where: {
-      ...(searchQuery && { 
-        name: { 
+      ...(searchQuery && {
+        name: {
           contains: searchQuery,
-          mode: 'insensitive' // Make the search case-insensitive
-        } 
+          mode: "insensitive" // Make the search case-insensitive
+        }
       }),
-      ...(obituaryFilter === 'has' && { obituary: { is: {} } }),
-      ...(obituaryFilter === 'no' && { obituary: null }),
+      ...(obituaryFilter === "has" && { obituary: { is: {} } }),
+      ...(obituaryFilter === "no" && { obituary: null }),
       ...(cursor && {
-        ...(orderBy === 'fileNameAsc' && { name: { gt: cursor } }),
-        ...(orderBy === 'fileNameDesc' && { name: { lt: cursor } }),
-        ...(orderBy === 'lastModifiedAsc' && { 
+        ...(orderBy === "fileNameAsc" && { name: { gt: cursor } }),
+        ...(orderBy === "fileNameDesc" && { name: { lt: cursor } }),
+        ...(orderBy === "lastModifiedAsc" && {
           OR: [
             { lastModified: { gt: new Date(cursor) } },
-            { 
+            {
               lastModified: { equals: new Date(cursor) },
               id: { gt: cursor }
             }
           ]
         }),
-        ...(orderBy === 'lastModifiedDesc' && { 
+        ...(orderBy === "lastModifiedDesc" && {
           OR: [
             { lastModified: { lt: new Date(cursor) } },
-            { 
+            {
               lastModified: { equals: new Date(cursor) },
               id: { lt: cursor }
             }
@@ -66,11 +66,15 @@ export async function fetchImagesAction(
     },
     take: safeImagesPerPage,
     orderBy: [
-      ...(orderBy.startsWith('fileName') ? [{ name: orderBy === 'fileNameAsc' ? 'asc' : 'desc' }] : []),
-      ...(orderBy.startsWith('lastModified') ? [
-        { lastModified: orderBy === 'lastModifiedAsc' ? 'asc' : 'desc' },
-        { id: orderBy === 'lastModifiedAsc' ? 'asc' : 'desc' }
-      ] : [])
+      ...(orderBy.startsWith("fileName")
+        ? [{ name: orderBy === "fileNameAsc" ? "asc" : "desc" }]
+        : []),
+      ...(orderBy.startsWith("lastModified")
+        ? [
+            { lastModified: orderBy === "lastModifiedAsc" ? "asc" : "desc" },
+            { id: orderBy === "lastModifiedAsc" ? "asc" : "desc" }
+          ]
+        : [])
     ],
     include: {
       obituary: true
@@ -79,11 +83,11 @@ export async function fetchImagesAction(
 
   const images = await prisma.image.findMany(query as Prisma.ImageFindManyArgs);
   const hasMore = images.length === safeImagesPerPage;
-  const nextCursor = hasMore ? (
-    orderBy.startsWith('fileName') 
-      ? images[images.length - 1].name 
+  const nextCursor = hasMore
+    ? orderBy.startsWith("fileName")
+      ? images[images.length - 1].name
       : images[images.length - 1].lastModified?.toISOString()
-  ) : null;
+    : null;
 
   return { images, hasMore, nextCursor };
 }
@@ -104,9 +108,9 @@ export async function deleteImageAction(fileName: string) {
       await updateObituaryImageNames(obituary.id);
     }
   } catch (error) {
-    console.error('Error deleting image:', error);
+    console.error("Error deleting image:", error);
     throw new Error(
-      `Failed to delete image: ${error instanceof Error ? error.message : 'Unknown error'}`
+      `Failed to delete image: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }
@@ -120,9 +124,9 @@ export async function getImageUrlAction(fileName: string) {
       24 * 60 * 60
     );
   } catch (error) {
-    console.error('Error getting image URL:', error);
+    console.error("Error getting image URL:", error);
     throw new Error(
-      `Failed to get image URL: ${error instanceof Error ? error.message : 'Unknown error'}`
+      `Failed to get image URL: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }
@@ -147,9 +151,9 @@ export async function rotateImageAction(fileName: string) {
       data: { rotation: newRotation }
     });
   } catch (error) {
-    console.error('Error rotating image:', error);
+    console.error("Error rotating image:", error);
     throw new Error(
-      `Failed to rotate image: ${error instanceof Error ? error.message : 'Unknown error'}`
+      `Failed to rotate image: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }
@@ -168,9 +172,9 @@ export async function renameImageAction(oldName: string, newName: string) {
       data: { name: newName }
     });
   } catch (error) {
-    console.error('Error renaming image:', error);
+    console.error("Error renaming image:", error);
     throw new Error(
-      `Failed to rename image: ${error instanceof Error ? error.message : 'Unknown error'}`
+      `Failed to rename image: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }
@@ -209,9 +213,9 @@ export async function uploadImagesAction(
       }
     }
   } catch (error) {
-    console.error('Error uploading images to Minio:', error);
+    console.error("Error uploading images to Minio:", error);
     throw new Error(
-      `Failed to upload images: ${error instanceof Error ? error.message : 'Unknown error'}`
+      `Failed to upload images: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }
@@ -221,24 +225,24 @@ export async function syncMinioWithDatabase() {
   try {
     const stream = minioClient.listObjects(
       process.env.MINIO_BUCKET_NAME!,
-      '',
+      "",
       true
     );
     const minioFiles: BucketItem[] = [];
 
     await new Promise<void>((resolve, reject) => {
-      stream.on('data', (obj: any) => {
-        console.log('Received object:', obj);
+      stream.on("data", (obj: any) => {
+        console.log("Received object:", obj);
         if (obj.name) {
           minioFiles.push(obj as BucketItem);
         }
       });
-      stream.on('error', (err) => {
-        console.error('Stream error:', err);
+      stream.on("error", err => {
+        console.error("Stream error:", err);
         reject(err); // Reject the promise on stream error
       });
-      stream.on('end', () => {
-        console.log('Stream ended. Total files:', minioFiles.length);
+      stream.on("end", () => {
+        console.log("Stream ended. Total files:", minioFiles.length);
         resolve(); // Resolve the promise when the stream ends
       });
     });
@@ -247,18 +251,18 @@ export async function syncMinioWithDatabase() {
     const batchSize = 10; // Adjust batch size as needed
     for (let i = 0; i < minioFiles.length; i += batchSize) {
       const batch = minioFiles.slice(i, i + batchSize);
-      await prisma.$transaction(async (tx) => {
-        const upsertPromises = batch.map((file) => {
+      await prisma.$transaction(async tx => {
+        const upsertPromises = batch.map(file => {
           if (file.etag !== undefined) {
             const dataToInsert = {
               name: file.name!,
               size: file.size,
               lastModified: file.lastModified!,
-              etag: file.etag || '',
+              etag: file.etag || "",
               prefix: file.prefix || null
             };
 
-            console.log('Preparing to upsert file:', dataToInsert); // Log each file being processed
+            console.log("Preparing to upsert file:", dataToInsert); // Log each file being processed
 
             return tx.image.upsert({
               where: { name: dataToInsert.name }, // Assuming 'name' is the unique identifier
@@ -274,10 +278,10 @@ export async function syncMinioWithDatabase() {
       });
 
       // Introduce a delay between transactions to avoid overwhelming the database
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Delay for 2 seconds (2000 milliseconds)
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Delay for 2 seconds (2000 milliseconds)
     }
   } catch (error) {
-    console.error('Sync error:', error);
+    console.error("Sync error:", error);
     throw error;
   }
 }
@@ -288,7 +292,34 @@ export async function getEtag(fileName: string): Promise<string> {
     const statObject = await minioClient.statObject(bucketName, fileName);
     return statObject.etag; // Return the ETag from the object's metadata
   } catch (error) {
-    console.error('Error fetching ETag:', error);
-    throw new Error('Failed to fetch ETag for the image');
+    console.error("Error fetching ETag:", error);
+    throw new Error("Failed to fetch ETag for the image");
+  }
+}
+
+export async function getImageCountAction(
+  searchQuery: string,
+  obituaryFilter: "all" | "has" | "no"
+): Promise<number> {
+  try {
+    const count = await prisma.image.count({
+      where: {
+        ...(searchQuery && {
+          name: {
+            contains: searchQuery,
+            mode: "insensitive"
+          }
+        }),
+        ...(obituaryFilter === "has" && { obituary: { is: {} } }),
+        ...(obituaryFilter === "no" && { obituary: null })
+      }
+    });
+
+    return count;
+  } catch (error) {
+    console.error("Error getting image count:", error);
+    throw new Error(
+      `Failed to get image count: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
   }
 }
