@@ -1291,42 +1291,55 @@ export async function deleteRelationship(id: string) {
   revalidatePath("/");
 }
 
-export async function getBatchNumbers(page: number, itemsPerPage: number) {
+export async function getBatchNumbers(
+  page: number,
+  itemsPerPage: number,
+  completionStatus?: "all" | "complete" | "incomplete",
+  sortOrder: "createdAt" | "number" = "createdAt"
+) {
   try {
     const skip = (page - 1) * itemsPerPage;
 
-    console.log("Fetching batch numbers with counts...");
-
-    const [batchNumbers, totalCount] = await Promise.all([
-      prisma.batchNumber.findMany({
-        skip,
-        take: itemsPerPage,
-        include: {
-          createdBy: {
-            select: {
-              fullName: true
-            }
-          },
-          _count: {
-            select: {
-              obituaries: true
-            }
+    // Get batch numbers with their obituary counts
+    const batchNumbersWithCounts = await prisma.batchNumber.findMany({
+      include: {
+        createdBy: {
+          select: {
+            fullName: true
           }
         },
-        orderBy: {
-          createdAt: "desc"
+        _count: {
+          select: {
+            obituaries: true
+          }
         }
-      }),
-      prisma.batchNumber.count()
-    ]);
+      },
+      orderBy: {
+        [sortOrder]: sortOrder === "createdAt" ? "desc" : "asc"
+      }
+    });
 
-    console.log(
-      "Batch numbers with counts:",
-      JSON.stringify(batchNumbers, null, 2)
+    // Filter based on completion status
+    let filteredBatchNumbers = batchNumbersWithCounts;
+    if (completionStatus === "complete") {
+      filteredBatchNumbers = batchNumbersWithCounts.filter(
+        batch => batch._count.obituaries === batch.assignedObituaries
+      );
+    } else if (completionStatus === "incomplete") {
+      filteredBatchNumbers = batchNumbersWithCounts.filter(
+        batch => batch._count.obituaries !== batch.assignedObituaries
+      );
+    }
+
+    // Apply pagination after filtering
+    const paginatedBatchNumbers = filteredBatchNumbers.slice(
+      skip,
+      skip + itemsPerPage
     );
+    const totalCount = filteredBatchNumbers.length;
 
     return {
-      batchNumbers,
+      batchNumbers: paginatedBatchNumbers,
       totalCount,
       totalPages: Math.ceil(totalCount / itemsPerPage)
     };
@@ -1339,47 +1352,57 @@ export async function getBatchNumbers(page: number, itemsPerPage: number) {
 export async function searchBatchNumbers(
   searchTerm: string,
   page: number,
-  itemsPerPage: number
+  itemsPerPage: number,
+  completionStatus?: "all" | "complete" | "incomplete",
+  sortOrder: "createdAt" | "number" = "createdAt"
 ) {
   try {
     const skip = (page - 1) * itemsPerPage;
 
-    const [batchNumbers, totalCount] = await Promise.all([
-      prisma.batchNumber.findMany({
-        where: {
-          number: {
-            contains: searchTerm,
-            mode: "insensitive"
+    // First get all batch numbers matching the search term with their counts
+    const batchNumbersWithCounts = await prisma.batchNumber.findMany({
+      where: {
+        number: {
+          contains: searchTerm,
+          mode: "insensitive"
+        }
+      },
+      orderBy: {
+        [sortOrder]: sortOrder === "createdAt" ? "desc" : "asc"
+      },
+      include: {
+        createdBy: {
+          select: {
+            fullName: true
           }
         },
-        skip,
-        take: itemsPerPage,
-        orderBy: {
-          createdAt: "desc"
-        },
-        include: {
-          createdBy: {
-            select: {
-              fullName: true
-            }
-          },
-          _count: {
-            select: { obituaries: true }
-          }
+        _count: {
+          select: { obituaries: true }
         }
-      }),
-      prisma.batchNumber.count({
-        where: {
-          number: {
-            contains: searchTerm,
-            mode: "insensitive"
-          }
-        }
-      })
-    ]);
+      }
+    });
+
+    // Filter based on completion status
+    let filteredBatchNumbers = batchNumbersWithCounts;
+    if (completionStatus === "complete") {
+      filteredBatchNumbers = batchNumbersWithCounts.filter(
+        batch => batch._count.obituaries === batch.assignedObituaries
+      );
+    } else if (completionStatus === "incomplete") {
+      filteredBatchNumbers = batchNumbersWithCounts.filter(
+        batch => batch._count.obituaries !== batch.assignedObituaries
+      );
+    }
+
+    // Apply pagination after filtering
+    const paginatedBatchNumbers = filteredBatchNumbers.slice(
+      skip,
+      skip + itemsPerPage
+    );
+    const totalCount = filteredBatchNumbers.length;
 
     return {
-      batchNumbers,
+      batchNumbers: paginatedBatchNumbers,
       totalCount,
       totalPages: Math.ceil(totalCount / itemsPerPage)
     };
