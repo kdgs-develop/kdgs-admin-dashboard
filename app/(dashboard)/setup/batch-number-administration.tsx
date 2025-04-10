@@ -81,6 +81,7 @@ export function BatchNumberAdministration() {
   const [batchStatusFilter, setBatchStatusFilter] = useState<
     "all" | "complete" | "incomplete"
   >("all");
+  const [editorRoleFilter, setEditorRoleFilter] = useState<string>("all");
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [sortOrder, setSortOrder] = useState<
     "createdAt" | "number" | "latestEditDate"
@@ -95,7 +96,8 @@ export function BatchNumberAdministration() {
         page,
         itemsPerPage,
         batchStatusFilter,
-        sortOrder
+        sortOrder,
+        editorRoleFilter
       );
       setBatchData(data);
       setIsDataFetched(true);
@@ -117,7 +119,14 @@ export function BatchNumberAdministration() {
       // or if it's the first load (data hasn't been fetched yet)
       fetchBatchNumbers(currentPage);
     }
-  }, [currentPage, itemsPerPage, isExpanded, sortOrder]);
+  }, [
+    currentPage,
+    itemsPerPage,
+    isExpanded,
+    sortOrder,
+    editorRoleFilter,
+    batchStatusFilter
+  ]);
 
   const handleSearch = async () => {
     if (!isExpanded) return;
@@ -133,7 +142,8 @@ export function BatchNumberAdministration() {
           1,
           itemsPerPage,
           batchStatusFilter,
-          sortOrder
+          sortOrder,
+          editorRoleFilter
         );
         setBatchData(results);
         setCurrentPage(1);
@@ -276,7 +286,7 @@ export function BatchNumberAdministration() {
         <CardContent className="space-y-4">
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-              <div className="md:col-span-5">
+              <div className="md:col-span-3">
                 <div className="text-sm font-medium mb-1">
                   Search Batch Number
                 </div>
@@ -286,7 +296,7 @@ export function BatchNumberAdministration() {
                   onChange={e => setSearchNumber(e.target.value)}
                 />
               </div>
-              <div className="md:col-span-4">
+              <div className="md:col-span-3">
                 <div className="text-sm font-medium mb-1">Filter by Status</div>
                 <Select
                   value={batchStatusFilter}
@@ -304,7 +314,8 @@ export function BatchNumberAdministration() {
                           1,
                           itemsPerPage,
                           value,
-                          sortOrder
+                          sortOrder,
+                          editorRoleFilter
                         )
                           .then(results => {
                             setBatchData(results);
@@ -323,7 +334,13 @@ export function BatchNumberAdministration() {
                           });
                       } else {
                         // Otherwise just fetch with the new filter
-                        getBatchNumbers(1, itemsPerPage, value, sortOrder)
+                        getBatchNumbers(
+                          1,
+                          itemsPerPage,
+                          value,
+                          sortOrder,
+                          editorRoleFilter
+                        )
                           .then(data => {
                             setBatchData(data);
                             setIsFilterLoading(false);
@@ -355,6 +372,88 @@ export function BatchNumberAdministration() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="md:col-span-3">
+                <div className="text-sm font-medium mb-1">
+                  Filter by Editor Role
+                </div>
+                <Select
+                  value={editorRoleFilter}
+                  onValueChange={(value: string) => {
+                    setEditorRoleFilter(value);
+                    setIsFilterLoading(true);
+                    // Reset to first page
+                    setCurrentPage(1);
+                    // Allow the state to update before searching
+                    setTimeout(() => {
+                      if (searchNumber) {
+                        // If there's a search term, use search function
+                        searchBatchNumbers(
+                          searchNumber,
+                          1,
+                          itemsPerPage,
+                          batchStatusFilter,
+                          sortOrder,
+                          value
+                        )
+                          .then(results => {
+                            setBatchData(results);
+                            setIsFilterLoading(false);
+                          })
+                          .catch(error => {
+                            toast({
+                              title: "Error filtering batch numbers",
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : "An unknown error occurred",
+                              variant: "destructive"
+                            });
+                            setIsFilterLoading(false);
+                          });
+                      } else {
+                        // Otherwise just fetch with the new filter
+                        getBatchNumbers(
+                          1,
+                          itemsPerPage,
+                          batchStatusFilter,
+                          sortOrder,
+                          value
+                        )
+                          .then(data => {
+                            setBatchData(data);
+                            setIsFilterLoading(false);
+                          })
+                          .catch(error => {
+                            toast({
+                              title: "Error filtering batch numbers",
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : "An unknown error occurred",
+                              variant: "destructive"
+                            });
+                            setIsFilterLoading(false);
+                          });
+                      }
+                    }, 0);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by editor role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="INDEXER">Indexer</SelectItem>
+                    <SelectItem value="PROOFREADER">Proofreader</SelectItem>
+                    <SelectItem value="SCANNER">Scanner</SelectItem>
+                    <SelectItem value="VIEWER">Viewer</SelectItem>
+                    <SelectItem value="PROCESS_MANAGER">
+                      Process Manager
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="md:col-span-3 flex space-x-2 items-end">
                 <Button
                   onClick={handleSearch}
@@ -376,7 +475,7 @@ export function BatchNumberAdministration() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-              <div className="md:col-span-5">
+              <div className="md:col-span-3">
                 <div className="text-sm font-medium mb-1">Sort By</div>
                 <Select
                   value={sortOrder}
@@ -401,6 +500,9 @@ export function BatchNumberAdministration() {
                     </SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="md:col-span-9">
+                {/* Empty space for alignment */}
               </div>
             </div>
           </div>
