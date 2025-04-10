@@ -1342,16 +1342,33 @@ export async function getBatchNumbers(
 
         // Use the editedBy field directly - it already contains the full name
         let latestEditorName = null;
+        let latestEditorRole = null;
+
         if (batch.obituaries.length > 0 && batch.obituaries[0].editedBy) {
           latestEditorName = batch.obituaries[0].editedBy;
+
+          // Try to find the genealogist by name to get their role
+          const genealogist = await prisma.genealogist.findFirst({
+            where: {
+              fullName: batch.obituaries[0].editedBy
+            },
+            select: {
+              role: true
+            }
+          });
+
+          if (genealogist?.role) {
+            latestEditorRole = genealogist.role;
+          }
         }
 
-        // Return the batch without the obituaries array but with latestEditDate and editor
+        // Return the batch without the obituaries array but with latestEditDate, editor and role
         const { obituaries, ...batchWithoutObituaries } = batch;
         return {
           ...batchWithoutObituaries,
           latestEditDate,
-          latestEditorName
+          latestEditorName,
+          latestEditorRole
         };
       })
     );
@@ -1459,16 +1476,33 @@ export async function searchBatchNumbers(
 
         // Use the editedBy field directly - it already contains the full name
         let latestEditorName = null;
+        let latestEditorRole = null;
+
         if (batch.obituaries.length > 0 && batch.obituaries[0].editedBy) {
           latestEditorName = batch.obituaries[0].editedBy;
+
+          // Try to find the genealogist by name to get their role
+          const genealogist = await prisma.genealogist.findFirst({
+            where: {
+              fullName: batch.obituaries[0].editedBy
+            },
+            select: {
+              role: true
+            }
+          });
+
+          if (genealogist?.role) {
+            latestEditorRole = genealogist.role;
+          }
         }
 
-        // Return the batch without the obituaries array but with latestEditDate and editor
+        // Return the batch without the obituaries array but with latestEditDate, editor and role
         const { obituaries, ...batchWithoutObituaries } = batch;
         return {
           ...batchWithoutObituaries,
           latestEditDate,
-          latestEditorName
+          latestEditorName,
+          latestEditorRole
         };
       })
     );
