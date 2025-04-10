@@ -1344,16 +1344,6 @@ export async function getBatchNumbers(
         let latestEditorName = null;
         if (batch.obituaries.length > 0 && batch.obituaries[0].editedBy) {
           latestEditorName = batch.obituaries[0].editedBy;
-          console.log(
-            `[getBatchNumbers] Using editor name directly: ${latestEditorName}`
-          );
-        } else {
-          console.log(
-            `[getBatchNumbers] No editedBy data for batch ${batch.number}:`,
-            batch.obituaries.length > 0
-              ? `editedBy: ${batch.obituaries[0].editedBy}`
-              : "No obituaries"
-          );
         }
 
         // Return the batch without the obituaries array but with latestEditDate and editor
@@ -1471,16 +1461,6 @@ export async function searchBatchNumbers(
         let latestEditorName = null;
         if (batch.obituaries.length > 0 && batch.obituaries[0].editedBy) {
           latestEditorName = batch.obituaries[0].editedBy;
-          console.log(
-            `[searchBatchNumbers] Using editor name directly: ${latestEditorName}`
-          );
-        } else {
-          console.log(
-            `[searchBatchNumbers] No editedBy data for batch ${batch.number}:`,
-            batch.obituaries.length > 0
-              ? `editedBy: ${batch.obituaries[0].editedBy}`
-              : "No obituaries"
-          );
         }
 
         // Return the batch without the obituaries array but with latestEditDate and editor
