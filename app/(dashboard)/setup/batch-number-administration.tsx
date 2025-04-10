@@ -300,11 +300,24 @@ export function BatchNumberAdministration() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md">
+                        <div
+                          className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md ${
+                            batch._count?.obituaries ===
+                            batch.assignedObituaries
+                              ? "bg-green-50 hover:bg-green-100 border border-green-200 text-green-700"
+                              : "bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700"
+                          }`}
+                        >
                           <FileText className="h-3 w-3" />
                           <span>
                             {batch._count?.obituaries || 0} of{" "}
                             {batch.assignedObituaries} assigned
+                            {batch._count?.obituaries ===
+                              batch.assignedObituaries && (
+                              <span className="ml-1 font-medium">
+                                • Complete
+                              </span>
+                            )}
                           </span>
                         </div>
                         <Button
