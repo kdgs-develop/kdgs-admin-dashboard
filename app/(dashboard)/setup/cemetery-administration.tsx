@@ -49,6 +49,13 @@ import { AddCemeteryDialog } from "./add-cemetery-dialog";
 import { EditCemeteryDialog } from "./edit-cemetery-dialog";
 import { RelatedCemeteryObituariesDialog } from "./related-cemetery-obituaries-dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 // Add this type for better type safety
 type City = {
@@ -64,6 +71,7 @@ export function CemeteryAdministration() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCemetery, setSelectedCemetery] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -84,6 +92,7 @@ export function CemeteryAdministration() {
   const [obituaryCounts, setObituaryCounts] = useState<Record<number, number>>(
     {}
   );
+  const [loadingRelationIds, setLoadingRelationIds] = useState<number[]>([]);
   const [isRelatedDialogOpen, setIsRelatedDialogOpen] = useState(false);
   const [relatedCemetery, setRelatedCemetery] = useState<any>(null);
 
@@ -93,7 +102,7 @@ export function CemeteryAdministration() {
     try {
       setIsLoading(true);
       const [cemeteriesResult, citiesResult] = await Promise.all([
-        getCemeteriesWithPagination(currentPage),
+        getCemeteriesWithPagination(currentPage, itemsPerPage),
         getCities()
       ]);
       setCemeteries(cemeteriesResult.cemeteries);
@@ -117,29 +126,42 @@ export function CemeteryAdministration() {
   }
 
   const fetchObituaryCounts = async (cemeteriesList: any[]) => {
-    const counts: Record<number, number> = {};
+    // Mark all cemeteries as loading
+    setLoadingRelationIds(cemeteriesList.map(cemetery => cemetery.id));
 
+    // Process each cemetery individually to show results as they come in
     for (const cemetery of cemeteriesList) {
       try {
         const result = await getObituariesByCemeteryId(cemetery.id);
-        counts[cemetery.id] = result.count;
+
+        // Update the count for this specific cemetery
+        setObituaryCounts(prev => ({
+          ...prev,
+          [cemetery.id]: result.count
+        }));
       } catch (error) {
         console.error(
           `Error fetching count for cemetery ${cemetery.id}:`,
           error
         );
-        counts[cemetery.id] = 0;
+
+        // Set count to 0 on error
+        setObituaryCounts(prev => ({
+          ...prev,
+          [cemetery.id]: 0
+        }));
+      } finally {
+        // Remove this cemetery from loading state
+        setLoadingRelationIds(prev => prev.filter(id => id !== cemetery.id));
       }
     }
-
-    setObituaryCounts(counts);
   };
 
   useEffect(() => {
     if (isExpanded) {
       fetchData();
     }
-  }, [currentPage, isExpanded]);
+  }, [currentPage, itemsPerPage, isExpanded]);
 
   // Safe filtering effect
   useEffect(() => {
@@ -170,7 +192,10 @@ export function CemeteryAdministration() {
       await addCemetery(name, cityId);
 
       if (isExpanded) {
-        const result = await getCemeteriesWithPagination(currentPage);
+        const result = await getCemeteriesWithPagination(
+          currentPage,
+          itemsPerPage
+        );
         setCemeteries(result.cemeteries);
         setTotalPages(result.totalPages);
         fetchObituaryCounts(result.cemeteries);
@@ -199,7 +224,10 @@ export function CemeteryAdministration() {
       await updateCemetery(id, name, cityId);
 
       if (isExpanded) {
-        const result = await getCemeteriesWithPagination(currentPage);
+        const result = await getCemeteriesWithPagination(
+          currentPage,
+          itemsPerPage
+        );
         setCemeteries(result.cemeteries);
         setTotalPages(result.totalPages);
         fetchObituaryCounts(result.cemeteries);
@@ -226,7 +254,10 @@ export function CemeteryAdministration() {
       await deleteCemetery(id);
 
       if (isExpanded) {
-        const result = await getCemeteriesWithPagination(currentPage);
+        const result = await getCemeteriesWithPagination(
+          currentPage,
+          itemsPerPage
+        );
         setCemeteries(result.cemeteries);
         setTotalPages(result.totalPages);
         fetchObituaryCounts(result.cemeteries);
@@ -256,7 +287,8 @@ export function CemeteryAdministration() {
       const result = await searchCemeteries(
         searchName || undefined,
         searchCityId ? parseInt(searchCityId) : undefined,
-        1 // Always start at page 1 when searching
+        1, // Always start at page 1 when searching
+        itemsPerPage
       );
       setCemeteries(result.cemeteries);
       setTotalPages(result.totalPages);
@@ -294,7 +326,7 @@ export function CemeteryAdministration() {
 
     try {
       setIsLoading(true);
-      const result = await getCemeteriesWithPagination(1);
+      const result = await getCemeteriesWithPagination(1, itemsPerPage);
       setCemeteries(result.cemeteries);
       setTotalPages(result.totalPages);
       setCurrentPage(1); // Reset to page 1
@@ -318,6 +350,11 @@ export function CemeteryAdministration() {
   const handleOpenRelatedObituaries = (cemetery: any) => {
     setRelatedCemetery(cemetery);
     setIsRelatedDialogOpen(true);
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to page 1 when changing items per page
   };
 
   return (
@@ -491,7 +528,12 @@ export function CemeteryAdministration() {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      {obituaryCounts[cemetery.id] > 0 && (
+                      {loadingRelationIds.includes(cemetery.id) ? (
+                        <span className="text-xs text-muted-foreground flex items-center">
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Loading...
+                        </span>
+                      ) : obituaryCounts[cemetery.id] > 0 ? (
                         <Button
                           variant="outline"
                           size="sm"
@@ -504,7 +546,7 @@ export function CemeteryAdministration() {
                           <FileText className="h-3 w-3" />
                           {obituaryCounts[cemetery.id]} Obituaries
                         </Button>
-                      )}
+                      ) : null}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -521,28 +563,49 @@ export function CemeteryAdministration() {
                 ))}
               </div>
 
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1 || isLoading}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="py-2 px-3 text-sm">
-                  Page {currentPage} of {totalPages || 1}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage(prev => Math.min(prev + 1, totalPages))
-                  }
-                  disabled={currentPage === totalPages || isLoading}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              <div className="flex justify-between items-center">
+                <div>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={handleItemsPerPageChange}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Items per page" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 per page</SelectItem>
+                      <SelectItem value="10">10 per page</SelectItem>
+                      <SelectItem value="25">25 per page</SelectItem>
+                      <SelectItem value="50">50 per page</SelectItem>
+                      <SelectItem value="100">100 per page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1 || isLoading}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="py-2 px-3 text-sm">
+                    Page {currentPage} of {totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages || isLoading}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </>
           ) : isDataFetched ? (
