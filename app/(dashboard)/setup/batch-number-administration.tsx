@@ -9,6 +9,13 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChevronDown,
@@ -61,7 +68,7 @@ export function BatchNumberAdministration() {
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
 
@@ -89,11 +96,9 @@ export function BatchNumberAdministration() {
     if (isExpanded) {
       // Only fetch if the component is expanded and we're changing pages
       // or if it's the first load (data hasn't been fetched yet)
-      if (!isDataFetched || isDataFetched) {
-        fetchBatchNumbers(currentPage);
-      }
+      fetchBatchNumbers(currentPage);
     }
-  }, [currentPage, isExpanded]);
+  }, [currentPage, itemsPerPage, isExpanded]);
 
   const handleSearch = async () => {
     if (!isExpanded) return;
@@ -217,6 +222,11 @@ export function BatchNumberAdministration() {
     }
   };
 
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to page 1 when changing items per page
+  };
+
   return (
     <Card>
       <CardHeader
@@ -307,34 +317,55 @@ export function BatchNumberAdministration() {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1 || isLoading}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="py-2 px-3 text-sm">
-                  Page {currentPage} of {batchData.totalPages || 1}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage(prev =>
-                      Math.min(prev + 1, batchData.totalPages)
-                    )
-                  }
-                  disabled={
-                    currentPage === batchData.totalPages ||
-                    batchData.totalPages === 0 ||
-                    isLoading
-                  }
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              <div className="flex justify-between items-center">
+                <div>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={handleItemsPerPageChange}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Items per page" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 per page</SelectItem>
+                      <SelectItem value="10">10 per page</SelectItem>
+                      <SelectItem value="25">25 per page</SelectItem>
+                      <SelectItem value="50">50 per page</SelectItem>
+                      <SelectItem value="100">100 per page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1 || isLoading}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="py-2 px-3 text-sm">
+                    Page {currentPage} of {batchData.totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev =>
+                        Math.min(prev + 1, batchData.totalPages)
+                      )
+                    }
+                    disabled={
+                      currentPage === batchData.totalPages ||
+                      batchData.totalPages === 0 ||
+                      isLoading
+                    }
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </>
           ) : !isLoading && isDataFetched ? (
