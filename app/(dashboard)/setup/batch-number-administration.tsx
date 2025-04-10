@@ -9,6 +9,13 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChevronDown,
@@ -18,7 +25,8 @@ import {
   Edit,
   Loader2,
   Plus,
-  Search
+  Search,
+  FileText
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { addBatchNumber } from "../actions";
@@ -61,7 +69,7 @@ export function BatchNumberAdministration() {
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
 
@@ -89,11 +97,9 @@ export function BatchNumberAdministration() {
     if (isExpanded) {
       // Only fetch if the component is expanded and we're changing pages
       // or if it's the first load (data hasn't been fetched yet)
-      if (!isDataFetched || isDataFetched) {
-        fetchBatchNumbers(currentPage);
-      }
+      fetchBatchNumbers(currentPage);
     }
-  }, [currentPage, isExpanded]);
+  }, [currentPage, itemsPerPage, isExpanded]);
 
   const handleSearch = async () => {
     if (!isExpanded) return;
@@ -217,6 +223,11 @@ export function BatchNumberAdministration() {
     }
   };
 
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to page 1 when changing items per page
+  };
+
   return (
     <Card>
       <CardHeader
@@ -281,60 +292,87 @@ export function BatchNumberAdministration() {
                       key={batch.id}
                       className="p-3 border rounded flex justify-between items-center hover:bg-accent"
                     >
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">
-                          {batch.number} ({batch._count?.obituaries || 0} of{" "}
-                          {batch.assignedObituaries} assigned obituaries)
-                        </span>
-                        <span className="text-sm text-muted-foreground">
+                      <div>
+                        <span className="font-medium">{batch.number}</span>
+                        <span className="ml-2 text-sm text-muted-foreground">
                           Created by {batch.createdBy.fullName || "Unknown"} on{" "}
                           {new Date(batch.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setSelectedBatchNumber(batch);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md">
+                          <FileText className="h-3 w-3" />
+                          <span>
+                            {batch._count?.obituaries || 0} of{" "}
+                            {batch.assignedObituaries} assigned
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setSelectedBatchNumber(batch);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1 || isLoading}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="py-2 px-3 text-sm">
-                  Page {currentPage} of {batchData.totalPages || 1}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage(prev =>
-                      Math.min(prev + 1, batchData.totalPages)
-                    )
-                  }
-                  disabled={
-                    currentPage === batchData.totalPages ||
-                    batchData.totalPages === 0 ||
-                    isLoading
-                  }
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              <div className="flex justify-between items-center">
+                <div>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={handleItemsPerPageChange}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Items per page" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 per page</SelectItem>
+                      <SelectItem value="10">10 per page</SelectItem>
+                      <SelectItem value="25">25 per page</SelectItem>
+                      <SelectItem value="50">50 per page</SelectItem>
+                      <SelectItem value="100">100 per page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1 || isLoading}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="py-2 px-3 text-sm">
+                    Page {currentPage} of {batchData.totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev =>
+                        Math.min(prev + 1, batchData.totalPages)
+                      )
+                    }
+                    disabled={
+                      currentPage === batchData.totalPages ||
+                      batchData.totalPages === 0 ||
+                      isLoading
+                    }
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </>
           ) : !isLoading && isDataFetched ? (

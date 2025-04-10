@@ -30,6 +30,13 @@ import {
   getObituariesByTitleId
 } from "./actions";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import AddTitleDialog from "./add-title-dialog";
 import EditTitleDialog from "./edit-title-dialog";
 import { RelatedTitleObituariesDialog } from "./related-title-obituaries-dialog";
@@ -56,12 +63,13 @@ export function TitleAdministration() {
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [obituaryCounts, setObituaryCounts] = useState<Record<number, number>>(
     {}
   );
+  const [loadingRelationIds, setLoadingRelationIds] = useState<number[]>([]);
   const [isRelatedDialogOpen, setIsRelatedDialogOpen] = useState(false);
   const [relatedTitle, setRelatedTitle] = useState<{
     id: number;
@@ -93,26 +101,39 @@ export function TitleAdministration() {
   const fetchObituaryCounts = async (
     titlesList: { id: number; name: string | null }[]
   ) => {
-    const counts: Record<number, number> = {};
+    // Mark all titles as loading
+    setLoadingRelationIds(titlesList.map(title => title.id));
 
+    // Process each title individually to show results as they come in
     for (const title of titlesList) {
       try {
         const result = await getObituariesByTitleId(title.id);
-        counts[title.id] = result.count;
+
+        // Update the count for this specific title
+        setObituaryCounts(prev => ({
+          ...prev,
+          [title.id]: result.count
+        }));
       } catch (error) {
         console.error(`Error fetching count for title ${title.id}:`, error);
-        counts[title.id] = 0;
+
+        // Set count to 0 on error
+        setObituaryCounts(prev => ({
+          ...prev,
+          [title.id]: 0
+        }));
+      } finally {
+        // Remove this title from loading state
+        setLoadingRelationIds(prev => prev.filter(id => id !== title.id));
       }
     }
-
-    setObituaryCounts(counts);
   };
 
   useEffect(() => {
     if (isExpanded) {
       fetchTitles(currentPage);
     }
-  }, [currentPage, isExpanded]);
+  }, [currentPage, itemsPerPage, isExpanded]);
 
   const handleSearch = async () => {
     if (!isExpanded) return;
@@ -248,6 +269,11 @@ export function TitleAdministration() {
     setIsRelatedDialogOpen(true);
   };
 
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to page 1 when changing items per page
+  };
+
   return (
     <Card>
       <CardHeader
@@ -325,7 +351,12 @@ export function TitleAdministration() {
                     >
                       <span className="text-sm">{title.name}</span>
                       <div className="flex items-center gap-2">
-                        {obituaryCounts[title.id] > 0 && (
+                        {loadingRelationIds.includes(title.id) ? (
+                          <span className="text-xs text-muted-foreground flex items-center">
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Loading...
+                          </span>
+                        ) : obituaryCounts[title.id] > 0 ? (
                           <Button
                             variant="outline"
                             size="sm"
@@ -338,7 +369,7 @@ export function TitleAdministration() {
                             <FileText className="h-3 w-3" />
                             {obituaryCounts[title.id]} Obituaries
                           </Button>
-                        )}
+                        ) : null}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -356,30 +387,51 @@ export function TitleAdministration() {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1 || isLoading}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="py-2 px-3 text-sm">
-                  Page {currentPage} of {titleData.totalPages || 1}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage(prev =>
-                      Math.min(prev + 1, titleData.totalPages)
-                    )
-                  }
-                  disabled={currentPage === titleData.totalPages || isLoading}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              <div className="flex justify-between items-center">
+                <div>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={handleItemsPerPageChange}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Items per page" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 per page</SelectItem>
+                      <SelectItem value="10">10 per page</SelectItem>
+                      <SelectItem value="25">25 per page</SelectItem>
+                      <SelectItem value="50">50 per page</SelectItem>
+                      <SelectItem value="100">100 per page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1 || isLoading}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="py-2 px-3 text-sm">
+                    Page {currentPage} of {titleData.totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev =>
+                        Math.min(prev + 1, titleData.totalPages)
+                      )
+                    }
+                    disabled={currentPage === titleData.totalPages || isLoading}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </>
           ) : isDataFetched ? (

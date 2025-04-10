@@ -30,6 +30,13 @@ import {
   getCitiesByCountryId
 } from "./actions";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import AddCountryDialog from "./add-country-dialog";
 import EditCountryDialog from "./edit-country-dialog";
 import { RelatedCitiesDialog } from "./related-cities-dialog";
@@ -56,7 +63,7 @@ export function CountryAdministration() {
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [relatedCountry, setRelatedCountry] = useState<{
@@ -65,6 +72,7 @@ export function CountryAdministration() {
   } | null>(null);
   const [isRelatedDialogOpen, setIsRelatedDialogOpen] = useState(false);
   const [cityCounts, setCityCounts] = useState<Record<number, number>>({});
+  const [loadingRelationIds, setLoadingRelationIds] = useState<number[]>([]);
 
   const fetchCountries = async (page: number) => {
     if (isLoading) return;
@@ -76,14 +84,9 @@ export function CountryAdministration() {
       setIsDataFetched(true);
 
       // Fetch city counts for each country
-      const counts: Record<number, number> = {};
-      await Promise.all(
-        data.countries.map(async country => {
-          const cityData = await getCitiesByCountryId(country.id);
-          counts[country.id] = cityData.count;
-        })
-      );
-      setCityCounts(counts);
+      if (data.countries.length > 0) {
+        fetchCityCounts(data.countries);
+      }
     } catch (error) {
       toast({
         title: "Error fetching countries",
@@ -96,11 +99,40 @@ export function CountryAdministration() {
     }
   };
 
+  const fetchCityCounts = async (countriesList: any[]) => {
+    // Mark all countries as loading
+    setLoadingRelationIds(countriesList.map(country => country.id));
+
+    // Process each country individually to show results as they come in
+    for (const country of countriesList) {
+      try {
+        const cityData = await getCitiesByCountryId(country.id);
+
+        // Update the count for this specific country
+        setCityCounts(prev => ({
+          ...prev,
+          [country.id]: cityData.count
+        }));
+      } catch (error) {
+        console.error(`Error fetching count for country ${country.id}:`, error);
+
+        // Set count to 0 on error
+        setCityCounts(prev => ({
+          ...prev,
+          [country.id]: 0
+        }));
+      } finally {
+        // Remove this country from loading state
+        setLoadingRelationIds(prev => prev.filter(id => id !== country.id));
+      }
+    }
+  };
+
   useEffect(() => {
-    if (isExpanded && (currentPage > 1 || !isDataFetched)) {
+    if (isExpanded) {
       fetchCountries(currentPage);
     }
-  }, [currentPage, isExpanded]);
+  }, [currentPage, itemsPerPage, isExpanded]);
 
   const handleSearch = async () => {
     if (!isExpanded) return;
@@ -115,15 +147,10 @@ export function CountryAdministration() {
         setCountryData(results);
         setCurrentPage(1);
 
-        // Also fetch city counts for search results
-        const counts: Record<number, number> = {};
-        await Promise.all(
-          results.countries.map(async country => {
-            const cityData = await getCitiesByCountryId(country.id);
-            counts[country.id] = cityData.count;
-          })
-        );
-        setCityCounts(counts);
+        // Fetch city counts for search results
+        if (results.countries.length > 0) {
+          fetchCityCounts(results.countries);
+        }
 
         if (results.totalCount === 0) {
           toast({
@@ -231,6 +258,11 @@ export function CountryAdministration() {
     setCurrentPage(1);
   };
 
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to page 1 when changing items per page
+  };
+
   return (
     <Card>
       <CardHeader
@@ -302,7 +334,12 @@ export function CountryAdministration() {
                     >
                       <span className="text-sm">{country.name}</span>
                       <div className="flex items-center gap-2">
-                        {cityCounts[country.id] > 0 && (
+                        {loadingRelationIds.includes(country.id) ? (
+                          <span className="text-xs text-muted-foreground flex items-center">
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Loading...
+                          </span>
+                        ) : cityCounts[country.id] > 0 ? (
                           <Button
                             variant="outline"
                             size="sm"
@@ -316,7 +353,7 @@ export function CountryAdministration() {
                             <LinkIcon className="h-3 w-3" />
                             {cityCounts[country.id]} Locations
                           </Button>
-                        )}
+                        ) : null}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -334,34 +371,55 @@ export function CountryAdministration() {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1 || isLoading}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="py-2 px-3 text-sm">
-                  Page {currentPage} of {countryData.totalPages || 1}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage(prev =>
-                      Math.min(prev + 1, countryData.totalPages)
-                    )
-                  }
-                  disabled={
-                    currentPage === countryData.totalPages ||
-                    countryData.totalPages === 0 ||
-                    isLoading
-                  }
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              <div className="flex justify-between items-center">
+                <div>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={handleItemsPerPageChange}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Items per page" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 per page</SelectItem>
+                      <SelectItem value="10">10 per page</SelectItem>
+                      <SelectItem value="25">25 per page</SelectItem>
+                      <SelectItem value="50">50 per page</SelectItem>
+                      <SelectItem value="100">100 per page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1 || isLoading}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="py-2 px-3 text-sm">
+                    Page {currentPage} of {countryData.totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev =>
+                        Math.min(prev + 1, countryData.totalPages)
+                      )
+                    }
+                    disabled={
+                      currentPage === countryData.totalPages ||
+                      countryData.totalPages === 0 ||
+                      isLoading
+                    }
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </>
           ) : !isLoading && isDataFetched ? (
