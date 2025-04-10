@@ -9,6 +9,13 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
   ChevronDown,
@@ -57,12 +64,13 @@ export function RelationshipAdministration() {
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [obituaryCounts, setObituaryCounts] = useState<Record<string, number>>(
     {}
   );
+  const [loadingRelationIds, setLoadingRelationIds] = useState<string[]>([]);
   const [isRelatedDialogOpen, setIsRelatedDialogOpen] = useState(false);
   const [relatedRelationship, setRelatedRelationship] = useState<{
     id: string;
@@ -104,21 +112,40 @@ export function RelationshipAdministration() {
   const fetchObituaryCounts = async (
     relationshipsList: { id: string; name: string; category: string }[]
   ) => {
-    try {
-      const counts: Record<string, number> = {};
+    // Mark all relationships as loading
+    setLoadingRelationIds(
+      relationshipsList.map(relationship => relationship.id)
+    );
 
-      await Promise.all(
-        relationshipsList.map(async relationship => {
-          if (relationship.id) {
-            const data = await getObituariesByRelationshipId(relationship.id);
-            counts[relationship.id] = data.count;
-          }
-        })
-      );
+    // Process each relationship individually to show results as they come in
+    for (const relationship of relationshipsList) {
+      try {
+        if (relationship.id) {
+          const data = await getObituariesByRelationshipId(relationship.id);
 
-      setObituaryCounts(counts);
-    } catch (error) {
-      console.error("Error fetching obituary counts:", error);
+          // Update the count for this specific relationship
+          setObituaryCounts(prev => ({
+            ...prev,
+            [relationship.id]: data.count
+          }));
+        }
+      } catch (error) {
+        console.error(
+          `Error fetching count for relationship ${relationship.id}:`,
+          error
+        );
+
+        // Set count to 0 on error
+        setObituaryCounts(prev => ({
+          ...prev,
+          [relationship.id]: 0
+        }));
+      } finally {
+        // Remove this relationship from loading state
+        setLoadingRelationIds(prev =>
+          prev.filter(id => id !== relationship.id)
+        );
+      }
     }
   };
 
@@ -126,7 +153,7 @@ export function RelationshipAdministration() {
     if (isExpanded) {
       fetchRelationships(currentPage);
     }
-  }, [currentPage, isExpanded]);
+  }, [currentPage, itemsPerPage, isExpanded]);
 
   const handleSearch = async () => {
     if (!isExpanded) return;
@@ -258,6 +285,11 @@ export function RelationshipAdministration() {
     setCurrentPage(1);
   };
 
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to page 1 when changing items per page
+  };
+
   return (
     <Card>
       <CardHeader
@@ -342,7 +374,12 @@ export function RelationshipAdministration() {
                         </span>
                       </div>
                       <div className="flex space-x-2">
-                        {obituaryCounts[relationship.id] > 0 && (
+                        {loadingRelationIds.includes(relationship.id) ? (
+                          <span className="text-xs text-muted-foreground flex items-center">
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Loading...
+                          </span>
+                        ) : obituaryCounts[relationship.id] > 0 ? (
                           <Button
                             variant="outline"
                             size="sm"
@@ -356,7 +393,7 @@ export function RelationshipAdministration() {
                             <LinkIcon className="h-3 w-3" />
                             {obituaryCounts[relationship.id]} Obituaries
                           </Button>
-                        )}
+                        ) : null}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -374,32 +411,53 @@ export function RelationshipAdministration() {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1 || isLoading}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="py-2 px-3 text-sm">
-                  Page {currentPage} of {relationshipData.totalPages || 1}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage(prev =>
-                      Math.min(prev + 1, relationshipData.totalPages)
-                    )
-                  }
-                  disabled={
-                    currentPage === relationshipData.totalPages || isLoading
-                  }
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              <div className="flex justify-between items-center">
+                <div>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={handleItemsPerPageChange}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Items per page" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 per page</SelectItem>
+                      <SelectItem value="10">10 per page</SelectItem>
+                      <SelectItem value="25">25 per page</SelectItem>
+                      <SelectItem value="50">50 per page</SelectItem>
+                      <SelectItem value="100">100 per page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1 || isLoading}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="py-2 px-3 text-sm">
+                    Page {currentPage} of {relationshipData.totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev =>
+                        Math.min(prev + 1, relationshipData.totalPages)
+                      )
+                    }
+                    disabled={
+                      currentPage === relationshipData.totalPages || isLoading
+                    }
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </>
           ) : isDataFetched ? (
