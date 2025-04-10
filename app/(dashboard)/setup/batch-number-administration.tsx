@@ -25,7 +25,8 @@ import {
   Edit,
   Loader2,
   Plus,
-  Search
+  Search,
+  FileText
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { addBatchNumber } from "../actions";
@@ -291,27 +292,33 @@ export function BatchNumberAdministration() {
                       key={batch.id}
                       className="p-3 border rounded flex justify-between items-center hover:bg-accent"
                     >
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">
-                          {batch.number} ({batch._count?.obituaries || 0} of{" "}
-                          {batch.assignedObituaries} assigned obituaries)
-                        </span>
-                        <span className="text-sm text-muted-foreground">
+                      <div>
+                        <span className="font-medium">{batch.number}</span>
+                        <span className="ml-2 text-sm text-muted-foreground">
                           Created by {batch.createdBy.fullName || "Unknown"} on{" "}
                           {new Date(batch.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setSelectedBatchNumber(batch);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md">
+                          <FileText className="h-3 w-3" />
+                          <span>
+                            {batch._count?.obituaries || 0} of{" "}
+                            {batch.assignedObituaries} assigned
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setSelectedBatchNumber(batch);
+                            setIsEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
