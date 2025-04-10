@@ -107,17 +107,19 @@ export function ImageTable({ initialSearchQuery = "" }) {
       if (tableRef.current) {
         const windowHeight = window.innerHeight;
         const tableTop = tableRef.current.getBoundingClientRect().top;
-        const footerHeight = 60;
-        const cardFooterHeight = 140;
-        const additionalPadding = isCompactMode ? 50 : 20;
+        const footerHeight = 24; // Reasonable footer spacing
+        const cardFooterHeight = 120; // Footer controls height
+        const layoutPadding = 24; // Account for layout padding
+        const additionalPadding = isCompactMode ? 10 : 20; // Some extra padding for breathing room
         const newHeight =
           windowHeight -
           tableTop -
           footerHeight -
           cardFooterHeight -
+          layoutPadding -
           additionalPadding;
 
-        // Different minimum height based on compact mode
+        // Reasonable minimum heights
         const minHeight = isCompactMode ? 200 : 300;
         setTableHeight(`${Math.max(newHeight, minHeight)}px`);
       }
@@ -224,8 +226,8 @@ export function ImageTable({ initialSearchQuery = "" }) {
   }
 
   return (
-    <div className="pb-2">
-      <Card className="flex flex-col h-full mb-6">
+    <div className="pb-0">
+      <Card className="flex flex-col h-full mb-0">
         <CardContent className="p-0 flex-grow overflow-hidden">
           {error ? (
             <div className="w-full h-full flex flex-col items-center justify-center">
@@ -334,7 +336,7 @@ export function ImageTable({ initialSearchQuery = "" }) {
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4 p-4">
+        <CardFooter className="flex flex-col space-y-2 p-3">
           {/* Top row with filter controls */}
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
