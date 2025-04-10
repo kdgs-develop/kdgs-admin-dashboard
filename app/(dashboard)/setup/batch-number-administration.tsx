@@ -72,13 +72,25 @@ export function BatchNumberAdministration() {
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
+  const [batchStatusFilter, setBatchStatusFilter] = useState<
+    "all" | "complete" | "incomplete"
+  >("all");
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"createdAt" | "number">(
+    "createdAt"
+  );
 
   const fetchBatchNumbers = async (page: number) => {
     if (isLoading) return;
 
     setIsLoading(true);
     try {
-      const data = await getBatchNumbers(page, itemsPerPage);
+      const data = await getBatchNumbers(
+        page,
+        itemsPerPage,
+        batchStatusFilter,
+        sortOrder
+      );
       setBatchData(data);
       setIsDataFetched(true);
     } catch (error) {
@@ -99,7 +111,7 @@ export function BatchNumberAdministration() {
       // or if it's the first load (data hasn't been fetched yet)
       fetchBatchNumbers(currentPage);
     }
-  }, [currentPage, itemsPerPage, isExpanded]);
+  }, [currentPage, itemsPerPage, isExpanded, sortOrder]);
 
   const handleSearch = async () => {
     if (!isExpanded) return;
@@ -110,7 +122,13 @@ export function BatchNumberAdministration() {
         await fetchBatchNumbers(1);
         setCurrentPage(1);
       } else {
-        const results = await searchBatchNumbers(searchNumber, 1, itemsPerPage);
+        const results = await searchBatchNumbers(
+          searchNumber,
+          1,
+          itemsPerPage,
+          batchStatusFilter,
+          sortOrder
+        );
         setBatchData(results);
         setCurrentPage(1);
 
@@ -250,30 +268,130 @@ export function BatchNumberAdministration() {
       </CardHeader>
       {isExpanded && (
         <CardContent className="space-y-4">
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search by number"
-                value={searchNumber}
-                onChange={e => setSearchNumber(e.target.value)}
-              />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+              <div className="md:col-span-5">
+                <div className="text-sm font-medium mb-1">
+                  Search Batch Number
+                </div>
+                <Input
+                  placeholder="Search by number"
+                  value={searchNumber}
+                  onChange={e => setSearchNumber(e.target.value)}
+                />
+              </div>
+              <div className="md:col-span-4">
+                <div className="text-sm font-medium mb-1">Filter by Status</div>
+                <Select
+                  value={batchStatusFilter}
+                  onValueChange={(value: "all" | "complete" | "incomplete") => {
+                    setBatchStatusFilter(value);
+                    setIsFilterLoading(true);
+                    // We need to manually trigger a search when the filter changes
+                    setCurrentPage(1); // Reset to first page
+                    // Allow the state to update before searching
+                    setTimeout(() => {
+                      if (searchNumber) {
+                        // If there's a search term, use search function
+                        searchBatchNumbers(
+                          searchNumber,
+                          1,
+                          itemsPerPage,
+                          value,
+                          sortOrder
+                        )
+                          .then(results => {
+                            setBatchData(results);
+                            setIsFilterLoading(false);
+                          })
+                          .catch(error => {
+                            toast({
+                              title: "Error filtering batch numbers",
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : "An unknown error occurred",
+                              variant: "destructive"
+                            });
+                            setIsFilterLoading(false);
+                          });
+                      } else {
+                        // Otherwise just fetch with the new filter
+                        getBatchNumbers(1, itemsPerPage, value, sortOrder)
+                          .then(data => {
+                            setBatchData(data);
+                            setIsFilterLoading(false);
+                          })
+                          .catch(error => {
+                            toast({
+                              title: "Error filtering batch numbers",
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : "An unknown error occurred",
+                              variant: "destructive"
+                            });
+                            setIsFilterLoading(false);
+                          });
+                      }
+                    }, 0);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Batches</SelectItem>
+                    <SelectItem value="complete">Complete Batches</SelectItem>
+                    <SelectItem value="incomplete">
+                      Incomplete Batches
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-3 flex space-x-2 items-end">
+                <Button
+                  onClick={handleSearch}
+                  variant="secondary"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="mr-2 h-4 w-4" />
+                  )}
+                  Search
+                </Button>
+                <Button onClick={() => setIsDialogOpen(true)} variant="outline">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add New
+                </Button>
+              </div>
             </div>
-            <Button
-              onClick={handleSearch}
-              variant="secondary"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="mr-2 h-4 w-4" />
-              )}
-              Search
-            </Button>
-            <Button onClick={() => setIsDialogOpen(true)} variant="outline">
-              <Plus className="mr-2 h-4 w-4" />
-              Add New
-            </Button>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+              <div className="md:col-span-5">
+                <div className="text-sm font-medium mb-1">Sort By</div>
+                <Select
+                  value={sortOrder}
+                  onValueChange={(value: "createdAt" | "number") => {
+                    setSortOrder(value);
+                    // Reset to first page when changing sort order
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="createdAt">
+                      Creation Date (newest first)
+                    </SelectItem>
+                    <SelectItem value="number">Batch Number</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
 
           {isLoading && batchData.batchNumbers.length === 0 ? (
