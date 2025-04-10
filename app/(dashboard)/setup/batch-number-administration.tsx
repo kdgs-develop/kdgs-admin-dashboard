@@ -49,6 +49,7 @@ interface BatchNumberData {
     assignedObituaries: number;
     latestEditDate: Date | null;
     latestEditorName: string | null;
+    latestEditorRole: string | null;
   }[];
   totalCount: number;
   totalPages: number;
@@ -69,6 +70,7 @@ export function BatchNumberAdministration() {
     assignedObituaries: number;
     latestEditDate?: Date | null;
     latestEditorName?: string | null;
+    latestEditorRole?: string | null;
   } | null>(null);
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -432,6 +434,11 @@ export function BatchNumberAdministration() {
                             {batch.latestEditorName && (
                               <span className="ml-1 text-xs font-semibold text-primary">
                                 by {batch.latestEditorName}
+                                {batch.latestEditorRole && (
+                                  <span className="ml-1 text-xs text-muted-foreground">
+                                    ({batch.latestEditorRole})
+                                  </span>
+                                )}
                               </span>
                             )}
                           </div>
