@@ -47,6 +47,7 @@ interface BatchNumberData {
     createdAt: Date;
     _count?: { obituaries: number };
     assignedObituaries: number;
+    latestEditDate: Date | null;
   }[];
   totalCount: number;
   totalPages: number;
@@ -65,6 +66,7 @@ export function BatchNumberAdministration() {
     id: string;
     number: string;
     assignedObituaries: number;
+    latestEditDate?: Date | null;
   } | null>(null);
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -416,6 +418,12 @@ export function BatchNumberAdministration() {
                           Created by {batch.createdBy.fullName || "Unknown"} on{" "}
                           {new Date(batch.createdAt).toLocaleDateString()}
                         </span>
+                        {batch.latestEditDate && (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            Last updated:{" "}
+                            {new Date(batch.latestEditDate).toLocaleString()}
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <div
