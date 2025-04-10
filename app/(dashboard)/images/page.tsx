@@ -12,8 +12,8 @@ import { ImageTableWrapper } from "./image-table-wrapper";
 
 export default function ImagesPage() {
   return (
-    <div className="container mx-auto p-4 pb-12 max-w-[calc(4xl)]">
-      <Card>
+    <div className="container mx-auto px-4 pb-3 max-w-[calc(4xl)]">
+      <Card className="mb-0 shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle>Obituary Images</CardTitle>
           <CardDescription>
@@ -24,7 +24,7 @@ export default function ImagesPage() {
             Exercise caution when modifying file names.
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 pb-4">
           <Suspense fallback={<div>Loading...</div>}>
             <ImageTableWrapper />
           </Suspense>
