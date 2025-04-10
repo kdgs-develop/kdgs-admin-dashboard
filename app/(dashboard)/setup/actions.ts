@@ -1295,7 +1295,7 @@ export async function getBatchNumbers(
   page: number,
   itemsPerPage: number,
   completionStatus?: "all" | "complete" | "incomplete",
-  sortOrder: "createdAt" | "number" = "createdAt"
+  sortOrder: "createdAt" | "number" | "latestEditDate" = "createdAt"
 ) {
   try {
     const skip = (page - 1) * itemsPerPage;
@@ -1319,37 +1319,78 @@ export async function getBatchNumbers(
           },
           take: 1,
           select: {
-            editedOn: true
+            id: true,
+            editedOn: true,
+            editedBy: true
           }
         }
       },
       orderBy: {
-        [sortOrder]: sortOrder === "createdAt" ? "desc" : "asc"
+        [sortOrder === "latestEditDate" ? "createdAt" : sortOrder]:
+          sortOrder === "createdAt" || sortOrder === "latestEditDate"
+            ? "desc"
+            : "asc"
       }
     });
 
-    // Map the results to include latestEditDate
-    const batchNumbersWithLatestEdit = batchNumbersWithCounts.map(batch => {
-      // Get the latest edit date if there are any obituaries
-      const latestEditDate =
-        batch.obituaries.length > 0 ? batch.obituaries[0].editedOn : null;
+    // Get genealogist information for each batch number's latest obituary
+    const batchNumbersWithLatestEdit = await Promise.all(
+      batchNumbersWithCounts.map(async batch => {
+        // Get the latest edit date and editor if there are any obituaries
+        const latestEditDate =
+          batch.obituaries.length > 0 ? batch.obituaries[0].editedOn : null;
 
-      // Return the batch without the obituaries array but with latestEditDate
-      const { obituaries, ...batchWithoutObituaries } = batch;
-      return {
-        ...batchWithoutObituaries,
-        latestEditDate
-      };
-    });
+        // Use the editedBy field directly - it already contains the full name
+        let latestEditorName = null;
+        if (batch.obituaries.length > 0 && batch.obituaries[0].editedBy) {
+          latestEditorName = batch.obituaries[0].editedBy;
+          console.log(
+            `[getBatchNumbers] Using editor name directly: ${latestEditorName}`
+          );
+        } else {
+          console.log(
+            `[getBatchNumbers] No editedBy data for batch ${batch.number}:`,
+            batch.obituaries.length > 0
+              ? `editedBy: ${batch.obituaries[0].editedBy}`
+              : "No obituaries"
+          );
+        }
+
+        // Return the batch without the obituaries array but with latestEditDate and editor
+        const { obituaries, ...batchWithoutObituaries } = batch;
+        return {
+          ...batchWithoutObituaries,
+          latestEditDate,
+          latestEditorName
+        };
+      })
+    );
+
+    // If sorting by latestEditDate, we need to do it manually after getting the data
+    let sortedBatchNumbers = batchNumbersWithLatestEdit;
+    if (sortOrder === "latestEditDate") {
+      sortedBatchNumbers = [...batchNumbersWithLatestEdit].sort((a, b) => {
+        // Handle null values (null comes after dates)
+        if (a.latestEditDate === null && b.latestEditDate === null) return 0;
+        if (a.latestEditDate === null) return 1;
+        if (b.latestEditDate === null) return -1;
+
+        // Sort by date descending (newest first)
+        return (
+          new Date(b.latestEditDate).getTime() -
+          new Date(a.latestEditDate).getTime()
+        );
+      });
+    }
 
     // Filter based on completion status
-    let filteredBatchNumbers = batchNumbersWithLatestEdit;
+    let filteredBatchNumbers = sortedBatchNumbers;
     if (completionStatus === "complete") {
-      filteredBatchNumbers = batchNumbersWithLatestEdit.filter(
+      filteredBatchNumbers = sortedBatchNumbers.filter(
         batch => batch._count.obituaries === batch.assignedObituaries
       );
     } else if (completionStatus === "incomplete") {
-      filteredBatchNumbers = batchNumbersWithLatestEdit.filter(
+      filteredBatchNumbers = sortedBatchNumbers.filter(
         batch => batch._count.obituaries !== batch.assignedObituaries
       );
     }
@@ -1377,7 +1418,7 @@ export async function searchBatchNumbers(
   page: number,
   itemsPerPage: number,
   completionStatus?: "all" | "complete" | "incomplete",
-  sortOrder: "createdAt" | "number" = "createdAt"
+  sortOrder: "createdAt" | "number" | "latestEditDate" = "createdAt"
 ) {
   try {
     const skip = (page - 1) * itemsPerPage;
@@ -1391,7 +1432,10 @@ export async function searchBatchNumbers(
         }
       },
       orderBy: {
-        [sortOrder]: sortOrder === "createdAt" ? "desc" : "asc"
+        [sortOrder === "latestEditDate" ? "createdAt" : sortOrder]:
+          sortOrder === "createdAt" || sortOrder === "latestEditDate"
+            ? "desc"
+            : "asc"
       },
       include: {
         createdBy: {
@@ -1408,34 +1452,72 @@ export async function searchBatchNumbers(
           },
           take: 1,
           select: {
-            editedOn: true
+            id: true,
+            editedOn: true,
+            editedBy: true
           }
         }
       }
     });
 
-    // Map the results to include latestEditDate
-    const batchNumbersWithLatestEdit = batchNumbersWithCounts.map(batch => {
-      // Get the latest edit date if there are any obituaries
-      const latestEditDate =
-        batch.obituaries.length > 0 ? batch.obituaries[0].editedOn : null;
+    // Get genealogist information for each batch number's latest obituary
+    const batchNumbersWithLatestEdit = await Promise.all(
+      batchNumbersWithCounts.map(async batch => {
+        // Get the latest edit date and editor if there are any obituaries
+        const latestEditDate =
+          batch.obituaries.length > 0 ? batch.obituaries[0].editedOn : null;
 
-      // Return the batch without the obituaries array but with latestEditDate
-      const { obituaries, ...batchWithoutObituaries } = batch;
-      return {
-        ...batchWithoutObituaries,
-        latestEditDate
-      };
-    });
+        // Use the editedBy field directly - it already contains the full name
+        let latestEditorName = null;
+        if (batch.obituaries.length > 0 && batch.obituaries[0].editedBy) {
+          latestEditorName = batch.obituaries[0].editedBy;
+          console.log(
+            `[searchBatchNumbers] Using editor name directly: ${latestEditorName}`
+          );
+        } else {
+          console.log(
+            `[searchBatchNumbers] No editedBy data for batch ${batch.number}:`,
+            batch.obituaries.length > 0
+              ? `editedBy: ${batch.obituaries[0].editedBy}`
+              : "No obituaries"
+          );
+        }
+
+        // Return the batch without the obituaries array but with latestEditDate and editor
+        const { obituaries, ...batchWithoutObituaries } = batch;
+        return {
+          ...batchWithoutObituaries,
+          latestEditDate,
+          latestEditorName
+        };
+      })
+    );
+
+    // If sorting by latestEditDate, we need to do it manually after getting the data
+    let sortedBatchNumbers = batchNumbersWithLatestEdit;
+    if (sortOrder === "latestEditDate") {
+      sortedBatchNumbers = [...batchNumbersWithLatestEdit].sort((a, b) => {
+        // Handle null values (null comes after dates)
+        if (a.latestEditDate === null && b.latestEditDate === null) return 0;
+        if (a.latestEditDate === null) return 1;
+        if (b.latestEditDate === null) return -1;
+
+        // Sort by date descending (newest first)
+        return (
+          new Date(b.latestEditDate).getTime() -
+          new Date(a.latestEditDate).getTime()
+        );
+      });
+    }
 
     // Filter based on completion status
-    let filteredBatchNumbers = batchNumbersWithLatestEdit;
+    let filteredBatchNumbers = sortedBatchNumbers;
     if (completionStatus === "complete") {
-      filteredBatchNumbers = batchNumbersWithLatestEdit.filter(
+      filteredBatchNumbers = sortedBatchNumbers.filter(
         batch => batch._count.obituaries === batch.assignedObituaries
       );
     } else if (completionStatus === "incomplete") {
-      filteredBatchNumbers = batchNumbersWithLatestEdit.filter(
+      filteredBatchNumbers = sortedBatchNumbers.filter(
         batch => batch._count.obituaries !== batch.assignedObituaries
       );
     }
