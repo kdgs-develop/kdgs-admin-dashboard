@@ -47,6 +47,9 @@ interface BatchNumberData {
     createdAt: Date;
     _count?: { obituaries: number };
     assignedObituaries: number;
+    latestEditDate: Date | null;
+    latestEditorName: string | null;
+    latestEditorRole: string | null;
   }[];
   totalCount: number;
   totalPages: number;
@@ -65,6 +68,9 @@ export function BatchNumberAdministration() {
     id: string;
     number: string;
     assignedObituaries: number;
+    latestEditDate?: Date | null;
+    latestEditorName?: string | null;
+    latestEditorRole?: string | null;
   } | null>(null);
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -72,13 +78,27 @@ export function BatchNumberAdministration() {
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
+  const [batchStatusFilter, setBatchStatusFilter] = useState<
+    "all" | "complete" | "incomplete"
+  >("all");
+  const [editorRoleFilter, setEditorRoleFilter] = useState<string>("all");
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [sortOrder, setSortOrder] = useState<
+    "createdAt" | "number" | "latestEditDate"
+  >("createdAt");
 
   const fetchBatchNumbers = async (page: number) => {
     if (isLoading) return;
 
     setIsLoading(true);
     try {
-      const data = await getBatchNumbers(page, itemsPerPage);
+      const data = await getBatchNumbers(
+        page,
+        itemsPerPage,
+        batchStatusFilter,
+        sortOrder,
+        editorRoleFilter
+      );
       setBatchData(data);
       setIsDataFetched(true);
     } catch (error) {
@@ -99,7 +119,14 @@ export function BatchNumberAdministration() {
       // or if it's the first load (data hasn't been fetched yet)
       fetchBatchNumbers(currentPage);
     }
-  }, [currentPage, itemsPerPage, isExpanded]);
+  }, [
+    currentPage,
+    itemsPerPage,
+    isExpanded,
+    sortOrder,
+    editorRoleFilter,
+    batchStatusFilter
+  ]);
 
   const handleSearch = async () => {
     if (!isExpanded) return;
@@ -110,7 +137,14 @@ export function BatchNumberAdministration() {
         await fetchBatchNumbers(1);
         setCurrentPage(1);
       } else {
-        const results = await searchBatchNumbers(searchNumber, 1, itemsPerPage);
+        const results = await searchBatchNumbers(
+          searchNumber,
+          1,
+          itemsPerPage,
+          batchStatusFilter,
+          sortOrder,
+          editorRoleFilter
+        );
         setBatchData(results);
         setCurrentPage(1);
 
@@ -250,30 +284,226 @@ export function BatchNumberAdministration() {
       </CardHeader>
       {isExpanded && (
         <CardContent className="space-y-4">
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search by number"
-                value={searchNumber}
-                onChange={e => setSearchNumber(e.target.value)}
-              />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+              <div className="md:col-span-3">
+                <div className="text-sm font-medium mb-1">
+                  Search Batch Number
+                </div>
+                <Input
+                  placeholder="Search by number"
+                  value={searchNumber}
+                  onChange={e => setSearchNumber(e.target.value)}
+                />
+              </div>
+              <div className="md:col-span-3">
+                <div className="text-sm font-medium mb-1">Filter by Status</div>
+                <Select
+                  value={batchStatusFilter}
+                  onValueChange={(value: "all" | "complete" | "incomplete") => {
+                    setBatchStatusFilter(value);
+                    setIsFilterLoading(true);
+                    // We need to manually trigger a search when the filter changes
+                    setCurrentPage(1); // Reset to first page
+                    // Allow the state to update before searching
+                    setTimeout(() => {
+                      if (searchNumber) {
+                        // If there's a search term, use search function
+                        searchBatchNumbers(
+                          searchNumber,
+                          1,
+                          itemsPerPage,
+                          value,
+                          sortOrder,
+                          editorRoleFilter
+                        )
+                          .then(results => {
+                            setBatchData(results);
+                            setIsFilterLoading(false);
+                          })
+                          .catch(error => {
+                            toast({
+                              title: "Error filtering batch numbers",
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : "An unknown error occurred",
+                              variant: "destructive"
+                            });
+                            setIsFilterLoading(false);
+                          });
+                      } else {
+                        // Otherwise just fetch with the new filter
+                        getBatchNumbers(
+                          1,
+                          itemsPerPage,
+                          value,
+                          sortOrder,
+                          editorRoleFilter
+                        )
+                          .then(data => {
+                            setBatchData(data);
+                            setIsFilterLoading(false);
+                          })
+                          .catch(error => {
+                            toast({
+                              title: "Error filtering batch numbers",
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : "An unknown error occurred",
+                              variant: "destructive"
+                            });
+                            setIsFilterLoading(false);
+                          });
+                      }
+                    }, 0);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Batches</SelectItem>
+                    <SelectItem value="complete">Complete Batches</SelectItem>
+                    <SelectItem value="incomplete">
+                      Incomplete Batches
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-3">
+                <div className="text-sm font-medium mb-1">
+                  Filter by Last Editor Role
+                </div>
+                <Select
+                  value={editorRoleFilter}
+                  onValueChange={(value: string) => {
+                    setEditorRoleFilter(value);
+                    setIsFilterLoading(true);
+                    // Reset to first page
+                    setCurrentPage(1);
+                    // Allow the state to update before searching
+                    setTimeout(() => {
+                      if (searchNumber) {
+                        // If there's a search term, use search function
+                        searchBatchNumbers(
+                          searchNumber,
+                          1,
+                          itemsPerPage,
+                          batchStatusFilter,
+                          sortOrder,
+                          value
+                        )
+                          .then(results => {
+                            setBatchData(results);
+                            setIsFilterLoading(false);
+                          })
+                          .catch(error => {
+                            toast({
+                              title: "Error filtering batch numbers",
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : "An unknown error occurred",
+                              variant: "destructive"
+                            });
+                            setIsFilterLoading(false);
+                          });
+                      } else {
+                        // Otherwise just fetch with the new filter
+                        getBatchNumbers(
+                          1,
+                          itemsPerPage,
+                          batchStatusFilter,
+                          sortOrder,
+                          value
+                        )
+                          .then(data => {
+                            setBatchData(data);
+                            setIsFilterLoading(false);
+                          })
+                          .catch(error => {
+                            toast({
+                              title: "Error filtering batch numbers",
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : "An unknown error occurred",
+                              variant: "destructive"
+                            });
+                            setIsFilterLoading(false);
+                          });
+                      }
+                    }, 0);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter by editor role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="SCANNER">Scanner</SelectItem>
+                    <SelectItem value="INDEXER">Indexer</SelectItem>
+                    <SelectItem value="PROOFREADER">Proofreader</SelectItem>
+                    <SelectItem value="PROCESS_MANAGER">
+                      Process Manager
+                    </SelectItem>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-3 flex space-x-2 items-end">
+                <Button
+                  onClick={handleSearch}
+                  variant="secondary"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="mr-2 h-4 w-4" />
+                  )}
+                  Search
+                </Button>
+                <Button onClick={() => setIsDialogOpen(true)} variant="outline">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add New
+                </Button>
+              </div>
             </div>
-            <Button
-              onClick={handleSearch}
-              variant="secondary"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="mr-2 h-4 w-4" />
-              )}
-              Search
-            </Button>
-            <Button onClick={() => setIsDialogOpen(true)} variant="outline">
-              <Plus className="mr-2 h-4 w-4" />
-              Add New
-            </Button>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+              <div className="md:col-span-3">
+                <div className="text-sm font-medium mb-1">Sort By</div>
+                <Select
+                  value={sortOrder}
+                  onValueChange={(
+                    value: "createdAt" | "number" | "latestEditDate"
+                  ) => {
+                    setSortOrder(value);
+                    // Reset to first page when changing sort order
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="createdAt">
+                      Creation Date (newest first)
+                    </SelectItem>
+                    <SelectItem value="number">Batch Number</SelectItem>
+                    <SelectItem value="latestEditDate">
+                      Latest Updated (newest first)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-9">
+                {/* Empty space for alignment */}
+              </div>
+            </div>
           </div>
 
           {isLoading && batchData.batchNumbers.length === 0 ? (
@@ -298,13 +528,42 @@ export function BatchNumberAdministration() {
                           Created by {batch.createdBy.fullName || "Unknown"} on{" "}
                           {new Date(batch.createdAt).toLocaleDateString()}
                         </span>
+                        {batch.latestEditDate && (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            Last updated:{" "}
+                            {new Date(batch.latestEditDate).toLocaleString()}
+                            {batch.latestEditorName && (
+                              <span className="ml-1 text-xs font-semibold text-primary">
+                                by {batch.latestEditorName}
+                                {batch.latestEditorRole && (
+                                  <span className="ml-1 text-xs text-muted-foreground">
+                                    ({batch.latestEditorRole})
+                                  </span>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md">
+                        <div
+                          className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md ${
+                            batch._count?.obituaries ===
+                            batch.assignedObituaries
+                              ? "bg-green-50 hover:bg-green-100 border border-green-200 text-green-700"
+                              : "bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700"
+                          }`}
+                        >
                           <FileText className="h-3 w-3" />
                           <span>
                             {batch._count?.obituaries || 0} of{" "}
                             {batch.assignedObituaries} assigned
+                            {batch._count?.obituaries ===
+                              batch.assignedObituaries && (
+                              <span className="ml-1 font-medium">
+                                • Complete
+                              </span>
+                            )}
                           </span>
                         </div>
                         <Button

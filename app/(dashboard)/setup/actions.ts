@@ -1291,42 +1291,134 @@ export async function deleteRelationship(id: string) {
   revalidatePath("/");
 }
 
-export async function getBatchNumbers(page: number, itemsPerPage: number) {
+export async function getBatchNumbers(
+  page: number,
+  itemsPerPage: number,
+  completionStatus?: "all" | "complete" | "incomplete",
+  sortOrder: "createdAt" | "number" | "latestEditDate" = "createdAt",
+  editorRoleFilter: string = "all"
+) {
   try {
     const skip = (page - 1) * itemsPerPage;
 
-    console.log("Fetching batch numbers with counts...");
-
-    const [batchNumbers, totalCount] = await Promise.all([
-      prisma.batchNumber.findMany({
-        skip,
-        take: itemsPerPage,
-        include: {
-          createdBy: {
-            select: {
-              fullName: true
-            }
-          },
-          _count: {
-            select: {
-              obituaries: true
-            }
+    // Get batch numbers with their obituary counts and latest edit date
+    const batchNumbersWithCounts = await prisma.batchNumber.findMany({
+      include: {
+        createdBy: {
+          select: {
+            fullName: true
           }
         },
-        orderBy: {
-          createdAt: "desc"
+        _count: {
+          select: {
+            obituaries: true
+          }
+        },
+        obituaries: {
+          orderBy: {
+            editedOn: "desc"
+          },
+          take: 1,
+          select: {
+            id: true,
+            editedOn: true,
+            editedBy: true
+          }
         }
-      }),
-      prisma.batchNumber.count()
-    ]);
+      },
+      orderBy: {
+        [sortOrder === "latestEditDate" ? "createdAt" : sortOrder]:
+          sortOrder === "createdAt" || sortOrder === "latestEditDate"
+            ? "desc"
+            : "asc"
+      }
+    });
 
-    console.log(
-      "Batch numbers with counts:",
-      JSON.stringify(batchNumbers, null, 2)
+    // Get genealogist information for each batch number's latest obituary
+    const batchNumbersWithLatestEdit = await Promise.all(
+      batchNumbersWithCounts.map(async batch => {
+        // Get the latest edit date and editor if there are any obituaries
+        const latestEditDate =
+          batch.obituaries.length > 0 ? batch.obituaries[0].editedOn : null;
+
+        // Use the editedBy field directly - it already contains the full name
+        let latestEditorName = null;
+        let latestEditorRole = null;
+
+        if (batch.obituaries.length > 0 && batch.obituaries[0].editedBy) {
+          latestEditorName = batch.obituaries[0].editedBy;
+
+          // Try to find the genealogist by name to get their role
+          const genealogist = await prisma.genealogist.findFirst({
+            where: {
+              fullName: batch.obituaries[0].editedBy
+            },
+            select: {
+              role: true
+            }
+          });
+
+          if (genealogist?.role) {
+            latestEditorRole = genealogist.role;
+          }
+        }
+
+        // Return the batch without the obituaries array but with latestEditDate, editor and role
+        const { obituaries, ...batchWithoutObituaries } = batch;
+        return {
+          ...batchWithoutObituaries,
+          latestEditDate,
+          latestEditorName,
+          latestEditorRole
+        };
+      })
     );
 
+    // If sorting by latestEditDate, we need to do it manually after getting the data
+    let sortedBatchNumbers = batchNumbersWithLatestEdit;
+    if (sortOrder === "latestEditDate") {
+      sortedBatchNumbers = [...batchNumbersWithLatestEdit].sort((a, b) => {
+        // Handle null values (null comes after dates)
+        if (a.latestEditDate === null && b.latestEditDate === null) return 0;
+        if (a.latestEditDate === null) return 1;
+        if (b.latestEditDate === null) return -1;
+
+        // Sort by date descending (newest first)
+        return (
+          new Date(b.latestEditDate).getTime() -
+          new Date(a.latestEditDate).getTime()
+        );
+      });
+    }
+
+    // Filter based on completion status
+    let filteredBatchNumbers = sortedBatchNumbers;
+    if (completionStatus === "complete") {
+      filteredBatchNumbers = sortedBatchNumbers.filter(
+        batch => batch._count.obituaries === batch.assignedObituaries
+      );
+    } else if (completionStatus === "incomplete") {
+      filteredBatchNumbers = sortedBatchNumbers.filter(
+        batch => batch._count.obituaries !== batch.assignedObituaries
+      );
+    }
+
+    // Filter by editor role if specified
+    if (editorRoleFilter !== "all") {
+      filteredBatchNumbers = filteredBatchNumbers.filter(
+        batch => batch.latestEditorRole === editorRoleFilter
+      );
+    }
+
+    // Apply pagination after filtering
+    const paginatedBatchNumbers = filteredBatchNumbers.slice(
+      skip,
+      skip + itemsPerPage
+    );
+    const totalCount = filteredBatchNumbers.length;
+
     return {
-      batchNumbers,
+      batchNumbers: paginatedBatchNumbers,
       totalCount,
       totalPages: Math.ceil(totalCount / itemsPerPage)
     };
@@ -1339,47 +1431,136 @@ export async function getBatchNumbers(page: number, itemsPerPage: number) {
 export async function searchBatchNumbers(
   searchTerm: string,
   page: number,
-  itemsPerPage: number
+  itemsPerPage: number,
+  completionStatus?: "all" | "complete" | "incomplete",
+  sortOrder: "createdAt" | "number" | "latestEditDate" = "createdAt",
+  editorRoleFilter: string = "all"
 ) {
   try {
     const skip = (page - 1) * itemsPerPage;
 
-    const [batchNumbers, totalCount] = await Promise.all([
-      prisma.batchNumber.findMany({
-        where: {
-          number: {
-            contains: searchTerm,
-            mode: "insensitive"
+    // First get all batch numbers matching the search term with their counts and latest edit date
+    const batchNumbersWithCounts = await prisma.batchNumber.findMany({
+      where: {
+        number: {
+          contains: searchTerm,
+          mode: "insensitive"
+        }
+      },
+      orderBy: {
+        [sortOrder === "latestEditDate" ? "createdAt" : sortOrder]:
+          sortOrder === "createdAt" || sortOrder === "latestEditDate"
+            ? "desc"
+            : "asc"
+      },
+      include: {
+        createdBy: {
+          select: {
+            fullName: true
           }
         },
-        skip,
-        take: itemsPerPage,
-        orderBy: {
-          createdAt: "desc"
+        _count: {
+          select: { obituaries: true }
         },
-        include: {
-          createdBy: {
-            select: {
-              fullName: true
-            }
+        obituaries: {
+          orderBy: {
+            editedOn: "desc"
           },
-          _count: {
-            select: { obituaries: true }
+          take: 1,
+          select: {
+            id: true,
+            editedOn: true,
+            editedBy: true
           }
         }
-      }),
-      prisma.batchNumber.count({
-        where: {
-          number: {
-            contains: searchTerm,
-            mode: "insensitive"
+      }
+    });
+
+    // Get genealogist information for each batch number's latest obituary
+    const batchNumbersWithLatestEdit = await Promise.all(
+      batchNumbersWithCounts.map(async batch => {
+        // Get the latest edit date and editor if there are any obituaries
+        const latestEditDate =
+          batch.obituaries.length > 0 ? batch.obituaries[0].editedOn : null;
+
+        // Use the editedBy field directly - it already contains the full name
+        let latestEditorName = null;
+        let latestEditorRole = null;
+
+        if (batch.obituaries.length > 0 && batch.obituaries[0].editedBy) {
+          latestEditorName = batch.obituaries[0].editedBy;
+
+          // Try to find the genealogist by name to get their role
+          const genealogist = await prisma.genealogist.findFirst({
+            where: {
+              fullName: batch.obituaries[0].editedBy
+            },
+            select: {
+              role: true
+            }
+          });
+
+          if (genealogist?.role) {
+            latestEditorRole = genealogist.role;
           }
         }
+
+        // Return the batch without the obituaries array but with latestEditDate, editor and role
+        const { obituaries, ...batchWithoutObituaries } = batch;
+        return {
+          ...batchWithoutObituaries,
+          latestEditDate,
+          latestEditorName,
+          latestEditorRole
+        };
       })
-    ]);
+    );
+
+    // If sorting by latestEditDate, we need to do it manually after getting the data
+    let sortedBatchNumbers = batchNumbersWithLatestEdit;
+    if (sortOrder === "latestEditDate") {
+      sortedBatchNumbers = [...batchNumbersWithLatestEdit].sort((a, b) => {
+        // Handle null values (null comes after dates)
+        if (a.latestEditDate === null && b.latestEditDate === null) return 0;
+        if (a.latestEditDate === null) return 1;
+        if (b.latestEditDate === null) return -1;
+
+        // Sort by date descending (newest first)
+        return (
+          new Date(b.latestEditDate).getTime() -
+          new Date(a.latestEditDate).getTime()
+        );
+      });
+    }
+
+    // Filter based on completion status
+    let filteredBatchNumbers = sortedBatchNumbers;
+    if (completionStatus === "complete") {
+      filteredBatchNumbers = sortedBatchNumbers.filter(
+        batch => batch._count.obituaries === batch.assignedObituaries
+      );
+    } else if (completionStatus === "incomplete") {
+      filteredBatchNumbers = sortedBatchNumbers.filter(
+        batch => batch._count.obituaries !== batch.assignedObituaries
+      );
+    }
+
+    // Filter by editor role if specified
+    if (editorRoleFilter !== "all") {
+      filteredBatchNumbers = filteredBatchNumbers.filter(
+        batch => batch.latestEditorRole === editorRoleFilter
+      );
+    }
+
+    // Apply pagination after filtering
+    const paginatedBatchNumbers = filteredBatchNumbers.slice(
+      skip,
+      skip + itemsPerPage
+    );
+    const totalCount = filteredBatchNumbers.length;
 
     return {
-      batchNumbers,
+      batchNumbers: paginatedBatchNumbers,
       totalCount,
       totalPages: Math.ceil(totalCount / itemsPerPage)
     };

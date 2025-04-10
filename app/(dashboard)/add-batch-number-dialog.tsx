@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -16,15 +16,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { toast } from '@/hooks/use-toast';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 const formSchema = z.object({
-  number: z.string().min(1, 'Batch number is required'),
+  number: z.string().min(1, "Batch number is required"),
   assignedObituaries: z.number().min(1).default(25)
 });
 
@@ -44,7 +44,7 @@ export function AddBatchNumberDialog({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      number: initialNumber || '',
+      number: initialNumber || "",
       assignedObituaries: 25
     }
   });
@@ -56,9 +56,9 @@ export function AddBatchNumberDialog({
       onClose();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to create batch number',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to create batch number",
+        variant: "destructive"
       });
     }
   };
@@ -94,7 +94,14 @@ export function AddBatchNumberDialog({
                 <FormItem>
                   <FormLabel>Assigned Obituaries</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={e =>
+                        field.onChange(parseInt(e.target.value) || 0)
+                      }
+                      value={field.value}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -108,4 +115,4 @@ export function AddBatchNumberDialog({
       </DialogContent>
     </Dialog>
   );
-} 
+}
