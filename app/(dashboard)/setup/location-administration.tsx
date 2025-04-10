@@ -58,6 +58,7 @@ export function LocationAdministration() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
   const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
@@ -151,7 +152,8 @@ export function LocationAdministration() {
             searchName || undefined,
             searchProvince || undefined,
             searchCountryId ? parseInt(searchCountryId) : undefined,
-            currentPage
+            currentPage,
+            itemsPerPage
           );
           setCities(result.cities);
           setTotalPages(result.totalPages);
@@ -165,7 +167,7 @@ export function LocationAdministration() {
           }
         } else {
           const [citiesResult, countriesResult] = await Promise.all([
-            getCitiesWithPagination(currentPage),
+            getCitiesWithPagination(currentPage, itemsPerPage),
             getCountries(1, 100)
           ]);
           setCities(citiesResult.cities);
@@ -198,6 +200,7 @@ export function LocationAdministration() {
   }, [
     isExpanded,
     currentPage,
+    itemsPerPage,
     isSearchMode,
     searchName,
     searchProvince,
@@ -296,7 +299,7 @@ export function LocationAdministration() {
 
       // Only refetch if the component is expanded
       if (isExpanded) {
-        const result = await getCitiesWithPagination(1);
+        const result = await getCitiesWithPagination(1, itemsPerPage);
         setCities(result.cities);
         setTotalPages(result.totalPages);
         // Reset to page 1 after adding
@@ -334,7 +337,7 @@ export function LocationAdministration() {
 
       // Only refetch if the component is expanded
       if (isExpanded) {
-        const result = await getCitiesWithPagination(currentPage);
+        const result = await getCitiesWithPagination(currentPage, itemsPerPage);
         setCities(result.cities);
         setTotalPages(result.totalPages);
 
@@ -366,7 +369,7 @@ export function LocationAdministration() {
 
       // Only refetch if the component is expanded
       if (isExpanded) {
-        const result = await getCitiesWithPagination(currentPage);
+        const result = await getCitiesWithPagination(currentPage, itemsPerPage);
         setCities(result.cities);
         setTotalPages(result.totalPages);
 
@@ -411,7 +414,8 @@ export function LocationAdministration() {
         localSearchName || undefined,
         localSearchProvince || undefined,
         localSearchCountryId ? parseInt(localSearchCountryId) : undefined,
-        1
+        1,
+        itemsPerPage
       );
       setCities(result.cities);
       setTotalPages(result.totalPages);
@@ -451,7 +455,7 @@ export function LocationAdministration() {
     shouldFetchRelations.current = true;
 
     try {
-      const result = await getCitiesWithPagination(1);
+      const result = await getCitiesWithPagination(1, itemsPerPage);
       setCities(result.cities);
       setTotalPages(result.totalPages);
 
@@ -469,6 +473,11 @@ export function LocationAdministration() {
         variant: "destructive"
       });
     }
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to page 1 when changing items per page
   };
 
   const handleOpenAddDialog = () => {
@@ -679,7 +688,24 @@ export function LocationAdministration() {
                   </div>
                 ))}
               </div>
-              <div className="flex justify-end items-center">
+              <div className="flex justify-between items-center">
+                <div>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={handleItemsPerPageChange}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Items per page" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 per page</SelectItem>
+                      <SelectItem value="10">10 per page</SelectItem>
+                      <SelectItem value="25">25 per page</SelectItem>
+                      <SelectItem value="50">50 per page</SelectItem>
+                      <SelectItem value="100">100 per page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="flex space-x-2">
                   <Button
                     variant="outline"
