@@ -443,14 +443,13 @@ export function BatchNumberAdministration() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="SCANNER">Scanner</SelectItem>
                     <SelectItem value="INDEXER">Indexer</SelectItem>
                     <SelectItem value="PROOFREADER">Proofreader</SelectItem>
-                    <SelectItem value="SCANNER">Scanner</SelectItem>
-                    <SelectItem value="VIEWER">Viewer</SelectItem>
                     <SelectItem value="PROCESS_MANAGER">
                       Process Manager
                     </SelectItem>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
