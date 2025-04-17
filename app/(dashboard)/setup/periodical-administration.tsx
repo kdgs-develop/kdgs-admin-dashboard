@@ -71,6 +71,7 @@ export function PeriodicalAdministration() {
   const [obituaryCounts, setObituaryCounts] = useState<Record<number, number>>(
     {}
   );
+  const [loadingRelationIds, setLoadingRelationIds] = useState<number[]>([]);
 
   // Related obituaries states
   const [relatedPeriodical, setRelatedPeriodical] = useState<{
@@ -116,21 +117,36 @@ export function PeriodicalAdministration() {
   const fetchObituaryCounts = async (
     periodicalsList: PeriodicalWithRelations[]
   ) => {
-    try {
-      const counts: Record<number, number> = {};
+    // Mark all periodicals as loading
+    setLoadingRelationIds(periodicalsList.map(periodical => periodical.id));
 
-      await Promise.all(
-        periodicalsList.map(async periodical => {
-          if (periodical.id) {
-            const data = await getObituariesByPeriodicalId(periodical.id);
-            counts[periodical.id] = data.count;
-          }
-        })
-      );
+    // Process each periodical individually to show results as they come in
+    for (const periodical of periodicalsList) {
+      try {
+        if (periodical.id) {
+          const data = await getObituariesByPeriodicalId(periodical.id);
 
-      setObituaryCounts(counts);
-    } catch (error) {
-      console.error("Error fetching obituary counts:", error);
+          // Update the count for this specific periodical
+          setObituaryCounts(prev => ({
+            ...prev,
+            [periodical.id]: data.count
+          }));
+        }
+      } catch (error) {
+        console.error(
+          `Error fetching count for periodical ${periodical.id}:`,
+          error
+        );
+
+        // Set count to 0 on error
+        setObituaryCounts(prev => ({
+          ...prev,
+          [periodical.id]: 0
+        }));
+      } finally {
+        // Remove this periodical from loading state
+        setLoadingRelationIds(prev => prev.filter(id => id !== periodical.id));
+      }
     }
   };
 
@@ -402,7 +418,12 @@ export function PeriodicalAdministration() {
                         </span>
                       </div>
                       <div className="flex space-x-2">
-                        {obituaryCounts[periodical.id] > 0 && (
+                        {loadingRelationIds.includes(periodical.id) ? (
+                          <span className="text-xs text-muted-foreground flex items-center">
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Loading...
+                          </span>
+                        ) : obituaryCounts[periodical.id] > 0 ? (
                           <Button
                             variant="outline"
                             size="sm"
@@ -419,7 +440,7 @@ export function PeriodicalAdministration() {
                             <LinkIcon className="h-3 w-3" />
                             {obituaryCounts[periodical.id]} Obituaries
                           </Button>
-                        )}
+                        ) : null}
                         <Button
                           variant="ghost"
                           size="sm"
