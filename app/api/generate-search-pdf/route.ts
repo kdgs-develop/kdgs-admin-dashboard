@@ -1,5 +1,5 @@
 import { getObituariesGeneratePDF } from "@/lib/db";
-import minioClient from "@/lib/minio-client";
+import { Client } from "minio";
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,6 +14,30 @@ import {
 
 
 export async function POST(req: NextRequest) {
+   // Initialize MinIO client
+   const minioClient = new Client({
+    endPoint: process.env.MINIO_ENDPOINT || "",
+    port: parseInt(process.env.MINIO_PORT || "9000"),
+    useSSL: process.env.MINIO_USE_SSL === "true",
+    accessKey: process.env.MINIO_ACCESS_KEY || "",
+    secretKey: process.env.MINIO_SECRET_KEY || ""
+  });
+
+  const BUCKET_NAME = process.env.MINIO_BUCKET_NAME || "";
+
+  // Validate required environment variables
+  if (
+    !process.env.MINIO_ENDPOINT ||
+    !process.env.MINIO_ACCESS_KEY ||
+    !process.env.MINIO_SECRET_KEY ||
+    !process.env.MINIO_BUCKET_NAME
+  ) {
+    return NextResponse.json(
+      { error: "MinIO configuration is incomplete" },
+      { status: 500 }
+    );
+  }
+
   const LETTER_WIDTH = 612;
   const LETTER_HEIGHT = 792;
   const MARGIN = 35;
