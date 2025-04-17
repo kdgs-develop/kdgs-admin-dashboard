@@ -35,6 +35,13 @@ import AddPeriodicalDialog from "./add-periodical-dialog";
 import EditPeriodicalDialog from "./edit-periodical-dialog";
 import { CityWithRelations, PeriodicalWithRelations } from "@/types/prisma";
 import { RelatedPeriodicalObituariesDialog } from "./related-periodical-obituaries-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 interface PeriodicalData {
   periodicals: PeriodicalWithRelations[];
@@ -58,7 +65,7 @@ export function PeriodicalAdministration() {
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [obituaryCounts, setObituaryCounts] = useState<Record<number, number>>(
@@ -144,61 +151,21 @@ export function PeriodicalAdministration() {
   useEffect(() => {
     // Only fetch when expanded
     if (isExpanded) {
-      const fetchData = async () => {
-        setIsLoading(true);
-        try {
-          const [periodicalsResult, citiesResult] = await Promise.all([
-            getPeriodicals(currentPage, itemsPerPage),
-            getCities()
-          ]);
-
-          const periodicals = periodicalsResult.periodicals.map(p => ({
-            id: p.id,
-            name: p.name,
-            url: p.url,
-            cityId: p.city?.id || null,
-            city: p.city || null,
-            _count: p._count
-          }));
-
-          setPeriodicalData({
-            periodicals,
-            totalCount: periodicalsResult.totalCount,
-            totalPages: periodicalsResult.totalPages
-          });
-          setCities(citiesResult);
-          setIsDataFetched(true);
-
-          // Fetch obituary counts
-          await fetchObituaryCounts(periodicals);
-        } catch (error) {
-          toast({
-            title: "Error fetching data",
-            description:
-              error instanceof Error
-                ? error.message
-                : "An unknown error occurred",
-            variant: "destructive"
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchData();
+      fetchPeriodicals(currentPage);
     }
-  }, [currentPage, isExpanded, toast]);
+  }, [currentPage, isExpanded, itemsPerPage]);
 
   const handleSearch = async () => {
     if (!isExpanded) return;
 
-    if (!searchName) {
-      await fetchPeriodicals(1);
-      setCurrentPage(1);
-      return;
-    }
-
     setIsLoading(true);
     try {
+      if (!searchName.trim()) {
+        await fetchPeriodicals(1);
+        setCurrentPage(1);
+        return;
+      }
+
       const results = await searchPeriodicals(searchName, 1, itemsPerPage);
       const periodicals = results.periodicals.map(p => ({
         id: p.id,
@@ -218,13 +185,6 @@ export function PeriodicalAdministration() {
 
       // Fetch obituary counts for search results
       await fetchObituaryCounts(periodicals);
-
-      if (results.totalCount === 0) {
-        toast({
-          title: "No results found",
-          description: `No publications found matching "${searchName}"`
-        });
-      }
     } catch (error) {
       toast({
         title: "Error searching publications",
@@ -334,6 +294,11 @@ export function PeriodicalAdministration() {
     setSearchName("");
     await fetchPeriodicals(1);
     setCurrentPage(1);
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to page 1 when changing items per page
   };
 
   return (
@@ -473,32 +438,53 @@ export function PeriodicalAdministration() {
               </div>
 
               {/* Pagination Controls */}
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1 || isLoading}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="py-2 px-3 text-sm">
-                  Page {currentPage} of {periodicalData.totalPages || 1}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage(prev =>
-                      Math.min(prev + 1, periodicalData.totalPages)
-                    )
-                  }
-                  disabled={
-                    currentPage === periodicalData.totalPages || isLoading
-                  }
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              <div className="flex justify-between items-center">
+                <div>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={handleItemsPerPageChange}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Items per page" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 per page</SelectItem>
+                      <SelectItem value="10">10 per page</SelectItem>
+                      <SelectItem value="25">25 per page</SelectItem>
+                      <SelectItem value="50">50 per page</SelectItem>
+                      <SelectItem value="100">100 per page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1 || isLoading}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="py-2 px-3 text-sm">
+                    Page {currentPage} of {periodicalData.totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev =>
+                        Math.min(prev + 1, periodicalData.totalPages)
+                      )
+                    }
+                    disabled={
+                      currentPage === periodicalData.totalPages || isLoading
+                    }
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </>
           ) : isDataFetched ? (
