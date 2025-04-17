@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,22 +8,29 @@ import {
   CardFooter,
   CardHeader,
   CardTitle
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
   TableHead,
   TableHeader,
   TableRow
-} from '@/components/ui/table';
-import { getUserData, Obituary as ObituaryType } from '@/lib/db';
-import { FilePlus } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { startTransition, useEffect, useState } from 'react';
-import { fetchObituariesAction, getEditObituaryDialogData } from './actions';
-import { AddObituaryDialog } from './add-obituary-dialog';
-import { CreateFileNumberDialog } from './create-file-number-dialog';
-import { Obituary } from './obituary';
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { getUserData, Obituary as ObituaryType } from "@/lib/db";
+import { FilePlus, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { startTransition, useEffect, useState } from "react";
+import { fetchObituariesAction, getEditObituaryDialogData } from "./actions";
+import { AddObituaryDialog } from "./add-obituary-dialog";
+import { CreateFileNumberDialog } from "./create-file-number-dialog";
+import { Obituary } from "./obituary";
 
 interface AddObituaryDialogProps {
   isOpen: boolean;
@@ -67,6 +74,9 @@ export function ObituariesTable({
   );
   const [isCreateFileNumberDialogOpen, setIsCreateFileNumberDialogOpen] =
     useState(false);
+  const [loadingButton, setLoadingButton] = useState<"prev" | "next" | null>(
+    null
+  );
 
   useEffect(() => {
     async function fetchUserData() {
@@ -88,18 +98,34 @@ export function ObituariesTable({
   }, [offset, limit, search, refreshTrigger]);
 
   function prevPage() {
+    setLoadingButton("prev");
     const newOffset = Math.max(offset - limit, 0);
-    router.push(`/?offset=${newOffset}&q=${search}`, { scroll: false });
+    router.push(`/?offset=${newOffset}&limit=${limit}&q=${search}`, {
+      scroll: false
+    });
   }
 
   function nextPage() {
+    setLoadingButton("next");
     const newOffset = offset + limit;
-    router.push(`/?offset=${newOffset}&q=${search}`, { scroll: false });
+    router.push(`/?offset=${newOffset}&limit=${limit}&q=${search}`, {
+      scroll: false
+    });
   }
+
+  function handleItemsPerPageChange(value: string) {
+    setLoadingButton(null);
+    const newLimit = parseInt(value, 10);
+    router.push(`/?offset=0&limit=${newLimit}&q=${search}`, { scroll: false });
+  }
+
+  useEffect(() => {
+    setLoadingButton(null);
+  }, [obituaries]);
 
   return (
     <>
-      <Card className="w-full">
+      <Card className="w-full mb-4">
         <CardHeader className="flex flex-row items-start justify-between gap-2">
           <div>
             <CardTitle className="mb-1">Obituary Index</CardTitle>
@@ -116,7 +142,7 @@ export function ObituariesTable({
           <div className="flex gap-2">
             <Button
               disabled={
-                role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
+                role !== "ADMIN" && role !== "PROOFREADER" && role !== "INDEXER"
               }
               onClick={() => setIsCreateFileNumberDialogOpen(true)}
               className="flex gap-2 items-center justify-center w-32 h-10 mr-5 whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 "
@@ -143,7 +169,7 @@ export function ObituariesTable({
             </TableHeader>
             <TableBody>
               {obituaries.map(
-                (obituary) =>
+                obituary =>
                   obituary && (
                     <Obituary
                       key={obituary.id}
@@ -164,27 +190,57 @@ export function ObituariesTable({
           </Table>
         </CardContent>
         <CardFooter className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Showing {Math.min(offset + 1, totalObituaries)}-
-            {Math.min(offset + limit, totalObituaries)} of {totalObituaries}{' '}
-            obituaries
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {Math.min(offset + 1, totalObituaries)}-
+              {Math.min(offset + limit, totalObituaries)} of {totalObituaries}{" "}
+              obituaries
+            </div>
+            <Select
+              value={limit.toString()}
+              onValueChange={handleItemsPerPageChange}
+              disabled={loadingButton !== null}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Items per page" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5 per page</SelectItem>
+                <SelectItem value="10">10 per page</SelectItem>
+                <SelectItem value="25">25 per page</SelectItem>
+                <SelectItem value="50">50 per page</SelectItem>
+                <SelectItem value="100">100 per page</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-x-2">
             <Button
               onClick={prevPage}
-              disabled={offset === 0}
+              disabled={offset === 0 || loadingButton !== null}
               variant="outline"
               size="sm"
+              className="w-[80px]"
             >
-              Previous
+              {loadingButton === "prev" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Previous"
+              )}
             </Button>
             <Button
               onClick={nextPage}
-              disabled={offset + limit >= totalObituaries}
+              disabled={
+                offset + limit >= totalObituaries || loadingButton !== null
+              }
               variant="outline"
               size="sm"
+              className="w-[80px]"
             >
-              Next
+              {loadingButton === "next" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Next"
+              )}
             </Button>
           </div>
         </CardFooter>
@@ -193,16 +249,16 @@ export function ObituariesTable({
         <AddObituaryDialog
           isOpen={isAddDialogOpen}
           onClose={() => setIsAddDialogOpen(false)}
-          onSave={(newObituary) => {
+          onSave={newObituary => {
             setObituaries([...obituaries, newObituary]);
             setTotalObituaries(totalObituaries + 1);
           }}
           {...dialogData}
           role={role}
-          currentUserFullName={currentUserFullName ?? ''}
-          cities={dialogData.cities.map((city) => ({
+          currentUserFullName={currentUserFullName ?? ""}
+          cities={dialogData.cities.map(city => ({
             id: city.id,
-            name: city.name || '',
+            name: city.name || "",
             province: city.province,
             country: city.country
           }))}
@@ -212,7 +268,7 @@ export function ObituariesTable({
       <CreateFileNumberDialog
         isOpen={isCreateFileNumberDialogOpen}
         onClose={() => setIsCreateFileNumberDialogOpen(false)}
-        onSave={(newObituary) => {
+        onSave={newObituary => {
           startTransition(() => {
             router.push(`/?q=${newObituary?.reference!}`);
           });
