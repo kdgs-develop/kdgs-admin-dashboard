@@ -5,7 +5,7 @@ const nextConfig = {
       // ... existing patterns
       {
         protocol: "https",
-        hostname: process.env.MINIO_ENDPOINT,
+        hostname: "minio-t0g840w8wc8wskws0cg80okw.82.180.133.192.sslip.io",
         port: "",
         pathname: "/**"
       },
@@ -26,7 +26,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "dashboard-*.kdgs.ca",
+        hostname: "*.dashboard.kdgs.ca",
         pathname: "/**"
       }
     ]
