@@ -26,7 +26,7 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "dashboard-*.kdgs.ca",
+        hostname: "*.dashboard.kdgs.ca",
         pathname: "/**"
       }
     ]
