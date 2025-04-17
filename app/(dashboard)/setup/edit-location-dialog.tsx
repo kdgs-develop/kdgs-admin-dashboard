@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,14 +18,14 @@ import {
   FormItem,
   FormLabel,
   FormControl,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
 import {
   AlertDialog,
@@ -36,7 +36,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
 
@@ -44,8 +44,8 @@ const formSchema = z.object({
   name: z.string().optional(),
   province: z.string().optional(),
   countryId: z.string({
-    required_error: "Country is required",
-  }),
+    required_error: "Country is required"
+  })
 });
 
 type EditLocationDialogProps = {
@@ -73,15 +73,15 @@ function EditLocationDialog({
   onEditCity,
   onDeleteCity,
   city,
-  countries,
+  countries
 }: EditLocationDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: city?.name || "",
       province: city?.province || "",
-      countryId: city?.country?.id?.toString() || "",
-    },
+      countryId: city?.country?.id?.toString() || ""
+    }
   });
 
   useEffect(() => {
@@ -89,7 +89,7 @@ function EditLocationDialog({
       form.reset({
         name: city?.name || "",
         province: city?.province || "",
-        countryId: city?.country?.id?.toString() || "",
+        countryId: city?.country?.id?.toString() || ""
       });
     }
   }, [city, form]);
@@ -120,6 +120,36 @@ function EditLocationDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
+              name="countryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs">Country (Required)</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Select a country" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {countries.map(country => (
+                        <SelectItem
+                          key={country.id}
+                          value={country.id.toString()}
+                        >
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
@@ -140,36 +170,6 @@ function EditLocationDialog({
                   <FormControl>
                     <Input {...field} className="h-8 text-sm" />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="countryId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">Country (Required)</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="Select a country" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {countries.map((country) => (
-                        <SelectItem
-                          key={country.id}
-                          value={country.id.toString()}
-                        >
-                          {country.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
