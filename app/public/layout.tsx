@@ -35,18 +35,13 @@ export default function PublicLayout({
             >
               Sign In
             </Button>
-            <Button className="bg-[#8B0000] hover:bg-[#6d0000] text-white border-none">
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white border-none">
               Become a Member
             </Button>
           </div>
         </div>
       </header>
       {children}
-      <footer className="mt-auto bg-[#003B5C] py-8">
-        <div className="container mx-auto px-4 text-center text-white">
-          <p>&copy; {new Date().getFullYear()} KDGS. All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 }
