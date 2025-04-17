@@ -78,6 +78,16 @@ function AddLocationDialog({
     }
   }, [initialValues, form]);
 
+  const handleCountryChange = async (value: string) => {
+    const currentValues = form.getValues();
+    if (refetchCountries) {
+      await refetchCountries();
+    }
+    form.setValue("countryId", value, { shouldDirty: true });
+    form.setValue("name", currentValues.name, { shouldDirty: true });
+    form.setValue("province", currentValues.province, { shouldDirty: true });
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     await onAddCity(
       values.name || null,
@@ -89,7 +99,15 @@ function AddLocationDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={async open => {
+        if (open && refetchCountries) {
+          await refetchCountries();
+        }
+        onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Location</DialogTitle>
@@ -108,11 +126,6 @@ function AddLocationDialog({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
-                    onOpenChange={open => {
-                      if (open && refetchCountries) {
-                        refetchCountries();
-                      }
-                    }}
                   >
                     <FormControl>
                       <SelectTrigger>
