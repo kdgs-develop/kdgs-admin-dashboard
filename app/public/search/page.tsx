@@ -28,22 +28,16 @@ export default async function SearchPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative bg-[#003B5C] py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:16px]" />
-        <div
-          className="absolute inset-0 bg-gradient-to-b from-[#003B5C]/10 via-[#003B5C]/50 to-[#003B5C]"
-          style={{
-            maskImage: "linear-gradient(to bottom, transparent, black)",
-            WebkitMaskImage: "linear-gradient(to bottom, transparent, black)"
-          }}
-        />
+      <div className="relative bg-[#003B5C] bg-[url('/duck-lake.jpg')] bg-cover bg-top py-24 overflow-hidden">
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-[#003B5C] opacity-70"></div>
 
         <div className="relative container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center space-y-8">
             <h1 className="text-5xl font-bold text-white tracking-tight">
               Search Obituary Records
             </h1>
-            <p className="text-xl text-gray-200 leading-relaxed">
+            <p className="text-xl text-gray-100 leading-relaxed">
               Our collection of Central Okanagan obituaries can help you
               discover important details about your ancestors. Enter information
               about your family member, and we&apos;ll search our database of
@@ -57,7 +51,7 @@ export default async function SearchPage() {
       </div>
 
       {/* Search Section */}
-      <main className="container mx-auto px-4 -mt-10 relative z-10 mb-20">
+      <main className="container mx-auto px-4 -mt-16 relative z-10 mb-20">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
             <div className="mb-8">
@@ -72,6 +66,7 @@ export default async function SearchPage() {
             <SearchForm relationships={relationships} />
           </div>
 
+          {/* Tips Section */}
           <div className="mt-12 text-center space-y-8">
             <button className="group text-blue-500 hover:text-blue-600 font-medium inline-flex items-center gap-2 transition-all">
               <span>TIPS FOR EFFECTIVE SEARCHES</span>
