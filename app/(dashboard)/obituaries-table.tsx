@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,22 +8,29 @@ import {
   CardFooter,
   CardHeader,
   CardTitle
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
   TableHead,
   TableHeader,
   TableRow
-} from '@/components/ui/table';
-import { getUserData, Obituary as ObituaryType } from '@/lib/db';
-import { FilePlus } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { startTransition, useEffect, useState } from 'react';
-import { fetchObituariesAction, getEditObituaryDialogData } from './actions';
-import { AddObituaryDialog } from './add-obituary-dialog';
-import { CreateFileNumberDialog } from './create-file-number-dialog';
-import { Obituary } from './obituary';
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { getUserData, Obituary as ObituaryType } from "@/lib/db";
+import { FilePlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { startTransition, useEffect, useState } from "react";
+import { fetchObituariesAction, getEditObituaryDialogData } from "./actions";
+import { AddObituaryDialog } from "./add-obituary-dialog";
+import { CreateFileNumberDialog } from "./create-file-number-dialog";
+import { Obituary } from "./obituary";
 
 interface AddObituaryDialogProps {
   isOpen: boolean;
@@ -89,12 +96,21 @@ export function ObituariesTable({
 
   function prevPage() {
     const newOffset = Math.max(offset - limit, 0);
-    router.push(`/?offset=${newOffset}&q=${search}`, { scroll: false });
+    router.push(`/?offset=${newOffset}&limit=${limit}&q=${search}`, {
+      scroll: false
+    });
   }
 
   function nextPage() {
     const newOffset = offset + limit;
-    router.push(`/?offset=${newOffset}&q=${search}`, { scroll: false });
+    router.push(`/?offset=${newOffset}&limit=${limit}&q=${search}`, {
+      scroll: false
+    });
+  }
+
+  function handleItemsPerPageChange(value: string) {
+    const newLimit = parseInt(value, 10);
+    router.push(`/?offset=0&limit=${newLimit}&q=${search}`, { scroll: false });
   }
 
   return (
@@ -116,7 +132,7 @@ export function ObituariesTable({
           <div className="flex gap-2">
             <Button
               disabled={
-                role !== 'ADMIN' && role !== 'PROOFREADER' && role !== 'INDEXER'
+                role !== "ADMIN" && role !== "PROOFREADER" && role !== "INDEXER"
               }
               onClick={() => setIsCreateFileNumberDialogOpen(true)}
               className="flex gap-2 items-center justify-center w-32 h-10 mr-5 whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 "
@@ -143,7 +159,7 @@ export function ObituariesTable({
             </TableHeader>
             <TableBody>
               {obituaries.map(
-                (obituary) =>
+                obituary =>
                   obituary && (
                     <Obituary
                       key={obituary.id}
@@ -166,26 +182,43 @@ export function ObituariesTable({
         <CardFooter className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             Showing {Math.min(offset + 1, totalObituaries)}-
-            {Math.min(offset + limit, totalObituaries)} of {totalObituaries}{' '}
+            {Math.min(offset + limit, totalObituaries)} of {totalObituaries}{" "}
             obituaries
           </div>
-          <div className="space-x-2">
-            <Button
-              onClick={prevPage}
-              disabled={offset === 0}
-              variant="outline"
-              size="sm"
+          <div className="flex items-center gap-4">
+            <Select
+              value={limit.toString()}
+              onValueChange={handleItemsPerPageChange}
             >
-              Previous
-            </Button>
-            <Button
-              onClick={nextPage}
-              disabled={offset + limit >= totalObituaries}
-              variant="outline"
-              size="sm"
-            >
-              Next
-            </Button>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Items per page" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5 per page</SelectItem>
+                <SelectItem value="10">10 per page</SelectItem>
+                <SelectItem value="25">25 per page</SelectItem>
+                <SelectItem value="50">50 per page</SelectItem>
+                <SelectItem value="100">100 per page</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="space-x-2">
+              <Button
+                onClick={prevPage}
+                disabled={offset === 0}
+                variant="outline"
+                size="sm"
+              >
+                Previous
+              </Button>
+              <Button
+                onClick={nextPage}
+                disabled={offset + limit >= totalObituaries}
+                variant="outline"
+                size="sm"
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </CardFooter>
       </Card>
@@ -193,16 +226,16 @@ export function ObituariesTable({
         <AddObituaryDialog
           isOpen={isAddDialogOpen}
           onClose={() => setIsAddDialogOpen(false)}
-          onSave={(newObituary) => {
+          onSave={newObituary => {
             setObituaries([...obituaries, newObituary]);
             setTotalObituaries(totalObituaries + 1);
           }}
           {...dialogData}
           role={role}
-          currentUserFullName={currentUserFullName ?? ''}
-          cities={dialogData.cities.map((city) => ({
+          currentUserFullName={currentUserFullName ?? ""}
+          cities={dialogData.cities.map(city => ({
             id: city.id,
-            name: city.name || '',
+            name: city.name || "",
             province: city.province,
             country: city.country
           }))}
@@ -212,7 +245,7 @@ export function ObituariesTable({
       <CreateFileNumberDialog
         isOpen={isCreateFileNumberDialogOpen}
         onClose={() => setIsCreateFileNumberDialogOpen(false)}
-        onSave={(newObituary) => {
+        onSave={newObituary => {
           startTransition(() => {
             router.push(`/?q=${newObituary?.reference!}`);
           });
