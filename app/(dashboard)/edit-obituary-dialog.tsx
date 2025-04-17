@@ -1,5 +1,5 @@
 "use client";
-
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import ComboboxFormField from "@/components/ui/combo-form-field";
@@ -845,6 +845,7 @@ export function EditObituaryDialog({
           )}
 
           <Form {...form}>
+          <div className={cn("form-container", form.watch("proofread") && !["ADMIN", "PROCESS_MANAGER", "PROOFREADER"].includes(role || "") && "pointer-events-none opacity-80")}>
             <form
               onSubmit={form.handleSubmit(onSubmit, errors => {
                 if (errors.deathDate) {
@@ -1783,6 +1784,7 @@ export function EditObituaryDialog({
                 </Button>
               </DialogFooter>
             </form>
+          </div>
           </Form>
         </div>
 
