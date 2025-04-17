@@ -219,6 +219,7 @@ export function ObituariesTable({
               disabled={offset === 0 || loadingButton !== null}
               variant="outline"
               size="sm"
+              className="w-[80px]"
             >
               {loadingButton === "prev" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -233,6 +234,7 @@ export function ObituariesTable({
               }
               variant="outline"
               size="sm"
+              className="w-[80px]"
             >
               {loadingButton === "next" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
