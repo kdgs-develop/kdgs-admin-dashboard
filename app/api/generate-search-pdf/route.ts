@@ -12,31 +12,32 @@ import {
   PDFString
 } from "pdf-lib";
 
-const LETTER_WIDTH = 612;
-const LETTER_HEIGHT = 792;
-const MARGIN = 35;
-const RECORDS_PER_PAGE = 30;
-const LINE_HEIGHT = 12;
-const KDGS_LOGO_URL = "https://kdgs-admin-dashboard.vercel.app/kdgs.png";
-const MAX_SURNAME_LENGTH = 18;
-const MAX_GIVEN_NAMES_LENGTH = 20;
-
-// Define column widths and positions
-const COLUMNS = {
-  number: { width: 25, x: MARGIN },
-  reference: { width: 65, x: MARGIN + 25 },
-  surname: { width: 110, x: MARGIN + 90 },
-  givenNames: { width: 110, x: MARGIN + 200 },
-  deathDate: { width: 75, x: MARGIN + 310 },
-  proofread: { width: 30, x: MARGIN + 385 },
-  fileBox: { width: 40, x: MARGIN + 415 },
-  images: { width: 85, x: MARGIN + 455 }
-};
-
-// Adjust vertical spacing between rows - slightly more than current 4 but less than original 8
-const ROW_PADDING = 6; // Changed from 4 to 6 for a little more spacing between rows
 
 export async function POST(req: NextRequest) {
+  const LETTER_WIDTH = 612;
+  const LETTER_HEIGHT = 792;
+  const MARGIN = 35;
+  const RECORDS_PER_PAGE = 30;
+  const LINE_HEIGHT = 12;
+  const KDGS_LOGO_URL = "https://dashboard.kdgs.ca/kdgs.png";
+  const MAX_SURNAME_LENGTH = 18;
+  const MAX_GIVEN_NAMES_LENGTH = 20;
+
+  // Define column widths and positions
+  const COLUMNS = {
+    number: { width: 25, x: MARGIN },
+    reference: { width: 65, x: MARGIN + 25 },
+    surname: { width: 110, x: MARGIN + 90 },
+    givenNames: { width: 110, x: MARGIN + 200 },
+    deathDate: { width: 75, x: MARGIN + 310 },
+    proofread: { width: 30, x: MARGIN + 385 },
+    fileBox: { width: 40, x: MARGIN + 415 },
+    images: { width: 85, x: MARGIN + 455 }
+  };
+  
+  // Adjust vertical spacing between rows - slightly more than current 4 but less than original 8
+  const ROW_PADDING = 6; // Changed from 4 to 6 for a little more spacing between rows
+  
   try {
     const { searchQuery, userId } = await req.json();
 
