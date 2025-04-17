@@ -78,6 +78,16 @@ function AddLocationDialog({
     }
   }, [initialValues, form]);
 
+  const handleCountryChange = async (value: string) => {
+    const currentValues = form.getValues();
+    if (refetchCountries) {
+      await refetchCountries();
+    }
+    form.setValue("countryId", value, { shouldDirty: true });
+    form.setValue("name", currentValues.name, { shouldDirty: true });
+    form.setValue("province", currentValues.province, { shouldDirty: true });
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     await onAddCity(
       values.name || null,
@@ -89,7 +99,15 @@ function AddLocationDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={async open => {
+        if (open && refetchCountries) {
+          await refetchCountries();
+        }
+        onClose();
+      }}
+    >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Location</DialogTitle>
@@ -99,6 +117,36 @@ function AddLocationDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="countryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a country" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {countries.map(country => (
+                        <SelectItem
+                          key={country.id}
+                          value={country.id.toString()}
+                        >
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="name"
@@ -121,41 +169,6 @@ function AddLocationDialog({
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="countryId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    onOpenChange={open => {
-                      if (open && refetchCountries) {
-                        refetchCountries();
-                      }
-                    }}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a country" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {countries.map(country => (
-                        <SelectItem
-                          key={country.id}
-                          value={country.id.toString()}
-                        >
-                          {country.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
