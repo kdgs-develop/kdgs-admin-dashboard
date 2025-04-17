@@ -36,7 +36,7 @@ export default function PublicLayout({
               Sign In
             </Button>
             <Button className="bg-[#8B0000] hover:bg-[#6d0000] text-white border-none">
-              Create Free Account
+              Become a Member
             </Button>
           </div>
         </div>
