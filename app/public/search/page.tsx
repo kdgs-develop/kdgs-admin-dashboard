@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 import { SearchForm } from "./components/search-form";
 import { ArrowDown } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { FamilyRelationship } from "@prisma/client";
 
 export const metadata: Metadata = {
   title: "Search Obituary Records - KDGS",
@@ -8,7 +10,21 @@ export const metadata: Metadata = {
     "Search through our collection of Central Okanagan obituary records to discover your family history"
 };
 
-export default function SearchPage() {
+async function getFamilyRelationships(): Promise<FamilyRelationship[]> {
+  try {
+    const relationships = await prisma.familyRelationship.findMany({
+      orderBy: { name: "asc" }
+    });
+    return relationships;
+  } catch (error) {
+    console.error("Failed to fetch family relationships:", error);
+    return []; // Return empty array on error
+  }
+}
+
+export default async function SearchPage() {
+  const relationships = await getFamilyRelationships();
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -53,11 +69,11 @@ export default function SearchPage() {
                 history
               </p>
             </div>
-            <SearchForm />
+            <SearchForm relationships={relationships} />
           </div>
 
           <div className="mt-12 text-center space-y-8">
-            <button className="group text-[#8B0000] hover:text-[#6d0000] font-medium inline-flex items-center gap-2 transition-all">
+            <button className="group text-blue-500 hover:text-blue-600 font-medium inline-flex items-center gap-2 transition-all">
               <span>TIPS FOR EFFECTIVE SEARCHES</span>
               <span className="group-hover:translate-x-1 transition-transform">
                 →
