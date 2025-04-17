@@ -115,7 +115,7 @@ export function ObituariesTable({
 
   return (
     <>
-      <Card className="w-full">
+      <Card className="w-full mb-4">
         <CardHeader className="flex flex-row items-start justify-between gap-2">
           <div>
             <CardTitle className="mb-1">Obituary Index</CardTitle>
@@ -180,12 +180,12 @@ export function ObituariesTable({
           </Table>
         </CardContent>
         <CardFooter className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Showing {Math.min(offset + 1, totalObituaries)}-
-            {Math.min(offset + limit, totalObituaries)} of {totalObituaries}{" "}
-            obituaries
-          </div>
           <div className="flex items-center gap-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {Math.min(offset + 1, totalObituaries)}-
+              {Math.min(offset + limit, totalObituaries)} of {totalObituaries}{" "}
+              obituaries
+            </div>
             <Select
               value={limit.toString()}
               onValueChange={handleItemsPerPageChange}
@@ -201,24 +201,24 @@ export function ObituariesTable({
                 <SelectItem value="100">100 per page</SelectItem>
               </SelectContent>
             </Select>
-            <div className="space-x-2">
-              <Button
-                onClick={prevPage}
-                disabled={offset === 0}
-                variant="outline"
-                size="sm"
-              >
-                Previous
-              </Button>
-              <Button
-                onClick={nextPage}
-                disabled={offset + limit >= totalObituaries}
-                variant="outline"
-                size="sm"
-              >
-                Next
-              </Button>
-            </div>
+          </div>
+          <div className="space-x-2">
+            <Button
+              onClick={prevPage}
+              disabled={offset === 0}
+              variant="outline"
+              size="sm"
+            >
+              Previous
+            </Button>
+            <Button
+              onClick={nextPage}
+              disabled={offset + limit >= totalObituaries}
+              variant="outline"
+              size="sm"
+            >
+              Next
+            </Button>
           </div>
         </CardFooter>
       </Card>
