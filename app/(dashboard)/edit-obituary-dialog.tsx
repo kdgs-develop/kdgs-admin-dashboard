@@ -1,5 +1,5 @@
 "use client";
-
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import ComboboxFormField from "@/components/ui/combo-form-field";
@@ -216,6 +216,7 @@ export function EditObituaryDialog({
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   const [sumChallenge, setSumChallenge] = useState({ a: 0, b: 0 });
   const [sumAnswer, setSumAnswer] = useState("");
+  const [isProofreadDialogOpen, setIsProofreadDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [updatedObituary, setUpdatedObituary] = useState<any>(obituary);
   const [role, setRole] = useState<string | null>(null);
@@ -845,484 +846,61 @@ export function EditObituaryDialog({
           )}
 
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit, errors => {
-                if (errors.deathDate) {
-                  toast({
-                    title: "Death Date is required",
-                    description: "Please select a valid death date",
-                    variant: "destructive"
-                  });
+            <div
+              className={cn(
+                "form-container relative",
+                form.watch("proofread") &&
+                  !["ADMIN", "PROCESS_MANAGER", "PROOFREADER"].includes(
+                    role || ""
+                  ) &&
+                  "after:absolute after:inset-0 after:bg-background/30 after:cursor-not-allowed"
+              )}
+              onClick={e => {
+                if (
+                  form.watch("proofread") &&
+                  !["ADMIN", "PROCESS_MANAGER", "PROOFREADER"].includes(
+                    role || ""
+                  )
+                ) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsProofreadDialogOpen(true);
                 }
-              })}
-              className="space-y-8"
+              }}
             >
-              {/* Personal Information - Enhanced section with better visual separation */}
-              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
-                  Personal Information
-                </h3>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="reference"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">File Number</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              className="h-8 text-sm"
-                              readOnly
-                              disabled
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="surname"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Surname</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              className="h-8 text-sm uppercase"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <ComboboxFormField
-                      control={form.control}
-                      name="titleId"
-                      label="Title"
-                      placeholder="Select a title"
-                      emptyText="No title found."
-                      items={localTitles}
-                      onAddItem={async name => {
-                        const newTitle = await addTitle(name);
-                        setLocalTitles([
-                          ...localTitles,
-                          { id: newTitle.id, name: newTitle?.name! }
-                        ]);
-                        return { id: newTitle.id, name: newTitle?.name! };
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="givenNames"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Given Names</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              className="h-8 text-sm"
-                              onChange={e => {
-                                const value = e.target.value;
-                                const capitalized = value.replace(
-                                  /(^|\()(.)/g,
-                                  (_, prefix, char) =>
-                                    prefix + char.toUpperCase()
-                                );
-                                field.onChange(capitalized);
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="maidenName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Maiden Name</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              className="h-8 text-sm uppercase"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Dates and Location Information */}
-              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
-                  Dates and Location
-                </h3>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="birthDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-xs">Birth Date</FormLabel>
-                          <DatePicker
-                            date={field.value}
-                            setDate={field.onChange}
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <ComboboxFormField
-                      control={form.control}
-                      name="birthCityId"
-                      label="Birth Place"
-                      placeholder="Select a place"
-                      emptyText="No place found."
-                      items={localCities.map(city => ({
-                        id: city.id,
-                        name: [city.name, city.province, city.country?.name]
-                          .filter(Boolean)
-                          .join(", "),
-                        province: city.province ?? undefined,
-                        country: city.country
-                          ? { name: city.country.name }
-                          : undefined
-                      }))}
-                    />
-                  </div>
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="deathDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-xs">Death Date</FormLabel>
-                          <DatePicker
-                            date={field.value}
-                            setDate={field.onChange}
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <ComboboxFormField
-                      control={form.control}
-                      name="deathCityId"
-                      label="Death Place"
-                      placeholder="Select a place"
-                      emptyText="No place found."
-                      items={localCities.map(city => ({
-                        id: city.id,
-                        name: [city.name, city.province, city.country?.name]
-                          .filter(Boolean)
-                          .join(", "),
-                        province: city.province ?? undefined,
-                        country: city.country
-                          ? { name: city.country.name }
-                          : undefined
-                      }))}
-                    />
-                    <ComboboxFormField
-                      control={form.control}
-                      name="cemeteryId"
-                      label="Interment Place"
-                      placeholder="Select an interment place"
-                      emptyText="No interment place found."
-                      items={cemeteries.map(cemetery => ({
-                        id: cemetery.id,
-                        name: cemetery.name,
-                        city: cemetery.city
-                          ? {
-                              name: cemetery.city.name,
-                              province: cemetery.city.province ?? undefined,
-                              country: cemetery.city.country
-                                ? { name: cemetery.city.country.name }
-                                : undefined
-                            }
-                          : undefined
-                      }))}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Also Known As */}
-              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
-                  Also Known As
-                </h3>
-                <div className="space-y-4">
-                  {form.watch("alsoKnownAs")?.map((_, index) => (
-                    <div key={index} className="flex items-end space-x-2">
+              <form
+                onSubmit={form.handleSubmit(onSubmit, errors => {
+                  if (errors.deathDate) {
+                    toast({
+                      title: "Death Date is required",
+                      description: "Please select a valid death date",
+                      variant: "destructive"
+                    });
+                  }
+                })}
+                className="space-y-8"
+              >
+                {/* Personal Information - Enhanced section with better visual separation */}
+                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                    Personal Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                    <div className="space-y-4">
                       <FormField
                         control={form.control}
-                        name={`alsoKnownAs.${index}.surname`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Surname</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                className="h-8 text-sm uppercase"
-                                value={field.value || ""}
-                                onChange={e => {
-                                  field.onChange(e.target.value.toUpperCase());
-                                }}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`alsoKnownAs.${index}.otherNames`}
+                        name="reference"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-xs">
-                              Other Names
+                              File Number
                             </FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
                                 className="h-8 text-sm"
-                                value={field.value || ""}
-                                onChange={e => {
-                                  const value = e.target.value;
-                                  const capitalized = value.replace(
-                                    /(^|\()(.)/g,
-                                    (_, prefix, char) =>
-                                      prefix + char.toUpperCase()
-                                  );
-                                  field.onChange(capitalized);
-                                }}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          const alsoKnownAs =
-                            form.getValues("alsoKnownAs") || [];
-                          form.setValue(
-                            "alsoKnownAs",
-                            alsoKnownAs.filter((_, i) => i !== index)
-                          );
-                        }}
-                        className="hover:bg-destructive/10 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const alsoKnownAs = form.getValues("alsoKnownAs") || [];
-                      form.setValue("alsoKnownAs", [
-                        ...alsoKnownAs,
-                        { surname: "", otherNames: "" }
-                      ]);
-                    }}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Also Known As
-                  </Button>
-                </div>
-              </div>
-
-              {/* Obituary Files */}
-              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
-                  Add New Images
-                </h3>
-                <div className="space-y-4">
-                  {selectedFiles.length > 0 && (
-                    <div className="mb-2 space-y-2">
-                      {selectedFiles.map((fileItem, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between text-sm"
-                        >
-                          <span>
-                            {fileItem.file.name} → {fileItem.newName}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveFile(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      ref={fileInputRef}
-                      multiple
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      Add New Image File
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Publication Information */}
-              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
-                  Publication Information
-                </h3>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                  <div className="space-y-4">
-                    <ComboboxFormField
-                      control={form.control}
-                      name="periodicalId"
-                      label="Publication"
-                      placeholder="Select a periodical"
-                      emptyText="No periodical found."
-                      items={localPeriodicals.map(periodical => ({
-                        id: periodical.id,
-                        name: periodical.name,
-                        city: periodical.city
-                          ? {
-                              name: periodical.city.name || "",
-                              province: periodical.city.province || undefined,
-                              country: periodical.city.country
-                                ? { name: periodical.city.country.name }
-                                : undefined
-                            }
-                          : undefined
-                      }))}
-                      onAddItem={async name => {
-                        const newPeriodical = await addPeriodical(name);
-                        const formattedPeriodical = {
-                          id: newPeriodical.id,
-                          name: newPeriodical.name || "",
-                          city: newPeriodical.city
-                            ? {
-                                name: newPeriodical.city.name || "",
-                                province: newPeriodical.city.province,
-                                country: newPeriodical.city.country
-                              }
-                            : null
-                        };
-                        setLocalPeriodicals([
-                          ...localPeriodicals,
-                          formattedPeriodical
-                        ]);
-                        return {
-                          id: newPeriodical.id,
-                          name: newPeriodical.name || "",
-                          city: newPeriodical.city
-                            ? {
-                                name: newPeriodical.city.name || "",
-                                province:
-                                  newPeriodical.city.province || undefined,
-                                country: newPeriodical.city.country
-                                  ? { name: newPeriodical.city.country.name }
-                                  : undefined
-                              }
-                            : undefined
-                        };
-                      }}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="publishDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-xs">
-                            Publish Date
-                          </FormLabel>
-                          <DatePicker
-                            date={field.value}
-                            setDate={field.onChange}
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="-mt-2">
-                    <FormField
-                      control={form.control}
-                      name="page"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Page</FormLabel>
-                          <FormControl>
-                            <Input {...field} className="h-8 text-sm" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="column"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Column</FormLabel>
-                          <FormControl>
-                            <Input {...field} className="h-8 text-sm" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Relatives */}
-              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
-                  Relatives
-                </h3>
-                <div className="space-y-4">
-                  {form.watch("relatives")?.map((relative, index) => (
-                    <div key={index} className="flex space-x-2">
-                      <FormField
-                        control={form.control}
-                        name={`relatives.${index}.surname`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Surname</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                className="h-8 text-sm uppercase"
-                                value={field.value || ""}
-                                onChange={e => {
-                                  field.onChange(e.target.value.toUpperCase());
-                                }}
+                                readOnly
+                                disabled
                               />
                             </FormControl>
                             <FormMessage />
@@ -1331,7 +909,41 @@ export function EditObituaryDialog({
                       />
                       <FormField
                         control={form.control}
-                        name={`relatives.${index}.givenNames`}
+                        name="surname"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Surname</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                className="h-8 text-sm uppercase"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <ComboboxFormField
+                        control={form.control}
+                        name="titleId"
+                        label="Title"
+                        placeholder="Select a title"
+                        emptyText="No title found."
+                        items={localTitles}
+                        onAddItem={async name => {
+                          const newTitle = await addTitle(name);
+                          setLocalTitles([
+                            ...localTitles,
+                            { id: newTitle.id, name: newTitle?.name! }
+                          ]);
+                          return { id: newTitle.id, name: newTitle?.name! };
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="givenNames"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-xs">
@@ -1341,7 +953,6 @@ export function EditObituaryDialog({
                               <Input
                                 {...field}
                                 className="h-8 text-sm"
-                                value={field.value || ""}
                                 onChange={e => {
                                   const value = e.target.value;
                                   const capitalized = value.replace(
@@ -1357,16 +968,163 @@ export function EditObituaryDialog({
                           </FormItem>
                         )}
                       />
-                      {!form.getValues(
-                        `relatives.${index}.familyRelationshipId`
-                      ) && form.getValues(`relatives.${index}.relationship`) ? (
+                      <FormField
+                        control={form.control}
+                        name="maidenName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">
+                              Maiden Name
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                className="h-8 text-sm uppercase"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dates and Location Information */}
+                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                    Dates and Location
+                  </h3>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="birthDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel className="text-xs">
+                              Birth Date
+                            </FormLabel>
+                            <DatePicker
+                              date={field.value}
+                              setDate={field.onChange}
+                            />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <ComboboxFormField
+                        control={form.control}
+                        name="birthCityId"
+                        label="Birth Place"
+                        placeholder="Select a place"
+                        emptyText="No place found."
+                        items={localCities.map(city => ({
+                          id: city.id,
+                          name: [city.name, city.province, city.country?.name]
+                            .filter(Boolean)
+                            .join(", "),
+                          province: city.province ?? undefined,
+                          country: city.country
+                            ? { name: city.country.name }
+                            : undefined
+                        }))}
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="deathDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel className="text-xs">
+                              Death Date
+                            </FormLabel>
+                            <DatePicker
+                              date={field.value}
+                              setDate={field.onChange}
+                            />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <ComboboxFormField
+                        control={form.control}
+                        name="deathCityId"
+                        label="Death Place"
+                        placeholder="Select a place"
+                        emptyText="No place found."
+                        items={localCities.map(city => ({
+                          id: city.id,
+                          name: [city.name, city.province, city.country?.name]
+                            .filter(Boolean)
+                            .join(", "),
+                          province: city.province ?? undefined,
+                          country: city.country
+                            ? { name: city.country.name }
+                            : undefined
+                        }))}
+                      />
+                      <ComboboxFormField
+                        control={form.control}
+                        name="cemeteryId"
+                        label="Interment Place"
+                        placeholder="Select an interment place"
+                        emptyText="No interment place found."
+                        items={cemeteries.map(cemetery => ({
+                          id: cemetery.id,
+                          name: cemetery.name,
+                          city: cemetery.city
+                            ? {
+                                name: cemetery.city.name,
+                                province: cemetery.city.province ?? undefined,
+                                country: cemetery.city.country
+                                  ? { name: cemetery.city.country.name }
+                                  : undefined
+                              }
+                            : undefined
+                        }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Also Known As */}
+                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                    Also Known As
+                  </h3>
+                  <div className="space-y-4">
+                    {form.watch("alsoKnownAs")?.map((_, index) => (
+                      <div key={index} className="flex items-end space-x-2">
                         <FormField
                           control={form.control}
-                          name={`relatives.${index}.relationship`}
+                          name={`alsoKnownAs.${index}.surname`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Surname</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  className="h-8 text-sm uppercase"
+                                  value={field.value || ""}
+                                  onChange={e => {
+                                    field.onChange(
+                                      e.target.value.toUpperCase()
+                                    );
+                                  }}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`alsoKnownAs.${index}.otherNames`}
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-xs">
-                                Relationship
+                                Other Names
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -1374,415 +1132,702 @@ export function EditObituaryDialog({
                                   className="h-8 text-sm"
                                   value={field.value || ""}
                                   onChange={e => {
-                                    const formatted =
-                                      e.target.value.toUpperCase();
-                                    field.onChange(formatted);
+                                    const value = e.target.value;
+                                    const capitalized = value.replace(
+                                      /(^|\()(.)/g,
+                                      (_, prefix, char) =>
+                                        prefix + char.toUpperCase()
+                                    );
+                                    field.onChange(capitalized);
                                   }}
                                 />
                               </FormControl>
                             </FormItem>
                           )}
                         />
-                      ) : (
-                        <ComboboxFormField
-                          control={form.control}
-                          name={`relatives.${index}.familyRelationshipId`}
-                          label="Relationship"
-                          placeholder="Select a relationship"
-                          emptyText="No relationship found."
-                          items={localFamilyRelationships}
-                          onAddItem={async name => {
-                            const newFamilyRelationship =
-                              await addFamilyRelationship(name);
-                            setLocalFamilyRelationships([
-                              ...localFamilyRelationships,
-                              {
-                                id: newFamilyRelationship.id,
-                                name: newFamilyRelationship?.name!,
-                                category: newFamilyRelationship?.category!
-                              }
-                            ]);
-                            return {
-                              id: newFamilyRelationship.id,
-                              name: newFamilyRelationship?.name!
-                            };
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const alsoKnownAs =
+                              form.getValues("alsoKnownAs") || [];
+                            form.setValue(
+                              "alsoKnownAs",
+                              alsoKnownAs.filter((_, i) => i !== index)
+                            );
                           }}
-                        />
-                      )}
+                          className="hover:bg-destructive/10 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const alsoKnownAs = form.getValues("alsoKnownAs") || [];
+                        form.setValue("alsoKnownAs", [
+                          ...alsoKnownAs,
+                          { surname: "", otherNames: "" }
+                        ]);
+                      }}
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Also Known As
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Obituary Files */}
+                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                    Add New Images
+                  </h3>
+                  <div className="space-y-4">
+                    {selectedFiles.length > 0 && (
+                      <div className="mb-2 space-y-2">
+                        {selectedFiles.map((fileItem, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between text-sm"
+                          >
+                            <span>
+                              {fileItem.file.name} → {fileItem.newName}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveFile(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        ref={fileInputRef}
+                        multiple
+                        className="hidden"
+                        id="file-upload"
+                      />
+                      <Button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Add New Image File
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Publication Information */}
+                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                    Publication Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                    <div className="space-y-4">
+                      <ComboboxFormField
+                        control={form.control}
+                        name="periodicalId"
+                        label="Publication"
+                        placeholder="Select a periodical"
+                        emptyText="No periodical found."
+                        items={localPeriodicals.map(periodical => ({
+                          id: periodical.id,
+                          name: periodical.name,
+                          city: periodical.city
+                            ? {
+                                name: periodical.city.name || "",
+                                province: periodical.city.province || undefined,
+                                country: periodical.city.country
+                                  ? { name: periodical.city.country.name }
+                                  : undefined
+                              }
+                            : undefined
+                        }))}
+                        onAddItem={async name => {
+                          const newPeriodical = await addPeriodical(name);
+                          const formattedPeriodical = {
+                            id: newPeriodical.id,
+                            name: newPeriodical.name || "",
+                            city: newPeriodical.city
+                              ? {
+                                  name: newPeriodical.city.name || "",
+                                  province: newPeriodical.city.province,
+                                  country: newPeriodical.city.country
+                                }
+                              : null
+                          };
+                          setLocalPeriodicals([
+                            ...localPeriodicals,
+                            formattedPeriodical
+                          ]);
+                          return {
+                            id: newPeriodical.id,
+                            name: newPeriodical.name || "",
+                            city: newPeriodical.city
+                              ? {
+                                  name: newPeriodical.city.name || "",
+                                  province:
+                                    newPeriodical.city.province || undefined,
+                                  country: newPeriodical.city.country
+                                    ? { name: newPeriodical.city.country.name }
+                                    : undefined
+                                }
+                              : undefined
+                          };
+                        }}
+                      />
                       <FormField
                         control={form.control}
-                        name={`relatives.${index}.predeceased`}
+                        name="publishDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel className="text-xs">
+                              Publish Date
+                            </FormLabel>
+                            <DatePicker
+                              date={field.value}
+                              setDate={field.onChange}
+                            />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="-mt-2">
+                      <FormField
+                        control={form.control}
+                        name="page"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-xs">
-                              Predeceased
-                            </FormLabel>
+                            <FormLabel className="text-xs">Page</FormLabel>
                             <FormControl>
-                              <div className="h-8 rounded-md border border-input bg-background px-3 flex items-center space-x-2">
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                  className="data-[state=checked]:bg-primary"
-                                />
-                                <span className="text-sm text-muted-foreground">
-                                  {field.value ? "Yes" : "No"}
-                                </span>
-                              </div>
+                              <Input {...field} className="h-8 text-sm" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          const relatives = form.getValues("relatives");
-                          relatives?.splice(index, 1);
-                          form.setValue("relatives", relatives || []);
-                        }}
-                        className="h-8 mt-8 hover:bg-destructive/10 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <FormField
+                        control={form.control}
+                        name="column"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Column</FormLabel>
+                            <FormControl>
+                              <Input {...field} className="h-8 text-sm" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const relatives = form.getValues("relatives") || [];
-                      form.setValue("relatives", [
-                        ...relatives,
-                        {
-                          surname: "",
-                          givenNames: "",
-                          relationship: "",
-                          familyRelationshipId: "",
-                          predeceased: false
-                        }
-                      ]);
-                    }}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Relative
-                  </Button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Additional Information */}
-              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
-                  Additional Information
-                </h3>
-                <div className="flex items-center space-x-2 mb-2">
-                  <Checkbox
-                    id="includeOtherFamily"
-                    checked={includeOtherFamilyText}
-                    onCheckedChange={checked => {
-                      setIncludeOtherFamilyText(checked as boolean);
-                      const currentNotes = form.getValues("notes") || "";
-                      const familyText =
-                        "See obituary image for other family members.";
-
-                      if (checked) {
-                        // Add the text on a new line if there's existing content
-                        const newNotes = currentNotes
-                          ? `${currentNotes}\n${familyText}`
-                          : familyText;
-                        form.setValue("notes", newNotes);
-                      } else {
-                        // Remove the text and any empty lines
-                        const newNotes = currentNotes
-                          .split("\n")
-                          .filter(line => line !== familyText)
-                          .join("\n");
-                        form.setValue("notes", newNotes);
-                      }
-                    }}
-                  />
-                  <label
-                    htmlFor="includeOtherFamily"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Include other family members note
-                  </label>
-                </div>
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">Notes</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} className="h-20 text-sm" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Proofread Information */}
-              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
-                  Proofread Information
-                </h3>
-                <div className="col-span-2">
-                  <FormField
-                    control={form.control}
-                    name="proofread"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={checked => {
-                              field.onChange(checked);
-                              handleProofreadChange(checked as boolean);
+                {/* Relatives */}
+                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                    Relatives
+                  </h3>
+                  <div className="space-y-4">
+                    {form.watch("relatives")?.map((relative, index) => (
+                      <div key={index} className="flex space-x-2">
+                        <FormField
+                          control={form.control}
+                          name={`relatives.${index}.surname`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Surname</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  className="h-8 text-sm uppercase"
+                                  value={field.value || ""}
+                                  onChange={e => {
+                                    field.onChange(
+                                      e.target.value.toUpperCase()
+                                    );
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`relatives.${index}.givenNames`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">
+                                Given Names
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  className="h-8 text-sm"
+                                  value={field.value || ""}
+                                  onChange={e => {
+                                    const value = e.target.value;
+                                    const capitalized = value.replace(
+                                      /(^|\()(.)/g,
+                                      (_, prefix, char) =>
+                                        prefix + char.toUpperCase()
+                                    );
+                                    field.onChange(capitalized);
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        {!form.getValues(
+                          `relatives.${index}.familyRelationshipId`
+                        ) &&
+                        form.getValues(`relatives.${index}.relationship`) ? (
+                          <FormField
+                            control={form.control}
+                            name={`relatives.${index}.relationship`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">
+                                  Relationship
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    className="h-8 text-sm"
+                                    value={field.value || ""}
+                                    onChange={e => {
+                                      const formatted =
+                                        e.target.value.toUpperCase();
+                                      field.onChange(formatted);
+                                    }}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        ) : (
+                          <ComboboxFormField
+                            control={form.control}
+                            name={`relatives.${index}.familyRelationshipId`}
+                            label="Relationship"
+                            placeholder="Select a relationship"
+                            emptyText="No relationship found."
+                            items={localFamilyRelationships}
+                            onAddItem={async name => {
+                              const newFamilyRelationship =
+                                await addFamilyRelationship(name);
+                              setLocalFamilyRelationships([
+                                ...localFamilyRelationships,
+                                {
+                                  id: newFamilyRelationship.id,
+                                  name: newFamilyRelationship?.name!,
+                                  category: newFamilyRelationship?.category!
+                                }
+                              ]);
+                              return {
+                                id: newFamilyRelationship.id,
+                                name: newFamilyRelationship?.name!
+                              };
                             }}
-                            disabled={
-                              (role !== "ADMIN" &&
-                                role !== "PROOFREADER" &&
-                                role !== "PROCESS_MANAGER") ||
-                              !hasImages
-                            }
                           />
-                        </FormControl>
-                        <FormLabel className="text-xs">Proofread</FormLabel>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <FormField
-                    control={form.control}
-                    name="proofreadDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-xs">
-                          Proofread Date
-                        </FormLabel>
-                        {role === "ADMIN" || role === "PROOFREADER" ? (
-                          <DatePicker
-                            date={field.value}
-                            setDate={field.onChange}
-                          />
-                        ) : (
-                          <Input type="date" className="h-8 text-sm" disabled />
                         )}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                        <FormField
+                          control={form.control}
+                          name={`relatives.${index}.predeceased`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">
+                                Predeceased
+                              </FormLabel>
+                              <FormControl>
+                                <div className="h-8 rounded-md border border-input bg-background px-3 flex items-center space-x-2">
+                                  <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    className="data-[state=checked]:bg-primary"
+                                  />
+                                  <span className="text-sm text-muted-foreground">
+                                    {field.value ? "Yes" : "No"}
+                                  </span>
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const relatives = form.getValues("relatives");
+                            relatives?.splice(index, 1);
+                            form.setValue("relatives", relatives || []);
+                          }}
+                          className="h-8 mt-8 hover:bg-destructive/10 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const relatives = form.getValues("relatives") || [];
+                        form.setValue("relatives", [
+                          ...relatives,
+                          {
+                            surname: "",
+                            givenNames: "",
+                            relationship: "",
+                            familyRelationshipId: "",
+                            predeceased: false
+                          }
+                        ]);
+                      }}
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Add Relative
+                    </Button>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <FormField
-                    control={form.control}
-                    name="proofreadBy"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">Proofread By</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            className="h-8 text-sm"
-                            disabled={
-                              role !== "ADMIN" && role !== "PROOFREADER"
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
 
-              {/* Metadata */}
-              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
-                  Metadata
-                </h3>
-                <div className="space-y-2">
+                {/* Additional Information */}
+                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                    Additional Information
+                  </h3>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Checkbox
+                      id="includeOtherFamily"
+                      checked={includeOtherFamilyText}
+                      onCheckedChange={checked => {
+                        setIncludeOtherFamilyText(checked as boolean);
+                        const currentNotes = form.getValues("notes") || "";
+                        const familyText =
+                          "See obituary image for other family members.";
+
+                        if (checked) {
+                          // Add the text on a new line if there's existing content
+                          const newNotes = currentNotes
+                            ? `${currentNotes}\n${familyText}`
+                            : familyText;
+                          form.setValue("notes", newNotes);
+                        } else {
+                          // Remove the text and any empty lines
+                          const newNotes = currentNotes
+                            .split("\n")
+                            .filter(line => line !== familyText)
+                            .join("\n");
+                          form.setValue("notes", newNotes);
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="includeOtherFamily"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Include other family members note
+                    </label>
+                  </div>
                   <FormField
                     control={form.control}
-                    name="enteredBy"
+                    name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs">Entered By</FormLabel>
+                        <FormLabel className="text-xs">Notes</FormLabel>
                         <FormControl>
-                          <Input
-                            {...field}
-                            className="h-8 text-sm"
-                            disabled={role !== "ADMIN" && role !== "ROOT"}
-                          />
+                          <Textarea {...field} className="h-20 text-sm" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="enteredOn"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-xs">Entered On</FormLabel>
-                        {role === "ADMIN" ? (
-                          <DatePicker
-                            date={field.value}
-                            setDate={field.onChange}
-                          />
-                        ) : (
-                          <Input
-                            type="date"
-                            className="h-8 text-sm"
-                            disabled
-                            value={
-                              field.value
-                                ? new Date(field.value).toLocaleDateString(
-                                    "en-CA"
-                                  )
-                                : ""
-                            }
-                          />
-                        )}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
-                <div className="space-y-2">
-                  <FormField
-                    control={form.control}
-                    name="editedBy"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">Edited By</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            className="h-8 text-sm"
-                            disabled={role !== "ADMIN"}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="editedOn"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-xs">Edited On</FormLabel>
-                        {role === "ADMIN" ? (
-                          <DatePicker
-                            date={field.value}
-                            setDate={field.onChange}
-                          />
-                        ) : (
-                          <Input
-                            type="date"
-                            className="h-8 text-sm"
-                            disabled
-                            value={new Date().toLocaleDateString("en-CA")}
-                          />
-                        )}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+
+                {/* Proofread Information */}
+                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                    Proofread Information
+                  </h3>
+                  <div className="col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="proofread"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={checked => {
+                                field.onChange(checked);
+                                handleProofreadChange(checked as boolean);
+                              }}
+                              disabled={
+                                (role !== "ADMIN" &&
+                                  role !== "PROOFREADER" &&
+                                  role !== "PROCESS_MANAGER") ||
+                                !hasImages
+                              }
+                            />
+                          </FormControl>
+                          <FormLabel className="text-xs">Proofread</FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="proofreadDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel className="text-xs">
+                            Proofread Date
+                          </FormLabel>
+                          {role === "ADMIN" || role === "PROOFREADER" ? (
+                            <DatePicker
+                              date={field.value}
+                              setDate={field.onChange}
+                            />
+                          ) : (
+                            <Input
+                              type="date"
+                              className="h-8 text-sm"
+                              disabled
+                            />
+                          )}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="proofreadBy"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">
+                            Proofread By
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className="h-8 text-sm"
+                              disabled={
+                                role !== "ADMIN" && role !== "PROOFREADER"
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
-                <div className="flex gap-2 items-start">
+
+                {/* Metadata */}
+                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                    Metadata
+                  </h3>
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="enteredBy"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Entered By</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className="h-8 text-sm"
+                              disabled={role !== "ADMIN" && role !== "ROOT"}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="enteredOn"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel className="text-xs">Entered On</FormLabel>
+                          {role === "ADMIN" ? (
+                            <DatePicker
+                              date={field.value}
+                              setDate={field.onChange}
+                            />
+                          ) : (
+                            <Input
+                              type="date"
+                              className="h-8 text-sm"
+                              disabled
+                              value={
+                                field.value
+                                  ? new Date(field.value).toLocaleDateString(
+                                      "en-CA"
+                                    )
+                                  : ""
+                              }
+                            />
+                          )}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <FormField
+                      control={form.control}
+                      name="editedBy"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Edited By</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className="h-8 text-sm"
+                              disabled={role !== "ADMIN"}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="editedOn"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel className="text-xs">Edited On</FormLabel>
+                          {role === "ADMIN" ? (
+                            <DatePicker
+                              date={field.value}
+                              setDate={field.onChange}
+                            />
+                          ) : (
+                            <Input
+                              type="date"
+                              className="h-8 text-sm"
+                              disabled
+                              value={new Date().toLocaleDateString("en-CA")}
+                            />
+                          )}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex gap-2 items-start">
+                    <ComboboxFormField
+                      control={form.control}
+                      name="batchNumberId"
+                      label="Batch Number"
+                      placeholder="Select a batch number"
+                      emptyText="No batch numbers found."
+                      items={batchNumbers.map(batch => {
+                        return {
+                          id: batch.id,
+                          name: `${batch.number} (${batch._count?.obituaries} of ${batch.assignedObituaries} done) Created by ${batch.createdBy?.fullName || "Unknown"} on ${batch.createdAt.toLocaleDateString()}`
+                        };
+                      })}
+                      onAddItem={async name => {
+                        const newBatch = await addBatchNumber(name);
+                        console.log("New batch created:", newBatch);
+                        setIsAddBatchNumberDialogOpen(false);
+                        return {
+                          id: newBatch.id,
+                          name: `${newBatch.number} (0 of ${newBatch.assignedObituaries} done) Created by ${newBatch.createdBy?.fullName || "Unknown"} on ${newBatch.createdAt.toLocaleDateString()}`
+                        };
+                      }}
+                    />
+                    {(role === "ROOT" ||
+                      role === "ADMIN" ||
+                      role === "PROCESS_MANAGER") && (
+                      <div className="pt-6">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsAddBatchNumberDialogOpen(true)}
+                          className="h-8 mt-1"
+                        >
+                          <PlusCircle className="h-3 w-3 mr-2" />
+                          Create new batch number
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* File Box */}
+                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                    Document Storage
+                  </h3>
                   <ComboboxFormField
                     control={form.control}
-                    name="batchNumberId"
-                    label="Batch Number"
-                    placeholder="Select a batch number"
-                    emptyText="No batch numbers found."
-                    items={batchNumbers.map(batch => {
-                      return {
-                        id: batch.id,
-                        name: `${batch.number} (${batch._count?.obituaries} of ${batch.assignedObituaries} done) Created by ${batch.createdBy?.fullName || "Unknown"} on ${batch.createdAt.toLocaleDateString()}`
-                      };
-                    })}
+                    name="fileBoxId"
+                    label="File Box"
+                    placeholder="Select a file box"
+                    emptyText="No file box found."
+                    items={fileBoxes
+                      .filter(
+                        box =>
+                          box.id === obituary.fileBoxId ||
+                          box.id === openFileBoxId
+                      )
+                      .map(box => ({
+                        id: box.id,
+                        name:
+                          box.id === 0
+                            ? "Not available"
+                            : `${box.year} : ${box.number}${box.id === openFileBoxId ? " (Current Open Box)" : ""}`
+                      }))}
                     onAddItem={async name => {
-                      const newBatch = await addBatchNumber(name);
-                      console.log("New batch created:", newBatch);
-                      setIsAddBatchNumberDialogOpen(false);
-                      return {
-                        id: newBatch.id,
-                        name: `${newBatch.number} (0 of ${newBatch.assignedObituaries} done) Created by ${newBatch.createdBy?.fullName || "Unknown"} on ${newBatch.createdAt.toLocaleDateString()}`
-                      };
+                      toast({
+                        title: "Cannot add new file box",
+                        description:
+                          "File boxes are managed separately. Please contact an administrator.",
+                        variant: "destructive"
+                      });
+                      const tempId = Date.now();
+                      return { id: tempId, name };
                     }}
                   />
-                  {(role === "ROOT" ||
-                    role === "ADMIN" ||
-                    role === "PROCESS_MANAGER") && (
-                    <div className="pt-6">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsAddBatchNumberDialogOpen(true)}
-                        className="h-8 mt-1"
-                      >
-                        <PlusCircle className="h-3 w-3 mr-2" />
-                        Create new batch number
-                      </Button>
-                    </div>
-                  )}
                 </div>
-              </div>
 
-              {/* File Box */}
-              <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
-                  Document Storage
-                </h3>
-                <ComboboxFormField
-                  control={form.control}
-                  name="fileBoxId"
-                  label="File Box"
-                  placeholder="Select a file box"
-                  emptyText="No file box found."
-                  items={fileBoxes
-                    .filter(
-                      box =>
-                        box.id === obituary.fileBoxId ||
-                        box.id === openFileBoxId
-                    )
-                    .map(box => ({
-                      id: box.id,
-                      name:
-                        box.id === 0
-                          ? "Not available"
-                          : `${box.year} : ${box.number}${box.id === openFileBoxId ? " (Current Open Box)" : ""}`
-                    }))}
-                  onAddItem={async name => {
-                    toast({
-                      title: "Cannot add new file box",
-                      description:
-                        "File boxes are managed separately. Please contact an administrator.",
-                      variant: "destructive"
-                    });
-                    const tempId = Date.now();
-                    return { id: tempId, name };
-                  }}
-                />
-              </div>
-
-              <DialogFooter className="flex justify-end space-x-2 pt-6">
-                <Button type="button" variant="outline" onClick={handleClose}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Saving..." : "Save Changes"}
-                </Button>
-              </DialogFooter>
-            </form>
+                <DialogFooter className="flex justify-end space-x-2 pt-6">
+                  <Button type="button" variant="outline" onClick={handleClose}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </div>
           </Form>
         </div>
 
@@ -1880,28 +1925,55 @@ export function EditObituaryDialog({
                         >
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => {
+                        <div
+                          className={cn(
+                            "form-container relative",
+                            form.watch("proofread") &&
+                              ![
+                                "ADMIN",
+                                "PROCESS_MANAGER",
+                                "PROOFREADER"
+                              ].includes(role || "") &&
+                              "after:absolute after:inset-0 after:bg-background/30 after:cursor-not-allowed"
+                          )}
+                          onClick={e => {
                             if (
-                              existingImages.some(
-                                img => img.newName === image.newName
-                              )
+                              form.watch("proofread") &&
+                              ![
+                                "ADMIN",
+                                "PROCESS_MANAGER",
+                                "PROOFREADER"
+                              ].includes(role || "")
                             ) {
-                              handleDeleteImage(image.newName);
-                            } else {
-                              handleRemoveFile(
-                                selectedFiles.findIndex(
-                                  f => f.newName === image.newName
-                                )
-                              );
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setIsProofreadDialogOpen(true);
                             }
                           }}
-                          className="h-7 w-7 text-destructive hover:bg-destructive/10"
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              if (
+                                existingImages.some(
+                                  img => img.newName === image.newName
+                                )
+                              ) {
+                                handleDeleteImage(image.newName);
+                              } else {
+                                handleRemoveFile(
+                                  selectedFiles.findIndex(
+                                    f => f.newName === image.newName
+                                  )
+                                );
+                              }
+                            }}
+                            className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                     <div
@@ -2018,6 +2090,27 @@ export function EditObituaryDialog({
           setIsAddBatchNumberDialogOpen(false);
         }}
       />
+
+      {/* Proofread Dialog */}
+      <Dialog
+        open={isProofreadDialogOpen}
+        onOpenChange={setIsProofreadDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Obituary is Proofread</DialogTitle>
+            <DialogDescription>
+              This obituary has been proofread and can only be edited by
+              administrators, process managers, or proofreaders.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setIsProofreadDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
