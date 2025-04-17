@@ -24,7 +24,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { getUserData, Obituary as ObituaryType } from "@/lib/db";
-import { FilePlus } from "lucide-react";
+import { FilePlus, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { startTransition, useEffect, useState } from "react";
 import { fetchObituariesAction, getEditObituaryDialogData } from "./actions";
@@ -74,6 +74,9 @@ export function ObituariesTable({
   );
   const [isCreateFileNumberDialogOpen, setIsCreateFileNumberDialogOpen] =
     useState(false);
+  const [loadingButton, setLoadingButton] = useState<"prev" | "next" | null>(
+    null
+  );
 
   useEffect(() => {
     async function fetchUserData() {
@@ -95,6 +98,7 @@ export function ObituariesTable({
   }, [offset, limit, search, refreshTrigger]);
 
   function prevPage() {
+    setLoadingButton("prev");
     const newOffset = Math.max(offset - limit, 0);
     router.push(`/?offset=${newOffset}&limit=${limit}&q=${search}`, {
       scroll: false
@@ -102,6 +106,7 @@ export function ObituariesTable({
   }
 
   function nextPage() {
+    setLoadingButton("next");
     const newOffset = offset + limit;
     router.push(`/?offset=${newOffset}&limit=${limit}&q=${search}`, {
       scroll: false
@@ -109,9 +114,14 @@ export function ObituariesTable({
   }
 
   function handleItemsPerPageChange(value: string) {
+    setLoadingButton(null);
     const newLimit = parseInt(value, 10);
     router.push(`/?offset=0&limit=${newLimit}&q=${search}`, { scroll: false });
   }
+
+  useEffect(() => {
+    setLoadingButton(null);
+  }, [obituaries]);
 
   return (
     <>
@@ -189,6 +199,7 @@ export function ObituariesTable({
             <Select
               value={limit.toString()}
               onValueChange={handleItemsPerPageChange}
+              disabled={loadingButton !== null}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Items per page" />
@@ -205,19 +216,29 @@ export function ObituariesTable({
           <div className="space-x-2">
             <Button
               onClick={prevPage}
-              disabled={offset === 0}
+              disabled={offset === 0 || loadingButton !== null}
               variant="outline"
               size="sm"
             >
-              Previous
+              {loadingButton === "prev" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Previous"
+              )}
             </Button>
             <Button
               onClick={nextPage}
-              disabled={offset + limit >= totalObituaries}
+              disabled={
+                offset + limit >= totalObituaries || loadingButton !== null
+              }
               variant="outline"
               size="sm"
             >
-              Next
+              {loadingButton === "next" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Next"
+              )}
             </Button>
           </div>
         </CardFooter>
