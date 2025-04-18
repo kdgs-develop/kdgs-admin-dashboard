@@ -13,6 +13,7 @@ const relativeSchema = z.object({
 const searchInputSchema = z.object({
   surname: z.string().optional(),
   givenNames: z.string().optional(),
+  maidenName: z.string().optional(),
   alsoKnownAs: z.string().optional(),
   relatives: z.array(relativeSchema).optional(),
   birthDay: z.string().optional(),
@@ -58,57 +59,51 @@ export async function searchObituaries(
     const { page, pageSize, ...searchCriteria } = validatedInput;
 
     const where: any = {}; // Build the where clause based on searchCriteria
+    const conditions: any[] = []; // Use an array for AND conditions
 
     // Name conditions
     if (searchCriteria.surname) {
-      where.surname = { contains: searchCriteria.surname, mode: "insensitive" };
+      conditions.push({
+        surname: { contains: searchCriteria.surname, mode: "insensitive" }
+      });
     }
     if (searchCriteria.givenNames) {
-      where.givenNames = {
-        contains: searchCriteria.givenNames,
-        mode: "insensitive"
-      };
+      conditions.push({
+        givenNames: { contains: searchCriteria.givenNames, mode: "insensitive" }
+      });
     }
-    // Add Maiden Name search
-    if (searchCriteria.surname) {
-      if (where.OR) {
-        where.OR.push({
-          maidenName: { contains: searchCriteria.surname, mode: "insensitive" }
-        });
-      } else {
-        where.OR = [
-          { surname: where.surname },
-          {
-            maidenName: {
-              contains: searchCriteria.surname,
-              mode: "insensitive"
-            }
-          }
-        ];
-        delete where.surname;
-      }
+    // Add Maiden Name search condition
+    if (searchCriteria.maidenName) {
+      conditions.push({
+        maidenName: { contains: searchCriteria.maidenName, mode: "insensitive" }
+      });
     }
+
     // Also Known As
     if (searchCriteria.alsoKnownAs) {
-      where.alsoKnownAs = {
-        some: {
-          OR: [
-            {
-              surname: {
-                contains: searchCriteria.alsoKnownAs,
-                mode: "insensitive"
+      // Add AKA condition to the main list
+      conditions.push({
+        alsoKnownAs: {
+          some: {
+            OR: [
+              {
+                surname: {
+                  contains: searchCriteria.alsoKnownAs,
+                  mode: "insensitive"
+                }
+              },
+              {
+                otherNames: {
+                  contains: searchCriteria.alsoKnownAs,
+                  mode: "insensitive"
+                }
               }
-            },
-            {
-              otherNames: {
-                contains: searchCriteria.alsoKnownAs,
-                mode: "insensitive"
-              }
-            }
-          ]
+            ]
+          }
         }
-      };
+      });
     }
+
     // Relatives
     if (searchCriteria.relatives && searchCriteria.relatives.length > 0) {
       const relativeConditions = searchCriteria.relatives
@@ -127,11 +122,13 @@ export async function searchObituaries(
         })
         .filter(Boolean);
       if (relativeConditions.length > 0) {
-        where.AND = (where.AND || []).concat(
-          relativeConditions.map(cond => ({ relatives: { some: cond } }))
+        // Add each relative condition as a separate AND clause
+        relativeConditions.forEach(cond =>
+          conditions.push({ relatives: { some: cond } })
         );
       }
     }
+
     // Birth Date
     const birthDateType = searchCriteria.birthDateType ?? "exact";
     if (birthDateType === "exact") {
@@ -148,7 +145,7 @@ export async function searchObituaries(
           // Check if date is valid after creation
           if (!isNaN(targetDate.getTime())) {
             // Use equals comparison - Prisma should handle matching against DATE column
-            where.birthDate = { equals: targetDate };
+            conditions.push({ birthDate: { equals: targetDate } });
           } else {
             console.warn(
               `Invalid exact birth date components: ${year}-${month}-${day}`
@@ -157,7 +154,7 @@ export async function searchObituaries(
             const startYear = new Date(Date.UTC(year, 0, 1));
             const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
             if (!isNaN(startYear.getTime())) {
-              where.birthDate = { gte: startYear, lte: endYear };
+              conditions.push({ birthDate: { gte: startYear, lte: endYear } });
             }
           }
         } else {
@@ -165,7 +162,7 @@ export async function searchObituaries(
           const startYear = new Date(Date.UTC(year, 0, 1));
           const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
           if (!isNaN(startYear.getTime())) {
-            where.birthDate = { gte: startYear, lte: endYear };
+            conditions.push({ birthDate: { gte: startYear, lte: endYear } });
           }
         }
       } else if (!isNaN(year)) {
@@ -173,7 +170,7 @@ export async function searchObituaries(
         const startYear = new Date(Date.UTC(year, 0, 1));
         const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
         if (!isNaN(startYear.getTime())) {
-          where.birthDate = { gte: startYear, lte: endYear };
+          conditions.push({ birthDate: { gte: startYear, lte: endYear } });
         }
       }
     } else if (birthDateType === "range") {
@@ -189,8 +186,9 @@ export async function searchObituaries(
         const date = new Date(Date.UTC(yearTo, 11, 31, 23, 59, 59, 999));
         if (!isNaN(date.getTime())) rangeConditions.lte = date;
       }
-      if (Object.keys(rangeConditions).length > 0)
-        where.birthDate = rangeConditions;
+      if (Object.keys(rangeConditions).length > 0) {
+        conditions.push({ birthDate: rangeConditions });
+      }
     }
     // Death Date
     const deathDateType = searchCriteria.deathDateType ?? "exact";
@@ -203,7 +201,7 @@ export async function searchObituaries(
         if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
           const targetDate = new Date(Date.UTC(year, month - 1, day));
           if (!isNaN(targetDate.getTime())) {
-            where.deathDate = { equals: targetDate };
+            conditions.push({ deathDate: { equals: targetDate } });
           } else {
             console.warn(
               `Invalid exact death date components: ${year}-${month}-${day}`
@@ -211,21 +209,21 @@ export async function searchObituaries(
             const startYear = new Date(Date.UTC(year, 0, 1));
             const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
             if (!isNaN(startYear.getTime())) {
-              where.deathDate = { gte: startYear, lte: endYear };
+              conditions.push({ deathDate: { gte: startYear, lte: endYear } });
             }
           }
         } else {
           const startYear = new Date(Date.UTC(year, 0, 1));
           const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
           if (!isNaN(startYear.getTime())) {
-            where.deathDate = { gte: startYear, lte: endYear };
+            conditions.push({ deathDate: { gte: startYear, lte: endYear } });
           }
         }
       } else if (!isNaN(year)) {
         const startYear = new Date(Date.UTC(year, 0, 1));
         const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
         if (!isNaN(startYear.getTime())) {
-          where.deathDate = { gte: startYear, lte: endYear };
+          conditions.push({ deathDate: { gte: startYear, lte: endYear } });
         }
       }
     } else if (deathDateType === "range") {
@@ -241,59 +239,35 @@ export async function searchObituaries(
         const date = new Date(Date.UTC(yearTo, 11, 31, 23, 59, 59, 999));
         if (!isNaN(date.getTime())) rangeConditions.lte = date;
       }
-      if (Object.keys(rangeConditions).length > 0)
-        where.deathDate = rangeConditions;
+      if (Object.keys(rangeConditions).length > 0) {
+        conditions.push({ deathDate: rangeConditions });
+      }
     }
     // Place conditions
     if (searchCriteria.birthPlace) {
-      where.birthCity = {
-        OR: [
-          {
-            name: { contains: searchCriteria.birthPlace, mode: "insensitive" }
-          },
-          {
-            province: {
-              contains: searchCriteria.birthPlace,
-              mode: "insensitive"
-            }
-          },
-          {
-            country: {
-              name: { contains: searchCriteria.birthPlace, mode: "insensitive" }
-            }
-          }
-        ]
-      };
+      conditions.push({
+        birthCity: {
+          name: { contains: searchCriteria.birthPlace, mode: "insensitive" }
+        }
+      });
     }
     if (searchCriteria.deathPlace) {
-      where.deathCity = {
-        OR: [
-          {
-            name: { contains: searchCriteria.deathPlace, mode: "insensitive" }
-          },
-          {
-            province: {
-              contains: searchCriteria.deathPlace,
-              mode: "insensitive"
-            }
-          },
-          {
-            country: {
-              name: { contains: searchCriteria.deathPlace, mode: "insensitive" }
-            }
-          }
-        ]
-      };
+      conditions.push({
+        deathCity: {
+          name: { contains: searchCriteria.deathPlace, mode: "insensitive" }
+        }
+      });
     }
-    // --- End of where clause building ---
+    // Combine all conditions with AND
+    if (conditions.length > 0) {
+      where.AND = conditions;
+    }
 
-    console.log(
-      "Prisma Query Where Clause (Using equals for exact date):",
-      JSON.stringify(where, null, 2)
-    );
+    // Calculate skip value for pagination
+    const skip = (page - 1) * pageSize;
 
-    // Use Promise.all to fetch results and total count concurrently
-    const [results, totalCount] = await Promise.all([
+    // Perform the search query and count query in parallel
+    const [results, totalCount] = await prisma.$transaction([
       prisma.obituary.findMany({
         where,
         select: {
@@ -304,16 +278,26 @@ export async function searchObituaries(
           birthDate: true,
           deathDate: true
         },
-        skip: (page - 1) * pageSize,
+        orderBy: { deathDate: "desc" }, // Example sorting
+        skip,
         take: pageSize
-        // Add orderBy if needed, e.g., orderBy: { surname: 'asc' }
       }),
       prisma.obituary.count({ where })
     ]);
 
-    return { data: { results, totalCount } };
+    // Format results
+    const formattedResults: SearchResult[] = results.map(obit => ({
+      reference: obit.reference,
+      givenNames: obit.givenNames,
+      surname: obit.surname,
+      maidenName: obit.maidenName,
+      birthDate: obit.birthDate,
+      deathDate: obit.deathDate
+    }));
+
+    return { data: { results: formattedResults, totalCount } };
   } catch (error) {
-    console.error("Search error:", error);
+    console.error("Error in searchObituaries action:", error);
     if (error instanceof z.ZodError) {
       return { error: "Invalid search input." };
     }
