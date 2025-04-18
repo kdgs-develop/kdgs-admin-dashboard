@@ -13,21 +13,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User } from "lucide-react";
 import Link from "next/link";
+import { logout } from "@/lib/actions/auth/logout"; // Import the server action directly
 
 interface UserNavProps {
   displayName?: string | null;
   username?: string | null;
-  logoutAction: () => Promise<void>; // Accept the server action
+  // Remove logoutAction prop
+  // logoutAction: () => Promise<void>;
 }
 
-export function UserNav({ displayName, username, logoutAction }: UserNavProps) {
+export function UserNav({ displayName, username }: UserNavProps) {
   const handleLogout = async () => {
     try {
-      await logoutAction();
-      // You might not need a redirect here if the action redirects
+      await logout(); // Call the imported server action
     } catch (error) {
       console.error("Logout failed:", error);
-      // Optionally show an error message to the user
     }
   };
 
@@ -80,4 +80,3 @@ export function UserNav({ displayName, username, logoutAction }: UserNavProps) {
     </DropdownMenu>
   );
 }
- 
