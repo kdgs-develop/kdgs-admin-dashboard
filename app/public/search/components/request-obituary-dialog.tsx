@@ -23,7 +23,8 @@ import {
   UserX,
   Wallet,
   LogIn,
-  FileWarning
+  FileWarning,
+  FileText
 } from "lucide-react";
 import type { SessionData } from "@/lib/session";
 import {
@@ -210,17 +211,30 @@ export function RequestObituaryDialog({
             )}
 
             {details.hasImages ? (
-              <Alert className="bg-green-50 border-green-200">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertTitle className="text-green-800">
-                  Image Record Available
-                </AlertTitle>
-                <AlertDescription className="text-green-700">
-                  {isLoggedIn
-                    ? `This obituary has ${details.imageCount} image record(s) available for download.`
-                    : `This obituary has ${details.imageCount} image record(s). As a guest, access costs $10 CAD + fees.`}
-                </AlertDescription>
-              </Alert>
+              <>
+                <Alert className="bg-green-50 border-green-200">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertTitle className="text-green-800">
+                    Image Record Available
+                  </AlertTitle>
+                  <AlertDescription className="text-green-700">
+                    {isLoggedIn
+                      ? `This obituary has ${details.imageCount} image record(s) available for download.`
+                      : `This obituary has ${details.imageCount} image record(s). As a guest, access costs $10 CAD + fees.`}
+                  </AlertDescription>
+                </Alert>
+                <Alert className="bg-blue-50 border-blue-200">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  <AlertTitle className="text-blue-800">
+                    PDF Report Included
+                  </AlertTitle>
+                  <AlertDescription className="text-blue-700">
+                    {isLoggedIn
+                      ? "A PDF report containing the obituary details is also included with your image download."
+                      : "A PDF report containing the obituary details is included at no extra cost when you purchase access to the image record(s)."}
+                  </AlertDescription>
+                </Alert>
+              </>
             ) : (
               <Alert className="bg-yellow-50 border-yellow-200">
                 <Info className="h-4 w-4 text-yellow-600" />
@@ -276,8 +290,8 @@ export function RequestObituaryDialog({
         return (
           <div className="space-y-4">
             <p>
-              To download available obituary images for free, please sign in
-              with your KDGS membership credentials.
+              To download available obituary images and PDF reports for free,
+              please sign in with your KDGS membership credentials.
             </p>
             <p className="text-sm text-muted-foreground">
               Alternatively, you can proceed as a guest. Image records for
