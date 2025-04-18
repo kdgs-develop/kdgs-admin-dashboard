@@ -136,6 +136,9 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
   // State for the login dialog
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
 
+  // Determine login status
+  const isLoggedIn = session?.isLoggedIn ?? false;
+
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchFormSchema),
     defaultValues: {
@@ -786,6 +789,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
           isLoading={isLoading}
           error={searchError}
           hasSearched={hasSearched}
+          isLoggedIn={isLoggedIn}
         />
       )}
 
