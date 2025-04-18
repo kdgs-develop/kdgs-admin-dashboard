@@ -13,6 +13,15 @@ export default async function PublicLayout({
 }) {
   const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
+  // Create a plain object for the session data to pass to the client component
+  const plainSessionData: SessionData | null = session.isLoggedIn
+    ? {
+        isLoggedIn: session.isLoggedIn,
+        username: session.username,
+        displayName: session.displayName
+      }
+    : null;
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-[#003B5C]">
@@ -37,7 +46,7 @@ export default async function PublicLayout({
               </Link> */}
             </nav>
           </div>
-          <HeaderAuth session={session} logoutAction={logout} />
+          <HeaderAuth session={plainSessionData} />
         </div>
       </header>
       {children}
