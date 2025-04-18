@@ -13,7 +13,7 @@ import {
   FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { SearchIcon, Loader2, PlusIcon, XIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +25,12 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import {
+  searchObituaries,
+  SearchResult,
+  SearchResponse
+} from "@/lib/actions/public-search/search-obituaries";
+import { SearchResults } from "./search-results";
 
 const relativeSchema = z.object({
   name: z.string().optional(),
@@ -36,7 +42,6 @@ const searchFormSchema = z.object({
   givenNames: z.string().optional(),
   alsoKnownAs: z.string().optional(),
   relatives: z.array(relativeSchema).optional(),
-  // Exact Birth Date
   birthDay: z
     .string()
     .optional()
@@ -49,7 +54,6 @@ const searchFormSchema = z.object({
     .string()
     .optional()
     .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
-  // Birth Year Range
   birthYearFrom: z
     .string()
     .optional()
@@ -59,7 +63,6 @@ const searchFormSchema = z.object({
     .optional()
     .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
   birthPlace: z.string().optional(),
-  // Exact Death Date
   deathDay: z
     .string()
     .optional()
@@ -72,7 +75,6 @@ const searchFormSchema = z.object({
     .string()
     .optional()
     .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
-  // Death Year Range
   deathYearFrom: z
     .string()
     .optional()
@@ -86,12 +88,30 @@ const searchFormSchema = z.object({
 
 type SearchFormValues = z.infer<typeof searchFormSchema>;
 
+interface CurrentSearchCriteria extends SearchFormValues {
+  birthDateType: "exact" | "range";
+  deathDateType: "exact" | "range";
+}
+
 interface SearchFormProps {
   relationships: FamilyRelationship[];
 }
 
 export function SearchForm({ relationships }: SearchFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [searchData, setSearchData] = useState<SearchResponse | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [birthDateType, setBirthDateType] = useState<"exact" | "range">(
+    "exact"
+  );
+  const [deathDateType, setDeathDateType] = useState<"exact" | "range">(
+    "exact"
+  );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [currentSearchCriteria, setCurrentSearchCriteria] =
+    useState<CurrentSearchCriteria | null>(null);
 
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchFormSchema),
@@ -99,7 +119,7 @@ export function SearchForm({ relationships }: SearchFormProps) {
       surname: "",
       givenNames: "",
       alsoKnownAs: "",
-      relatives: [{ name: "", relationshipId: "" }], // Start with one empty relative row
+      relatives: [{ name: "", relationshipId: "" }],
       birthDay: "",
       birthMonth: "",
       birthYear: "",
@@ -120,30 +140,88 @@ export function SearchForm({ relationships }: SearchFormProps) {
     name: "relatives"
   });
 
-  async function onSubmit(data: SearchFormValues) {
-    setIsLoading(true);
-    try {
-      // Filter out empty relative rows before submitting
-      const processedData = {
-        ...data,
-        relatives: data.relatives?.filter(
+  const performSearch = useCallback(
+    async (criteria: CurrentSearchCriteria, page: number, size: number) => {
+      setIsLoading(true);
+      setSearchData(null);
+      setSearchError(null);
+      setHasSearched(true);
+
+      try {
+        const relatives = criteria.relatives?.filter(
           relative => relative.name || relative.relationshipId
-        )
-      };
-      console.log("Processed Search Data:", processedData);
-      // TODO: Implement search functionality with processedData
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+        );
+
+        const searchInput = {
+          ...criteria,
+          relatives,
+          page: page,
+          pageSize: size
+        };
+
+        console.log("Sending Search Input:", searchInput);
+
+        const { data, error } = await searchObituaries(searchInput);
+
+        if (error) {
+          setSearchError(error);
+          setSearchData(null);
+        } else if (data) {
+          setSearchData(data);
+          setSearchError(null);
+        } else {
+          setSearchData({ results: [], totalCount: 0 });
+          setSearchError(null);
+        }
+      } catch (error) {
+        console.error("Search execution error:", error);
+        setSearchError("An unexpected error occurred during the search.");
+        setSearchData(null);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  async function onSubmit(formData: SearchFormValues) {
+    const newCriteria: CurrentSearchCriteria = {
+      ...formData,
+      birthDateType: birthDateType,
+      deathDateType: deathDateType
+    };
+    setCurrentSearchCriteria(newCriteria);
+    setCurrentPage(1);
+    await performSearch(newCriteria, 1, pageSize);
   }
+
+  const handlePageChange = (newPage: number) => {
+    if (!currentSearchCriteria || isLoading) return;
+    setCurrentPage(newPage);
+    performSearch(currentSearchCriteria, newPage, pageSize);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    if (!currentSearchCriteria || isLoading) return;
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+    performSearch(currentSearchCriteria, 1, newPageSize);
+  };
+
+  const handleClear = () => {
+    form.reset();
+    setSearchData(null);
+    setSearchError(null);
+    setHasSearched(false);
+    setCurrentPage(1);
+    setPageSize(10);
+    setCurrentSearchCriteria(null);
+  };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Name & Relatives Information */}
           <Card className="border-0 shadow-none">
             <CardContent className="space-y-6 p-0">
               <div className="space-y-2">
@@ -156,7 +234,6 @@ export function SearchForm({ relationships }: SearchFormProps) {
               </div>
 
               <div className="space-y-4">
-                {/* Person Name Fields */}
                 <FormField
                   control={form.control}
                   name="surname"
@@ -216,7 +293,6 @@ export function SearchForm({ relationships }: SearchFormProps) {
                 />
               </div>
 
-              {/* Relatives Section */}
               <div className="space-y-4 pt-4 border-t border-gray-200">
                 <FormLabel className="text-[#003B5C] font-medium">
                   Relatives
@@ -293,7 +369,6 @@ export function SearchForm({ relationships }: SearchFormProps) {
             </CardContent>
           </Card>
 
-          {/* Life Events Information */}
           <Card className="border-0 shadow-none">
             <CardContent className="space-y-6 p-0">
               <div className="space-y-2">
@@ -304,12 +379,17 @@ export function SearchForm({ relationships }: SearchFormProps) {
               </div>
 
               <div className="space-y-6">
-                {/* Birth Information */}
                 <div className="space-y-4">
                   <p className="font-medium text-[#003B5C] text-sm">
                     Birth Information
                   </p>
-                  <Tabs defaultValue="exact" className="w-full">
+                  <Tabs
+                    defaultValue="exact"
+                    className="w-full"
+                    onValueChange={value =>
+                      setBirthDateType(value as "exact" | "range")
+                    }
+                  >
                     <TabsList className="grid w-full grid-cols-2 mb-4">
                       <TabsTrigger value="exact">Exact Date</TabsTrigger>
                       <TabsTrigger value="range">Year Range</TabsTrigger>
@@ -444,12 +524,17 @@ export function SearchForm({ relationships }: SearchFormProps) {
                   />
                 </div>
 
-                {/* Death Information */}
                 <div className="space-y-4">
                   <p className="font-medium text-[#003B5C] text-sm">
                     Death Information
                   </p>
-                  <Tabs defaultValue="exact" className="w-full">
+                  <Tabs
+                    defaultValue="exact"
+                    className="w-full"
+                    onValueChange={value =>
+                      setDeathDateType(value as "exact" | "range")
+                    }
+                  >
                     <TabsList className="grid w-full grid-cols-2 mb-4">
                       <TabsTrigger value="exact">Exact Date</TabsTrigger>
                       <TabsTrigger value="range">Year Range</TabsTrigger>
@@ -563,7 +648,6 @@ export function SearchForm({ relationships }: SearchFormProps) {
                       </div>
                     </TabsContent>
                   </Tabs>
-
                   <FormField
                     control={form.control}
                     name="deathPlace"
@@ -589,7 +673,6 @@ export function SearchForm({ relationships }: SearchFormProps) {
           </Card>
         </div>
 
-        {/* Submit/Clear buttons */}
         <div className="flex justify-center gap-4 pt-4">
           <Button
             type="submit"
@@ -611,7 +694,7 @@ export function SearchForm({ relationships }: SearchFormProps) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => form.reset()}
+            onClick={handleClear}
             disabled={isLoading}
             className="border-[#003B5C] text-[#003B5C] hover:bg-[#003B5C] hover:text-white px-8 py-2 h-11 rounded-lg transition-colors"
           >
@@ -619,6 +702,17 @@ export function SearchForm({ relationships }: SearchFormProps) {
           </Button>
         </div>
       </form>
+      <SearchResults
+        results={searchData?.results ?? null}
+        isLoading={isLoading}
+        error={searchError}
+        hasSearched={hasSearched}
+        totalCount={searchData?.totalCount ?? 0}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </Form>
   );
 }
