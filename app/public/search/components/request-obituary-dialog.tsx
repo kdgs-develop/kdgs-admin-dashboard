@@ -106,7 +106,7 @@ export function RequestObituaryDialog({
     fetchDetails(obituaryRef);
   };
 
-  const triggerDownloads = (filenames: string[]) => {
+  const triggerImageDownloads = (filenames: string[]) => {
     filenames.forEach((filename, index) => {
       setTimeout(() => {
         try {
@@ -117,10 +117,42 @@ export function RequestObituaryDialog({
           link.click();
           document.body.removeChild(link);
         } catch (error) {
-          console.error("Error triggering download for:", filename, error);
+          console.error(
+            "Error triggering image download for:",
+            filename,
+            error
+          );
         }
-      }, index * 500);
+      }, index * 700);
     });
+  };
+
+  const triggerPdfDownload = async (reference: string) => {
+    try {
+      const pdfResponse = await fetch(
+        `/api/generate-pdf/${encodeURIComponent(reference)}`
+      );
+      if (!pdfResponse.ok) {
+        const errorBody = await pdfResponse.text();
+        throw new Error(
+          `Failed to generate PDF: ${pdfResponse.statusText} ${errorBody}`.trim()
+        );
+      }
+      const pdfBlob = await pdfResponse.blob();
+      const pdfUrl = window.URL.createObjectURL(pdfBlob);
+      const pdfLink = document.createElement("a");
+      pdfLink.href = pdfUrl;
+      pdfLink.download = `obituary_report_${reference}.pdf`;
+      document.body.appendChild(pdfLink);
+      pdfLink.click();
+      document.body.removeChild(pdfLink);
+      window.URL.revokeObjectURL(pdfUrl);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      throw new Error(
+        `Failed to download PDF report. ${error instanceof Error ? error.message : ""}`.trim()
+      );
+    }
   };
 
   const handleDownload = async () => {
@@ -133,22 +165,47 @@ export function RequestObituaryDialog({
 
     setIsDownloading(true);
     setDownloadError(null);
-    try {
-      const result = await getObituaryImageUrls(details.reference);
+    const reference = details.reference;
+    let pdfSuccess = false;
+    let imagesSuccess = false;
+    let errorMessages: string[] = [];
 
-      if (result.error) {
-        setDownloadError(result.error);
-      } else if (result.message) {
-        setDownloadError(result.message);
-      } else if (result.imageNames && result.imageNames.length > 0) {
-        triggerDownloads(result.imageNames);
-      } else {
-        setDownloadError("No download links could be generated.");
+    try {
+      try {
+        await triggerPdfDownload(reference);
+        pdfSuccess = true;
+      } catch (pdfError) {
+        if (pdfError instanceof Error) {
+          errorMessages.push(pdfError.message);
+        } else {
+          errorMessages.push("An unknown error occurred downloading the PDF.");
+        }
+      }
+
+      if (details.imageCount > 0) {
+        const result = await getObituaryImageUrls(reference);
+
+        if (result.error) {
+          errorMessages.push(result.error);
+        } else if (result.message && !result.imageNames) {
+          errorMessages.push(result.message);
+        } else if (result.imageNames && result.imageNames.length > 0) {
+          triggerImageDownloads(result.imageNames);
+          imagesSuccess = true;
+        } else {
+          errorMessages.push(
+            "Could not find image files to download, although expected."
+          );
+        }
+      }
+
+      if (errorMessages.length > 0) {
+        setDownloadError(errorMessages.join(" \n "));
       }
     } catch (err) {
-      console.error("Download error:", err);
+      console.error("Download process error:", err);
       setDownloadError(
-        "An unexpected error occurred during download preparation."
+        `An unexpected error occurred during the download process. ${errorMessages.join(" \n ")}`.trim()
       );
     } finally {
       setIsDownloading(false);
@@ -252,7 +309,9 @@ export function RequestObituaryDialog({
               <Alert variant="destructive">
                 <FileWarning className="h-4 w-4" />
                 <AlertTitle>Download Issue</AlertTitle>
-                <AlertDescription>{downloadError}</AlertDescription>
+                <AlertDescription className="whitespace-pre-wrap">
+                  {downloadError}
+                </AlertDescription>
               </Alert>
             )}
 
@@ -266,7 +325,8 @@ export function RequestObituaryDialog({
                     </>
                   ) : (
                     <>
-                      <Download className="mr-2 h-4 w-4" /> Download Image(s)
+                      <Download className="mr-2 h-4 w-4" /> Download Report &
+                      Image(s)
                     </>
                   )}
                 </Button>
