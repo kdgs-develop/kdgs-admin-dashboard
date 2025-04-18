@@ -12,3 +12,4 @@ export async function logout() {
   // Optional: Redirect user after logout
   redirect("/public/search"); // Or wherever you want them to go
 }
+ 
