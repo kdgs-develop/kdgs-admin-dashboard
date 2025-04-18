@@ -3,6 +3,9 @@ import { SearchForm } from "./components/search-form";
 import { ArrowDown } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { FamilyRelationship } from "@prisma/client";
+import { getIronSession } from "iron-session";
+import { sessionOptions, SessionData } from "@/lib/session";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Search Obituary Records - KDGS",
@@ -23,7 +26,11 @@ async function getFamilyRelationships(): Promise<FamilyRelationship[]> {
 }
 
 export default async function SearchPage() {
-  const relationships = await getFamilyRelationships();
+  // Fetch both relationships and session data
+  const [relationships, session] = await Promise.all([
+    getFamilyRelationships(),
+    getIronSession<SessionData>(cookies(), sessionOptions)
+  ]);
 
   return (
     <div className="min-h-screen">
@@ -63,7 +70,7 @@ export default async function SearchPage() {
                 history
               </p>
             </div>
-            <SearchForm relationships={relationships} />
+            <SearchForm relationships={relationships} session={session} />
           </div>
 
           {/* Tips Section */}
