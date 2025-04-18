@@ -14,7 +14,8 @@ import {
   Info,
   Loader2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ClipboardCopy
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ interface SearchResultsProps {
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
+  onOpenRequestDialog: (obituaryRef: string, obituaryName: string) => void;
 }
 
 export function SearchResults({
@@ -60,7 +62,8 @@ export function SearchResults({
   currentPage,
   pageSize,
   onPageChange,
-  onPageSizeChange
+  onPageSizeChange,
+  onOpenRequestDialog
 }: SearchResultsProps) {
   const totalPages = Math.ceil(totalCount / pageSize);
   const pageSizes = [10, 25, 50, 100];
@@ -124,20 +127,46 @@ export function SearchResults({
               <TableHead className="text-[#003B5C] w-[120px]">
                 Death Date
               </TableHead>
+              <TableHead className="w-[100px] text-right text-[#003B5C]">
+                Request
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {results.map(result => (
-              <TableRow key={result.reference}>
-                <TableCell className="font-medium">
-                  {result.givenNames || "-"}
-                </TableCell>
-                <TableCell>{result.surname || "-"}</TableCell>
-                <TableCell>{result.maidenName || "-"}</TableCell>
-                <TableCell>{formatDate(result.birthDate)}</TableCell>
-                <TableCell>{formatDate(result.deathDate)}</TableCell>
-              </TableRow>
-            ))}
+            {results.map(result => {
+              // Construct full name for the dialog
+              const givenNames = result.givenNames || "";
+              const surname = result.surname || "";
+              let obituaryName = `${givenNames} ${surname}`.trim();
+              if (!obituaryName) {
+                obituaryName = `Record ${result.reference}`; // Fallback name
+              }
+
+              return (
+                <TableRow key={result.reference}>
+                  <TableCell className="font-medium">
+                    {result.givenNames || "-"}
+                  </TableCell>
+                  <TableCell>{result.surname || "-"}</TableCell>
+                  <TableCell>{result.maidenName || "-"}</TableCell>
+                  <TableCell>{formatDate(result.birthDate)}</TableCell>
+                  <TableCell>{formatDate(result.deathDate)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      title="Request Record"
+                      onClick={() =>
+                        onOpenRequestDialog(result.reference, obituaryName)
+                      }
+                    >
+                      <ClipboardCopy className="h-4 w-4" />
+                      <span className="sr-only">Request Record</span>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
