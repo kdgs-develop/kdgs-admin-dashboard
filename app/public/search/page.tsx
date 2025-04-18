@@ -32,6 +32,15 @@ export default async function SearchPage() {
     getIronSession<SessionData>(cookies(), sessionOptions)
   ]);
 
+  // Create a plain object for the session data to pass to the client component
+  const plainSessionData: SessionData | null = session.isLoggedIn
+    ? {
+        isLoggedIn: session.isLoggedIn,
+        username: session.username,
+        displayName: session.displayName
+      }
+    : null;
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -70,7 +79,10 @@ export default async function SearchPage() {
                 history
               </p>
             </div>
-            <SearchForm relationships={relationships} session={session} />
+            <SearchForm
+              relationships={relationships}
+              session={plainSessionData}
+            />
           </div>
 
           {/* Tips Section */}
