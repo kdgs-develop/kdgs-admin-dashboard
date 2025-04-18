@@ -11,11 +11,11 @@ import {
 import { SearchResult } from "@/lib/actions/public-search/search-obituaries";
 import {
   AlertCircle,
-  Info,
+  ShoppingCart,
   Loader2,
   ChevronLeft,
   ChevronRight,
-  ClipboardCopy
+  Download
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,7 @@ interface SearchResultsProps {
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
   onOpenRequestDialog: (obituaryRef: string, obituaryName: string) => void;
+  isLoggedIn: boolean;
 }
 
 export function SearchResults({
@@ -63,7 +64,8 @@ export function SearchResults({
   pageSize,
   onPageChange,
   onPageSizeChange,
-  onOpenRequestDialog
+  onOpenRequestDialog,
+  isLoggedIn
 }: SearchResultsProps) {
   const totalPages = Math.ceil(totalCount / pageSize);
   const pageSizes = [10, 25, 50, 100];
@@ -98,7 +100,7 @@ export function SearchResults({
   if (!results || results.length === 0) {
     return (
       <Alert className="mt-8 bg-blue-50 border-blue-200 text-blue-800">
-        <Info className="h-4 w-4 text-blue-600" />
+        <ShoppingCart className="h-4 w-4 text-blue-600" />
         <AlertTitle>No Results Found</AlertTitle>
         <AlertDescription>
           Your search did not match any obituary records. Try broadening your
@@ -128,7 +130,7 @@ export function SearchResults({
                 Death Date
               </TableHead>
               <TableHead className="w-[100px] text-right text-[#003B5C]">
-                Request
+                {isLoggedIn ? "Download" : "Request"}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -141,6 +143,12 @@ export function SearchResults({
               if (!obituaryName) {
                 obituaryName = `Record ${result.reference}`; // Fallback name
               }
+
+              // Determine button title and SR text based on login status
+              const buttonTitle = isLoggedIn
+                ? "Download Record"
+                : "Add to Cart";
+              const srText = isLoggedIn ? "Download Record" : "Add to Cart";
 
               return (
                 <TableRow key={result.reference}>
@@ -155,13 +163,18 @@ export function SearchResults({
                     <Button
                       variant="ghost"
                       size="sm"
-                      title="Request Record"
+                      title={buttonTitle}
                       onClick={() =>
                         onOpenRequestDialog(result.reference, obituaryName)
                       }
+                      className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md"
                     >
-                      <ClipboardCopy className="h-4 w-4" />
-                      <span className="sr-only">Request Record</span>
+                      {isLoggedIn ? (
+                        <Download className="h-4 w-4" />
+                      ) : (
+                        <ShoppingCart className="h-4 w-4" />
+                      )}
+                      <span className="sr-only">{srText}</span>
                     </Button>
                   </TableCell>
                 </TableRow>
