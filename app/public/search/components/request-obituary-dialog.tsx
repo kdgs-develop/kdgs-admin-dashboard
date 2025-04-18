@@ -34,11 +34,6 @@ import { getObituaryImageUrls } from "@/lib/actions/public-search/get-obituary-i
 
 type RequestStep = "authCheck" | "loadingDetails" | "infoDisplay" | "error";
 
-interface DownloadItem {
-  url: string;
-  filename: string;
-}
-
 interface RequestObituaryDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -110,18 +105,18 @@ export function RequestObituaryDialog({
     fetchDetails(obituaryRef);
   };
 
-  const triggerDownloads = (downloads: DownloadItem[]) => {
-    downloads.forEach((item, index) => {
+  const triggerDownloads = (filenames: string[]) => {
+    filenames.forEach((filename, index) => {
       setTimeout(() => {
         try {
           const link = document.createElement("a");
-          link.href = item.url;
-          link.download = item.filename;
+          link.href = `/api/download-image/${encodeURIComponent(filename)}`;
+          link.download = filename;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
         } catch (error) {
-          console.error("Error triggering download for:", item.filename, error);
+          console.error("Error triggering download for:", filename, error);
         }
       }, index * 500);
     });
@@ -144,14 +139,16 @@ export function RequestObituaryDialog({
         setDownloadError(result.error);
       } else if (result.message) {
         setDownloadError(result.message);
-      } else if (result.downloads && result.downloads.length > 0) {
-        triggerDownloads(result.downloads);
+      } else if (result.imageNames && result.imageNames.length > 0) {
+        triggerDownloads(result.imageNames);
       } else {
-        setDownloadError("No download links were found.");
+        setDownloadError("No download links could be generated.");
       }
     } catch (err) {
       console.error("Download error:", err);
-      setDownloadError("An unexpected error occurred during download.");
+      setDownloadError(
+        "An unexpected error occurred during download preparation."
+      );
     } finally {
       setIsDownloading(false);
     }
