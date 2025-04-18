@@ -31,6 +31,9 @@ import {
   SearchResponse
 } from "@/lib/actions/public-search/search-obituaries";
 import { SearchResults } from "./search-results";
+import type { SessionData } from "@/lib/session";
+import { RequestObituaryDialog } from "./request-obituary-dialog";
+import { LoginDialog } from "@/app/public/components/login-dialog";
 
 const relativeSchema = z.object({
   name: z.string().optional(),
@@ -95,9 +98,10 @@ interface CurrentSearchCriteria extends SearchFormValues {
 
 interface SearchFormProps {
   relationships: FamilyRelationship[];
+  session?: SessionData | null;
 }
 
-export function SearchForm({ relationships }: SearchFormProps) {
+export function SearchForm({ relationships, session }: SearchFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [searchData, setSearchData] = useState<SearchResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -112,6 +116,18 @@ export function SearchForm({ relationships }: SearchFormProps) {
   const [pageSize, setPageSize] = useState(10);
   const [currentSearchCriteria, setCurrentSearchCriteria] =
     useState<CurrentSearchCriteria | null>(null);
+
+  // State for the request dialog
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [selectedObituaryRef, setSelectedObituaryRef] = useState<string | null>(
+    null
+  );
+  const [selectedObituaryName, setSelectedObituaryName] = useState<
+    string | null
+  >(null);
+
+  // State for the login dialog
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
 
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchFormSchema),
@@ -183,6 +199,35 @@ export function SearchForm({ relationships }: SearchFormProps) {
     },
     []
   );
+
+  // Handlers for the request dialog
+  const handleOpenRequestDialog = useCallback(
+    (obituaryRef: string, obituaryName: string) => {
+      console.log(
+        `Opening request dialog for: ${obituaryName} (Ref: ${obituaryRef})`
+      );
+      setSelectedObituaryRef(obituaryRef);
+      setSelectedObituaryName(obituaryName);
+      setIsRequestDialogOpen(true);
+    },
+    [] // Dependencies: none, as it only uses setters
+  );
+
+  const handleCloseRequestDialog = useCallback(() => {
+    setIsRequestDialogOpen(false);
+    setSelectedObituaryRef(null);
+    setSelectedObituaryName(null);
+    // Reset any other dialog-specific state here in the future (e.g., step)
+  }, []);
+
+  // Placeholder handler for triggering sign-in
+  const handleSignInRequest = useCallback(() => {
+    console.log("Sign In requested from RequestObituaryDialog");
+    // Close the request dialog
+    setIsRequestDialogOpen(false);
+    // Open the login dialog
+    setIsLoginDialogOpen(true);
+  }, []);
 
   async function onSubmit(formData: SearchFormValues) {
     const newCriteria: CurrentSearchCriteria = {
@@ -702,16 +747,37 @@ export function SearchForm({ relationships }: SearchFormProps) {
           </Button>
         </div>
       </form>
-      <SearchResults
-        results={searchData?.results ?? null}
-        isLoading={isLoading}
-        error={searchError}
-        hasSearched={hasSearched}
-        totalCount={searchData?.totalCount ?? 0}
-        currentPage={currentPage}
-        pageSize={pageSize}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
+      {hasSearched && !isLoading && searchData && (
+        <SearchResults
+          results={searchData.results}
+          totalCount={searchData.totalCount}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          onOpenRequestDialog={handleOpenRequestDialog}
+          isLoading={isLoading}
+          error={searchError}
+          hasSearched={hasSearched}
+        />
+      )}
+
+      {/* Render the RequestObituaryDialog */}
+      <RequestObituaryDialog
+        isOpen={isRequestDialogOpen}
+        onOpenChange={setIsRequestDialogOpen} // Use the state setter directly for simple open/close
+        session={session ?? null} // Ensure null is passed if session is undefined
+        obituaryRef={selectedObituaryRef}
+        obituaryName={selectedObituaryName}
+        // Pass handleCloseRequestDialog if more complex close logic is needed later
+        // onClose={handleCloseRequestDialog}
+        onSignInRequest={handleSignInRequest} // Pass the sign-in handler
+      />
+
+      {/* Render the Login Dialog */}
+      <LoginDialog
+        isOpen={isLoginDialogOpen}
+        onOpenChange={setIsLoginDialogOpen}
       />
     </Form>
   );
