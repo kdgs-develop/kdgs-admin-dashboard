@@ -20,16 +20,14 @@ export async function getObituaryDetails(
 
     const obituary = await prisma.obituary.findUnique({
       where: { reference: validatedReference },
+      // Select only the fields needed now
       select: {
         reference: true,
-        imageNames: true, // Check if this array has items
-        _count: {
-          // Use _count for efficiency if only count is needed
-          select: { images: true, fileImages: true }
-        }
-        // Alternatively, select the relations if you need filenames etc.
-        // images: { select: { name: true }, take: 1 }, // Select first Image
-        // fileImages: { select: { name: true }, take: 1 }, // Select first ImageFile
+        imageNames: true
+        // No longer need _count for this logic
+        // _count: {
+        //   select: { images: true, fileImages: true }
+        // }
       }
     });
 
@@ -37,20 +35,20 @@ export async function getObituaryDetails(
       return { error: "Obituary not found." };
     }
 
-    // Determine if images exist based on relations or imageNames array
-    const imageCount =
-      (obituary._count?.images ?? 0) + (obituary._count?.fileImages ?? 0);
-    const hasImagesBasedOnCount = imageCount > 0;
-    // Or check the string array if that's the primary indicator:
-    const hasImagesBasedOnArray =
-      obituary.imageNames && obituary.imageNames.length > 0;
+    // Calculate count and hasImages based *only* on imageNames array
+    const imageCount = obituary.imageNames?.length ?? 0;
+    const hasImages = imageCount > 0;
 
-    const hasImages = hasImagesBasedOnCount || hasImagesBasedOnArray; // Combine checks if needed
+    // Removed the check based on _count
+    // const hasImagesBasedOnCount = imageCount > 0;
+    // const hasImagesBasedOnArray =
+    //   obituary.imageNames && obituary.imageNames.length > 0;
+    // const hasImages = hasImagesBasedOnCount || hasImagesBasedOnArray;
 
     const details: ObituaryDetails = {
       reference: obituary.reference,
       hasImages: hasImages,
-      imageCount: imageCount // You might want to use the more accurate count
+      imageCount: imageCount
     };
 
     return { data: details };
