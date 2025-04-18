@@ -9,10 +9,9 @@ import { SessionData } from "@/lib/session"; // Import the session data type
 
 interface HeaderAuthProps {
   session: SessionData | null; // Session can be null if not logged in
-  logoutAction: () => Promise<void>;
 }
 
-export function HeaderAuth({ session, logoutAction }: HeaderAuthProps) {
+export function HeaderAuth({ session }: HeaderAuthProps) {
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
 
   return (
@@ -24,7 +23,6 @@ export function HeaderAuth({ session, logoutAction }: HeaderAuthProps) {
             <UserNav
               displayName={session.displayName}
               username={session.username}
-              logoutAction={logoutAction}
             />
           </>
         ) : (
