@@ -1,44 +1,43 @@
-import { Button } from "@/components/ui/button";
+import { getIronSession } from "iron-session";
+import { sessionOptions, SessionData } from "@/lib/session"; // Your session config
+import { cookies } from "next/headers";
+import { logout } from "@/lib/actions/auth/logout";
+import Link from "next/link";
+import { HeaderAuth } from "./components/header-auth"; // Import the new component
 
-export default function PublicLayout({
+// Layout becomes an async component to fetch session
+export default async function PublicLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-[#003B5C]">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <a href="/" className="text-2xl font-bold text-white">
+            <Link href="/" className="text-2xl font-bold text-white">
               KDGS
-            </a>
+            </Link>
             <nav className="hidden md:flex space-x-4">
-              <a
+              <Link
                 href="/public/search"
                 className="text-white hover:text-gray-200"
               >
                 Search Records
-              </a>
-              <a href="#" className="text-white hover:text-gray-200">
+              </Link>
+              {/* Add other relevant public nav links */}
+              {/* <Link href="#" className="text-white hover:text-gray-200">
                 About
-              </a>
-              <a href="#" className="text-white hover:text-gray-200">
+              </Link>
+              <Link href="#" className="text-white hover:text-gray-200">
                 Help
-              </a>
+              </Link> */}
             </nav>
           </div>
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              className="text-white hover:text-gray-200 hover:bg-[#004d7a]"
-            >
-              Sign In
-            </Button>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white border-none">
-              Become a Member
-            </Button>
-          </div>
+          <HeaderAuth session={session} logoutAction={logout} />
         </div>
       </header>
       {children}
