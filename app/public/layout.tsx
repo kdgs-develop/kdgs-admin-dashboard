@@ -49,7 +49,9 @@ export default async function PublicLayout({
           <HeaderAuth session={plainSessionData} />
         </div>
       </header>
-      {children}
+
+      {/* Wrap children in a main element that grows */}
+      <main className="flex-1">{children}</main>
     </div>
   );
 }
