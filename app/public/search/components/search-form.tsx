@@ -41,8 +41,15 @@ const relativeSchema = z.object({
 });
 
 const searchFormSchema = z.object({
-  surname: z.string().optional(),
+  surname: z
+    .string()
+    .optional()
+    .transform(val => val?.toUpperCase()),
   givenNames: z.string().optional(),
+  maidenName: z
+    .string()
+    .optional()
+    .transform(val => val?.toUpperCase()),
   alsoKnownAs: z.string().optional(),
   relatives: z.array(relativeSchema).optional(),
   birthDay: z
@@ -134,6 +141,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
     defaultValues: {
       surname: "",
       givenNames: "",
+      maidenName: "",
       alsoKnownAs: "",
       relatives: [{ name: "", relationshipId: "" }],
       birthDay: "",
@@ -309,6 +317,25 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                       <FormControl>
                         <Input
                           placeholder="Enter given names"
+                          {...field}
+                          className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-500" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="maidenName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[#003B5C] font-medium">
+                        Maiden Name
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter maiden name (if applicable)"
                           {...field}
                           className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                         />
