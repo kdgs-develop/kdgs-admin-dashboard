@@ -167,14 +167,15 @@ export function PeriodicalAdministration() {
   useEffect(() => {
     // Only fetch when expanded
     if (isExpanded) {
+      fetchCities();
       fetchPeriodicals(currentPage);
     }
   }, [currentPage, isExpanded, itemsPerPage]);
 
-  // Fetch cities on initial mount
-  useEffect(() => {
-    fetchCities();
-  }, []); // Empty dependency array ensures this runs only once on mount
+  // // Fetch cities on initial mount
+  // useEffect(() => {
+  //   fetchCities();
+  // }, []); // Empty dependency array ensures this runs only once on mount
 
   const handleSearch = async () => {
     if (!isExpanded) return;
