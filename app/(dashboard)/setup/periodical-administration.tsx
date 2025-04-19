@@ -171,10 +171,11 @@ export function PeriodicalAdministration() {
     }
   }, [currentPage, isExpanded, itemsPerPage]);
 
-  // Fetch cities on initial mount
   useEffect(() => {
-    fetchCities();
-  }, []); // Empty dependency array ensures this runs only once on mount
+    if (isExpanded) {
+      fetchCities();
+    }
+  }, [isExpanded]);
 
   const handleSearch = async () => {
     if (!isExpanded) return;
