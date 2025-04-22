@@ -34,6 +34,14 @@ import { SearchResults } from "./search-results";
 import type { SessionData } from "@/lib/session";
 import { RequestObituaryDialog } from "./request-obituary-dialog";
 import { LoginDialog } from "@/app/public/components/login-dialog";
+import { ShoppingCart } from "@/app/public/components/shopping-cart";
+
+// Update CartItem type
+interface CartItem {
+  ref: string;
+  name: string;
+  hasImages: boolean; // Add flag for image/PDF availability
+}
 
 const relativeSchema = z.object({
   name: z.string().optional(),
@@ -135,6 +143,9 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
 
   // State for the login dialog
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+
+  // State for the shopping cart
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   // Determine login status
   const isLoggedIn = session?.isLoggedIn ?? false;
@@ -238,6 +249,39 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
     setIsRequestDialogOpen(false);
     // Open the login dialog
     setIsLoginDialogOpen(true);
+  }, []);
+
+  // Update handler to accept and store hasImages
+  const handleAddToCart = useCallback(
+    (obituaryRef: string, obituaryName: string, hasImages: boolean) => {
+      setCartItems(prevCart => {
+        if (prevCart.some(item => item.ref === obituaryRef)) {
+          console.log(`Item ${obituaryRef} already in cart.`);
+          // toast({ title: "Item already in cart" });
+          return prevCart;
+        }
+        const newItem: CartItem = {
+          ref: obituaryRef,
+          name: obituaryName,
+          hasImages: hasImages // Store the flag
+        };
+        console.log("Adding to cart:", newItem);
+        // toast({ title: "Item Added" });
+        return [...prevCart, newItem];
+      });
+    },
+    []
+  );
+
+  // Handler to remove an item from the cart
+  const handleRemoveFromCart = useCallback((obituaryRef: string) => {
+    setCartItems(prevCart => {
+      const updatedCart = prevCart.filter(item => item.ref !== obituaryRef);
+      console.log(`Removed ${obituaryRef} from cart. New cart:`, updatedCart);
+      // Optionally show toast notification for removal
+      // toast({ title: "Item Removed", description: `Item with ref ${obituaryRef} removed from cart.` });
+      return updatedCart;
+    });
   }, []);
 
   async function onSubmit(formData: SearchFormValues) {
@@ -793,16 +837,18 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
         />
       )}
 
+      {/* Render the ShoppingCart component */}
+      <ShoppingCart cartItems={cartItems} onRemoveItem={handleRemoveFromCart} />
+
       {/* Render the RequestObituaryDialog */}
       <RequestObituaryDialog
         isOpen={isRequestDialogOpen}
-        onOpenChange={setIsRequestDialogOpen} // Use the state setter directly for simple open/close
-        session={session ?? null} // Ensure null is passed if session is undefined
+        onOpenChange={setIsRequestDialogOpen}
+        session={session ?? null}
         obituaryRef={selectedObituaryRef}
         obituaryName={selectedObituaryName}
-        // Pass handleCloseRequestDialog if more complex close logic is needed later
-        // onClose={handleCloseRequestDialog}
-        onSignInRequest={handleSignInRequest} // Pass the sign-in handler
+        onSignInRequest={handleSignInRequest}
+        onAddToCart={handleAddToCart}
       />
 
       {/* Render the Login Dialog */}
