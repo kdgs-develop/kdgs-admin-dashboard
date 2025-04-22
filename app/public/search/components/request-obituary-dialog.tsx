@@ -24,7 +24,8 @@ import {
   Wallet,
   LogIn,
   FileWarning,
-  FileText
+  FileText,
+  ShoppingCart
 } from "lucide-react";
 import type { SessionData } from "@/lib/session";
 import {
@@ -42,6 +43,7 @@ interface RequestObituaryDialogProps {
   obituaryRef: string | null;
   obituaryName: string | null;
   onSignInRequest: () => void;
+  onAddToCart: (ref: string, name: string, hasImages: boolean) => void;
 }
 
 export function RequestObituaryDialog({
@@ -50,7 +52,8 @@ export function RequestObituaryDialog({
   session,
   obituaryRef,
   obituaryName,
-  onSignInRequest
+  onSignInRequest,
+  onAddToCart
 }: RequestObituaryDialogProps) {
   const [step, setStep] = useState<RequestStep>("authCheck");
   const [details, setDetails] = useState<ObituaryDetails | null>(null);
@@ -151,6 +154,18 @@ export function RequestObituaryDialog({
       console.error("Error downloading PDF:", error);
       throw new Error(
         `Failed to download PDF report. ${error instanceof Error ? error.message : ""}`.trim()
+      );
+    }
+  };
+
+  const handleAddToCartClick = () => {
+    if (details?.reference && obituaryName && details !== null) {
+      onAddToCart(details.reference, obituaryName, details.hasImages);
+      onOpenChange(false);
+    } else {
+      console.error("Cannot add to cart, missing ref, name, or details");
+      setDownloadError(
+        "Could not add item to cart due to missing information."
       );
     }
   };
@@ -332,8 +347,12 @@ export function RequestObituaryDialog({
                 </Button>
               )}
               {!isLoggedIn && details.hasImages && (
-                <Button disabled className="w-full sm:w-auto">
-                  <Wallet className="mr-2 h-4 w-4" /> Proceed to Payment (Soon)
+                <Button
+                  onClick={handleAddToCartClick}
+                  className="w-full sm:w-auto"
+                  disabled={isDownloading}
+                >
+                  <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
                 </Button>
               )}
               <DialogClose asChild>
