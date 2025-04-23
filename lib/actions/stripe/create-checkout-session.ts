@@ -6,6 +6,7 @@ import { getIronSession } from "iron-session";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
+import { randomUUID } from "crypto";
 
 import { sessionOptions, SessionData } from "@/lib/session";
 
@@ -78,16 +79,21 @@ export async function createCheckoutSession(cartItems: unknown): Promise<{
     return { error: "Server configuration error." };
   }
 
-  let orderId: string | null = null; // To store the created order ID
+  let orderId: string | null = null;
+  let successToken: string | null = null;
 
   try {
+    // Generate a unique token for the success URL
+    successToken = randomUUID();
+
     // 4. Create Pending Order in Database
     const order = await prisma.order.create({
       data: {
         status: OrderStatus.PENDING,
         totalAmount: totalAmount,
         currency: "cad",
-        guestSessionId: guestSessionId, // Store guest session ID if available
+        guestSessionId: guestSessionId,
+        successToken: successToken,
         // userId: session.userId, // If handling logged-in users
         items: {
           create: itemsToPurchase.map(item => ({
@@ -131,12 +137,13 @@ export async function createCheckoutSession(cartItems: unknown): Promise<{
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}&obituary_refs=${itemsToPurchase.map(item => item.ref).join(",")}`,
-      cancel_url: `${baseUrl}?order_id=${orderId}`,
+      success_url: `${baseUrl}/payment-success?token=${successToken}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}?canceled=true`,
       metadata: {
-        orderId: orderId
+        orderId: orderId,
+        successToken: successToken // Optional: Add token here too
       },
-      client_reference_id: orderId
+      client_reference_id: orderId // Keep using orderId here for potential webhook lookup
     });
 
     if (!checkoutSession.id) {
