@@ -5,8 +5,9 @@ import { cn } from "@/lib/utils";
 import { DownloadButton } from "./download-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, FileText, Info } from "lucide-react";
+import { CheckCircle2, FileText, Info, ArrowLeft } from "lucide-react";
 import { getObituaryDetails } from "@/lib/actions/public-search/get-obituary-details";
+import Image from "next/image";
 
 // Optional: Component to read and display details from URL params
 async function PaymentDetails({
@@ -42,9 +43,20 @@ async function PaymentDetails({
           const imageCount = details.data?.imageCount;
 
           return (
-            <div key={ref} className="space-y-4 p-4 border rounded-lg">
+            <div
+              key={ref}
+              className="space-y-4 p-6 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-200"
+            >
               <div className="space-y-2">
-                <h3 className="font-medium text-lg">{details.data?.name}</h3>
+                <h3 className="font-medium text-lg text-gray-900">
+                  {[
+                    details.data?.title?.name,
+                    details.data?.givenNames,
+                    details.data?.surname
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || "Unknown"}
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   Reference: {ref}
                 </p>
@@ -106,42 +118,80 @@ export default function PaymentSuccessPage({
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
   return (
-    <div className="container flex min-h-screen flex-col items-center justify-center py-12">
-      <div className="mx-auto max-w-md text-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="mx-auto mb-4 h-16 w-16 text-green-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <h1 className="mb-2 text-3xl font-bold tracking-tight">
-          Payment Successful!
-        </h1>
-        <p className="mb-6 text-muted-foreground">
-          Thank you for your purchase. Your obituary records are ready for
-          download.
-        </p>
+    <div className="min-h-screen relative">
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/duck-lake.jpg"
+          alt="Peaceful lake background"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm" />
+      </div>
 
-        {/* Wrap details component in Suspense as it reads searchParams */}
-        <Suspense fallback={<div>Loading download options...</div>}>
-          <PaymentDetails searchParams={searchParams} />
-        </Suspense>
+      {/* Content */}
+      <div className="container relative z-10 flex min-h-screen flex-col items-center justify-center py-12">
+        <div className="mx-auto max-w-2xl w-full px-4">
+          <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-8 border border-gray-100">
+            <div className="text-center space-y-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-24 h-24 bg-green-100/80 rounded-full"></div>
+                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="mx-auto h-16 w-16 text-green-500 relative z-10"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
 
-        <div className="mt-8">
-          <Link
-            href="/public/search"
-            className={cn(buttonVariants({ variant: "outline" }))}
-          >
-            Return to Search
-          </Link>
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                  Payment Successful!
+                </h1>
+                <p className="text-muted-foreground text-lg">
+                  Thank you for your purchase. Your obituary records are ready
+                  for download.
+                </p>
+              </div>
+
+              {/* Wrap details component in Suspense as it reads searchParams */}
+              <Suspense
+                fallback={
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                  </div>
+                }
+              >
+                <PaymentDetails searchParams={searchParams} />
+              </Suspense>
+
+              <div className="pt-6">
+                <Link
+                  href="/public/search"
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "group inline-flex items-center gap-2 bg-white hover:bg-gray-50"
+                  )}
+                >
+                  <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                  Return to Search
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
