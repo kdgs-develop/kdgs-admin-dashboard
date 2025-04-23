@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, FileText, Info, ArrowLeft } from "lucide-react";
 import { getObituaryDetails } from "@/lib/actions/public-search/get-obituary-details";
 import Image from "next/image";
+import { getCheckoutSessionDetails } from "@/lib/actions/stripe/get-checkout-session-details";
 
 // Optional: Component to read and display details from URL params
 async function PaymentDetails({
@@ -19,7 +20,24 @@ async function PaymentDetails({
   const orderId = searchParams?.order_id;
   const obituaryRefs = searchParams?.obituary_refs;
 
-  if (!obituaryRefs) {
+  // Fetch checkout session details concurrently
+  const sessionDetailsPromise = sessionId
+    ? getCheckoutSessionDetails(sessionId)
+    : Promise.resolve({ customerEmail: null, error: "Session ID missing." });
+
+  // Fetch obituary details in parallel
+  const refs = typeof obituaryRefs === "string" ? obituaryRefs.split(",") : [];
+  const obituaryDetailsPromises = refs.map(ref => getObituaryDetails(ref));
+
+  // Await all promises
+  const [sessionDetails, ...obituaryDetailsResults] = await Promise.all([
+    sessionDetailsPromise,
+    ...obituaryDetailsPromises
+  ]);
+
+  const customerEmail = sessionDetails.customerEmail;
+
+  if (!obituaryRefs || refs.length === 0) {
     return (
       <Alert className="mt-4">
         <Info className="h-4 w-4" />
@@ -32,13 +50,11 @@ async function PaymentDetails({
     );
   }
 
-  const refs = typeof obituaryRefs === "string" ? obituaryRefs.split(",") : [];
-
   return (
     <div className="mt-8 space-y-6">
       <div className="space-y-4">
-        {refs.map(async ref => {
-          const details = await getObituaryDetails(ref);
+        {refs.map((ref, index) => {
+          const details = obituaryDetailsResults[index];
           const hasImages = details.data?.hasImages;
           const imageCount = details.data?.imageCount;
 
@@ -105,7 +121,11 @@ async function PaymentDetails({
           );
         })}
       </div>
-      <div className="text-sm text-muted-foreground space-y-2">
+      <div className="text-sm text-muted-foreground space-y-2 text-center">
+        {customerEmail && <p>Email: {customerEmail}</p>}
+        {sessionDetails.error && !customerEmail && (
+          <p className="text-red-500">Could not retrieve email.</p>
+        )}
         <p>Order ID: {orderId}</p>
       </div>
     </div>
