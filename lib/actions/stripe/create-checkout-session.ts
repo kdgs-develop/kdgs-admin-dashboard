@@ -131,14 +131,12 @@ export async function createCheckoutSession(cartItems: unknown): Promise<{
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`, // Pass order ID too
-      cancel_url: `${baseUrl}/public/search?order_id=${orderId}`, // Pass order ID if needed for cancellation logic
+      success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}&obituary_refs=${itemsToPurchase.map(item => item.ref).join(",")}`,
+      cancel_url: `${baseUrl}?order_id=${orderId}`,
       metadata: {
-        // Add crucial metadata to link back to your order
-        orderId: orderId // Now guaranteed to be a string
+        orderId: orderId
       },
-      // Link the Stripe session to your Order ID
-      client_reference_id: orderId // Now guaranteed to be a string
+      client_reference_id: orderId
     });
 
     if (!checkoutSession.id) {
@@ -176,4 +174,3 @@ export async function createCheckoutSession(cartItems: unknown): Promise<{
     };
   }
 }
- 
