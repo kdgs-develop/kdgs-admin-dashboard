@@ -9,54 +9,88 @@ import { CheckCircle2, FileText, Info, ArrowLeft } from "lucide-react";
 import { getObituaryDetails } from "@/lib/actions/public-search/get-obituary-details";
 import Image from "next/image";
 import { getCheckoutSessionDetails } from "@/lib/actions/stripe/get-checkout-session-details";
+import { getOrderDetailsByToken } from "@/lib/actions/orders/get-order-details-by-token";
 
-// Optional: Component to read and display details from URL params
+// Component to display payment details and download links
 async function PaymentDetails({
   searchParams
 }: {
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
+  const token = searchParams?.token;
   const sessionId = searchParams?.session_id;
-  const orderId = searchParams?.order_id;
-  const obituaryRefs = searchParams?.obituary_refs;
 
-  // Fetch checkout session details concurrently
-  const sessionDetailsPromise = sessionId
-    ? getCheckoutSessionDetails(sessionId)
-    : Promise.resolve({ customerEmail: null, error: "Session ID missing." });
-
-  // Fetch obituary details in parallel
-  const refs = typeof obituaryRefs === "string" ? obituaryRefs.split(",") : [];
-  const obituaryDetailsPromises = refs.map(ref => getObituaryDetails(ref));
-
-  // Await all promises
-  const [sessionDetails, ...obituaryDetailsResults] = await Promise.all([
-    sessionDetailsPromise,
-    ...obituaryDetailsPromises
-  ]);
-
-  const customerEmail = sessionDetails.customerEmail;
-
-  if (!obituaryRefs || refs.length === 0) {
+  // Basic validation: Ensure token and session ID are present
+  if (typeof token !== "string" || typeof sessionId !== "string") {
     return (
-      <Alert className="mt-4">
+      <Alert variant="destructive" className="mt-4">
         <Info className="h-4 w-4" />
-        <AlertTitle>Missing References</AlertTitle>
+        <AlertTitle>Invalid Request</AlertTitle>
         <AlertDescription>
-          No obituary references found. Please contact support if you believe
-          this is an error.
+          Missing payment confirmation details. Please contact support.
         </AlertDescription>
       </Alert>
     );
   }
 
+  // Fetch order and session details concurrently
+  const orderDetailsPromise = getOrderDetailsByToken(token);
+  const sessionDetailsPromise = getCheckoutSessionDetails(sessionId);
+
+  const [orderDetails, sessionDetails] = await Promise.all([
+    orderDetailsPromise,
+    sessionDetailsPromise
+  ]);
+
+  // Handle errors from fetching details
+  if (orderDetails.error || sessionDetails.error) {
+    const errorMessage = orderDetails.error || sessionDetails.error;
+    return (
+      <Alert variant="destructive" className="mt-4">
+        <Info className="h-4 w-4" />
+        <AlertTitle>Error Retrieving Details</AlertTitle>
+        <AlertDescription>
+          {errorMessage || "Could not load your purchase details."}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // Extract data (we know these exist if no error)
+  const orderId = orderDetails.orderId!;
+  const obituaryRefs = orderDetails.obituaryRefs!;
+  const customerEmail = sessionDetails.customerEmail;
+  const customerFullName = sessionDetails.customerFullName;
+  const customerCountry = sessionDetails.customerCountry;
+
+  // Fetch individual obituary details concurrently
+  const obituaryDetailsPromises = obituaryRefs.map(ref =>
+    getObituaryDetails(ref)
+  );
+  const obituaryDetailsResults = await Promise.all(obituaryDetailsPromises);
+
   return (
     <div className="mt-8 space-y-6">
       <div className="space-y-4">
-        {refs.map((ref, index) => {
-          const details = obituaryDetailsResults[index];
-          const hasImages = details.data?.hasImages;
-          const imageCount = details.data?.imageCount;
+        {obituaryRefs.map((ref, index) => {
+          const detailsResult = obituaryDetailsResults[index];
+          // Handle potential error fetching individual obituary details
+          if (detailsResult.error || !detailsResult.data) {
+            return (
+              <Alert key={ref} variant="destructive" className="my-4">
+                <Info className="h-4 w-4" />
+                <AlertTitle>Error Loading Obituary</AlertTitle>
+                <AlertDescription>
+                  Could not load details for reference {ref}.
+                  {detailsResult.error ? ` (${detailsResult.error})` : ""}
+                </AlertDescription>
+              </Alert>
+            );
+          }
+
+          const details = detailsResult.data;
+          const hasImages = details.hasImages;
+          const imageCount = details.imageCount;
 
           return (
             <div
@@ -65,11 +99,7 @@ async function PaymentDetails({
             >
               <div className="space-y-2">
                 <h3 className="font-medium text-lg text-gray-900">
-                  {[
-                    details.data?.title?.name,
-                    details.data?.givenNames,
-                    details.data?.surname
-                  ]
+                  {[details.title?.name, details.givenNames, details.surname]
                     .filter(Boolean)
                     .join(" ") || "Unknown"}
                 </h3>
@@ -121,11 +151,11 @@ async function PaymentDetails({
           );
         })}
       </div>
-      <div className="text-sm text-muted-foreground space-y-2 text-center">
+      {/* Display Customer and Order Info */}
+      <div className="text-sm text-muted-foreground space-y-1 text-center border-t pt-4 mt-6">
+        {customerFullName && <p>Customer: {customerFullName}</p>}
         {customerEmail && <p>Email: {customerEmail}</p>}
-        {sessionDetails.error && !customerEmail && (
-          <p className="text-red-500">Could not retrieve email.</p>
-        )}
+        {customerCountry && <p>Country: {customerCountry}</p>}
         <p>Order ID: {orderId}</p>
       </div>
     </div>
