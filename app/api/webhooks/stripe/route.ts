@@ -44,8 +44,20 @@ export async function POST(request: NextRequest) {
 
     switch (event.type) {
       case "checkout.session.completed": {
-        const orderId = session?.metadata?.orderId;
-        const clientReferenceId = session?.client_reference_id;
+        // Retrieve the full session object with expanded details
+        const sessionWithDetails = await stripe.checkout.sessions.retrieve(
+          (event.data.object as Stripe.Checkout.Session).id,
+          {
+            expand: ["customer_details", "customer_details.address"]
+          }
+        );
+
+        const orderId = sessionWithDetails?.metadata?.orderId;
+        const clientReferenceId = sessionWithDetails?.client_reference_id;
+        const customerEmail = sessionWithDetails?.customer_details?.email;
+        const customerFullName = sessionWithDetails?.customer_details?.name;
+        const customerCountry =
+          sessionWithDetails?.customer_details?.address?.country;
 
         if (!orderId || !clientReferenceId || orderId !== clientReferenceId) {
           console.error(
@@ -65,7 +77,12 @@ export async function POST(request: NextRequest) {
             where: { id: orderId },
             data: {
               status: OrderStatus.COMPLETED,
-              stripePaymentIntentId: session.payment_intent as string
+              stripePaymentIntentId:
+                sessionWithDetails.payment_intent as string,
+              // Add customer details to the update
+              ...(customerEmail && { customerEmail }),
+              ...(customerFullName && { customerFullName }),
+              ...(customerCountry && { customerCountry })
             }
           });
 
