@@ -33,9 +33,16 @@ interface CartItem {
 interface ShoppingCartProps {
   cartItems: CartItem[];
   onRemoveItem: (ref: string) => void;
+  onClearCart: () => void;
+  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
 }
 
-export function ShoppingCart({ cartItems, onRemoveItem }: ShoppingCartProps) {
+export function ShoppingCart({
+  cartItems,
+  onRemoveItem,
+  onClearCart,
+  setCartItems
+}: ShoppingCartProps) {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
@@ -76,10 +83,18 @@ export function ShoppingCart({ cartItems, onRemoveItem }: ShoppingCartProps) {
         return;
       }
 
+      // Clear the cart state BEFORE redirecting to prevent stale state
+      onClearCart();
+
+      // Force a rerender to ensure cart is cleared visually
+      setCartItems([]);
+
+      // Small delay to ensure state updates are processed
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Redirect to Stripe Checkout
       const stripe = await stripePromise;
       if (!stripe) {
-        // This case should be caught earlier, but double-check
         throw new Error("Stripe.js failed to load.");
       }
 
@@ -94,13 +109,11 @@ export function ShoppingCart({ cartItems, onRemoveItem }: ShoppingCartProps) {
         );
         setIsCheckingOut(false); // Reset loading state if redirect fails
       }
-      // If redirect is successful, the user leaves the page, no need to set loading false here.
     } catch (err) {
       console.error("Checkout handling error:", err);
       setCheckoutError("An unexpected error occurred during checkout.");
       setIsCheckingOut(false);
     }
-    // Note: Don't set setIsCheckingOut(false) here if redirect is expected to succeed
   };
 
   return (
