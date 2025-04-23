@@ -204,6 +204,43 @@ model BatchNumber {
   obituaries         Obituary[]
 }
 
+model Order {
+  id                      String      @id @default(cuid())
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+  status                  OrderStatus @default(PENDING)
+  stripeCheckoutSessionId String?     @unique // Store Stripe Session ID
+  stripePaymentIntentId   String?     @unique // Store Stripe Payment Intent ID after success
+  totalAmount             Int // Store amount in cents
+  currency                String      @default("cad")
+  guestSessionId          String? // Link to guest session if needed
+  // userId               String?     // Optional: Link to logged-in user if feature is added
+  // user                 User?       @relation(fields: [userId], references: [id])
+  items                   OrderItem[]
+  // @@index([userId])
+
+  @@index([guestSessionId])
+}
+
+model OrderItem {
+  id           String @id @default(cuid())
+  orderId      String
+  order        Order  @relation(fields: [orderId], references: [id], onDelete: Cascade) // Ensure deletion cascades
+  obituaryRef  String // The reference ID of the purchased obituary
+  obituaryName String // Store the name for easier display
+  price        Int // Store price in cents for this item (e.g., 1000 for $10.00)
+
+  @@index([orderId])
+  @@index([obituaryRef])
+}
+
+enum OrderStatus {
+  PENDING // Order created, awaiting payment
+  COMPLETED // Payment successful
+  FAILED // Payment failed
+  PROCESSING // Optional: If fulfillment takes time
+}
+
 enum Role {
   VIEWER
   INDEXER
