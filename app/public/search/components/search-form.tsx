@@ -281,6 +281,12 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
     });
   }, []);
 
+  // Handler to clear the entire cart
+  const handleClearCart = useCallback(() => {
+    setCartItems([]);
+    console.log("Cart cleared");
+  }, []);
+
   async function onSubmit(formData: SearchFormValues) {
     const newCriteria: CurrentSearchCriteria = {
       ...formData,
@@ -837,7 +843,12 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
       )}
 
       {/* Render the ShoppingCart component */}
-      <ShoppingCart cartItems={cartItems} onRemoveItem={handleRemoveFromCart} />
+      <ShoppingCart
+        cartItems={cartItems}
+        onRemoveItem={handleRemoveFromCart}
+        onClearCart={handleClearCart}
+        setCartItems={setCartItems}
+      />
 
       {/* Request Obituary Dialog */}
       {selectedRecord && (
@@ -864,4 +875,3 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
     </Form>
   );
 }
- 
