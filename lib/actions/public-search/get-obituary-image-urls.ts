@@ -2,11 +2,6 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getIronSession } from "iron-session";
-import { sessionOptions, SessionData } from "@/lib/session";
-import { cookies } from "next/headers";
-// No longer need getImageUrlAction here
-// import { getImageUrlAction } from "@/app/(dashboard)/images/minio-actions";
 
 const referenceSchema = z.string().min(1, "Obituary reference is required");
 
@@ -22,13 +17,7 @@ export async function getObituaryImageUrls(reference: unknown): Promise<{
   error?: string;
   message?: string;
 }> {
-  // 1. Verify Authentication
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
-  if (!session.isLoggedIn) {
-    return { error: "Authentication required." };
-  }
-
-  // 2. Validate Input
+  // Validate Input
   const validation = referenceSchema.safeParse(reference);
   if (!validation.success) {
     return { error: "Invalid input." };
@@ -36,7 +25,7 @@ export async function getObituaryImageUrls(reference: unknown): Promise<{
   const validReference = validation.data;
 
   try {
-    // 3. Fetch Obituary Image Data
+    // Fetch Obituary Image Data
     const obituary = await prisma.obituary.findUnique({
       where: { reference: validReference },
       select: {
@@ -54,7 +43,7 @@ export async function getObituaryImageUrls(reference: unknown): Promise<{
       return { message: "No images associated with this obituary." };
     }
 
-    // 4. Simply return the list of image keys (filenames)
+    // Return the list of image keys (filenames)
     return { imageNames: imageKeys };
   } catch (error) {
     console.error("Error fetching image names for ref:", validReference, error);
