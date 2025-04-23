@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getIronSession } from "iron-session";
-import { sessionOptions, SessionData } from "@/lib/session";
 import minioClient from "@/lib/minio-client";
-import { cookies } from "next/headers";
 import { Readable } from "stream";
 
 export async function GET(
@@ -10,12 +7,6 @@ export async function GET(
   { params }: { params: { imageName: string } }
 ) {
   const imageName = params.imageName;
-
-  // 1. Verify Authentication
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
-  if (!session.isLoggedIn) {
-    return new NextResponse("Authentication required", { status: 401 });
-  }
 
   // Basic input validation
   if (!imageName || typeof imageName !== "string") {
@@ -29,16 +20,16 @@ export async function GET(
   }
 
   try {
-    // 2. Get image metadata (optional but good for Content-Type/Length)
+    // Get image metadata (optional but good for Content-Type/Length)
     const stat = await minioClient.statObject(bucketName, imageName);
 
-    // 3. Get image stream from MinIO
+    // Get image stream from MinIO
     const objectStream = await minioClient.getObject(bucketName, imageName);
 
     // Ensure the stream is a Node.js Readable stream for NextResponse
     const nodeReadableStream = Readable.from(objectStream);
 
-    // 4. Create and return the Response with download headers
+    // Create and return the Response with download headers
     const response = new NextResponse(nodeReadableStream as any, {
       headers: {
         "Content-Disposition": `attachment; filename="${imageName}"`, // Force download
