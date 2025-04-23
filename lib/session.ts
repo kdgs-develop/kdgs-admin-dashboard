@@ -35,3 +35,4 @@ if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
     "SESSION_SECRET environment variable is not set or is too short (must be at least 32 characters)."
   );
 }
+ 
