@@ -4,6 +4,7 @@ const isPublicRoute = createRouteMatcher([
   "/login(.*)",
   "/public/obituary(.*)",
   "/api/generate-pdf(.*)",
+  "/api/download-image(.*)",
   "/api/webhooks/stripe(.*)",
   "/public/search(.*)"
 ]);
