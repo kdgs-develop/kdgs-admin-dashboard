@@ -9,6 +9,11 @@ export interface ObituaryDetails {
   reference: string;
   hasImages: boolean;
   imageCount: number;
+  surname: string | null;
+  givenNames: string | null;
+  title: {
+    name: string | null;
+  } | null;
   // Add other details needed for display if required
 }
 
@@ -23,11 +28,14 @@ export async function getObituaryDetails(
       // Select only the fields needed now
       select: {
         reference: true,
-        imageNames: true
-        // No longer need _count for this logic
-        // _count: {
-        //   select: { images: true, fileImages: true }
-        // }
+        imageNames: true,
+        surname: true,
+        givenNames: true,
+        title: {
+          select: {
+            name: true
+          }
+        }
       }
     });
 
@@ -48,7 +56,10 @@ export async function getObituaryDetails(
     const details: ObituaryDetails = {
       reference: obituary.reference,
       hasImages: hasImages,
-      imageCount: imageCount
+      imageCount: imageCount,
+      surname: obituary.surname,
+      givenNames: obituary.givenNames,
+      title: obituary.title
     };
 
     return { data: details };
