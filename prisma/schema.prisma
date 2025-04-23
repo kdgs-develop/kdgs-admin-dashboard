@@ -208,9 +208,10 @@ model Order {
   id                      String      @id @default(cuid())
   userId                  String? // Link to User model if needed for logged-in users
   // user                 User?         @relation(fields: [userId], references: [id])
-  guestSessionId          String? // For guest checkouts
+  guestSessionId          String? // Original guest session ID (if any)
+  customerEmail           String? // Added field for customer's email from Stripe
   customerFullName        String? // Customer's full name from Stripe
-  customerCountry         String? // Added field for customer's country (e.g., 'CA', 'US')
+  customerCountry         String? // Customer's country (e.g., 'CA', 'US')
   status                  OrderStatus @default(PENDING)
   totalAmount             Int
   currency                String      @default("cad")
@@ -228,7 +229,7 @@ model Order {
 model OrderItem {
   id           String @id @default(cuid())
   orderId      String
-  order        Order  @relation(fields: [orderId], references: [id], onDelete: Cascade) // Ensure deletion cascades
+  order        Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   obituaryRef  String // The reference ID of the purchased obituary
   obituaryName String // Store the name for easier display
   price        Int // Store price in cents for this item (e.g., 1000 for $10.00)
