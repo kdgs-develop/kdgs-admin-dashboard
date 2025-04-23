@@ -112,6 +112,9 @@ export async function createCheckoutSession(cartItems: unknown): Promise<{
       throw new Error("Failed to create order record.");
     }
 
+    // Generate the refs string before creating the session
+    const obituaryRefsString = itemsToPurchase.map(item => item.ref).join(",");
+
     // 5. Map items to Stripe line items
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
       itemsToPurchase.map(item => {
@@ -141,7 +144,8 @@ export async function createCheckoutSession(cartItems: unknown): Promise<{
       cancel_url: `${baseUrl}?canceled=true`,
       metadata: {
         orderId: orderId,
-        successToken: successToken // Optional: Add token here too
+        successToken: successToken, // Optionally include token in metadata too
+        obituaryRefsString: obituaryRefsString // Add refs string to metadata
       },
       client_reference_id: orderId // Keep using orderId here for potential webhook lookup
     });
