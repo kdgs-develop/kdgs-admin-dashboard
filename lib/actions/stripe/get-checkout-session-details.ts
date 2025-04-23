@@ -12,6 +12,8 @@ const inputSchema = z.string().startsWith("cs_"); // Basic validation for checko
 
 interface CheckoutSessionDetails {
   customerEmail?: string | null;
+  customerFullName?: string | null;
+  customerCountry?: string | null;
   error?: string;
 }
 
@@ -29,17 +31,19 @@ export async function getCheckoutSessionDetails(
   try {
     // 2. Retrieve the session from Stripe
     const session = await stripe.checkout.sessions.retrieve(validSessionId, {
-      expand: ["customer_details"] // Expand to get customer details including email
+      expand: ["customer_details", "customer_details.address"]
     });
 
     if (!session) {
       return { error: "Checkout session not found." };
     }
 
-    // 3. Extract customer email
+    // 3. Extract customer details
     const customerEmail = session.customer_details?.email;
+    const customerFullName = session.customer_details?.name;
+    const customerCountry = session.customer_details?.address?.country;
 
-    return { customerEmail };
+    return { customerEmail, customerFullName, customerCountry };
   } catch (error) {
     console.error("Error retrieving Stripe Checkout session:", error);
 
