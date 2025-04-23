@@ -43,6 +43,12 @@ interface CartItem {
   hasImages: boolean; // Add flag for image/PDF availability
 }
 
+// Interface for the data passed to the request dialog
+interface SelectedRecordData {
+  obituaryReference: string;
+  obituaryName: string;
+}
+
 const relativeSchema = z.object({
   name: z.string().optional(),
   relationshipId: z.string().optional()
@@ -134,12 +140,8 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
 
   // State for the request dialog
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
-  const [selectedObituaryRef, setSelectedObituaryRef] = useState<string | null>(
-    null
-  );
-  const [selectedObituaryName, setSelectedObituaryName] = useState<
-    string | null
-  >(null);
+  const [selectedRecord, setSelectedRecord] =
+    useState<SelectedRecordData | null>(null); // Consolidated state
 
   // State for the login dialog
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
@@ -222,25 +224,20 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
     []
   );
 
-  // Handlers for the request dialog
-  const handleOpenRequestDialog = useCallback(
-    (obituaryRef: string, obituaryName: string) => {
-      console.log(
-        `Opening request dialog for: ${obituaryName} (Ref: ${obituaryRef})`
-      );
-      setSelectedObituaryRef(obituaryRef);
-      setSelectedObituaryName(obituaryName);
-      setIsRequestDialogOpen(true);
-    },
-    [] // Dependencies: none, as it only uses setters
-  );
+  // Handler to open the request dialog
+  const handleOpenRequestDialog = (
+    obituaryReference: string,
+    obituaryName: string
+  ) => {
+    setSelectedRecord({ obituaryReference, obituaryName });
+    setIsRequestDialogOpen(true);
+  };
 
-  const handleCloseRequestDialog = useCallback(() => {
+  // Handler to close the request dialog
+  const handleCloseRequestDialog = () => {
     setIsRequestDialogOpen(false);
-    setSelectedObituaryRef(null);
-    setSelectedObituaryName(null);
-    // Reset any other dialog-specific state here in the future (e.g., step)
-  }, []);
+    setSelectedRecord(null); // Reset selected record on close
+  };
 
   // Placeholder handler for triggering sign-in
   const handleSignInRequest = useCallback(() => {
@@ -316,6 +313,8 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
     setCurrentPage(1);
     setPageSize(10);
     setCurrentSearchCriteria(null);
+    setSelectedRecord(null);
+    setIsRequestDialogOpen(false);
   };
 
   return (
@@ -840,18 +839,24 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
       {/* Render the ShoppingCart component */}
       <ShoppingCart cartItems={cartItems} onRemoveItem={handleRemoveFromCart} />
 
-      {/* Render the RequestObituaryDialog */}
-      <RequestObituaryDialog
-        isOpen={isRequestDialogOpen}
-        onOpenChange={setIsRequestDialogOpen}
-        session={session ?? null}
-        obituaryRef={selectedObituaryRef}
-        obituaryName={selectedObituaryName}
-        onSignInRequest={handleSignInRequest}
-        onAddToCart={handleAddToCart}
-      />
+      {/* Request Obituary Dialog */}
+      {selectedRecord && (
+        <RequestObituaryDialog
+          isOpen={isRequestDialogOpen}
+          onOpenChange={open => {
+            if (!open) {
+              handleCloseRequestDialog();
+            }
+          }}
+          obituaryRef={selectedRecord.obituaryReference}
+          obituaryName={selectedRecord.obituaryName}
+          session={session ?? null}
+          onSignInRequest={handleSignInRequest}
+          onAddToCart={handleAddToCart}
+        />
+      )}
 
-      {/* Render the Login Dialog */}
+      {/* Login Dialog */}
       <LoginDialog
         isOpen={isLoginDialogOpen}
         onOpenChange={setIsLoginDialogOpen}
