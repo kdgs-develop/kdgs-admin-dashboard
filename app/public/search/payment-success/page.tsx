@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
-
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DownloadButton } from "./download-button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 // Optional: Component to read and display details from URL params
 function PaymentDetails({
@@ -12,15 +14,36 @@ function PaymentDetails({
 }) {
   const sessionId = searchParams?.session_id;
   const orderId = searchParams?.order_id;
+  const obituaryRefs = searchParams?.obituary_refs;
 
-  // You could potentially fetch order details here using orderId
-  // Be cautious about displaying sensitive info directly on the client
+  if (!obituaryRefs) {
+    return (
+      <Alert className="mt-4">
+        <Info className="h-4 w-4" />
+        <AlertTitle>Missing References</AlertTitle>
+        <AlertDescription>
+          No obituary references found. Please contact support if you believe
+          this is an error.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  const refs = typeof obituaryRefs === "string" ? obituaryRefs.split(",") : [];
 
   return (
-    <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-      {orderId && <p>Order ID: {orderId}</p>}
-      {sessionId && <p>Stripe Session ID: {sessionId}</p>}
-      {/* Add more details if needed */}
+    <div className="mt-8 space-y-6">
+      <div className="space-y-4">
+        {refs.map(ref => (
+          <div key={ref} className="space-y-2">
+            <DownloadButton obituaryRef={ref} />
+            <p className="text-xs text-muted-foreground">Reference ID: {ref}</p>
+          </div>
+        ))}
+      </div>
+      <div className="text-sm text-muted-foreground space-y-2">
+        <p>Order ID: {orderId}</p>
+      </div>
     </div>
   );
 }
@@ -51,18 +74,19 @@ export default function PaymentSuccessPage({
           Payment Successful!
         </h1>
         <p className="mb-6 text-muted-foreground">
-          Thank you for your purchase. Your order is being processed.
+          Thank you for your purchase. Your obituary records are ready for
+          download.
         </p>
 
         {/* Wrap details component in Suspense as it reads searchParams */}
-        <Suspense fallback={<div>Loading details...</div>}>
+        <Suspense fallback={<div>Loading download options...</div>}>
           <PaymentDetails searchParams={searchParams} />
         </Suspense>
 
         <div className="mt-8">
           <Link
-            href="/public/search" // Link back to the main search page
-            className={cn(buttonVariants({ variant: "default" }))}
+            href="/public/search"
+            className={cn(buttonVariants({ variant: "outline" }))}
           >
             Return to Search
           </Link>
