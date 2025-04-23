@@ -1,10 +1,19 @@
 import { SessionOptions } from "iron-session";
 
+declare module "iron-session" {
+  interface IronSessionData {
+    userId?: string;
+    isLoggedIn?: boolean;
+    guestId?: string; // Add optional guest ID
+  }
+}
+
 // Define the structure of your session data
 export interface SessionData {
   isLoggedIn: boolean;
   username?: string;
   displayName?: string;
+  guestId?: string; // Add optional guest ID
 }
 
 export const sessionOptions: SessionOptions = {
