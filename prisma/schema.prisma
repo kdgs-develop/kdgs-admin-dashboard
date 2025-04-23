@@ -206,19 +206,22 @@ model BatchNumber {
 
 model Order {
   id                      String      @id @default(cuid())
+  userId                  String? // Link to User model if needed for logged-in users
+  // user                 User?         @relation(fields: [userId], references: [id])
+  guestSessionId          String? // For guest checkouts
+  customerFullName        String? // Customer's full name from Stripe
+  customerCountry         String? // Added field for customer's country (e.g., 'CA', 'US')
+  status                  OrderStatus @default(PENDING)
+  totalAmount             Int
+  currency                String      @default("cad")
+  stripeCheckoutSessionId String?     @unique
+  stripePaymentIntentId   String?     @unique
+  successToken            String?     @unique
   createdAt               DateTime    @default(now())
   updatedAt               DateTime    @updatedAt
-  status                  OrderStatus @default(PENDING)
-  stripeCheckoutSessionId String?     @unique // Store Stripe Session ID
-  stripePaymentIntentId   String?     @unique // Store Stripe Payment Intent ID after success
-  totalAmount             Int // Store amount in cents
-  currency                String      @default("cad")
-  guestSessionId          String? // Link to guest session if needed
-  // userId               String?     // Optional: Link to logged-in user if feature is added
-  // user                 User?       @relation(fields: [userId], references: [id])
   items                   OrderItem[]
-  // @@index([userId])
 
+  // @@index([userId])
   @@index([guestSessionId])
 }
 
