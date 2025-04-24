@@ -49,6 +49,7 @@ interface OrderData {
     totalAmount: number;
     currency: string;
     createdAt: Date;
+    isMember: boolean;
     _count: { items: number };
   }[];
   totalCount: number;
@@ -69,6 +70,7 @@ export function OrdersAdministration() {
     customerEmail: string | null;
     customerFullName: string | null;
     status: string;
+    isMember: boolean;
   } | null>(null);
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -310,9 +312,21 @@ export function OrdersAdministration() {
                         </div>
 
                         <div>
-                          <Badge variant={getStatusBadgeVariant(order.status)}>
-                            {order.status}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={getStatusBadgeVariant(order.status)}
+                            >
+                              {order.status}
+                            </Badge>
+                            {order.isMember && (
+                              <Badge
+                                variant="success"
+                                className="bg-green-100 hover:bg-green-200 text-green-800 border-green-200"
+                              >
+                                Member
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -328,7 +342,8 @@ export function OrdersAdministration() {
                                 id: order.id,
                                 customerEmail: order.customerEmail,
                                 customerFullName: order.customerFullName,
-                                status: order.status
+                                status: order.status,
+                                isMember: order.isMember
                               });
                               setIsItemsDialogOpen(true);
                             }}
@@ -346,7 +361,8 @@ export function OrdersAdministration() {
                               id: order.id,
                               customerEmail: order.customerEmail,
                               customerFullName: order.customerFullName,
-                              status: order.status
+                              status: order.status,
+                              isMember: order.isMember
                             });
                             setIsEditDialogOpen(true);
                           }}
