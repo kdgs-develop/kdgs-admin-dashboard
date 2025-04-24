@@ -30,6 +30,11 @@ export async function fetchOrdersMonthlyData(
     const countMember: number[] = new Array(12).fill(0);
     const countNonMember: number[] = new Array(12).fill(0);
 
+    // New arrays for item counts
+    const itemCountTotal: number[] = new Array(12).fill(0);
+    const itemCountMember: number[] = new Array(12).fill(0);
+    const itemCountNonMember: number[] = new Array(12).fill(0);
+
     // Get previous year data as well
     const prevYear = year - 1;
     const prevSalesTotal: number[] = new Array(12).fill(0);
@@ -39,6 +44,11 @@ export async function fetchOrdersMonthlyData(
     const prevCountTotal: number[] = new Array(12).fill(0);
     const prevCountMember: number[] = new Array(12).fill(0);
     const prevCountNonMember: number[] = new Array(12).fill(0);
+
+    // New arrays for previous year item counts
+    const prevItemCountTotal: number[] = new Array(12).fill(0);
+    const prevItemCountMember: number[] = new Array(12).fill(0);
+    const prevItemCountNonMember: number[] = new Array(12).fill(0);
 
     // Get orders for current year
     const currentYearOrders = await prisma.order.findMany({
@@ -70,6 +80,7 @@ export async function fetchOrdersMonthlyData(
     for (const order of currentYearOrders) {
       const month = new Date(order.createdAt).getMonth();
       const orderTotal = order.totalAmount || 0;
+      const itemsCount = order.items.length;
 
       // Increment sales data
       salesTotal[month] += orderTotal;
@@ -88,12 +99,22 @@ export async function fetchOrdersMonthlyData(
       } else {
         countNonMember[month] += 1;
       }
+
+      // Increment item count data
+      itemCountTotal[month] += itemsCount;
+
+      if (order.isMember) {
+        itemCountMember[month] += itemsCount;
+      } else {
+        itemCountNonMember[month] += itemsCount;
+      }
     }
 
     // Process previous year data
     for (const order of prevYearOrders) {
       const month = new Date(order.createdAt).getMonth();
       const orderTotal = order.totalAmount || 0;
+      const itemsCount = order.items.length;
 
       // Increment sales data
       prevSalesTotal[month] += orderTotal;
@@ -111,6 +132,15 @@ export async function fetchOrdersMonthlyData(
         prevCountMember[month] += 1;
       } else {
         prevCountNonMember[month] += 1;
+      }
+
+      // Increment item count data
+      prevItemCountTotal[month] += itemsCount;
+
+      if (order.isMember) {
+        prevItemCountMember[month] += itemsCount;
+      } else {
+        prevItemCountNonMember[month] += itemsCount;
       }
     }
 
@@ -132,6 +162,14 @@ export async function fetchOrdersMonthlyData(
         prevYearTotal: prevCountTotal,
         prevYearMember: prevCountMember,
         prevYearNonMember: prevCountNonMember
+      },
+      itemCountData: {
+        total: itemCountTotal,
+        member: itemCountMember,
+        nonMember: itemCountNonMember,
+        prevYearTotal: prevItemCountTotal,
+        prevYearMember: prevItemCountMember,
+        prevYearNonMember: prevItemCountNonMember
       },
       year,
       previousYear: prevYear
