@@ -26,7 +26,8 @@ import {
   Loader2,
   Search,
   ShoppingCart,
-  Users
+  Users,
+  BarChart3
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -35,12 +36,33 @@ import {
   updateOrderStatus,
   deleteOrder,
   getOrderItems,
-  getOrderCounts
+  getOrderCounts,
+  getMonthlyOrdersData
 } from "./actions";
 import EditOrderDialog from "./edit-order-dialog";
 import OrderItemsDialog from "./order-items-dialog";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface OrderData {
   orders: {
@@ -56,6 +78,28 @@ interface OrderData {
   }[];
   totalCount: number;
   totalPages: number;
+}
+
+interface MonthlyData {
+  labels: string[];
+  salesData: {
+    total: number[];
+    member: number[];
+    nonMember: number[];
+    prevYearTotal: number[];
+    prevYearMember: number[];
+    prevYearNonMember: number[];
+  };
+  countData: {
+    total: number[];
+    member: number[];
+    nonMember: number[];
+    prevYearTotal: number[];
+    prevYearMember: number[];
+    prevYearNonMember: number[];
+  };
+  year: number;
+  previousYear: number;
 }
 
 export function OrdersAdministration() {
@@ -88,6 +132,13 @@ export function OrdersAdministration() {
     memberCount: 0,
     nonMemberCount: 0
   });
+  const [monthlyData, setMonthlyData] = useState<MonthlyData | null>(null);
+  const [isChartLoading, setIsChartLoading] = useState(false);
+  const [chartView, setChartView] = useState<"sales" | "count">("sales");
+  const [dataView, setDataView] = useState<
+    "all" | "total" | "member" | "non-member"
+  >("all");
+  const [showPreviousYear, setShowPreviousYear] = useState(false);
 
   const fetchOrderCounts = async () => {
     try {
@@ -124,9 +175,27 @@ export function OrdersAdministration() {
     }
   };
 
+  const fetchMonthlyData = async () => {
+    setIsChartLoading(true);
+    try {
+      const data = await getMonthlyOrdersData();
+      setMonthlyData(data);
+    } catch (error) {
+      console.error("Error fetching monthly data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load monthly sales data",
+        variant: "destructive"
+      });
+    } finally {
+      setIsChartLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isExpanded) {
       fetchOrders(currentPage);
+      fetchMonthlyData();
     }
   }, [currentPage, itemsPerPage, isExpanded, memberFilter]);
 
@@ -259,6 +328,273 @@ export function OrdersAdministration() {
     }
   };
 
+  // Update chart options
+  const getSalesChartOptions = () => {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "top" as const
+        },
+        title: {
+          display: true,
+          text: monthlyData
+            ? `Monthly Sales ${monthlyData.year} (CAD)`
+            : "Monthly Sales (CAD)"
+        },
+        tooltip: {
+          callbacks: {
+            label: (context: any) => `$${context.parsed.y.toFixed(2)}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (value: number) => `$${value}`
+          }
+        }
+      }
+    };
+  };
+
+  const getCountChartOptions = () => {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "top" as const
+        },
+        title: {
+          display: true,
+          text: monthlyData
+            ? `Monthly Order Counts ${monthlyData.year}`
+            : "Monthly Order Counts"
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1
+          }
+        }
+      }
+    };
+  };
+
+  const renderSalesChart = () => {
+    if (isChartLoading) {
+      return (
+        <div className="h-72 flex items-center justify-center bg-muted/30 rounded-md">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+
+    if (monthlyData) {
+      // Create dataset based on the chart type
+      let datasets = [];
+
+      if (chartView === "sales") {
+        // Total sales
+        datasets.push({
+          label: `${monthlyData.year} Total Sales`,
+          data: monthlyData.salesData.total,
+          backgroundColor: "rgba(25, 118, 210, 0.6)",
+          borderColor: "rgba(25, 118, 210, 1)",
+          borderWidth: 1
+        });
+
+        // Previous year sales (if enabled)
+        if (showPreviousYear) {
+          datasets.push({
+            label: `${monthlyData.previousYear} Total Sales`,
+            data: monthlyData.salesData.prevYearTotal,
+            backgroundColor: "rgba(25, 118, 210, 0.2)",
+            borderColor: "rgba(25, 118, 210, 1)",
+            borderWidth: 1,
+            borderDash: [5, 5]
+          });
+        }
+      } else if (chartView === "count") {
+        // Current year counts based on data view
+        if (dataView === "all" || dataView === "total") {
+          datasets.push({
+            label: `${monthlyData.year} Total Orders`,
+            data: monthlyData.countData.total,
+            backgroundColor: "rgba(25, 118, 210, 0.6)",
+            borderColor: "rgba(25, 118, 210, 1)",
+            borderWidth: 1
+          });
+        }
+
+        if (dataView === "all" || dataView === "member") {
+          datasets.push({
+            label: `${monthlyData.year} Member Orders`,
+            data: monthlyData.countData.member,
+            backgroundColor: "rgba(46, 125, 50, 0.6)",
+            borderColor: "rgba(46, 125, 50, 1)",
+            borderWidth: 1
+          });
+        }
+
+        if (dataView === "all" || dataView === "non-member") {
+          datasets.push({
+            label: `${monthlyData.year} Non-Member Orders`,
+            data: monthlyData.countData.nonMember,
+            backgroundColor: "rgba(211, 47, 47, 0.6)",
+            borderColor: "rgba(211, 47, 47, 1)",
+            borderWidth: 1
+          });
+        }
+
+        // Previous year counts (if enabled)
+        if (showPreviousYear) {
+          if (dataView === "all" || dataView === "total") {
+            datasets.push({
+              label: `${monthlyData.previousYear} Total Orders`,
+              data: monthlyData.countData.prevYearTotal,
+              backgroundColor: "rgba(25, 118, 210, 0.2)",
+              borderColor: "rgba(25, 118, 210, 1)",
+              borderWidth: 1,
+              borderDash: [5, 5]
+            });
+          }
+
+          if (dataView === "all" || dataView === "member") {
+            datasets.push({
+              label: `${monthlyData.previousYear} Member Orders`,
+              data: monthlyData.countData.prevYearMember,
+              backgroundColor: "rgba(46, 125, 50, 0.2)",
+              borderColor: "rgba(46, 125, 50, 1)",
+              borderWidth: 1,
+              borderDash: [5, 5]
+            });
+          }
+
+          if (dataView === "all" || dataView === "non-member") {
+            datasets.push({
+              label: `${monthlyData.previousYear} Non-Member Orders`,
+              data: monthlyData.countData.prevYearNonMember,
+              backgroundColor: "rgba(211, 47, 47, 0.2)",
+              borderColor: "rgba(211, 47, 47, 1)",
+              borderWidth: 1,
+              borderDash: [5, 5]
+            });
+          }
+        }
+      }
+
+      const chartData = {
+        labels: monthlyData.labels,
+        datasets
+      };
+
+      return (
+        <div className="h-72 bg-white p-4 rounded-md border">
+          <Bar
+            options={
+              chartView === "sales"
+                ? getSalesChartOptions()
+                : getCountChartOptions()
+            }
+            data={chartData}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="h-72 flex items-center justify-center bg-muted/30 rounded-md">
+        <p className="text-muted-foreground">No sales data available</p>
+      </div>
+    );
+  };
+
+  // Add this to render the chart view buttons
+  const renderChartControls = () => {
+    return (
+      <div className="mt-2">
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex space-x-2">
+            <Button
+              variant={chartView === "sales" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("sales")}
+            >
+              <BarChart3 className="h-4 w-4 mr-1" />
+              Sales Amount
+            </Button>
+            <Button
+              variant={chartView === "count" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("count")}
+            >
+              <ShoppingCart className="h-4 w-4 mr-1" />
+              Order Counts
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm">Show previous year: </span>
+            <Button
+              variant={showPreviousYear ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowPreviousYear(!showPreviousYear)}
+            >
+              {showPreviousYear ? "Hide" : "Show"} {monthlyData?.previousYear}{" "}
+              Data
+            </Button>
+          </div>
+        </div>
+
+        {/* Only show data type filters for the count chart */}
+        {chartView === "count" && (
+          <div className="flex space-x-2 mt-2">
+            <Button
+              variant={dataView === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDataView("all")}
+            >
+              All
+            </Button>
+            <Button
+              variant={dataView === "total" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDataView("total")}
+              className="border-blue-200 text-blue-800"
+            >
+              <div className="w-2 h-2 bg-blue-600 rounded-full mr-1"></div>
+              Total Only
+            </Button>
+            <Button
+              variant={dataView === "member" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDataView("member")}
+              className="border-green-200 text-green-800"
+            >
+              <div className="w-2 h-2 bg-green-600 rounded-full mr-1"></div>
+              Members Only
+            </Button>
+            <Button
+              variant={dataView === "non-member" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setDataView("non-member")}
+              className="border-red-200 text-red-800"
+            >
+              <div className="w-2 h-2 bg-red-600 rounded-full mr-1"></div>
+              Non-Members Only
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Card>
       <CardHeader
@@ -325,6 +661,30 @@ export function OrdersAdministration() {
                 % of total
               </span>
             </div>
+          </div>
+
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium flex items-center">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                {chartView === "sales"
+                  ? "Monthly Sales (CAD)"
+                  : "Monthly Order Counts"}
+              </h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchMonthlyData}
+                disabled={isChartLoading}
+              >
+                {isChartLoading && (
+                  <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                )}
+                Refresh
+              </Button>
+            </div>
+            {renderSalesChart()}
+            {monthlyData && renderChartControls()}
           </div>
 
           <div className="flex space-x-4">
