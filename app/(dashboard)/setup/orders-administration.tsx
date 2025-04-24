@@ -98,6 +98,14 @@ interface MonthlyData {
     prevYearMember: number[];
     prevYearNonMember: number[];
   };
+  itemCountData: {
+    total: number[];
+    member: number[];
+    nonMember: number[];
+    prevYearTotal: number[];
+    prevYearMember: number[];
+    prevYearNonMember: number[];
+  };
   year: number;
   previousYear: number;
 }
@@ -134,7 +142,9 @@ export function OrdersAdministration() {
   });
   const [monthlyData, setMonthlyData] = useState<MonthlyData | null>(null);
   const [isChartLoading, setIsChartLoading] = useState(false);
-  const [chartView, setChartView] = useState<"sales" | "count">("sales");
+  const [chartView, setChartView] = useState<"sales" | "count" | "items">(
+    "sales"
+  );
   const [dataView, setDataView] = useState<
     "all" | "total" | "member" | "non-member"
   >("all");
@@ -386,6 +396,32 @@ export function OrdersAdministration() {
     };
   };
 
+  const getItemCountChartOptions = () => {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "top" as const
+        },
+        title: {
+          display: true,
+          text: monthlyData
+            ? `Monthly Items Purchased ${monthlyData.year}`
+            : "Monthly Items Purchased"
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1
+          }
+        }
+      }
+    };
+  };
+
   const renderSalesChart = () => {
     if (isChartLoading) {
       return (
@@ -400,16 +436,7 @@ export function OrdersAdministration() {
       let datasets = [];
 
       if (chartView === "sales") {
-        // Total sales
-        datasets.push({
-          label: `${monthlyData.year} Total Sales`,
-          data: monthlyData.salesData.total,
-          backgroundColor: "rgba(25, 118, 210, 0.6)",
-          borderColor: "rgba(25, 118, 210, 1)",
-          borderWidth: 1
-        });
-
-        // Previous year sales (if enabled)
+        // Show previous year data first if enabled
         if (showPreviousYear) {
           datasets.push({
             label: `${monthlyData.previousYear} Total Sales`,
@@ -420,39 +447,17 @@ export function OrdersAdministration() {
             borderDash: [5, 5]
           });
         }
+
+        // Then add current year data
+        datasets.push({
+          label: `${monthlyData.year} Total Sales`,
+          data: monthlyData.salesData.total,
+          backgroundColor: "rgba(25, 118, 210, 0.6)",
+          borderColor: "rgba(25, 118, 210, 1)",
+          borderWidth: 1
+        });
       } else if (chartView === "count") {
-        // Current year counts based on data view
-        if (dataView === "all" || dataView === "total") {
-          datasets.push({
-            label: `${monthlyData.year} Total Orders`,
-            data: monthlyData.countData.total,
-            backgroundColor: "rgba(25, 118, 210, 0.6)",
-            borderColor: "rgba(25, 118, 210, 1)",
-            borderWidth: 1
-          });
-        }
-
-        if (dataView === "all" || dataView === "member") {
-          datasets.push({
-            label: `${monthlyData.year} Member Orders`,
-            data: monthlyData.countData.member,
-            backgroundColor: "rgba(46, 125, 50, 0.6)",
-            borderColor: "rgba(46, 125, 50, 1)",
-            borderWidth: 1
-          });
-        }
-
-        if (dataView === "all" || dataView === "non-member") {
-          datasets.push({
-            label: `${monthlyData.year} Non-Member Orders`,
-            data: monthlyData.countData.nonMember,
-            backgroundColor: "rgba(211, 47, 47, 0.6)",
-            borderColor: "rgba(211, 47, 47, 1)",
-            borderWidth: 1
-          });
-        }
-
-        // Previous year counts (if enabled)
+        // Show previous year data first (if enabled)
         if (showPreviousYear) {
           if (dataView === "all" || dataView === "total") {
             datasets.push({
@@ -487,6 +492,104 @@ export function OrdersAdministration() {
             });
           }
         }
+
+        // Then add current year counts based on data view
+        if (dataView === "all" || dataView === "total") {
+          datasets.push({
+            label: `${monthlyData.year} Total Orders`,
+            data: monthlyData.countData.total,
+            backgroundColor: "rgba(25, 118, 210, 0.6)",
+            borderColor: "rgba(25, 118, 210, 1)",
+            borderWidth: 1
+          });
+        }
+
+        if (dataView === "all" || dataView === "member") {
+          datasets.push({
+            label: `${monthlyData.year} Member Orders`,
+            data: monthlyData.countData.member,
+            backgroundColor: "rgba(46, 125, 50, 0.6)",
+            borderColor: "rgba(46, 125, 50, 1)",
+            borderWidth: 1
+          });
+        }
+
+        if (dataView === "all" || dataView === "non-member") {
+          datasets.push({
+            label: `${monthlyData.year} Non-Member Orders`,
+            data: monthlyData.countData.nonMember,
+            backgroundColor: "rgba(211, 47, 47, 0.6)",
+            borderColor: "rgba(211, 47, 47, 1)",
+            borderWidth: 1
+          });
+        }
+      } else if (chartView === "items") {
+        // Show previous year item counts first (if enabled)
+        if (showPreviousYear) {
+          if (dataView === "all" || dataView === "total") {
+            datasets.push({
+              label: `${monthlyData.previousYear} Total Items`,
+              data: monthlyData.itemCountData.prevYearTotal,
+              backgroundColor: "rgba(25, 118, 210, 0.2)",
+              borderColor: "rgba(25, 118, 210, 1)",
+              borderWidth: 1,
+              borderDash: [5, 5]
+            });
+          }
+
+          if (dataView === "all" || dataView === "member") {
+            datasets.push({
+              label: `${monthlyData.previousYear} Member Items`,
+              data: monthlyData.itemCountData.prevYearMember,
+              backgroundColor: "rgba(46, 125, 50, 0.2)",
+              borderColor: "rgba(46, 125, 50, 1)",
+              borderWidth: 1,
+              borderDash: [5, 5]
+            });
+          }
+
+          if (dataView === "all" || dataView === "non-member") {
+            datasets.push({
+              label: `${monthlyData.previousYear} Non-Member Items`,
+              data: monthlyData.itemCountData.prevYearNonMember,
+              backgroundColor: "rgba(211, 47, 47, 0.2)",
+              borderColor: "rgba(211, 47, 47, 1)",
+              borderWidth: 1,
+              borderDash: [5, 5]
+            });
+          }
+        }
+
+        // Then add current year item counts
+        if (dataView === "all" || dataView === "total") {
+          datasets.push({
+            label: `${monthlyData.year} Total Items`,
+            data: monthlyData.itemCountData.total,
+            backgroundColor: "rgba(25, 118, 210, 0.6)",
+            borderColor: "rgba(25, 118, 210, 1)",
+            borderWidth: 1
+          });
+        }
+
+        if (dataView === "all" || dataView === "member") {
+          datasets.push({
+            label: `${monthlyData.year} Member Items`,
+            data: monthlyData.itemCountData.member,
+            backgroundColor: "rgba(46, 125, 50, 0.6)",
+            borderColor: "rgba(46, 125, 50, 1)",
+            borderWidth: 1
+          });
+        }
+
+        if (dataView === "all" || dataView === "non-member") {
+          datasets.push({
+            label: `${monthlyData.year} Non-Member Items`,
+            data: monthlyData.itemCountData.nonMember,
+            backgroundColor: "rgba(211, 47, 47, 0.6)",
+            borderColor: "rgba(211, 47, 47, 1)",
+            borderWidth: 1
+          });
+        }
       }
 
       const chartData = {
@@ -500,7 +603,9 @@ export function OrdersAdministration() {
             options={
               chartView === "sales"
                 ? getSalesChartOptions()
-                : getCountChartOptions()
+                : chartView === "count"
+                  ? getCountChartOptions()
+                  : getItemCountChartOptions()
             }
             data={chartData}
           />
@@ -537,6 +642,14 @@ export function OrdersAdministration() {
               <ShoppingCart className="h-4 w-4 mr-1" />
               Order Counts
             </Button>
+            <Button
+              variant={chartView === "items" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartView("items")}
+            >
+              <ShoppingCart className="h-4 w-4 mr-1" />
+              Item Counts
+            </Button>
           </div>
 
           <div className="flex items-center gap-2">
@@ -553,7 +666,7 @@ export function OrdersAdministration() {
         </div>
 
         {/* Only show data type filters for the count chart */}
-        {chartView === "count" && (
+        {chartView !== "sales" && (
           <div className="flex space-x-2 mt-2">
             <Button
               variant={dataView === "all" ? "default" : "outline"}
@@ -669,7 +782,9 @@ export function OrdersAdministration() {
                 <BarChart3 className="h-4 w-4 mr-2" />
                 {chartView === "sales"
                   ? "Monthly Sales (CAD)"
-                  : "Monthly Order Counts"}
+                  : chartView === "count"
+                    ? "Monthly Order Counts"
+                    : "Monthly Items Purchased"}
               </h3>
               <Button
                 variant="outline"
