@@ -25,7 +25,8 @@ import {
   Edit,
   Loader2,
   Search,
-  ShoppingCart
+  ShoppingCart,
+  Users
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -33,7 +34,8 @@ import {
   searchOrders,
   updateOrderStatus,
   deleteOrder,
-  getOrderItems
+  getOrderItems,
+  getOrderCounts
 } from "./actions";
 import EditOrderDialog from "./edit-order-dialog";
 import OrderItemsDialog from "./order-items-dialog";
@@ -78,17 +80,38 @@ export function OrdersAdministration() {
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
+  const [memberFilter, setMemberFilter] = useState<
+    "all" | "members" | "non-members"
+  >("all");
+  const [orderCounts, setOrderCounts] = useState({
+    totalCount: 0,
+    memberCount: 0,
+    nonMemberCount: 0
+  });
+
+  const fetchOrderCounts = async () => {
+    try {
+      const counts = await getOrderCounts();
+      setOrderCounts(counts);
+    } catch (error) {
+      console.error("Error fetching order counts:", error);
+    }
+  };
 
   const fetchOrders = async (page: number) => {
     setIsLoading(true);
     try {
-      const data = await getOrders(page, itemsPerPage);
+      const data = await getOrders(page, itemsPerPage, memberFilter);
+
       setOrderData({
         orders: data.orders,
         totalCount: data.totalCount,
         totalPages: data.totalPages
       });
       setIsDataFetched(true);
+
+      // Fetch order counts after loading orders
+      fetchOrderCounts();
     } catch (error) {
       toast({
         title: "Error fetching orders",
@@ -105,7 +128,7 @@ export function OrdersAdministration() {
     if (isExpanded) {
       fetchOrders(currentPage);
     }
-  }, [currentPage, itemsPerPage, isExpanded]);
+  }, [currentPage, itemsPerPage, isExpanded, memberFilter]);
 
   const handleSearch = async () => {
     if (!isExpanded) return;
@@ -118,7 +141,13 @@ export function OrdersAdministration() {
         return;
       }
 
-      const results = await searchOrders(searchTerm, 1, itemsPerPage);
+      const results = await searchOrders(
+        searchTerm,
+        1,
+        itemsPerPage,
+        memberFilter
+      );
+
       setOrderData({
         orders: results.orders,
         totalCount: results.totalCount,
@@ -203,6 +232,11 @@ export function OrdersAdministration() {
     setCurrentPage(1); // Reset to page 1 when changing items per page
   };
 
+  const handleMemberFilterChange = (value: string) => {
+    setMemberFilter(value as "all" | "members" | "non-members");
+    setCurrentPage(1); // Reset to page 1 when changing filters
+  };
+
   const formatCurrency = (amount: number, currency: string = "cad") => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -247,6 +281,52 @@ export function OrdersAdministration() {
       </CardHeader>
       {isExpanded && (
         <CardContent className="space-y-4">
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="p-4 bg-muted/30 rounded-md flex flex-col">
+              <span className="text-sm text-muted-foreground">
+                Total Orders
+              </span>
+              <span className="text-2xl font-bold">
+                {orderCounts.totalCount}
+              </span>
+            </div>
+            <div className="p-4 bg-green-50 rounded-md flex flex-col">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-green-700">Member Orders</span>
+              </div>
+              <span className="text-2xl font-bold text-green-700">
+                {orderCounts.memberCount}
+              </span>
+              <span className="text-xs text-green-600">
+                {orderCounts.totalCount
+                  ? Math.round(
+                      (orderCounts.memberCount / orderCounts.totalCount) * 100
+                    )
+                  : 0}
+                % of total
+              </span>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-md flex flex-col">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4 text-blue-600" />
+                <span className="text-sm text-blue-700">Non-Member Orders</span>
+              </div>
+              <span className="text-2xl font-bold text-blue-700">
+                {orderCounts.nonMemberCount}
+              </span>
+              <span className="text-xs text-blue-600">
+                {orderCounts.totalCount
+                  ? Math.round(
+                      (orderCounts.nonMemberCount / orderCounts.totalCount) *
+                        100
+                    )
+                  : 0}
+                % of total
+              </span>
+            </div>
+          </div>
+
           <div className="flex space-x-4">
             <div className="flex-1">
               <Input
@@ -276,6 +356,38 @@ export function OrdersAdministration() {
             </Button>
           </div>
 
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">
+              Orders:{" "}
+              {memberFilter !== "all" && (
+                <Badge
+                  variant={memberFilter === "members" ? "success" : "default"}
+                  className="ml-2"
+                >
+                  {memberFilter === "members"
+                    ? "Members Only"
+                    : "Non-Members Only"}
+                </Badge>
+              )}
+            </h3>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Filter by:</span>
+              <Select
+                value={memberFilter}
+                onValueChange={handleMemberFilterChange}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Member status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Orders</SelectItem>
+                  <SelectItem value="members">Members Only</SelectItem>
+                  <SelectItem value="non-members">Non-Members Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {isLoading && !isDataFetched ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -283,7 +395,6 @@ export function OrdersAdministration() {
           ) : orderData.orders.length > 0 ? (
             <>
               <div className="mt-4">
-                <h3 className="text-sm font-medium mb-2">Orders:</h3>
                 <div className="space-y-2">
                   {orderData.orders.map(order => (
                     <div
