@@ -56,6 +56,7 @@ type EditOrderDialogProps = {
     customerEmail: string | null;
     customerFullName: string | null;
     status: string;
+    isMember?: boolean;
   } | null;
 };
 
@@ -125,6 +126,16 @@ function EditOrderDialog({
                   {order?.customerEmail || "Not provided"}
                 </p>
               </div>
+              {order?.isMember && (
+                <div>
+                  <p className="text-sm font-medium text-green-700 flex items-center">
+                    <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded mr-1">
+                      Member
+                    </span>
+                    This order was made by a registered member
+                  </p>
+                </div>
+              )}
             </div>
 
             <FormField
