@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,32 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from "@/components/ui/accordion";
+import {
   AlertCircle,
   CheckCircle2,
   Download,
@@ -25,7 +51,12 @@ import {
   LogIn,
   FileWarning,
   FileText,
-  ShoppingCart
+  ShoppingCart,
+  Send,
+  Plus,
+  Minus,
+  Mail,
+  CheckCircle
 } from "lucide-react";
 import type { SessionData } from "@/lib/session";
 import {
@@ -33,8 +64,22 @@ import {
   ObituaryDetails
 } from "@/lib/actions/public-search/get-obituary-details";
 import { getObituaryImageUrls } from "@/lib/actions/public-search/get-obituary-image-urls";
+import {
+  sendObituaryRequestEmail,
+  type ObituaryRequestFormData
+} from "@/lib/actions/public-search/send-obituary-request-email";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { POPULAR_COUNTRIES, ALL_COUNTRIES } from "@/constants";
 
-type RequestStep = "authCheck" | "loadingDetails" | "infoDisplay" | "error";
+type RequestStep =
+  | "authCheck"
+  | "loadingDetails"
+  | "infoDisplay"
+  | "requestForm"
+  | "requestSuccess"
+  | "error";
 
 interface RequestObituaryDialogProps {
   isOpen: boolean;
@@ -61,9 +106,72 @@ export function RequestObituaryDialog({
   const [isGuestFlow, setIsGuestFlow] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [isSubmitting, startTransition] = useTransition();
+  const [relatives, setRelatives] = useState<
+    { name: string; relationship: string }[]
+  >([{ name: "", relationship: "" }]);
+
+  // Define the form schema
+  const formSchema = z.object({
+    requesterEmail: z.string().email("Please enter a valid email address"),
+    requesterFullName: z.string().min(1, "Please enter your full name"),
+    requesterCountry: z.string().min(1, "Please select your country"),
+    requesterProvince: z.string().optional(),
+
+    surname: z.string().min(1, "Surname is required"),
+    givenNames: z.string().optional(),
+    maidenName: z.string().optional(),
+    alsoKnownAs: z.string().optional(),
+
+    birthExactDate: z.string().optional(),
+    birthYearFrom: z.string().optional(),
+    birthYearTo: z.string().optional(),
+    birthPlace: z.string().optional(),
+
+    deathExactDate: z.string().optional(),
+    deathYearFrom: z.string().optional(),
+    deathYearTo: z.string().optional(),
+    deathPlace: z.string().optional(),
+
+    notes: z.string().optional()
+  });
+
+  // Initialize form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      requesterEmail: "",
+      requesterFullName: "",
+      requesterCountry: "",
+      requesterProvince: "",
+      surname: "",
+      givenNames: "",
+      maidenName: "",
+      alsoKnownAs: "",
+      birthExactDate: "",
+      birthYearFrom: "",
+      birthYearTo: "",
+      birthPlace: "",
+      deathExactDate: "",
+      deathYearFrom: "",
+      deathYearTo: "",
+      deathPlace: "",
+      notes: ""
+    }
+  });
 
   useEffect(() => {
-    if (isOpen && obituaryRef) {
+    if (!isOpen) {
+      const timer = setTimeout(() => {
+        setStep("authCheck");
+        setDetails(null);
+        setError(null);
+        setIsGuestFlow(false);
+        setIsDownloading(false);
+        setDownloadError(null);
+      }, 300);
+      return () => clearTimeout(timer);
+    } else if (obituaryRef) {
       if (session?.isLoggedIn) {
         setIsGuestFlow(false);
         fetchDetails(obituaryRef);
@@ -71,11 +179,10 @@ export function RequestObituaryDialog({
         setStep("authCheck");
         setIsGuestFlow(false);
       }
-    } else {
-      setStep("authCheck");
-      setDetails(null);
       setError(null);
-      setIsGuestFlow(false);
+      setDetails(null);
+      setDownloadError(null);
+      setIsDownloading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, obituaryRef, session?.isLoggedIn]);
@@ -227,6 +334,65 @@ export function RequestObituaryDialog({
     }
   };
 
+  const handleShowRequestForm = () => {
+    setStep("requestForm");
+  };
+
+  const handleSendRequest = async (formData: ObituaryRequestFormData) => {
+    try {
+      startTransition(async () => {
+        if (!obituaryRef) {
+          setError("Missing obituary reference");
+          setStep("error");
+          return;
+        }
+
+        // Include obituary reference in the form data
+        const requestData = {
+          ...formData,
+          obituaryRef: obituaryRef!,
+          // Add relatives from state
+          relatives: relatives.filter(rel => rel.name || rel.relationship)
+        };
+
+        const result = await sendObituaryRequestEmail(requestData);
+
+        if (result.success) {
+          setStep("requestSuccess");
+        } else {
+          setError(result.error || "Failed to send request");
+          setStep("error");
+        }
+      });
+    } catch (error) {
+      console.error("Send request error:", error);
+      setError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+      setStep("error");
+    }
+  };
+
+  const addRelative = () => {
+    setRelatives([...relatives, { name: "", relationship: "" }]);
+  };
+
+  const removeRelative = (index: number) => {
+    if (relatives.length > 1) {
+      setRelatives(relatives.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateRelative = (
+    index: number,
+    field: "name" | "relationship",
+    value: string
+  ) => {
+    const newRelatives = [...relatives];
+    newRelatives[index][field] = value;
+    setRelatives(newRelatives);
+  };
+
   if (!isOpen || !obituaryRef) {
     return null;
   }
@@ -315,7 +481,8 @@ export function RequestObituaryDialog({
                 </AlertTitle>
                 <AlertDescription className="text-yellow-700">
                   We do not currently have a digitized image associated with
-                  this obituary record.
+                  this obituary record. You can request our team to search for
+                  it.
                 </AlertDescription>
               </Alert>
             )}
@@ -355,10 +522,512 @@ export function RequestObituaryDialog({
                   <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
                 </Button>
               )}
+              {!details.hasImages && (
+                <Button onClick={handleShowRequestForm} variant="secondary">
+                  <Send className="mr-2 h-4 w-4" /> Send Email Request
+                </Button>
+              )}
               <DialogClose asChild>
                 <Button variant="outline" disabled={isDownloading}>
                   Close
                 </Button>
+              </DialogClose>
+            </DialogFooter>
+          </div>
+        );
+
+      case "requestForm":
+        return (
+          <div>
+            <h3 className="text-lg font-medium mb-4">Obituary Request</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Please provide details below for the obituary search. Our team
+              will use this information to try and locate the record. We will
+              contact you via the email provided. Reference: {obituaryRef}
+            </p>
+
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(data => {
+                  handleSendRequest({
+                    ...data,
+                    // Transform data for the server action format
+                    birthYearRange: {
+                      from: data.birthYearFrom || "",
+                      to: data.birthYearTo || ""
+                    },
+                    deathYearRange: {
+                      from: data.deathYearFrom || "",
+                      to: data.deathYearTo || ""
+                    },
+                    obituaryRef: obituaryRef!, // Include the reference
+                    relatives // Include the relatives from state
+                  });
+                })}
+                className="space-y-4"
+              >
+                <ScrollArea className="h-[500px] px-1">
+                  <div className="space-y-6 px-1">
+                    {/* Requester Information Section */}
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Your Information</h4>
+
+                      <FormField
+                        control={form.control}
+                        name="requesterEmail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="your@email.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="requesterFullName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full Name *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your full name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="requesterCountry"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Country *</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select country" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {/* Popular countries first */}
+                                  {POPULAR_COUNTRIES.map(country => (
+                                    <SelectItem
+                                      key={country.value}
+                                      value={country.value}
+                                    >
+                                      {country.label}
+                                    </SelectItem>
+                                  ))}
+
+                                  {/* Divider */}
+                                  <SelectItem value="divider" disabled>
+                                    ────────────────
+                                  </SelectItem>
+
+                                  {/* All other countries (excluding popular ones) */}
+                                  {ALL_COUNTRIES.filter(
+                                    country =>
+                                      !POPULAR_COUNTRIES.some(
+                                        popular =>
+                                          popular.value === country.value
+                                      )
+                                  ).map(country => (
+                                    <SelectItem
+                                      key={country.value}
+                                      value={country.value}
+                                    >
+                                      {country.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="requesterProvince"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Province/State</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Province or State"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Person to Find Section */}
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Person to Find</h4>
+
+                      <FormField
+                        control={form.control}
+                        name="surname"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Surname *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Family name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="givenNames"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Given Names</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="First and middle names"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="maidenName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Maiden Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="If applicable" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="alsoKnownAs"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Also Known As</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Nickname or alias"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Relatives Section */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-medium">Relatives</h4>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addRelative}
+                        >
+                          <Plus className="h-4 w-4 mr-1" /> Add
+                        </Button>
+                      </div>
+
+                      {relatives.map((relative, index) => (
+                        <div key={index} className="flex gap-4 items-end">
+                          <div className="flex-1">
+                            <FormLabel className={index !== 0 ? "sr-only" : ""}>
+                              Name
+                            </FormLabel>
+                            <Input
+                              placeholder="Relative's name"
+                              value={relative.name}
+                              onChange={e =>
+                                updateRelative(index, "name", e.target.value)
+                              }
+                            />
+                          </div>
+
+                          <div className="flex-1">
+                            <FormLabel className={index !== 0 ? "sr-only" : ""}>
+                              Relationship
+                            </FormLabel>
+                            <Input
+                              placeholder="e.g. Son, Wife"
+                              value={relative.relationship}
+                              onChange={e =>
+                                updateRelative(
+                                  index,
+                                  "relationship",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </div>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeRelative(index)}
+                            disabled={relatives.length === 1}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Birth Information */}
+                    <Accordion
+                      type="single"
+                      collapsible
+                      defaultValue="birth"
+                      className="w-full"
+                    >
+                      <AccordionItem value="birth">
+                        <AccordionTrigger>Birth Information</AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-4 pt-4">
+                            <FormField
+                              control={form.control}
+                              name="birthExactDate"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Exact Date (if known)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="YYYY-MM-DD or any date format"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="birthYearFrom"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Year Range (From)</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="YYYY" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name="birthYearTo"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Year Range (To)</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="YYYY" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            <FormField
+                              control={form.control}
+                              name="birthPlace"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Place</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="City, Province/State, Country"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+
+                    {/* Death Information */}
+                    <Accordion
+                      type="single"
+                      collapsible
+                      defaultValue="death"
+                      className="w-full"
+                    >
+                      <AccordionItem value="death">
+                        <AccordionTrigger>Death Information</AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-4 pt-4">
+                            <FormField
+                              control={form.control}
+                              name="deathExactDate"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Exact Date (if known)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="YYYY-MM-DD or any date format"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="deathYearFrom"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Year Range (From)</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="YYYY" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name="deathYearTo"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Year Range (To)</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="YYYY" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            <FormField
+                              control={form.control}
+                              name="deathPlace"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Place</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="City, Province/State, Country"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+
+                    {/* Notes Section */}
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Additional Notes</h4>
+                      <FormField
+                        control={form.control}
+                        name="notes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Notes</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Any additional information that might help with the search"
+                                {...field}
+                                rows={3}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </ScrollArea>
+
+                <DialogFooter className="pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep("infoDisplay")}
+                    disabled={isSubmitting}
+                    type="button"
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-4 w-4" /> Send Request
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </div>
+        );
+
+      case "requestSuccess":
+        return (
+          <div className="space-y-4 text-center py-6">
+            <div className="mx-auto bg-green-50 rounded-full p-3 w-fit">
+              <CheckCircle className="h-12 w-12 text-green-600" />
+            </div>
+            <h3 className="text-xl font-semibold">Request Sent Successfully</h3>
+            <p className="text-muted-foreground">
+              Your obituary record request has been submitted to our team. We
+              will review it and get back to you via email. A confirmation has
+              been sent to your email address.
+            </p>
+            <p className="text-sm text-muted-foreground mt-4">
+              Reference: {obituaryRef}
+            </p>
+            <DialogFooter className="pt-4">
+              <DialogClose asChild>
+                <Button>Close</Button>
               </DialogClose>
             </DialogFooter>
           </div>
@@ -374,7 +1043,8 @@ export function RequestObituaryDialog({
             </p>
             <p className="text-sm text-muted-foreground">
               Alternatively, you can proceed as a guest. Image records for
-              guests may require payment (details shown on the next step).
+              guests may require payment (details shown on the next step). If no
+              image is found, you can submit an email request.
             </p>
             <DialogFooter className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
               <Button onClick={onSignInRequest} className="w-full">
@@ -393,20 +1063,49 @@ export function RequestObituaryDialog({
     }
   };
 
+  const getDialogTexts = () => {
+    switch (step) {
+      case "infoDisplay":
+      case "error":
+        return {
+          title: "Obituary Record Details",
+          description: obituaryName ?? obituaryRef ?? "Details"
+        };
+      case "requestForm":
+        return {
+          title: "Obituary Request Form",
+          description: obituaryName ?? obituaryRef ?? "Record Request Form"
+        };
+      case "requestSuccess":
+        return {
+          title: "Request Submitted",
+          description: "Your request has been sent to our research team"
+        };
+      case "loadingDetails":
+        return {
+          title: "Loading...",
+          description: "Fetching obituary details"
+        };
+      case "authCheck":
+      default:
+        return {
+          title: "Request Obituary Record",
+          description: "Authentication Check"
+        };
+    }
+  };
+
+  const { title, description } = getDialogTexts();
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Request Obituary Record</DialogTitle>
-          <DialogDescription>
-            {step === "infoDisplay" || step === "error"
-              ? (obituaryName ?? obituaryRef)
-              : "Authentication Check"}
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <div className="py-4 min-h-[150px]">{renderContent()}</div>
       </DialogContent>
     </Dialog>
   );
 }
- 
