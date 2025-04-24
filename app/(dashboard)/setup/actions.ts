@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { clerkClient } from "@clerk/nextjs/server";
 import { Prisma, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { fetchOrdersMonthlyData } from "@/app/actions/fetchOrdersMonthlyData";
 
 interface CreateGenealogistParams {
   firstName: string;
@@ -2272,5 +2273,15 @@ export async function getOrderCounts() {
   } catch (error) {
     console.error("Error getting order counts:", error);
     throw new Error("Failed to get order counts");
+  }
+}
+
+export async function getMonthlyOrdersData(year?: number) {
+  try {
+    const currentYear = year || new Date().getFullYear();
+    return await fetchOrdersMonthlyData(currentYear);
+  } catch (error) {
+    console.error("Error fetching monthly orders data:", error);
+    throw new Error("Failed to fetch monthly orders data");
   }
 }
