@@ -326,9 +326,9 @@ export function OrdersAdministration() {
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case "COMPLETED":
-        return "success";
+        return "secondary";
       case "PENDING":
-        return "warning";
+        return "outline";
       case "FAILED":
         return "destructive";
       case "PROCESSING":
@@ -355,15 +355,20 @@ export function OrdersAdministration() {
         },
         tooltip: {
           callbacks: {
-            label: (context: any) => `$${context.parsed.y.toFixed(2)}`
+            label: function (context: any) {
+              return `$${context.parsed.y.toFixed(2)}`;
+            }
           }
         }
       },
       scales: {
         y: {
+          type: "linear" as const,
           beginAtZero: true,
           ticks: {
-            callback: (value: number) => `$${value.toFixed(2)}`
+            callback: function (tickValue: any) {
+              return `$${parseFloat(tickValue).toFixed(2)}`;
+            }
           }
         }
       }
@@ -387,6 +392,7 @@ export function OrdersAdministration() {
       },
       scales: {
         y: {
+          type: "linear" as const,
           beginAtZero: true,
           ticks: {
             stepSize: 1
@@ -413,6 +419,7 @@ export function OrdersAdministration() {
       },
       scales: {
         y: {
+          type: "linear" as const,
           beginAtZero: true,
           ticks: {
             stepSize: 1
@@ -897,8 +904,12 @@ export function OrdersAdministration() {
               Orders:{" "}
               {memberFilter !== "all" && (
                 <Badge
-                  variant={memberFilter === "members" ? "success" : "default"}
-                  className="ml-2"
+                  variant={memberFilter === "members" ? "secondary" : "default"}
+                  className={
+                    memberFilter === "members"
+                      ? "bg-green-100 hover:bg-green-200 text-green-800 border-green-200"
+                      : ""
+                  }
                 >
                   {memberFilter === "members"
                     ? "Members Only"
@@ -962,12 +973,19 @@ export function OrdersAdministration() {
                           <div className="flex items-center gap-2">
                             <Badge
                               variant={getStatusBadgeVariant(order.status)}
+                              className={
+                                order.status === "COMPLETED"
+                                  ? "bg-green-100 hover:bg-green-200 text-green-800 border-green-200"
+                                  : order.status === "PENDING"
+                                    ? "bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-200"
+                                    : ""
+                              }
                             >
                               {order.status}
                             </Badge>
                             {order.isMember && (
                               <Badge
-                                variant="success"
+                                variant="secondary"
                                 className="bg-green-100 hover:bg-green-200 text-green-800 border-green-200"
                               >
                                 Member
