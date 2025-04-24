@@ -2102,3 +2102,132 @@ export async function getPeriodicalsByCityId(cityId: number) {
     throw new Error("Failed to fetch periodicals by city");
   }
 }
+
+export async function getOrders(page: number, perPage: number) {
+  const skip = (page - 1) * perPage;
+  const [orders, totalCount] = await prisma.$transaction([
+    prisma.order.findMany({
+      skip,
+      take: perPage,
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: {
+          select: {
+            items: true
+          }
+        }
+      }
+    }),
+    prisma.order.count()
+  ]);
+
+  return {
+    orders,
+    totalCount,
+    totalPages: Math.ceil(totalCount / perPage)
+  };
+}
+
+export async function searchOrders(
+  searchTerm: string,
+  page: number,
+  perPage: number
+) {
+  const skip = (page - 1) * perPage;
+  const [orders, totalCount] = await prisma.$transaction([
+    prisma.order.findMany({
+      where: {
+        OR: [
+          { customerEmail: { contains: searchTerm, mode: "insensitive" } },
+          { customerFullName: { contains: searchTerm, mode: "insensitive" } },
+          { id: { contains: searchTerm, mode: "insensitive" } }
+        ]
+      },
+      skip,
+      take: perPage,
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: {
+          select: {
+            items: true
+          }
+        }
+      }
+    }),
+    prisma.order.count({
+      where: {
+        OR: [
+          { customerEmail: { contains: searchTerm, mode: "insensitive" } },
+          { customerFullName: { contains: searchTerm, mode: "insensitive" } },
+          { id: { contains: searchTerm, mode: "insensitive" } }
+        ]
+      }
+    })
+  ]);
+
+  return {
+    orders,
+    totalCount,
+    totalPages: Math.ceil(totalCount / perPage)
+  };
+}
+
+export async function getOrderItems(orderId: string) {
+  try {
+    // First, get the order with items
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: true
+      }
+    });
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    // Return all items and count
+    return {
+      items: order.items,
+      order: {
+        id: order.id,
+        customerEmail: order.customerEmail,
+        customerFullName: order.customerFullName,
+        status: order.status,
+        totalAmount: order.totalAmount,
+        currency: order.currency,
+        createdAt: order.createdAt
+      },
+      count: order.items.length
+    };
+  } catch (error) {
+    console.error("Error fetching order items:", error);
+    throw new Error("Failed to fetch order items");
+  }
+}
+
+export async function updateOrderStatus(id: string, status: string) {
+  try {
+    const order = await prisma.order.update({
+      where: { id },
+      data: { status: status as any }
+    });
+    revalidatePath("/");
+    return order;
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    throw new Error("Failed to update order status");
+  }
+}
+
+export async function deleteOrder(id: string) {
+  try {
+    await prisma.order.delete({
+      where: { id }
+    });
+    revalidatePath("/");
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    throw new Error("Failed to delete order");
+  }
+}
