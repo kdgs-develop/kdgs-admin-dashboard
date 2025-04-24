@@ -363,7 +363,7 @@ export function OrdersAdministration() {
         y: {
           beginAtZero: true,
           ticks: {
-            callback: (value: number) => `$${value}`
+            callback: (value: number) => `$${value.toFixed(2)}`
           }
         }
       }
@@ -436,26 +436,89 @@ export function OrdersAdministration() {
       let datasets = [];
 
       if (chartView === "sales") {
+        // Convert sales data from cents to dollars
+        const currentYearSales = {
+          total: monthlyData.salesData.total.map(value => value / 100),
+          member: monthlyData.salesData.member.map(value => value / 100),
+          nonMember: monthlyData.salesData.nonMember.map(value => value / 100)
+        };
+
+        const prevYearSales = {
+          total: monthlyData.salesData.prevYearTotal.map(value => value / 100),
+          member: monthlyData.salesData.prevYearMember.map(
+            value => value / 100
+          ),
+          nonMember: monthlyData.salesData.prevYearNonMember.map(
+            value => value / 100
+          )
+        };
+
         // Show previous year data first if enabled
         if (showPreviousYear) {
-          datasets.push({
-            label: `${monthlyData.previousYear} Total Sales`,
-            data: monthlyData.salesData.prevYearTotal,
-            backgroundColor: "rgba(25, 118, 210, 0.2)",
-            borderColor: "rgba(25, 118, 210, 1)",
-            borderWidth: 1,
-            borderDash: [5, 5]
-          });
+          if (dataView === "all" || dataView === "total") {
+            datasets.push({
+              label: `${monthlyData.previousYear} Total Sales`,
+              data: prevYearSales.total,
+              backgroundColor: "rgba(25, 118, 210, 0.2)",
+              borderColor: "rgba(25, 118, 210, 1)",
+              borderWidth: 1,
+              borderDash: [5, 5]
+            });
+          }
+
+          if (dataView === "all" || dataView === "member") {
+            datasets.push({
+              label: `${monthlyData.previousYear} Member Sales`,
+              data: prevYearSales.member,
+              backgroundColor: "rgba(46, 125, 50, 0.2)",
+              borderColor: "rgba(46, 125, 50, 1)",
+              borderWidth: 1,
+              borderDash: [5, 5]
+            });
+          }
+
+          if (dataView === "all" || dataView === "non-member") {
+            datasets.push({
+              label: `${monthlyData.previousYear} Non-Member Sales`,
+              data: prevYearSales.nonMember,
+              backgroundColor: "rgba(211, 47, 47, 0.2)",
+              borderColor: "rgba(211, 47, 47, 1)",
+              borderWidth: 1,
+              borderDash: [5, 5]
+            });
+          }
         }
 
         // Then add current year data
-        datasets.push({
-          label: `${monthlyData.year} Total Sales`,
-          data: monthlyData.salesData.total,
-          backgroundColor: "rgba(25, 118, 210, 0.6)",
-          borderColor: "rgba(25, 118, 210, 1)",
-          borderWidth: 1
-        });
+        if (dataView === "all" || dataView === "total") {
+          datasets.push({
+            label: `${monthlyData.year} Total Sales`,
+            data: currentYearSales.total,
+            backgroundColor: "rgba(25, 118, 210, 0.6)",
+            borderColor: "rgba(25, 118, 210, 1)",
+            borderWidth: 1
+          });
+        }
+
+        if (dataView === "all" || dataView === "member") {
+          datasets.push({
+            label: `${monthlyData.year} Member Sales`,
+            data: currentYearSales.member,
+            backgroundColor: "rgba(46, 125, 50, 0.6)",
+            borderColor: "rgba(46, 125, 50, 1)",
+            borderWidth: 1
+          });
+        }
+
+        if (dataView === "all" || dataView === "non-member") {
+          datasets.push({
+            label: `${monthlyData.year} Non-Member Sales`,
+            data: currentYearSales.nonMember,
+            backgroundColor: "rgba(211, 47, 47, 0.6)",
+            borderColor: "rgba(211, 47, 47, 1)",
+            borderWidth: 1
+          });
+        }
       } else if (chartView === "count") {
         // Show previous year data first (if enabled)
         if (showPreviousYear) {
@@ -665,45 +728,43 @@ export function OrdersAdministration() {
           </div>
         </div>
 
-        {/* Only show data type filters for the count chart */}
-        {chartView !== "sales" && (
-          <div className="flex space-x-2 mt-2">
-            <Button
-              variant={dataView === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDataView("all")}
-            >
-              All
-            </Button>
-            <Button
-              variant={dataView === "total" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDataView("total")}
-              className="border-blue-200 text-blue-800"
-            >
-              <div className="w-2 h-2 bg-blue-600 rounded-full mr-1"></div>
-              Total Only
-            </Button>
-            <Button
-              variant={dataView === "member" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDataView("member")}
-              className="border-green-200 text-green-800"
-            >
-              <div className="w-2 h-2 bg-green-600 rounded-full mr-1"></div>
-              Members Only
-            </Button>
-            <Button
-              variant={dataView === "non-member" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDataView("non-member")}
-              className="border-red-200 text-red-800"
-            >
-              <div className="w-2 h-2 bg-red-600 rounded-full mr-1"></div>
-              Non-Members Only
-            </Button>
-          </div>
-        )}
+        {/* Show data type filters for all chart types */}
+        <div className="flex space-x-2 mt-2">
+          <Button
+            variant={dataView === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDataView("all")}
+          >
+            All
+          </Button>
+          <Button
+            variant={dataView === "total" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDataView("total")}
+            className="border-blue-200 text-blue-800"
+          >
+            <div className="w-2 h-2 bg-blue-600 rounded-full mr-1"></div>
+            Total Only
+          </Button>
+          <Button
+            variant={dataView === "member" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDataView("member")}
+            className="border-green-200 text-green-800"
+          >
+            <div className="w-2 h-2 bg-green-600 rounded-full mr-1"></div>
+            Members Only
+          </Button>
+          <Button
+            variant={dataView === "non-member" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDataView("non-member")}
+            className="border-red-200 text-red-800"
+          >
+            <div className="w-2 h-2 bg-red-600 rounded-full mr-1"></div>
+            Non-Members Only
+          </Button>
+        </div>
       </div>
     );
   };
