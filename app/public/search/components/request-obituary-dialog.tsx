@@ -68,6 +68,7 @@ import {
   sendObituaryRequestEmail,
   type ObituaryRequestFormData
 } from "@/lib/actions/public-search/send-obituary-request-email";
+import { recordMemberDownload } from "@/lib/actions/orders/record-member-download";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -293,6 +294,21 @@ export function RequestObituaryDialog({
     let errorMessages: string[] = [];
 
     try {
+      // Record the member download as a completed order
+      const orderResult = await recordMemberDownload({
+        obituaryRef: reference,
+        obituaryName: obituaryName || reference,
+        customerEmail: session.username, // Using username field which may be an email
+        customerFullName: session.displayName || ""
+      });
+
+      if (!orderResult.success) {
+        console.warn(
+          "Failed to record download as order, but continuing download:",
+          orderResult.error
+        );
+      }
+
       try {
         await triggerPdfDownload(reference);
         pdfSuccess = true;
