@@ -31,6 +31,7 @@ interface OrderData {
   totalAmount: number;
   currency: string;
   createdAt: Date;
+  isMember: boolean;
 }
 
 interface OrderItemsDialogProps {
@@ -163,19 +164,29 @@ export function OrderItemsDialog({
 
                 <div>Status:</div>
                 <div className="font-medium">
-                  <Badge
-                    variant={
-                      orderDetails.status === "COMPLETED"
-                        ? "success"
-                        : orderDetails.status === "PENDING"
-                          ? "warning"
-                          : orderDetails.status === "FAILED"
-                            ? "destructive"
-                            : "default"
-                    }
-                  >
-                    {orderDetails.status}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant={
+                        orderDetails.status === "COMPLETED"
+                          ? "success"
+                          : orderDetails.status === "PENDING"
+                            ? "warning"
+                            : orderDetails.status === "FAILED"
+                              ? "destructive"
+                              : "default"
+                      }
+                    >
+                      {orderDetails.status}
+                    </Badge>
+                    {orderDetails.isMember && (
+                      <Badge
+                        variant="success"
+                        className="bg-green-100 hover:bg-green-200 text-green-800 border-green-200"
+                      >
+                        Member
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 <div>Total:</div>
