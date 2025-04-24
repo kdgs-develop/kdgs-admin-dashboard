@@ -168,19 +168,26 @@ export function OrderItemsDialog({
                     <Badge
                       variant={
                         orderDetails.status === "COMPLETED"
-                          ? "success"
+                          ? "secondary"
                           : orderDetails.status === "PENDING"
-                            ? "warning"
+                            ? "outline"
                             : orderDetails.status === "FAILED"
                               ? "destructive"
                               : "default"
+                      }
+                      className={
+                        orderDetails.status === "COMPLETED"
+                          ? "bg-green-100 text-green-800 hover:bg-green-200"
+                          : orderDetails.status === "PENDING"
+                            ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                            : ""
                       }
                     >
                       {orderDetails.status}
                     </Badge>
                     {orderDetails.isMember && (
                       <Badge
-                        variant="success"
+                        variant="secondary"
                         className="bg-green-100 hover:bg-green-200 text-green-800 border-green-200"
                       >
                         Member
