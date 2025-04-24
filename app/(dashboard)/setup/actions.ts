@@ -2103,10 +2103,24 @@ export async function getPeriodicalsByCityId(cityId: number) {
   }
 }
 
-export async function getOrders(page: number, perPage: number) {
+export async function getOrders(
+  page: number,
+  perPage: number,
+  memberFilter: "all" | "members" | "non-members" = "all"
+) {
   const skip = (page - 1) * perPage;
+
+  // Build where clause based on member filter
+  const where: any = {};
+  if (memberFilter === "members") {
+    where.isMember = true;
+  } else if (memberFilter === "non-members") {
+    where.isMember = false;
+  }
+
   const [orders, totalCount] = await prisma.$transaction([
     prisma.order.findMany({
+      where,
       skip,
       take: perPage,
       orderBy: { createdAt: "desc" },
@@ -2118,7 +2132,7 @@ export async function getOrders(page: number, perPage: number) {
         }
       }
     }),
-    prisma.order.count()
+    prisma.order.count({ where })
   ]);
 
   return {
@@ -2131,18 +2145,30 @@ export async function getOrders(page: number, perPage: number) {
 export async function searchOrders(
   searchTerm: string,
   page: number,
-  perPage: number
+  perPage: number,
+  memberFilter: "all" | "members" | "non-members" = "all"
 ) {
   const skip = (page - 1) * perPage;
+
+  // Build where clause based on search term and member filter
+  const where: any = {
+    OR: [
+      { customerEmail: { contains: searchTerm, mode: "insensitive" } },
+      { customerFullName: { contains: searchTerm, mode: "insensitive" } },
+      { id: { contains: searchTerm, mode: "insensitive" } }
+    ]
+  };
+
+  // Add member filter condition
+  if (memberFilter === "members") {
+    where.isMember = true;
+  } else if (memberFilter === "non-members") {
+    where.isMember = false;
+  }
+
   const [orders, totalCount] = await prisma.$transaction([
     prisma.order.findMany({
-      where: {
-        OR: [
-          { customerEmail: { contains: searchTerm, mode: "insensitive" } },
-          { customerFullName: { contains: searchTerm, mode: "insensitive" } },
-          { id: { contains: searchTerm, mode: "insensitive" } }
-        ]
-      },
+      where,
       skip,
       take: perPage,
       orderBy: { createdAt: "desc" },
@@ -2154,15 +2180,7 @@ export async function searchOrders(
         }
       }
     }),
-    prisma.order.count({
-      where: {
-        OR: [
-          { customerEmail: { contains: searchTerm, mode: "insensitive" } },
-          { customerFullName: { contains: searchTerm, mode: "insensitive" } },
-          { id: { contains: searchTerm, mode: "insensitive" } }
-        ]
-      }
-    })
+    prisma.order.count({ where })
   ]);
 
   return {
@@ -2229,5 +2247,30 @@ export async function deleteOrder(id: string) {
   } catch (error) {
     console.error("Error deleting order:", error);
     throw new Error("Failed to delete order");
+  }
+}
+
+export async function getOrderCounts() {
+  try {
+    const [totalCount, memberCount, nonMemberCount] = await prisma.$transaction(
+      [
+        prisma.order.count(),
+        prisma.order.count({
+          where: { isMember: true }
+        }),
+        prisma.order.count({
+          where: { isMember: false }
+        })
+      ]
+    );
+
+    return {
+      totalCount,
+      memberCount,
+      nonMemberCount
+    };
+  } catch (error) {
+    console.error("Error getting order counts:", error);
+    throw new Error("Failed to get order counts");
   }
 }
