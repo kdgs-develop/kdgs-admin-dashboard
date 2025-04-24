@@ -218,6 +218,7 @@ model Order {
   stripeCheckoutSessionId String?     @unique
   stripePaymentIntentId   String?     @unique
   successToken            String?     @unique
+  isMember                Boolean     @default(false) // Track if the order was made by a member
   createdAt               DateTime    @default(now())
   updatedAt               DateTime    @updatedAt
   items                   OrderItem[]
