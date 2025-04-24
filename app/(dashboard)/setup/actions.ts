@@ -2215,7 +2215,8 @@ export async function getOrderItems(orderId: string) {
         status: order.status,
         totalAmount: order.totalAmount,
         currency: order.currency,
-        createdAt: order.createdAt
+        createdAt: order.createdAt,
+        isMember: order.isMember
       },
       count: order.items.length
     };
