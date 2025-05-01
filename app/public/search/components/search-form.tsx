@@ -50,8 +50,11 @@ interface SelectedRecordData {
 }
 
 const relativeSchema = z.object({
-  name: z.string().optional(),
-  relationshipId: z.string().optional()
+  surname: z
+    .string()
+    .optional()
+    .transform(val => val?.toUpperCase()),
+  givenNames: z.string().optional()
 });
 
 const searchFormSchema = z.object({
@@ -159,7 +162,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
       givenNames: "",
       maidenName: "",
       alsoKnownAs: "",
-      relatives: [{ name: "", relationshipId: "" }],
+      relatives: [{ surname: "", givenNames: "" }],
       birthDay: "",
       birthMonth: "",
       birthYear: "",
@@ -189,7 +192,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
 
       try {
         const relatives = criteria.relatives?.filter(
-          relative => relative.name || relative.relationshipId
+          relative => relative.surname || relative.givenNames
         );
 
         const searchInput = {
@@ -426,12 +429,12 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                     <div className="grid grid-cols-2 gap-4 flex-grow">
                       <FormField
                         control={form.control}
-                        name={`relatives.${index}.name`}
+                        name={`relatives.${index}.surname`}
                         render={({ field }) => (
                           <FormItem>
                             <FormControl>
                               <Input
-                                placeholder="Relative's Name"
+                                placeholder="Surname"
                                 {...field}
                                 className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                               />
@@ -442,26 +445,16 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                       />
                       <FormField
                         control={form.control}
-                        name={`relatives.${index}.relationshipId`}
+                        name={`relatives.${index}.givenNames`}
                         render={({ field }) => (
                           <FormItem>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg">
-                                  <SelectValue placeholder="Relationship" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {relationships.map(rel => (
-                                  <SelectItem key={rel.id} value={rel.id}>
-                                    {rel.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <FormControl>
+                              <Input
+                                placeholder="Given Names"
+                                {...field}
+                                className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
+                              />
+                            </FormControl>
                             <FormMessage className="text-red-500" />
                           </FormItem>
                         )}
@@ -484,7 +477,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                   variant="outline"
                   size="sm"
                   className="mt-2 border-[#003B5C] text-[#003B5C] hover:bg-[#003B5C] hover:text-white"
-                  onClick={() => append({ name: "", relationshipId: "" })}
+                  onClick={() => append({ surname: "", givenNames: "" })}
                 >
                   <PlusIcon className="mr-2 h-4 w-4" />
                   Add Relative
@@ -522,17 +515,17 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                       <div className="grid grid-cols-3 gap-4">
                         <FormField
                           control={form.control}
-                          name="birthDay"
+                          name="birthYear"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Day
+                                Year
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="DD"
+                                  placeholder="YYYY"
                                   {...field}
-                                  maxLength={2}
+                                  maxLength={4}
                                   className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                                 />
                               </FormControl>
@@ -562,17 +555,17 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                         />
                         <FormField
                           control={form.control}
-                          name="birthYear"
+                          name="birthDay"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Year
+                                Day
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="YYYY"
+                                  placeholder="DD"
                                   {...field}
-                                  maxLength={4}
+                                  maxLength={2}
                                   className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                                 />
                               </FormControl>
@@ -637,7 +630,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="City, County, State, Province, or Country"
+                            placeholder="City, Province, State, or Country"
                             {...field}
                             className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                           />
@@ -667,17 +660,17 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                       <div className="grid grid-cols-3 gap-4">
                         <FormField
                           control={form.control}
-                          name="deathDay"
+                          name="deathYear"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Day
+                                Year
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="DD"
+                                  placeholder="YYYY"
                                   {...field}
-                                  maxLength={2}
+                                  maxLength={4}
                                   className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                                 />
                               </FormControl>
@@ -707,17 +700,17 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                         />
                         <FormField
                           control={form.control}
-                          name="deathYear"
+                          name="deathDay"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Year
+                                Day
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="YYYY"
+                                  placeholder="DD"
                                   {...field}
-                                  maxLength={4}
+                                  maxLength={2}
                                   className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                                 />
                               </FormControl>
@@ -782,7 +775,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="City, County, State, Province, or Country"
+                            placeholder="City, Province, State, or Country"
                             {...field}
                             className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                           />
