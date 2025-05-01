@@ -5,8 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { Obituary } from "@prisma/client";
 
 const relativeSchema = z.object({
-  name: z.string().optional(),
-  relationshipId: z.string().optional()
+  surname: z.string().optional(),
+  givenNames: z.string().optional()
 });
 
 // Define a schema for the expected input, including pagination
@@ -108,24 +108,39 @@ export async function searchObituaries(
     if (searchCriteria.relatives && searchCriteria.relatives.length > 0) {
       const relativeConditions = searchCriteria.relatives
         .map(rel => {
-          const condition: any = {};
-          if (rel.name) {
-            condition.OR = [
-              { surname: { contains: rel.name, mode: "insensitive" } },
-              { givenNames: { contains: rel.name, mode: "insensitive" } }
-            ];
+          const relConditions = [];
+
+          if (rel.surname) {
+            relConditions.push({
+              surname: { contains: rel.surname, mode: "insensitive" }
+            });
           }
-          if (rel.relationshipId) {
-            condition.familyRelationshipId = rel.relationshipId;
+
+          if (rel.givenNames) {
+            relConditions.push({
+              givenNames: { contains: rel.givenNames, mode: "insensitive" }
+            });
           }
-          return rel.name || rel.relationshipId ? condition : null;
+
+          // Only create a condition if at least one field is specified
+          if (relConditions.length > 0) {
+            return {
+              AND: relConditions
+            };
+          }
+
+          return null;
         })
         .filter(Boolean);
+
       if (relativeConditions.length > 0) {
-        // Add each relative condition as a separate AND clause
-        relativeConditions.forEach(cond =>
-          conditions.push({ relatives: { some: cond } })
-        );
+        conditions.push({
+          relatives: {
+            some: {
+              OR: relativeConditions
+            }
+          }
+        });
       }
     }
 
@@ -136,40 +151,74 @@ export async function searchObituaries(
       const month = parseInt(searchCriteria.birthMonth || "", 10);
       const day = parseInt(searchCriteria.birthDay || "", 10);
 
-      if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-        // Basic validation
-        if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-          // Create target date object (YYYY-MM-DD 00:00:00 UTC)
-          const targetDate = new Date(Date.UTC(year, month - 1, day));
-
-          // Check if date is valid after creation
-          if (!isNaN(targetDate.getTime())) {
-            // Use equals comparison - Prisma should handle matching against DATE column
-            conditions.push({ birthDate: { equals: targetDate } });
+      if (!isNaN(year)) {
+        if (!isNaN(month) && !isNaN(day)) {
+          // Full date provided (year + month + day)
+          if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+            const targetDate = new Date(Date.UTC(year, month - 1, day));
+            if (!isNaN(targetDate.getTime())) {
+              conditions.push({ birthDate: { equals: targetDate } });
+            } else {
+              console.warn(
+                `Invalid exact birth date components: ${year}-${month}-${day}`
+              );
+              // Fallback to year-month search
+              if (month >= 1 && month <= 12) {
+                const startMonth = new Date(Date.UTC(year, month - 1, 1));
+                const lastDay = new Date(year, month, 0).getDate(); // Get last day of month
+                const endMonth = new Date(
+                  Date.UTC(year, month - 1, lastDay, 23, 59, 59, 999)
+                );
+                conditions.push({
+                  birthDate: { gte: startMonth, lte: endMonth }
+                });
+              } else {
+                // Fallback to year search
+                const startYear = new Date(Date.UTC(year, 0, 1));
+                const endYear = new Date(
+                  Date.UTC(year, 11, 31, 23, 59, 59, 999)
+                );
+                conditions.push({
+                  birthDate: { gte: startYear, lte: endYear }
+                });
+              }
+            }
           } else {
-            console.warn(
-              `Invalid exact birth date components: ${year}-${month}-${day}`
-            );
-            // Fallback to year search
-            const startYear = new Date(Date.UTC(year, 0, 1));
-            const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-            if (!isNaN(startYear.getTime())) {
+            // Invalid month/day values, fallback to year-month or year search
+            if (month >= 1 && month <= 12) {
+              const startMonth = new Date(Date.UTC(year, month - 1, 1));
+              const lastDay = new Date(year, month, 0).getDate();
+              const endMonth = new Date(
+                Date.UTC(year, month - 1, lastDay, 23, 59, 59, 999)
+              );
+              conditions.push({
+                birthDate: { gte: startMonth, lte: endMonth }
+              });
+            } else {
+              const startYear = new Date(Date.UTC(year, 0, 1));
+              const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
               conditions.push({ birthDate: { gte: startYear, lte: endYear } });
             }
           }
-        } else {
-          // Fallback to year search
-          const startYear = new Date(Date.UTC(year, 0, 1));
-          const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-          if (!isNaN(startYear.getTime())) {
+        } else if (!isNaN(month)) {
+          // Only year and month provided
+          if (month >= 1 && month <= 12) {
+            const startMonth = new Date(Date.UTC(year, month - 1, 1));
+            const lastDay = new Date(year, month, 0).getDate();
+            const endMonth = new Date(
+              Date.UTC(year, month - 1, lastDay, 23, 59, 59, 999)
+            );
+            conditions.push({ birthDate: { gte: startMonth, lte: endMonth } });
+          } else {
+            // Invalid month, fallback to year search
+            const startYear = new Date(Date.UTC(year, 0, 1));
+            const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
             conditions.push({ birthDate: { gte: startYear, lte: endYear } });
           }
-        }
-      } else if (!isNaN(year)) {
-        // Only year provided
-        const startYear = new Date(Date.UTC(year, 0, 1));
-        const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-        if (!isNaN(startYear.getTime())) {
+        } else {
+          // Only year provided
+          const startYear = new Date(Date.UTC(year, 0, 1));
+          const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
           conditions.push({ birthDate: { gte: startYear, lte: endYear } });
         }
       }
@@ -197,32 +246,74 @@ export async function searchObituaries(
       const month = parseInt(searchCriteria.deathMonth || "", 10);
       const day = parseInt(searchCriteria.deathDay || "", 10);
 
-      if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-        if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-          const targetDate = new Date(Date.UTC(year, month - 1, day));
-          if (!isNaN(targetDate.getTime())) {
-            conditions.push({ deathDate: { equals: targetDate } });
+      if (!isNaN(year)) {
+        if (!isNaN(month) && !isNaN(day)) {
+          // Full date provided (year + month + day)
+          if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+            const targetDate = new Date(Date.UTC(year, month - 1, day));
+            if (!isNaN(targetDate.getTime())) {
+              conditions.push({ deathDate: { equals: targetDate } });
+            } else {
+              console.warn(
+                `Invalid exact death date components: ${year}-${month}-${day}`
+              );
+              // Fallback to year-month search
+              if (month >= 1 && month <= 12) {
+                const startMonth = new Date(Date.UTC(year, month - 1, 1));
+                const lastDay = new Date(year, month, 0).getDate(); // Get last day of month
+                const endMonth = new Date(
+                  Date.UTC(year, month - 1, lastDay, 23, 59, 59, 999)
+                );
+                conditions.push({
+                  deathDate: { gte: startMonth, lte: endMonth }
+                });
+              } else {
+                // Fallback to year search
+                const startYear = new Date(Date.UTC(year, 0, 1));
+                const endYear = new Date(
+                  Date.UTC(year, 11, 31, 23, 59, 59, 999)
+                );
+                conditions.push({
+                  deathDate: { gte: startYear, lte: endYear }
+                });
+              }
+            }
           } else {
-            console.warn(
-              `Invalid exact death date components: ${year}-${month}-${day}`
-            );
-            const startYear = new Date(Date.UTC(year, 0, 1));
-            const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-            if (!isNaN(startYear.getTime())) {
+            // Invalid month/day values, fallback to year-month or year search
+            if (month >= 1 && month <= 12) {
+              const startMonth = new Date(Date.UTC(year, month - 1, 1));
+              const lastDay = new Date(year, month, 0).getDate();
+              const endMonth = new Date(
+                Date.UTC(year, month - 1, lastDay, 23, 59, 59, 999)
+              );
+              conditions.push({
+                deathDate: { gte: startMonth, lte: endMonth }
+              });
+            } else {
+              const startYear = new Date(Date.UTC(year, 0, 1));
+              const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
               conditions.push({ deathDate: { gte: startYear, lte: endYear } });
             }
           }
-        } else {
-          const startYear = new Date(Date.UTC(year, 0, 1));
-          const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-          if (!isNaN(startYear.getTime())) {
+        } else if (!isNaN(month)) {
+          // Only year and month provided
+          if (month >= 1 && month <= 12) {
+            const startMonth = new Date(Date.UTC(year, month - 1, 1));
+            const lastDay = new Date(year, month, 0).getDate();
+            const endMonth = new Date(
+              Date.UTC(year, month - 1, lastDay, 23, 59, 59, 999)
+            );
+            conditions.push({ deathDate: { gte: startMonth, lte: endMonth } });
+          } else {
+            // Invalid month, fallback to year search
+            const startYear = new Date(Date.UTC(year, 0, 1));
+            const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
             conditions.push({ deathDate: { gte: startYear, lte: endYear } });
           }
-        }
-      } else if (!isNaN(year)) {
-        const startYear = new Date(Date.UTC(year, 0, 1));
-        const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-        if (!isNaN(startYear.getTime())) {
+        } else {
+          // Only year provided
+          const startYear = new Date(Date.UTC(year, 0, 1));
+          const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
           conditions.push({ deathDate: { gte: startYear, lte: endYear } });
         }
       }
@@ -246,16 +337,60 @@ export async function searchObituaries(
     // Place conditions
     if (searchCriteria.birthPlace) {
       conditions.push({
-        birthCity: {
-          name: { contains: searchCriteria.birthPlace, mode: "insensitive" }
-        }
+        OR: [
+          {
+            birthCity: {
+              name: { contains: searchCriteria.birthPlace, mode: "insensitive" }
+            }
+          },
+          {
+            birthCity: {
+              province: {
+                contains: searchCriteria.birthPlace,
+                mode: "insensitive"
+              }
+            }
+          },
+          {
+            birthCity: {
+              country: {
+                name: {
+                  contains: searchCriteria.birthPlace,
+                  mode: "insensitive"
+                }
+              }
+            }
+          }
+        ]
       });
     }
     if (searchCriteria.deathPlace) {
       conditions.push({
-        deathCity: {
-          name: { contains: searchCriteria.deathPlace, mode: "insensitive" }
-        }
+        OR: [
+          {
+            deathCity: {
+              name: { contains: searchCriteria.deathPlace, mode: "insensitive" }
+            }
+          },
+          {
+            deathCity: {
+              province: {
+                contains: searchCriteria.deathPlace,
+                mode: "insensitive"
+              }
+            }
+          },
+          {
+            deathCity: {
+              country: {
+                name: {
+                  contains: searchCriteria.deathPlace,
+                  mode: "insensitive"
+                }
+              }
+            }
+          }
+        ]
       });
     }
     // Combine all conditions with AND
