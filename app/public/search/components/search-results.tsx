@@ -243,4 +243,3 @@ export function SearchResults({
     </div>
   );
 }
- 
