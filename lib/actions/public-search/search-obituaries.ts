@@ -14,7 +14,6 @@ const searchInputSchema = z.object({
   surname: z.string().optional(),
   givenNames: z.string().optional(),
   maidenName: z.string().optional(),
-  alsoKnownAs: z.string().optional(),
   relatives: z.array(relativeSchema).optional(),
   birthDay: z.string().optional(),
   birthMonth: z.string().optional(),
@@ -48,6 +47,7 @@ export interface SearchResult {
 export interface SearchResponse {
   results: SearchResult[];
   totalCount: number;
+  isPartialMatch?: boolean;
 }
 
 export async function searchObituaries(
@@ -61,47 +61,126 @@ export async function searchObituaries(
     const where: any = {}; // Build the where clause based on searchCriteria
     const conditions: any[] = []; // Use an array for AND conditions
 
-    // Name conditions
-    if (searchCriteria.surname) {
-      conditions.push({
-        surname: { contains: searchCriteria.surname, mode: "insensitive" }
-      });
-    }
-    if (searchCriteria.givenNames) {
-      conditions.push({
-        givenNames: { contains: searchCriteria.givenNames, mode: "insensitive" }
-      });
-    }
-    // Add Maiden Name search condition
-    if (searchCriteria.maidenName) {
-      conditions.push({
-        maidenName: { contains: searchCriteria.maidenName, mode: "insensitive" }
-      });
-    }
-
-    // Also Known As
-    if (searchCriteria.alsoKnownAs) {
-      // Add AKA condition to the main list
-      conditions.push({
-        alsoKnownAs: {
-          some: {
-            OR: [
-              {
+    // --- Name conditions (Revised Logic) ---
+    if (searchCriteria.surname && searchCriteria.givenNames) {
+      // --- Case 1: Both Surname and Given Names provided (Use AND) ---
+      const surnameCondition = {
+        OR: [
+          {
+            surname: { contains: searchCriteria.surname, mode: "insensitive" }
+          },
+          {
+            alsoKnownAs: {
+              some: {
                 surname: {
-                  contains: searchCriteria.alsoKnownAs,
-                  mode: "insensitive"
-                }
-              },
-              {
-                otherNames: {
-                  contains: searchCriteria.alsoKnownAs,
+                  contains: searchCriteria.surname,
                   mode: "insensitive"
                 }
               }
-            ]
+            }
           }
-        }
-      });
+        ]
+      };
+      const givenNamesCondition = {
+        OR: [
+          {
+            givenNames: {
+              contains: searchCriteria.givenNames,
+              mode: "insensitive"
+            }
+          },
+          {
+            alsoKnownAs: {
+              some: {
+                otherNames: {
+                  contains: searchCriteria.givenNames,
+                  mode: "insensitive"
+                }
+              }
+            }
+          }
+        ]
+      };
+      conditions.push({ AND: [surnameCondition, givenNamesCondition] });
+
+      // If maiden name is also provided, add it as a separate AND condition
+      if (searchCriteria.maidenName) {
+        conditions.push({
+          OR: [
+            {
+              maidenName: {
+                contains: searchCriteria.maidenName,
+                mode: "insensitive"
+              }
+            },
+            {
+              alsoKnownAs: {
+                some: {
+                  surname: {
+                    contains: searchCriteria.maidenName,
+                    mode: "insensitive"
+                  }
+                }
+              }
+            }
+          ]
+        });
+      }
+    } else {
+      // --- Case 2: Only one (or none) of Surname/GivenNames provided (Use OR) ---
+      const nameConditions: any[] = [];
+      if (searchCriteria.surname) {
+        nameConditions.push({
+          surname: { contains: searchCriteria.surname, mode: "insensitive" }
+        });
+        nameConditions.push({
+          alsoKnownAs: {
+            some: {
+              surname: { contains: searchCriteria.surname, mode: "insensitive" }
+            }
+          }
+        });
+      }
+      if (searchCriteria.givenNames) {
+        nameConditions.push({
+          givenNames: {
+            contains: searchCriteria.givenNames,
+            mode: "insensitive"
+          }
+        });
+        nameConditions.push({
+          alsoKnownAs: {
+            some: {
+              otherNames: {
+                contains: searchCriteria.givenNames,
+                mode: "insensitive"
+              }
+            }
+          }
+        });
+      }
+      if (searchCriteria.maidenName) {
+        nameConditions.push({
+          maidenName: {
+            contains: searchCriteria.maidenName,
+            mode: "insensitive"
+          }
+        });
+        nameConditions.push({
+          alsoKnownAs: {
+            some: {
+              surname: {
+                contains: searchCriteria.maidenName,
+                mode: "insensitive"
+              }
+            }
+          }
+        });
+      }
+      // If any single name conditions exist, add them as an OR group
+      if (nameConditions.length > 0) {
+        conditions.push({ OR: nameConditions });
+      }
     }
 
     // Relatives
@@ -413,15 +492,131 @@ export async function searchObituaries(
           birthDate: true,
           deathDate: true
         },
-        orderBy: { deathDate: "desc" }, // Example sorting
+        orderBy: [{ surname: "asc" }, { givenNames: "asc" }], // Order by surname, then given names
         skip,
         take: pageSize
       }),
       prisma.obituary.count({ where })
     ]);
 
+    // --- Fallback Search Logic (Restored) ---
+    let finalResults = results;
+    let finalTotalCount = totalCount;
+    let isPartial = false;
+
+    // Check if initial search yielded no results and if at least one name field was provided
+    if (
+      totalCount === 0 &&
+      (searchCriteria.surname ||
+        searchCriteria.givenNames ||
+        searchCriteria.maidenName)
+    ) {
+      console.log(
+        "Initial search failed, attempting fallback partial match search based on provided name fields..."
+      );
+
+      // Construct fallback WHERE clause dynamically based on provided name fields (using OR)
+      const fallbackNameConditions: any[] = [];
+      if (searchCriteria.surname) {
+        fallbackNameConditions.push({
+          surname: { contains: searchCriteria.surname, mode: "insensitive" }
+        });
+        fallbackNameConditions.push({
+          alsoKnownAs: {
+            some: {
+              surname: {
+                contains: searchCriteria.surname,
+                mode: "insensitive"
+              }
+            }
+          }
+        });
+      }
+      if (searchCriteria.givenNames) {
+        fallbackNameConditions.push({
+          givenNames: {
+            contains: searchCriteria.givenNames,
+            mode: "insensitive"
+          }
+        });
+        fallbackNameConditions.push({
+          alsoKnownAs: {
+            some: {
+              otherNames: {
+                contains: searchCriteria.givenNames,
+                mode: "insensitive"
+              }
+            }
+          }
+        });
+      }
+      if (searchCriteria.maidenName) {
+        fallbackNameConditions.push({
+          maidenName: {
+            contains: searchCriteria.maidenName,
+            mode: "insensitive"
+          }
+        });
+        fallbackNameConditions.push({
+          alsoKnownAs: {
+            some: {
+              surname: {
+                contains: searchCriteria.maidenName,
+                mode: "insensitive"
+              }
+            }
+          }
+        });
+      }
+
+      const fallbackWhere: any = {};
+      if (fallbackNameConditions.length > 0) {
+        fallbackWhere.OR = fallbackNameConditions;
+      }
+
+      // Declare variables to hold fallback results
+      let fallbackResults: SearchResult[] = [];
+      let fallbackTotalCount: number = 0;
+
+      // Perform the fallback search query and count query
+      if (Object.keys(fallbackWhere).length > 0) {
+        // Use temporary variables for the transaction result
+        const [fResults, fCount] = await prisma.$transaction([
+          prisma.obituary.findMany({
+            where: fallbackWhere,
+            select: {
+              reference: true,
+              givenNames: true,
+              surname: true,
+              maidenName: true,
+              birthDate: true,
+              deathDate: true
+            },
+            orderBy: [{ surname: "asc" }, { givenNames: "asc" }], // Keep consistent sorting
+            skip,
+            take: pageSize
+          }),
+          prisma.obituary.count({ where: fallbackWhere })
+        ]);
+
+        // Assign transaction results to the appropriately scoped variables
+        fallbackResults = fResults;
+        fallbackTotalCount = fCount;
+
+        // If fallback found results, update the final results and set the flag
+        if (fallbackTotalCount > 0) {
+          console.log(
+            `Fallback search successful: Found ${fallbackTotalCount} partial matches based on name fields.`
+          );
+          finalResults = fallbackResults;
+          finalTotalCount = fallbackTotalCount;
+          isPartial = true;
+        }
+      }
+    }
+
     // Format results
-    const formattedResults: SearchResult[] = results.map(obit => ({
+    const formattedResults: SearchResult[] = finalResults.map(obit => ({
       reference: obit.reference,
       givenNames: obit.givenNames,
       surname: obit.surname,
@@ -430,7 +625,13 @@ export async function searchObituaries(
       deathDate: obit.deathDate
     }));
 
-    return { data: { results: formattedResults, totalCount } };
+    return {
+      data: {
+        results: formattedResults,
+        totalCount: finalTotalCount,
+        isPartialMatch: isPartial
+      }
+    };
   } catch (error) {
     console.error("Error in searchObituaries action:", error);
     if (error instanceof z.ZodError) {
