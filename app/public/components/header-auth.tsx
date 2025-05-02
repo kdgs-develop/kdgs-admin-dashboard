@@ -35,14 +35,6 @@ export function HeaderAuth({ session }: HeaderAuthProps) {
             >
               Sign In
             </Button>
-            {/* Become Member Button */}
-            <Link href="/become-member">
-              {" "}
-              {/* Link to membership page */}
-              <Button className="bg-blue-500 hover:bg-blue-600 text-white border-none">
-                Become a Member
-              </Button>
-            </Link>
           </>
         )}
       </div>
