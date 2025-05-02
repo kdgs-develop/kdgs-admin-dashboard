@@ -67,7 +67,6 @@ const searchFormSchema = z.object({
     .string()
     .optional()
     .transform(val => val?.toUpperCase()),
-  alsoKnownAs: z.string().optional(),
   relatives: z.array(relativeSchema).optional(),
   birthDay: z
     .string()
@@ -161,7 +160,6 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
       surname: "",
       givenNames: "",
       maidenName: "",
-      alsoKnownAs: "",
       relatives: [{ surname: "", givenNames: "" }],
       birthDay: "",
       birthMonth: "",
@@ -348,7 +346,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-[#003B5C] font-medium">
-                        Surname
+                        Surname (Recommended)
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -367,7 +365,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-[#003B5C] font-medium">
-                        Given Names
+                        Given Names (Recommended)
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -386,7 +384,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-[#003B5C] font-medium">
-                        Maiden Name
+                        Maiden Name (Recommended if applicable)
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -399,30 +397,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="alsoKnownAs"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-[#003B5C] font-medium">
-                        Also Known As
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter alternate names"
-                          {...field}
-                          className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                        />
-                      </FormControl>
-                      <FormMessage className="text-red-500" />
-                    </FormItem>
-                  )}
-                />
               </div>
 
               <div className="space-y-4 pt-4 border-t border-gray-200">
                 <FormLabel className="text-[#003B5C] font-medium">
-                  Relatives
+                  Relatives (Optional)
                 </FormLabel>
                 {fields.map((item, index) => (
                   <div key={item.id} className="flex items-start gap-4">
@@ -434,7 +413,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           <FormItem>
                             <FormControl>
                               <Input
-                                placeholder="Surname"
+                                placeholder="Surname (Optional)"
                                 {...field}
                                 className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                               />
@@ -450,7 +429,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           <FormItem>
                             <FormControl>
                               <Input
-                                placeholder="Given Names"
+                                placeholder="Given Names (Optional)"
                                 {...field}
                                 className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                               />
@@ -519,7 +498,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Year
+                                Year (Optional)
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -539,7 +518,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Month
+                                Month (Optional)
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -559,7 +538,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Day
+                                Day (Optional)
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -583,7 +562,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Year From
+                                Year From (Optional)
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -603,7 +582,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Year To
+                                Year To (Optional)
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -626,7 +605,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[#003B5C] font-medium">
-                          Birth Place
+                          Birth Place (Optional)
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -664,7 +643,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Year
+                                Year (Optional)
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -684,7 +663,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Month
+                                Month (Optional)
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -704,7 +683,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Day
+                                Day (Optional)
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -728,7 +707,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Year From
+                                Year From (Optional)
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -748,7 +727,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Year To
+                                Year To (Optional)
                               </FormLabel>
                               <FormControl>
                                 <Input
@@ -771,7 +750,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[#003B5C] font-medium">
-                          Death Place
+                          Death Place (Optional)
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -832,6 +811,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
           error={searchError}
           hasSearched={hasSearched}
           isLoggedIn={isLoggedIn}
+          isPartialMatch={searchData.isPartialMatch}
         />
       )}
 
