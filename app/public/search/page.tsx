@@ -86,42 +86,67 @@ export default async function SearchPage() {
           </div>
 
           {/* Tips Section */}
-          <div className="mt-12 text-center space-y-8">
-            <button className="group text-blue-500 hover:text-blue-600 font-medium inline-flex items-center gap-2 transition-all">
-              <span>TIPS FOR EFFECTIVE SEARCHES</span>
-              <span className="group-hover:translate-x-1 transition-transform">
-                →
-              </span>
-            </button>
+          <div className="mt-16 text-left space-y-6 bg-green-50 p-8 rounded-xl border border-green-200">
+            <h3 className="text-xl font-semibold text-green-800 mb-4">
+              Tips for Effective Searching
+            </h3>
+            <p className="text-gray-700 leading-relaxed">
+              Finding family records can be rewarding! Here's a suggested
+              approach to help you get the best results:
+            </p>
 
-            {/* Search Tips Preview */}
-            <div className="grid md:grid-cols-3 gap-6 text-left">
-              {[
-                {
-                  title: "Use Name Variations",
-                  description:
-                    "Try different spellings and nicknames when searching"
-                },
-                {
-                  title: "Narrow by Date",
-                  description:
-                    "Add birth or death years to find more specific matches"
-                },
-                {
-                  title: "Include Places",
-                  description: "Search with locations to find relevant records"
-                }
-              ].map((tip, i) => (
-                <div
-                  key={i}
-                  className="bg-gray-50 p-6 rounded-xl border border-gray-100"
-                >
-                  <h3 className="font-medium text-[#003B5C] mb-2">
-                    {tip.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm">{tip.description}</p>
-                </div>
-              ))}
+            {/* Search Tips Grid */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Tip 1: Start with Names */}
+              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                <h4 className="font-medium text-[#003B5C] mb-2">
+                  1. Start with Names (Recommended)
+                </h4>
+                <p className="text-gray-600 text-sm">
+                  Begin by entering the person's <strong>Surname</strong> and{" "}
+                  <strong>Given Names</strong>. Add the{" "}
+                  <strong>Maiden Name</strong> if you know it. Try different
+                  spellings or nicknames if the first attempt doesn't work.
+                </p>
+              </div>
+
+              {/* Tip 2: Narrow with Death Date */}
+              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                <h4 className="font-medium text-[#003B5C] mb-2">
+                  2. Narrow with Death Date/Year
+                </h4>
+                <p className="text-gray-600 text-sm">
+                  If you get too many results, add the{" "}
+                  <strong>Death Year</strong>, or the full{" "}
+                  <strong>Death Date</strong> if known. This is often the most
+                  helpful field after names.
+                </p>
+              </div>
+
+              {/* Tip 3: Use Advanced Options */}
+              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                <h4 className="font-medium text-[#003B5C] mb-2">
+                  3. Use Advanced Options Sparingly
+                </h4>
+                <p className="text-gray-600 text-sm">
+                  If needed, use the "Advanced Search Options" to add{" "}
+                  <strong>Birth Date/Year</strong> or <strong>Places</strong>.
+                  Be aware that older records may not have complete place
+                  information.
+                </p>
+              </div>
+
+              {/* Tip 4: Broaden if Needed */}
+              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                <h4 className="font-medium text-[#003B5C] mb-2">
+                  4. Broaden if No Results
+                </h4>
+                <p className="text-gray-600 text-sm">
+                  If your search with dates/places finds nothing, try removing
+                  them and searching only by name again. Our partial match
+                  feature might find relevant records based just on the name.
+                </p>
+              </div>
             </div>
           </div>
         </div>
