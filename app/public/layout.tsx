@@ -25,7 +25,7 @@ export default async function PublicLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-[#0f4c81]">
+      <header className="bg-[#0f4c81] sticky top-0 z-50 shadow-md">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center">
