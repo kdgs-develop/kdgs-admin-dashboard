@@ -115,8 +115,9 @@ export default async function SearchPage() {
                 Begin Your Search
               </h2>
               <p className="text-gray-600">
-                Fill in any of the fields below to start discovering your family
-                history
+                Start with any of the recommended fields (surname, given names,
+                maiden name) to begin your search. If you get too many results,
+                use the optional fields to narrow down your search.
               </p>
             </div>
             <SearchForm
