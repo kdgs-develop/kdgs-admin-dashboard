@@ -158,8 +158,8 @@ export default async function SearchPage() {
                 </h4>
                 <p className="text-gray-600 text-sm">
                   If you get too many results, add the{" "}
-                  <strong>Death Year</strong>, or the full{" "}
-                  <strong>Death Date</strong> if known. This is often the most
+                  <strong>Death Year</strong>, or the {" "}
+                  <strong>Death Date</strong> (full or partial) if known. This is often the most
                   helpful field after names.
                 </p>
               </div>
