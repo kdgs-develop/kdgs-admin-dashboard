@@ -126,8 +126,51 @@ export async function searchObituaries(
           ]
         });
       }
+    } else if (searchCriteria.givenNames && searchCriteria.maidenName) {
+      // --- New Case: Given Names and Maiden Name provided (Use AND) ---
+      const givenNamesCondition = {
+        OR: [
+          {
+            givenNames: {
+              contains: searchCriteria.givenNames,
+              mode: "insensitive"
+            }
+          },
+          {
+            alsoKnownAs: {
+              some: {
+                otherNames: {
+                  contains: searchCriteria.givenNames,
+                  mode: "insensitive"
+                }
+              }
+            }
+          }
+        ]
+      };
+      const maidenNameCondition = {
+        OR: [
+          {
+            maidenName: {
+              contains: searchCriteria.maidenName,
+              mode: "insensitive"
+            }
+          },
+          {
+            alsoKnownAs: {
+              some: {
+                surname: {
+                  contains: searchCriteria.maidenName,
+                  mode: "insensitive"
+                }
+              }
+            }
+          }
+        ]
+      };
+      conditions.push({ AND: [givenNamesCondition, maidenNameCondition] });
     } else {
-      // --- Case 2: Only one (or none) of Surname/GivenNames provided (Use OR) ---
+      // --- Case 3: Other combinations (Use OR) ---
       const nameConditions: any[] = [];
       if (searchCriteria.surname) {
         nameConditions.push({
