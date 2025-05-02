@@ -348,15 +348,15 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
               <div className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="surname"
+                  name="givenNames"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-[#003B5C] font-medium">
-                        Surname (Recommended)
+                        Given Name(s) (Recommended)
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Enter surname"
+                          placeholder="Enter given names"
                           {...field}
                           className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                         />
@@ -367,15 +367,15 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                 />
                 <FormField
                   control={form.control}
-                  name="givenNames"
+                  name="surname"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-[#003B5C] font-medium">
-                        Given Names (Recommended)
+                        Surname (Recommended)
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Enter given names"
+                          placeholder="Enter surname"
                           {...field}
                           className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                         />
