@@ -344,6 +344,30 @@ export async function searchObituaries(
           conditions.push({ birthDate: { gte: startYear, lte: endYear } });
         }
       }
+      // Adding new case: Month only (no year) provided
+      else if (!isNaN(month) && month >= 1 && month <= 12) {
+        // Create an OR condition for this month across all years (up to 150 years)
+        const monthConditions: any[] = [];
+        const currentYear = new Date().getFullYear();
+        // Create a range spanning many years to cover all possible records
+        for (let year = currentYear - 150; year <= currentYear; year++) {
+          const startMonth = new Date(Date.UTC(year, month - 1, 1));
+          const lastDay = new Date(year, month, 0).getDate();
+          const endMonth = new Date(
+            Date.UTC(year, month - 1, lastDay, 23, 59, 59, 999)
+          );
+          monthConditions.push({
+            birthDate: { gte: startMonth, lte: endMonth }
+          });
+        }
+        conditions.push({ OR: monthConditions });
+      }
+      // Day only (no year or month) - throw an error
+      else if (!isNaN(day) && day >= 1 && day <= 31) {
+        throw new Error(
+          "Please specify at least a year when searching by day."
+        );
+      }
     } else if (birthDateType === "range") {
       // Range logic remains the same
       const yearFrom = parseInt(searchCriteria.birthYearFrom || "", 10);
@@ -438,6 +462,30 @@ export async function searchObituaries(
           const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
           conditions.push({ deathDate: { gte: startYear, lte: endYear } });
         }
+      }
+      // Adding new case: Month only (no year) provided
+      else if (!isNaN(month) && month >= 1 && month <= 12) {
+        // Create an OR condition for this month across all years (up to 150 years)
+        const monthConditions: any[] = [];
+        const currentYear = new Date().getFullYear();
+        // Create a range spanning many years to cover all possible records
+        for (let year = currentYear - 150; year <= currentYear; year++) {
+          const startMonth = new Date(Date.UTC(year, month - 1, 1));
+          const lastDay = new Date(year, month, 0).getDate();
+          const endMonth = new Date(
+            Date.UTC(year, month - 1, lastDay, 23, 59, 59, 999)
+          );
+          monthConditions.push({
+            deathDate: { gte: startMonth, lte: endMonth }
+          });
+        }
+        conditions.push({ OR: monthConditions });
+      }
+      // Day only (no year or month) - throw an error
+      else if (!isNaN(day) && day >= 1 && day <= 31) {
+        throw new Error(
+          "Please specify at least a year when searching by day."
+        );
       }
     } else if (deathDateType === "range") {
       // Range logic remains the same
@@ -679,6 +727,15 @@ export async function searchObituaries(
     console.error("Error in searchObituaries action:", error);
     if (error instanceof z.ZodError) {
       return { error: "Invalid search input." };
+    }
+    // Check for the specific day-only search error
+    if (
+      error instanceof Error &&
+      error.message.includes(
+        "Please specify at least a year when searching by day"
+      )
+    ) {
+      return { error: error.message };
     }
     return { error: "An unexpected error occurred during the search." };
   }
