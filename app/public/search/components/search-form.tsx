@@ -63,60 +63,87 @@ const relativeSchema = z.object({
   givenNames: z.string().optional()
 });
 
-const searchFormSchema = z.object({
-  surname: z
-    .string()
-    .optional()
-    .transform(val => val?.toUpperCase()),
-  givenNames: z.string().optional(),
-  maidenName: z
-    .string()
-    .optional()
-    .transform(val => val?.toUpperCase()),
-  relatives: z.array(relativeSchema).optional(),
-  birthDay: z
-    .string()
-    .optional()
-    .refine(val => !val || /^\d{1,2}$/.test(val), "Invalid day"),
-  birthMonth: z
-    .string()
-    .optional()
-    .refine(val => !val || /^\d{1,2}$/.test(val), "Invalid month"),
-  birthYear: z
-    .string()
-    .optional()
-    .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
-  birthYearFrom: z
-    .string()
-    .optional()
-    .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
-  birthYearTo: z
-    .string()
-    .optional()
-    .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
-  birthPlace: z.string().optional(),
-  deathDay: z
-    .string()
-    .optional()
-    .refine(val => !val || /^\d{1,2}$/.test(val), "Invalid day"),
-  deathMonth: z
-    .string()
-    .optional()
-    .refine(val => !val || /^\d{1,2}$/.test(val), "Invalid month"),
-  deathYear: z
-    .string()
-    .optional()
-    .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
-  deathYearFrom: z
-    .string()
-    .optional()
-    .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
-  deathYearTo: z
-    .string()
-    .optional()
-    .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
-  deathPlace: z.string().optional()
-});
+const searchFormSchema = z
+  .object({
+    surname: z
+      .string()
+      .optional()
+      .transform(val => val?.toUpperCase()),
+    givenNames: z.string().optional(),
+    maidenName: z
+      .string()
+      .optional()
+      .transform(val => val?.toUpperCase()),
+    relatives: z.array(relativeSchema).optional(),
+    birthDay: z
+      .string()
+      .optional()
+      .refine(val => !val || /^\d{1,2}$/.test(val), "Invalid day"),
+    birthMonth: z
+      .string()
+      .optional()
+      .refine(val => !val || /^\d{1,2}$/.test(val), "Invalid month"),
+    birthYear: z
+      .string()
+      .optional()
+      .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
+    birthYearFrom: z
+      .string()
+      .optional()
+      .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
+    birthYearTo: z
+      .string()
+      .optional()
+      .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
+    birthPlace: z.string().optional(),
+    deathDay: z
+      .string()
+      .optional()
+      .refine(val => !val || /^\d{1,2}$/.test(val), "Invalid day"),
+    deathMonth: z
+      .string()
+      .optional()
+      .refine(val => !val || /^\d{1,2}$/.test(val), "Invalid month"),
+    deathYear: z
+      .string()
+      .optional()
+      .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
+    deathYearFrom: z
+      .string()
+      .optional()
+      .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
+    deathYearTo: z
+      .string()
+      .optional()
+      .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
+    deathPlace: z.string().optional()
+  })
+  .refine(
+    data => {
+      // If birthDay is provided but either birthYear or birthMonth is not, return false
+      if (data.birthDay && (!data.birthYear || !data.birthMonth)) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Please provide both year and month when searching by day",
+      path: ["birthDay"] // This will show the error on the birthDay field
+    }
+  )
+  .refine(
+    data => {
+      // If deathDay is provided but either deathYear or deathMonth is not, return false
+      if (data.deathDay && (!data.deathYear || !data.deathMonth)) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Please provide both year and month when searching by day",
+      path: ["deathDay"] // This will show the error on the deathDay field
+    }
+  );
 
 type SearchFormValues = z.infer<typeof searchFormSchema>;
 
