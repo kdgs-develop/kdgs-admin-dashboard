@@ -3,6 +3,7 @@ import { sessionOptions, SessionData } from "@/lib/session"; // Your session con
 import { cookies } from "next/headers";
 import { logout } from "@/lib/actions/auth/logout";
 import Link from "next/link";
+import Image from "next/image";
 import { HeaderAuth } from "./components/header-auth"; // Import the new component
 
 // Layout becomes an async component to fetch session
@@ -24,18 +25,25 @@ export default async function PublicLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-[#003B5C]">
+      <header className="bg-[#0f4c81]">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link href="/" className="text-2xl font-bold text-white">
-              KDGS
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/kdgs.png"
+                alt="KDGS Logo"
+                width={120}
+                height={40}
+                className="h-10 w-auto"
+                priority
+              />
             </Link>
             <nav className="hidden md:flex space-x-4">
               <Link
                 href="/public/search"
                 className="text-white hover:text-gray-200"
               >
-                Search Records
+                Kelowna & District Genealogical Society
               </Link>
               {/* Add other relevant public nav links */}
               {/* <Link href="#" className="text-white hover:text-gray-200">
@@ -46,7 +54,18 @@ export default async function PublicLayout({
               </Link> */}
             </nav>
           </div>
-          <HeaderAuth session={plainSessionData} />
+
+          <div className="flex items-center space-x-4">
+            <HeaderAuth session={plainSessionData} />
+            <a
+              href="https://kdgs.ca/membership/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors hidden md:inline-block"
+            >
+              Become a Member
+            </a>
+          </div>
         </div>
       </header>
 
