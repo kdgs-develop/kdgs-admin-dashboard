@@ -52,6 +52,7 @@ interface SearchResultsProps {
   onPageSizeChange: (size: number) => void;
   onOpenRequestDialog: (obituaryRef: string, obituaryName: string) => void;
   isLoggedIn: boolean;
+  isPartialMatch?: boolean;
 }
 
 export function SearchResults({
@@ -65,7 +66,8 @@ export function SearchResults({
   onPageChange,
   onPageSizeChange,
   onOpenRequestDialog,
-  isLoggedIn
+  isLoggedIn,
+  isPartialMatch
 }: SearchResultsProps) {
   const totalPages = Math.ceil(totalCount / pageSize);
   const pageSizes = [10, 25, 50, 100];
@@ -113,6 +115,18 @@ export function SearchResults({
   // --- Results Found State ---
   return (
     <div className="mt-8 space-y-4">
+      {/* Partial Match Indicator (Restored) */}
+      {isPartialMatch && (
+        <Alert className="bg-yellow-50 border-yellow-200 text-yellow-800">
+          <AlertCircle className="h-4 w-4 text-yellow-600" />
+          <AlertTitle>Partial Matches Found</AlertTitle>
+          <AlertDescription>
+            No exact matches found for all criteria. Showing results based on
+            provided name fields only.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Results Table */}
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         <Table>
