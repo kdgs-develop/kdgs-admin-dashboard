@@ -53,13 +53,53 @@ export default async function SearchPage() {
             <h1 className="text-5xl font-bold text-white tracking-tight">
               Search Obituary Records
             </h1>
-            <p className="text-xl text-gray-100 leading-relaxed">
-              Our collection of Central Okanagan obituaries can help you
-              discover important details about your ancestors. Enter information
-              about your family member, and we&apos;ll search our database of
-              obituary records.
-            </p>
-            <div className="animate-bounce flex justify-center pt-8">
+            <div className="text-lg text-gray-100 leading-7 space-y-4 text-left max-w-2xl mx-auto">
+              <p>
+                Since 2010, we have been indexing obituaries of individuals who
+                passed away in the Central Okanagan. As of 2025, our collection
+                includes records for over 24,000 people, with some entries
+                dating back as early as 1913.
+              </p>
+              <p>
+                Now, for the first time, we are making this database available
+                for you to search for family members or friends from the region.
+              </p>
+              <p>
+                If you find an obituary you would like to download, simply
+                proceed to the shopping cart.
+              </p>
+              <ul className="list-disc list-inside space-y-2 pl-6">
+                <li>Members can download obituaries for free.</li>
+                <li>
+                  Non-members can purchase downloads for $10 plus a handling
+                  fee.
+                </li>
+              </ul>
+              <p>
+                If you're planning to download multiple obituaries, consider
+                becoming a member! Membership offers great benefits and savings.
+                Learn more about membership options and sign up at{" "}
+                <a
+                  href="https://kdgs.ca/membership/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-gray-300"
+                >
+                  https://kdgs.ca/membership/
+                </a>
+              </p>
+              <div className="flex justify-center p-8">
+                <a
+                  href="https://kdgs.ca/membership/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-md transition-colors"
+                >
+                  Become a Member
+                </a>
+              </div>
+            </div>
+            <div className="animate-bounce flex justify-center pt-4">
               <ArrowDown className="h-6 w-6 text-white" />
             </div>
           </div>
