@@ -70,10 +70,6 @@ const searchFormSchema = z
       .optional()
       .transform(val => val?.toUpperCase()),
     givenNames: z.string().optional(),
-    maidenName: z
-      .string()
-      .optional()
-      .transform(val => val?.toUpperCase()),
     relatives: z.array(relativeSchema).optional(),
     birthDay: z
       .string()
@@ -192,7 +188,6 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
     defaultValues: {
       surname: "",
       givenNames: "",
-      maidenName: "",
       relatives: [{ surname: "", givenNames: "" }],
       birthDay: "",
       birthMonth: "",
@@ -364,22 +359,41 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
           <Card className="border-gray-200 shadow-sm rounded-lg">
             <CardContent className="space-y-6 p-6 bg-blue-50 rounded-lg">
               <div className="space-y-2">
-                <h3 className="font-medium text-[#003B5C]">
-                  Person & Relatives
-                </h3>
+                <h3 className="font-medium text-[#003B5C]">Deceased Subject (Start Searching Here)</h3>
                 <p className="text-sm text-gray-500">
-                  Enter details about the person and their relatives
+                  Enter details about the deceased subject you are searching
+                  for. We suggest entering the surname first and then narrow
+                  down your results with the given names if needed.
                 </p>
               </div>
 
               <div className="space-y-4">
                 <FormField
                   control={form.control}
+                  name="surname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-[#003B5C] font-medium">
+                        Surname
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter surname (will also search maiden names)"
+                          {...field}
+                          className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-500" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="givenNames"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-[#003B5C] font-medium">
-                        Given Name(s) (Recommended)
+                        Given Name(s)
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -392,50 +406,26 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="surname"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-[#003B5C] font-medium">
-                        Surname (Recommended)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter surname"
-                          {...field}
-                          className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                        />
-                      </FormControl>
-                      <FormMessage className="text-red-500" />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="maidenName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-[#003B5C] font-medium">
-                        Maiden Name (Recommended if applicable)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter maiden name"
-                          {...field}
-                          className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                        />
-                      </FormControl>
-                      <FormMessage className="text-red-500" />
-                    </FormItem>
-                  )}
-                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Relatives Section */}
+          <Card className="border-gray-200 shadow-sm rounded-lg">
+            <CardContent className="space-y-6 p-6 bg-green-50 rounded-lg">
+              <div className="space-y-2">
+                <h3 className="font-medium text-[#003B5C]">
+                  Relatives (Optional)
+                </h3>
+                <p className="text-sm text-gray-500">
+                  If your initial search returns too many results, you can add
+                  information about relatives to help narrow down the search.
+                  This is particularly useful when searching for common
+                  surnames.
+                </p>
               </div>
 
-              <div className="space-y-4 pt-4 border-t border-gray-200">
-                <FormLabel className="text-[#003B5C] font-medium">
-                  Relatives (Optional)
-                </FormLabel>
+              <div className="space-y-4">
                 {fields.map((item, index) => (
                   <div key={item.id} className="flex items-start gap-4">
                     <div className="grid grid-cols-2 gap-4 flex-grow">
@@ -501,9 +491,14 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
           <Card className="border-gray-200 shadow-sm rounded-lg">
             <CardContent className="space-y-6 p-6 bg-gray-100 rounded-lg">
               <div className="space-y-2">
-                <h3 className="font-medium text-[#003B5C]">Life Events</h3>
+                <h3 className="font-medium text-[#003B5C]">
+                  Life Events (Optional)
+                </h3>
                 <p className="text-sm text-gray-500">
-                  Add death information if known
+                  Add death information if you need to narrow down your search
+                  results. The death date is often the most helpful field after
+                  names. Birth information can be added in the advanced options
+                  if needed.
                 </p>
               </div>
 
