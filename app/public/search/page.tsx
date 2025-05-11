@@ -44,63 +44,74 @@ export default async function SearchPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative bg-[#003B5C] bg-[url('/duck-lake.jpg')] bg-cover bg-top py-24 overflow-hidden">
+      <div className="relative bg-[#003B5C] bg-[url('/duck-lake.jpg')] bg-cover bg-center py-24 overflow-hidden">
         {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-[#003B5C] opacity-70"></div>
+        <div className="absolute inset-0 bg-[#003B5C] opacity-40"></div>
 
         <div className="relative container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center space-y-8">
-            <h1 className="text-5xl font-bold text-white tracking-tight">
-              Search Obituary Records
-            </h1>
-            <div className="text-lg text-gray-100 leading-7 space-y-4 text-left max-w-2xl mx-auto">
-              <p>
-                Since 2010, we have been indexing obituaries of individuals who
-                passed away in the Central Okanagan. As of 2025, our collection
-                includes records for over 24,000 people, with some entries
-                dating back as early as 1913.
-              </p>
-              <p>
-                Now, for the first time, we are making this database available
-                for you to search for family members or friends from the region.
-              </p>
-              <p>
-                If you find an obituary you would like to download, simply
-                proceed to the shopping cart.
-              </p>
-              <ul className="list-disc list-inside space-y-2 pl-6">
-                <li>Members can download obituaries for free.</li>
-                <li>
-                  Non-members can purchase downloads for $10 plus a handling
-                  fee.
-                </li>
-              </ul>
-              <p>
-                If you're planning to download multiple obituaries, consider
-                becoming a member! Membership offers great benefits and savings.
-                Learn more about membership options and sign up at{" "}
-                <a
-                  href="https://kdgs.ca/membership/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-gray-300"
-                >
-                  https://kdgs.ca/membership/
-                </a>
-              </p>
-              <div className="flex justify-center p-8">
-                <a
-                  href="https://kdgs.ca/membership/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-md transition-colors"
-                >
-                  Become a Member
-                </a>
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-[#003B5C]/50 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/10">
+              <div className="space-y-8">
+                <h1 className="text-4xl font-bold text-white tracking-tight drop-shadow-md">
+                  Search Obituary Records
+                </h1>
+                <div className="text-white/90 leading-7 space-y-4 drop-shadow-sm">
+                  <p>
+                    Since 2010, we have been indexing obituaries of individuals
+                    who passed away in the Central Okanagan. As of 2025, our
+                    collection includes records for over 24,000 people, with
+                    some entries dating back as early as 1913.
+                  </p>
+                  <p>
+                    Now, for the first time, we are making this database
+                    available for you to search for family members or friends
+                    from the region.
+                  </p>
+                  <p>
+                    If you find an obituary you would like to download, simply
+                    proceed to the shopping cart.
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-center gap-2">
+                      <span className="text-green-300">•</span>
+                      <span>Members can download obituaries for free.</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-green-300">•</span>
+                      <span>
+                        Non-members can purchase downloads for $10 plus a
+                        handling fee.
+                      </span>
+                    </li>
+                  </ul>
+                  <p>
+                    If you're planning to download multiple obituaries, consider
+                    becoming a member! Membership offers great benefits and
+                    savings. Learn more about membership options and sign up at{" "}
+                    <a
+                      href="https://kdgs.ca/membership/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white hover:text-green-300 underline"
+                    >
+                      https://kdgs.ca/membership/
+                    </a>
+                  </p>
+                  <div className="flex justify-center pt-4">
+                    <a
+                      href="https://kdgs.ca/membership/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-md transition-colors"
+                    >
+                      Become a Member
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="animate-bounce flex justify-center pt-4">
-              <ArrowDown className="h-6 w-6 text-white" />
+            <div className="flex justify-center pt-8">
+              <ArrowDown className="h-6 w-6 text-white animate-bounce" />
             </div>
           </div>
         </div>
