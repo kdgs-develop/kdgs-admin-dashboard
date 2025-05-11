@@ -356,10 +356,13 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 gap-8">
+          {/* Deceased Subject Section */}
           <Card className="border-gray-200 shadow-sm rounded-lg">
             <CardContent className="space-y-6 p-6 bg-blue-50 rounded-lg">
               <div className="space-y-2">
-                <h3 className="font-medium text-[#003B5C]">Deceased Subject (Start Searching Here)</h3>
+                <h3 className="font-medium text-[#003B5C]">
+                  Deceased Subject (Start Here)
+                </h3>
                 <p className="text-sm text-gray-500">
                   Enter details about the deceased subject you are searching
                   for. We suggest entering the surname first and then narrow
@@ -397,7 +400,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Enter given names"
+                          placeholder="Enter given names (Optional)"
                           {...field}
                           className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                         />
@@ -410,103 +413,105 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
             </CardContent>
           </Card>
 
-          {/* Relatives Section */}
-          <Card className="border-gray-200 shadow-sm rounded-lg">
-            <CardContent className="space-y-6 p-6 bg-green-50 rounded-lg">
-              <div className="space-y-2">
-                <h3 className="font-medium text-[#003B5C]">
-                  Relatives (Optional)
-                </h3>
-                <p className="text-sm text-gray-500">
-                  If your initial search returns too many results, you can add
-                  information about relatives to help narrow down the search.
-                  This is particularly useful when searching for common
-                  surnames.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                {fields.map((item, index) => (
-                  <div key={item.id} className="flex items-start gap-4">
-                    <div className="grid grid-cols-2 gap-4 flex-grow">
-                      <FormField
-                        control={form.control}
-                        name={`relatives.${index}.surname`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                placeholder="Surname (Optional)"
-                                {...field}
-                                className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                              />
-                            </FormControl>
-                            <FormMessage className="text-red-500" />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`relatives.${index}.givenNames`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                placeholder="Given Names (Optional)"
-                                {...field}
-                                className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                              />
-                            </FormControl>
-                            <FormMessage className="text-red-500" />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-500 hover:bg-red-100 mt-1"
-                      onClick={() => remove(index)}
-                      disabled={fields.length <= 1}
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 border-[#003B5C] text-[#003B5C] hover:bg-[#003B5C] hover:text-white"
-                  onClick={() => append({ surname: "", givenNames: "" })}
-                >
-                  <PlusIcon className="mr-2 h-4 w-4" />
-                  Add Relative
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-gray-200 shadow-sm rounded-lg">
-            <CardContent className="space-y-6 p-6 bg-gray-100 rounded-lg">
-              <div className="space-y-2">
-                <h3 className="font-medium text-[#003B5C]">
-                  Life Events (Optional)
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Add death information if you need to narrow down your search
-                  results. The death date is often the most helpful field after
-                  names. Birth information can be added in the advanced options
-                  if needed.
-                </p>
-              </div>
-
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <p className="font-medium text-[#003B5C] text-sm">
-                    Death Information
+          {/* Optional Sections Accordion */}
+          <Accordion type="multiple" className="space-y-4">
+            {/* Relatives Section */}
+            <AccordionItem
+              value="relatives"
+              className="border border-gray-200 rounded-lg overflow-hidden"
+            >
+              <AccordionTrigger className="px-6 py-4 bg-green-50 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <h3 className="font-medium text-[#003B5C]">
+                    Relatives (Optional)
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Add information about relatives to help narrow down your
+                    search
                   </p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 py-4 bg-green-50">
+                <div className="space-y-4">
+                  {fields.map((item, index) => (
+                    <div key={item.id} className="flex items-start gap-4">
+                      <div className="grid grid-cols-2 gap-4 flex-grow">
+                        <FormField
+                          control={form.control}
+                          name={`relatives.${index}.surname`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  placeholder="Surname (Optional)"
+                                  {...field}
+                                  className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
+                                />
+                              </FormControl>
+                              <FormMessage className="text-red-500" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`relatives.${index}.givenNames`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  placeholder="Given Names (Optional)"
+                                  {...field}
+                                  className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
+                                />
+                              </FormControl>
+                              <FormMessage className="text-red-500" />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-500 hover:bg-red-100 mt-1"
+                        onClick={() => remove(index)}
+                        disabled={fields.length <= 1}
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 border-[#003B5C] text-[#003B5C] hover:bg-[#003B5C] hover:text-white"
+                    onClick={() => append({ surname: "", givenNames: "" })}
+                  >
+                    <PlusIcon className="mr-2 h-4 w-4" />
+                    Add Relative
+                  </Button>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Death Information Section */}
+            <AccordionItem
+              value="death-info"
+              className="border border-gray-200 rounded-lg overflow-hidden"
+            >
+              <AccordionTrigger className="px-6 py-4 bg-gray-100 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <h3 className="font-medium text-[#003B5C]">
+                    Death Information (Optional)
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Add death information to narrow down your search results
+                  </p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 py-4 bg-gray-100">
+                <div className="space-y-4">
                   <Tabs
                     defaultValue="exact"
                     className="w-full"
@@ -628,188 +633,201 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                     </TabsContent>
                   </Tabs>
                 </div>
+              </AccordionContent>
+            </AccordionItem>
 
-                {/* Advanced Search Accordion */}
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="advanced-search" className="border-b-0">
-                    <AccordionTrigger className="text-sm font-medium text-[#003B5C] hover:no-underline py-2">
-                      Advanced Search Options (Birth & Places)
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-6 pb-2 space-y-6">
-                      {/* Birth Information - Moved inside Accordion */}
-                      <div className="space-y-4">
-                        <p className="font-medium text-[#003B5C] text-sm">
-                          Birth Information (Optional)
-                        </p>
-                        <Tabs
-                          defaultValue="exact"
-                          className="w-full"
-                          onValueChange={value =>
-                            setBirthDateType(value as "exact" | "range")
-                          }
-                        >
-                          <TabsList className="grid w-full grid-cols-2 mb-4">
-                            <TabsTrigger value="exact">Exact Date</TabsTrigger>
-                            <TabsTrigger value="range">Year Range</TabsTrigger>
-                          </TabsList>
-                          <TabsContent value="exact">
-                            <div className="grid grid-cols-3 gap-4">
-                              <FormField
-                                control={form.control}
-                                name="birthYear"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="text-[#003B5C] font-medium">
-                                      Year (Optional)
-                                    </FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder="YYYY"
-                                        {...field}
-                                        maxLength={4}
-                                        className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                                      />
-                                    </FormControl>
-                                    <FormMessage className="text-red-500" />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name="birthMonth"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="text-[#003B5C] font-medium">
-                                      Month (Optional)
-                                    </FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder="MM"
-                                        {...field}
-                                        maxLength={2}
-                                        className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                                      />
-                                    </FormControl>
-                                    <FormMessage className="text-red-500" />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name="birthDay"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="text-[#003B5C] font-medium">
-                                      Day (Optional)
-                                    </FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder="DD"
-                                        {...field}
-                                        maxLength={2}
-                                        className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                                      />
-                                    </FormControl>
-                                    <FormMessage className="text-red-500" />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                          </TabsContent>
-                          <TabsContent value="range">
-                            <div className="grid grid-cols-2 gap-4">
-                              <FormField
-                                control={form.control}
-                                name="birthYearFrom"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="text-[#003B5C] font-medium">
-                                      Year From (Optional)
-                                    </FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder="YYYY"
-                                        {...field}
-                                        maxLength={4}
-                                        className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                                      />
-                                    </FormControl>
-                                    <FormMessage className="text-red-500" />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name="birthYearTo"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel className="text-[#003B5C] font-medium">
-                                      Year To (Optional)
-                                    </FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        placeholder="YYYY"
-                                        {...field}
-                                        maxLength={4}
-                                        className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                                      />
-                                    </FormControl>
-                                    <FormMessage className="text-red-500" />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                          </TabsContent>
-                        </Tabs>
-                      </div>
+            {/* Birth Information & Places Section */}
+            <AccordionItem
+              value="advanced-search"
+              className="border border-gray-200 rounded-lg overflow-hidden"
+            >
+              <AccordionTrigger className="px-6 py-4 bg-blue-50 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <h3 className="font-medium text-[#003B5C]">
+                    Birth Information & Places (Optional)
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Add birth details and location information to refine your
+                    search
+                  </p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 py-4 bg-blue-50">
+                <div className="space-y-6">
+                  {/* Birth Information */}
+                  <div className="space-y-4">
+                    <p className="font-medium text-[#003B5C] text-sm">
+                      Birth Information
+                    </p>
+                    <Tabs
+                      defaultValue="exact"
+                      className="w-full"
+                      onValueChange={value =>
+                        setBirthDateType(value as "exact" | "range")
+                      }
+                    >
+                      <TabsList className="grid w-full grid-cols-2 mb-4">
+                        <TabsTrigger value="exact">Exact Date</TabsTrigger>
+                        <TabsTrigger value="range">Year Range</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="exact">
+                        <div className="grid grid-cols-3 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="birthYear"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-[#003B5C] font-medium">
+                                  Year (Optional)
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="YYYY"
+                                    {...field}
+                                    maxLength={4}
+                                    className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
+                                  />
+                                </FormControl>
+                                <FormMessage className="text-red-500" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="birthMonth"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-[#003B5C] font-medium">
+                                  Month (Optional)
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="MM"
+                                    {...field}
+                                    maxLength={2}
+                                    className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
+                                  />
+                                </FormControl>
+                                <FormMessage className="text-red-500" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="birthDay"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-[#003B5C] font-medium">
+                                  Day (Optional)
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="DD"
+                                    {...field}
+                                    maxLength={2}
+                                    className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
+                                  />
+                                </FormControl>
+                                <FormMessage className="text-red-500" />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="range">
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="birthYearFrom"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-[#003B5C] font-medium">
+                                  Year From (Optional)
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="YYYY"
+                                    {...field}
+                                    maxLength={4}
+                                    className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
+                                  />
+                                </FormControl>
+                                <FormMessage className="text-red-500" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="birthYearTo"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-[#003B5C] font-medium">
+                                  Year To (Optional)
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="YYYY"
+                                    {...field}
+                                    maxLength={4}
+                                    className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
+                                  />
+                                </FormControl>
+                                <FormMessage className="text-red-500" />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
 
-                      {/* Birth Place - Moved inside Accordion */}
-                      <FormField
-                        control={form.control}
-                        name="birthPlace"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[#003B5C] font-medium">
-                              Birth Place (Optional)
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="City, Province, State, or Country"
-                                {...field}
-                                className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                              />
-                            </FormControl>
-                            <FormMessage className="text-red-500" />
-                          </FormItem>
-                        )}
-                      />
+                  {/* Places */}
+                  <div className="space-y-4">
+                    <p className="font-medium text-[#003B5C] text-sm">Places</p>
+                    <FormField
+                      control={form.control}
+                      name="birthPlace"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[#003B5C] font-medium">
+                            Birth Place (Optional)
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="City, Province, State, or Country"
+                              {...field}
+                              className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
 
-                      {/* Death Place - Moved inside Accordion */}
-                      <FormField
-                        control={form.control}
-                        name="deathPlace"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[#003B5C] font-medium">
-                              Death Place (Optional)
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="City, Province, State, or Country"
-                                {...field}
-                                className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                              />
-                            </FormControl>
-                            <FormMessage className="text-red-500" />
-                          </FormItem>
-                        )}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </div>
-            </CardContent>
-          </Card>
+                    <FormField
+                      control={form.control}
+                      name="deathPlace"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[#003B5C] font-medium">
+                            Death Place (Optional)
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="City, Province, State, or Country"
+                              {...field}
+                              className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
 
         <div className="flex justify-center gap-4 pt-4">
