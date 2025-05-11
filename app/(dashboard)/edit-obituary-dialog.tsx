@@ -70,7 +70,7 @@ const formSchema = z.object({
     .string()
     .optional()
     .transform(val => val?.toUpperCase()),
-  birthDate: z.coerce.date().optional(),
+  birthDate: z.coerce.date().nullable().optional(),
   birthCityId: z.number().nullable().optional(),
   deathDate: z.date({
     required_error: "Death date is required",
@@ -80,7 +80,7 @@ const formSchema = z.object({
   burialCemetery: z.string().optional(),
   cemeteryId: z.number().nullable().optional(),
   periodicalId: z.number().nullable().optional(),
-  publishDate: z.coerce.date().optional(),
+  publishDate: z.coerce.date().nullable().optional(),
   page: z.string().max(8, "Page must be 8 characters or less").optional(),
   column: z.string().max(8, "Column must be 8 characters or less").optional(),
   notes: z.string().optional(),
@@ -88,9 +88,9 @@ const formSchema = z.object({
   proofreadDate: z.coerce.date().nullable(),
   proofreadBy: z.string().optional(),
   enteredBy: z.string().optional(),
-  enteredOn: z.coerce.date().optional(),
+  enteredOn: z.coerce.date().nullable().optional(),
   editedBy: z.string().optional(),
-  editedOn: z.coerce.date().optional(),
+  editedOn: z.coerce.date().nullable().optional(),
   fileBoxId: z.number().nullable().optional(),
   relatives: z
     .array(
@@ -420,16 +420,34 @@ export function EditObituaryDialog({
       obituaryData.editedOn = new Date();
 
       // Ensure other dates are properly handled for UTC storage
-      if (obituaryData.birthDate)
+      if (obituaryData.birthDate) {
         obituaryData.birthDate = new Date(obituaryData.birthDate);
-      if (obituaryData.deathDate)
+      } else {
+        obituaryData.birthDate = null;
+      }
+      if (obituaryData.deathDate) {
         obituaryData.deathDate = new Date(obituaryData.deathDate);
-      if (obituaryData.publishDate)
+      }
+      if (obituaryData.publishDate) {
         obituaryData.publishDate = new Date(obituaryData.publishDate);
-      if (obituaryData.proofreadDate)
+      } else {
+        obituaryData.publishDate = null;
+      }
+      if (obituaryData.proofreadDate) {
         obituaryData.proofreadDate = new Date(obituaryData.proofreadDate);
-      if (obituaryData.enteredOn)
+      } else {
+        obituaryData.proofreadDate = null;
+      }
+      if (obituaryData.enteredOn) {
         obituaryData.enteredOn = new Date(obituaryData.enteredOn);
+      } else {
+        obituaryData.enteredOn = null;
+      }
+      if (obituaryData.editedOn) {
+        obituaryData.editedOn = new Date(obituaryData.editedOn);
+      } else {
+        obituaryData.editedOn = null;
+      }
 
       // Format relatives' names
       const formattedRelatives = relatives?.map(relative => ({
