@@ -45,17 +45,17 @@ export default async function SearchPage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <div className="relative bg-[#003B5C] bg-[url('/duck-lake.jpg')] bg-cover bg-center py-24 overflow-hidden">
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-[#003B5C] opacity-40"></div>
+        {/* White Overlay */}
+        <div className="absolute inset-0 bg-white/40"></div>
 
         <div className="relative container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-[#E5E9D8]/25 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/10">
+            <div className="bg-white/70 rounded-2xl shadow-2xl p-8 border border-white/10">
               <div className="space-y-8">
-                <h1 className="text-4xl font-bold text-white tracking-tight drop-shadow-md">
+                <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
                   Search Obituary Records
                 </h1>
-                <div className="text-white/90 leading-7 space-y-4 drop-shadow-sm">
+                <div className="text-gray-800 leading-7 space-y-4">
                   <p>
                     Since 2010, we have been indexing obituaries of individuals
                     who passed away in the Central Okanagan. As of 2025, our
@@ -73,11 +73,11 @@ export default async function SearchPage() {
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-center gap-2">
-                      <span className="text-green-300">•</span>
+                      <span className="text-green-600">•</span>
                       <span>Members can download obituaries for free.</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="text-green-300">•</span>
+                      <span className="text-green-600">•</span>
                       <span>
                         Non-members can purchase downloads for $10 plus a
                         handling fee.
@@ -92,7 +92,7 @@ export default async function SearchPage() {
                       href="https://kdgs.ca/membership/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-white hover:text-green-300 underline"
+                      className="text-[#003B5C] hover:text-green-600 underline"
                     >
                       https://kdgs.ca/membership/
                     </a>
@@ -111,7 +111,7 @@ export default async function SearchPage() {
               </div>
             </div>
             <div className="flex justify-center pt-8">
-              <ArrowDown className="h-6 w-6 text-white animate-bounce" />
+              <ArrowDown className="h-6 w-6 text-[#003B5C] animate-bounce" />
             </div>
           </div>
         </div>
