@@ -115,9 +115,10 @@ export default async function SearchPage() {
                 Begin Your Search
               </h2>
               <p className="text-gray-600">
-                Start with any of the recommended fields (surname, given names,
-                maiden name) to begin your search. If you get too many results,
-                use the optional fields to narrow down your search.
+                Start by entering the surname of the deceased person you are
+                looking for. The search will automatically include maiden names.
+                If you get too many results, you can add given names, relatives,
+                or life events to narrow down your search.
               </p>
             </div>
             <SearchForm
@@ -138,16 +139,16 @@ export default async function SearchPage() {
 
             {/* Search Tips Grid */}
             <div className="grid md:grid-cols-2 gap-6">
-              {/* Tip 1: Start with Names */}
+              {/* Tip 1: Start with Surname */}
               <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
                 <h4 className="font-medium text-[#003B5C] mb-2">
-                  1. Start with Names (Recommended)
+                  1. Start with Surname (Recommended)
                 </h4>
                 <p className="text-gray-600 text-sm">
-                  Begin by entering the person's <strong>Surname</strong> and{" "}
-                  <strong>Given Names</strong>. Add the{" "}
-                  <strong>Maiden Name</strong> if you know it. Try different
-                  spellings or nicknames if the first attempt doesn't work.
+                  Begin by entering the person's <strong>Surname</strong>. Our
+                  search automatically includes maiden names. If you get too
+                  many results, add the <strong>Given Names</strong> to narrow
+                  down the search.
                 </p>
               </div>
 
@@ -157,35 +158,36 @@ export default async function SearchPage() {
                   2. Narrow with Death Date/Year
                 </h4>
                 <p className="text-gray-600 text-sm">
-                  If you get too many results, add the{" "}
-                  <strong>Death Year</strong>, or the {" "}
-                  <strong>Death Date</strong> (full or partial) if known. This is often the most
-                  helpful field after names.
+                  If you still have too many results, add the{" "}
+                  <strong>Death Year</strong> or the <strong>Death Date</strong>{" "}
+                  (full or partial) if known. This is often the most helpful
+                  field after names.
                 </p>
               </div>
 
-              {/* Tip 3: Use Advanced Options */}
+              {/* Tip 3: Use Relatives */}
               <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
                 <h4 className="font-medium text-[#003B5C] mb-2">
-                  3. Use Advanced Options Sparingly
+                  3. Add Relatives if Needed
+                </h4>
+                <p className="text-gray-600 text-sm">
+                  For common surnames, adding information about{" "}
+                  <strong>Relatives</strong> can help identify the correct
+                  person. This is particularly useful when searching for someone
+                  with a common name.
+                </p>
+              </div>
+
+              {/* Tip 4: Advanced Options */}
+              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                <h4 className="font-medium text-[#003B5C] mb-2">
+                  4. Use Advanced Options Sparingly
                 </h4>
                 <p className="text-gray-600 text-sm">
                   If needed, use the "Advanced Search Options" to add{" "}
                   <strong>Birth Date/Year</strong> or <strong>Places</strong>.
                   Be aware that older records may not have complete place
                   information.
-                </p>
-              </div>
-
-              {/* Tip 4: Broaden if Needed */}
-              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
-                <h4 className="font-medium text-[#003B5C] mb-2">
-                  4. Broaden if No Results
-                </h4>
-                <p className="text-gray-600 text-sm">
-                  If your search with dates/places finds nothing, try removing
-                  them and searching only by name again. Our partial match
-                  feature might find relevant records based just on the name.
                 </p>
               </div>
             </div>
