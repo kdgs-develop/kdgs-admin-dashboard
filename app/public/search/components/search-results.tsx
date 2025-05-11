@@ -121,8 +121,7 @@ export function SearchResults({
           <AlertCircle className="h-4 w-4 text-yellow-600" />
           <AlertTitle>Partial Matches Found</AlertTitle>
           <AlertDescription>
-            No exact matches found for all criteria. Showing results based on
-            provided name fields only.
+          No exact matches found for all criteria. Showing results based on deceased subject fields only.
           </AlertDescription>
         </Alert>
       )}
