@@ -109,6 +109,85 @@ export default async function SearchPage() {
       {/* Search Section */}
       <main className="container mx-auto px-4 -mt-16 relative z-10 mb-20">
         <div className="max-w-4xl mx-auto">
+          {/* Tips Section */}
+          <div className="mb-8 text-left space-y-6 bg-green-50 p-8 rounded-xl border border-green-200">
+            <h3 className="text-xl font-semibold text-green-800 mb-4">
+              Tips for Effective Searching
+            </h3>
+            <p className="text-gray-700 leading-relaxed">
+              Finding family records can be rewarding! Here's a suggested
+              approach to help you get the best results:
+            </p>
+
+            {/* Search Tips Grid */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Tip 1: Start with Surname */}
+              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#003B5C] text-white text-sm font-medium">
+                    1
+                  </div>
+                  <h4 className="font-medium text-[#003B5C]">
+                    Start with the Surname
+                  </h4>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  Enter the surname of the deceased person you are looking for.
+                  The search will automatically include maiden names in the
+                  results.
+                </p>
+              </div>
+
+              {/* Tip 2: Add Given Names */}
+              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#003B5C] text-white text-sm font-medium">
+                    2
+                  </div>
+                  <h4 className="font-medium text-[#003B5C]">
+                    Add Given Names
+                  </h4>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  If you get too many results, add the deceased person's given
+                  names to narrow down the search results.
+                </p>
+              </div>
+
+              {/* Tip 3: Include Relatives */}
+              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#003B5C] text-white text-sm font-medium">
+                    3
+                  </div>
+                  <h4 className="font-medium text-[#003B5C]">
+                    Include Relatives
+                  </h4>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  Add relatives' surnames and given names to further refine your
+                  search, especially useful for common surnames.
+                </p>
+              </div>
+
+              {/* Tip 4: Use Dates and Places */}
+              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#003B5C] text-white text-sm font-medium">
+                    4
+                  </div>
+                  <h4 className="font-medium text-[#003B5C]">
+                    Use Dates and Places
+                  </h4>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  If needed, add death information or birth details and places.
+                  You can use full or partial dates to narrow down your search.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
             <div className="mb-8">
               <h2 className="text-2xl font-semibold text-[#003B5C] mb-2">
@@ -125,72 +204,6 @@ export default async function SearchPage() {
               relationships={relationships}
               session={plainSessionData}
             />
-          </div>
-
-          {/* Tips Section */}
-          <div className="mt-16 text-left space-y-6 bg-green-50 p-8 rounded-xl border border-green-200">
-            <h3 className="text-xl font-semibold text-green-800 mb-4">
-              Tips for Effective Searching
-            </h3>
-            <p className="text-gray-700 leading-relaxed">
-              Finding family records can be rewarding! Here's a suggested
-              approach to help you get the best results:
-            </p>
-
-            {/* Search Tips Grid */}
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Tip 1: Start with Surname */}
-              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
-                <h4 className="font-medium text-[#003B5C] mb-2">
-                  1. Start with Surname (Recommended)
-                </h4>
-                <p className="text-gray-600 text-sm">
-                  Begin by entering the person's <strong>Surname</strong>. Our
-                  search automatically includes maiden names. If you get too
-                  many results, add the <strong>Given Names</strong> to narrow
-                  down the search.
-                </p>
-              </div>
-
-              {/* Tip 2: Narrow with Death Date */}
-              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
-                <h4 className="font-medium text-[#003B5C] mb-2">
-                  2. Narrow with Death Date/Year
-                </h4>
-                <p className="text-gray-600 text-sm">
-                  If you still have too many results, add the{" "}
-                  <strong>Death Year</strong> or the <strong>Death Date</strong>{" "}
-                  (full or partial) if known. This is often the most helpful
-                  field after names.
-                </p>
-              </div>
-
-              {/* Tip 3: Use Relatives */}
-              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
-                <h4 className="font-medium text-[#003B5C] mb-2">
-                  3. Add Relatives if Needed
-                </h4>
-                <p className="text-gray-600 text-sm">
-                  For common surnames, adding information about{" "}
-                  <strong>Relatives</strong> can help identify the correct
-                  person. This is particularly useful when searching for someone
-                  with a common name.
-                </p>
-              </div>
-
-              {/* Tip 4: Advanced Options */}
-              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
-                <h4 className="font-medium text-[#003B5C] mb-2">
-                  4. Use Advanced Options Sparingly
-                </h4>
-                <p className="text-gray-600 text-sm">
-                  If needed, use the "Advanced Search Options" to add{" "}
-                  <strong>Birth Date/Year</strong> or <strong>Places</strong>.
-                  Be aware that older records may not have complete place
-                  information.
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </main>
