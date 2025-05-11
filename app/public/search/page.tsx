@@ -199,7 +199,7 @@ export default async function SearchPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+          <div className="bg-gray-50 rounded-2xl shadow-2xl p-8 border border-gray-200">
             <div className="mb-8">
               <h2 className="text-2xl font-semibold text-[#003B5C] mb-2">
                 Begin Your Search
