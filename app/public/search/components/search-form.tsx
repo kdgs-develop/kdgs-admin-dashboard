@@ -441,6 +441,9 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           name={`relatives.${index}.surname`}
                           render={({ field }) => (
                             <FormItem>
+                              <FormLabel className="text-[#003B5C] font-medium">
+                                Surname
+                              </FormLabel>
                               <FormControl>
                                 <Input
                                   placeholder="Surname (Optional)"
@@ -457,6 +460,9 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           name={`relatives.${index}.givenNames`}
                           render={({ field }) => (
                             <FormItem>
+                              <FormLabel className="text-[#003B5C] font-medium">
+                                Given Name(s)
+                              </FormLabel>
                               <FormControl>
                                 <Input
                                   placeholder="Given Names (Optional)"
@@ -531,11 +537,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Year (Optional)
+                                Year
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="YYYY"
+                                  placeholder="YYYY (Optional)"
                                   {...field}
                                   maxLength={4}
                                   className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
@@ -551,11 +557,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Month (Optional)
+                                Month
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="MM"
+                                  placeholder="MM (Optional)"
                                   {...field}
                                   maxLength={2}
                                   className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
@@ -571,11 +577,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Day (Optional)
+                                Day
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="DD"
+                                  placeholder="DD (Optional)"
                                   {...field}
                                   maxLength={2}
                                   className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
@@ -595,11 +601,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Year From (Optional)
+                                Year From
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="YYYY"
+                                  placeholder="YYYY (Optional)"
                                   {...field}
                                   maxLength={4}
                                   className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
@@ -615,11 +621,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[#003B5C] font-medium">
-                                Year To (Optional)
+                                Year To
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="YYYY"
+                                  placeholder="YYYY (Optional)"
                                   {...field}
                                   maxLength={4}
                                   className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
@@ -678,11 +684,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-[#003B5C] font-medium">
-                                  Year (Optional)
+                                  Year
                                 </FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="YYYY"
+                                    placeholder="YYYY (Optional)"
                                     {...field}
                                     maxLength={4}
                                     className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
@@ -698,11 +704,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-[#003B5C] font-medium">
-                                  Month (Optional)
+                                  Month
                                 </FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="MM"
+                                    placeholder="MM (Optional)"
                                     {...field}
                                     maxLength={2}
                                     className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
@@ -718,11 +724,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-[#003B5C] font-medium">
-                                  Day (Optional)
+                                  Day
                                 </FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="DD"
+                                    placeholder="DD (Optional)"
                                     {...field}
                                     maxLength={2}
                                     className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
@@ -742,11 +748,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-[#003B5C] font-medium">
-                                  Year From (Optional)
+                                  Year From
                                 </FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="YYYY"
+                                    placeholder="YYYY (Optional)"
                                     {...field}
                                     maxLength={4}
                                     className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
@@ -762,11 +768,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-[#003B5C] font-medium">
-                                  Year To (Optional)
+                                  Year To
                                 </FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="YYYY"
+                                    placeholder="YYYY (Optional)"
                                     {...field}
                                     maxLength={4}
                                     className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
@@ -790,11 +796,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-[#003B5C] font-medium">
-                            Birth Place (Optional)
+                            Birth Place
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="City, Province, State, or Country"
+                              placeholder="City, Province, State, or Country (Optional)"
                               {...field}
                               className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                             />
@@ -810,11 +816,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-[#003B5C] font-medium">
-                            Death Place (Optional)
+                            Death Place
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="City, Province, State, or Country"
+                              placeholder="City, Province, State, or Country (Optional)"
                               {...field}
                               className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
                             />
