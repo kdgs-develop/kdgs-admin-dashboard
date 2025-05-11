@@ -70,6 +70,12 @@ export async function searchObituaries(
             surname: { contains: searchCriteria.surname, mode: "insensitive" }
           },
           {
+            maidenName: {
+              contains: searchCriteria.surname,
+              mode: "insensitive"
+            }
+          },
+          {
             alsoKnownAs: {
               some: {
                 surname: {
@@ -102,79 +108,15 @@ export async function searchObituaries(
         ]
       };
       conditions.push({ AND: [surnameCondition, givenNamesCondition] });
-
-      // If maiden name is also provided, add it as a separate AND condition
-      if (searchCriteria.maidenName) {
-        conditions.push({
-          OR: [
-            {
-              maidenName: {
-                contains: searchCriteria.maidenName,
-                mode: "insensitive"
-              }
-            },
-            {
-              alsoKnownAs: {
-                some: {
-                  surname: {
-                    contains: searchCriteria.maidenName,
-                    mode: "insensitive"
-                  }
-                }
-              }
-            }
-          ]
-        });
-      }
-    } else if (searchCriteria.givenNames && searchCriteria.maidenName) {
-      // --- New Case: Given Names and Maiden Name provided (Use AND) ---
-      const givenNamesCondition = {
-        OR: [
-          {
-            givenNames: {
-              contains: searchCriteria.givenNames,
-              mode: "insensitive"
-            }
-          },
-          {
-            alsoKnownAs: {
-              some: {
-                otherNames: {
-                  contains: searchCriteria.givenNames,
-                  mode: "insensitive"
-                }
-              }
-            }
-          }
-        ]
-      };
-      const maidenNameCondition = {
-        OR: [
-          {
-            maidenName: {
-              contains: searchCriteria.maidenName,
-              mode: "insensitive"
-            }
-          },
-          {
-            alsoKnownAs: {
-              some: {
-                surname: {
-                  contains: searchCriteria.maidenName,
-                  mode: "insensitive"
-                }
-              }
-            }
-          }
-        ]
-      };
-      conditions.push({ AND: [givenNamesCondition, maidenNameCondition] });
     } else {
-      // --- Case 3: Other combinations (Use OR) ---
+      // --- Case 2: Other combinations (Use OR) ---
       const nameConditions: any[] = [];
       if (searchCriteria.surname) {
         nameConditions.push({
           surname: { contains: searchCriteria.surname, mode: "insensitive" }
+        });
+        nameConditions.push({
+          maidenName: { contains: searchCriteria.surname, mode: "insensitive" }
         });
         nameConditions.push({
           alsoKnownAs: {
@@ -196,24 +138,6 @@ export async function searchObituaries(
             some: {
               otherNames: {
                 contains: searchCriteria.givenNames,
-                mode: "insensitive"
-              }
-            }
-          }
-        });
-      }
-      if (searchCriteria.maidenName) {
-        nameConditions.push({
-          maidenName: {
-            contains: searchCriteria.maidenName,
-            mode: "insensitive"
-          }
-        });
-        nameConditions.push({
-          alsoKnownAs: {
-            some: {
-              surname: {
-                contains: searchCriteria.maidenName,
                 mode: "insensitive"
               }
             }
