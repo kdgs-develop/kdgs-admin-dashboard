@@ -50,7 +50,7 @@ export default async function SearchPage() {
 
         <div className="relative container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-[#005B8C]/50 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/10">
+            <div className="bg-[#E5E9D8]/25 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/10">
               <div className="space-y-8">
                 <h1 className="text-4xl font-bold text-white tracking-tight drop-shadow-md">
                   Search Obituary Records
