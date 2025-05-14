@@ -106,7 +106,8 @@ export function SearchResults({
         <AlertTitle>No Results Found</AlertTitle>
         <AlertDescription>
           Your search did not match any obituary records. Try broadening your
-          search criteria.
+          search criteria or check for variant spellings in the surname (e.g.,
+          THOMPSON vs. THOMSON).
         </AlertDescription>
       </Alert>
     );
@@ -121,7 +122,8 @@ export function SearchResults({
           <AlertCircle className="h-4 w-4 text-yellow-600" />
           <AlertTitle>Partial Matches Found</AlertTitle>
           <AlertDescription>
-          No exact matches found for all criteria. Showing results based on deceased subject fields only.
+            No exact matches found for all criteria. Showing results based on
+            deceased subject fields only.
           </AlertDescription>
         </Alert>
       )}
