@@ -126,8 +126,8 @@ export default async function SearchPage() {
               Tips for Effective Searching
             </h3>
             <p className="text-gray-700 leading-relaxed">
-              Finding family records can be rewarding! Here's a suggested
-              approach to help you get the best results:
+              Finding family members through local obituaries can be rewarding!
+              Here's a suggested approach to help you get the best results:
             </p>
 
             {/* Search Tips Grid */}
@@ -143,9 +143,10 @@ export default async function SearchPage() {
                   </h4>
                 </div>
                 <p className="text-gray-600 text-sm">
-                  Enter the surname of the deceased person you are looking for.
-                  The search will automatically include maiden names in the
-                  results.
+                  Enter the surname of the deceased person. The search will
+                  include maiden names, where given, in the results. If you don't
+                  find what you're looking for, try variant spellings (e.g.,
+                  THOMPSON vs. THOMSON).
                 </p>
               </div>
 
@@ -181,19 +182,17 @@ export default async function SearchPage() {
                 </p>
               </div>
 
-              {/* Tip 4: Use Dates and Places */}
+              {/* Tip 4: Use Dates */}
               <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#003B5C] text-white text-sm font-medium">
                     4
                   </div>
-                  <h4 className="font-medium text-[#003B5C]">
-                    Use Dates and Places
-                  </h4>
+                  <h4 className="font-medium text-[#003B5C]">Use Dates</h4>
                 </div>
                 <p className="text-gray-600 text-sm">
-                  If needed, add death information or birth details and places.
-                  You can use full or partial dates to narrow down your search.
+                  If needed, add death or birth information. You can use full or
+                  partial dates to narrow down your search.
                 </p>
               </div>
             </div>
