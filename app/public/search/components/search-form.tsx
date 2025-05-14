@@ -91,7 +91,6 @@ const searchFormSchema = z
       .string()
       .optional()
       .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
-    birthPlace: z.string().optional(),
     deathDay: z
       .string()
       .optional()
@@ -111,8 +110,7 @@ const searchFormSchema = z
     deathYearTo: z
       .string()
       .optional()
-      .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
-    deathPlace: z.string().optional()
+      .refine(val => !val || /^\d{4}$/.test(val), "Invalid year")
   })
   .refine(
     data => {
@@ -194,13 +192,11 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
       birthYear: "",
       birthYearFrom: "",
       birthYearTo: "",
-      birthPlace: "",
       deathDay: "",
       deathMonth: "",
       deathYear: "",
       deathYearFrom: "",
-      deathYearTo: "",
-      deathPlace: ""
+      deathYearTo: ""
     }
   });
 
@@ -426,8 +422,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                     Relatives (Optional)
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Add information about relatives to help narrow down your
-                    search
+                    Add relatives details to refine your search
                   </p>
                 </div>
               </AccordionTrigger>
@@ -512,7 +507,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                     Death Information (Optional)
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Add death information to narrow down your search results
+                    Add death details to refine your search
                   </p>
                 </div>
               </AccordionTrigger>
@@ -650,11 +645,10 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
               <AccordionTrigger className="px-6 py-4 bg-blue-50 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
                   <h3 className="font-medium text-[#003B5C]">
-                    Birth Information & Places (Optional)
+                    Birth Information (Optional)
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Add birth details and location information to refine your
-                    search
+                    Add birth details to refine your search
                   </p>
                 </div>
               </AccordionTrigger>
@@ -786,50 +780,7 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                       </TabsContent>
                     </Tabs>
                   </div>
-
-                  {/* Places */}
-                  <div className="space-y-4">
-                    <p className="font-medium text-[#003B5C] text-sm">Places</p>
-                    <FormField
-                      control={form.control}
-                      name="birthPlace"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[#003B5C] font-medium">
-                            Birth Place
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="City, Province, State, or Country (Optional)"
-                              {...field}
-                              className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                            />
-                          </FormControl>
-                          <FormMessage className="text-red-500" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="deathPlace"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[#003B5C] font-medium">
-                            Death Place
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="City, Province, State, or Country (Optional)"
-                              {...field}
-                              className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                            />
-                          </FormControl>
-                          <FormMessage className="text-red-500" />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  
                 </div>
               </AccordionContent>
             </AccordionItem>
