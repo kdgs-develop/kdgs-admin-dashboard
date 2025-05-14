@@ -144,9 +144,9 @@ export default async function SearchPage() {
                 </div>
                 <p className="text-gray-600 text-sm">
                   Enter the surname of the deceased person. The search will
-                  include maiden names, where given, in the results. If you don't
-                  find what you're looking for, try variant spellings (e.g.,
-                  THOMPSON vs. THOMSON).
+                  include maiden names, where given, in the results. If you
+                  don't find what you're looking for, try variant spellings
+                  (e.g., THOMPSON vs. THOMSON).
                 </p>
               </div>
 
