@@ -162,6 +162,16 @@ export function LoginDialog({ isOpen, onOpenChange }: LoginDialogProps) {
                 </FormItem>
               )}
             />
+            <div className="text-sm">
+              <a
+                href="https://kdgs.ca/wp-login.php?action=lostpassword"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-blue-600 hover:text-blue-500"
+              >
+                Forgot your password?
+              </a>
+            </div>
             <DialogFooter>
               <Button type="submit" disabled={isLoading} className="w-full">
                 {isLoading ? (
