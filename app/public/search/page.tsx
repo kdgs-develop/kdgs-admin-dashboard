@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import { SearchForm } from "./components/search-form";
 import { ArrowDown } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import { FamilyRelationship } from "@prisma/client";
+// import { prisma } from "@/lib/prisma"; // No longer needed if getFamilyRelationships is removed
+// import { FamilyRelationship } from "@prisma/client"; // No longer needed
 import { getIronSession } from "iron-session";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { cookies } from "next/headers";
@@ -13,24 +13,25 @@ export const metadata: Metadata = {
     "Search through our collection of Central Okanagan obituary records to discover your family history"
 };
 
-async function getFamilyRelationships(): Promise<FamilyRelationship[]> {
-  try {
-    const relationships = await prisma.familyRelationship.findMany({
-      orderBy: { name: "asc" }
-    });
-    return relationships;
-  } catch (error) {
-    console.error("Failed to fetch family relationships:", error);
-    return []; // Return empty array on error
-  }
-}
+// async function getFamilyRelationships(): Promise<FamilyRelationship[]> { // Function no longer needed
+//   try {
+//     const relationships = await prisma.familyRelationship.findMany({
+//       orderBy: { name: "asc" }
+//     });
+//     return relationships;
+//   } catch (error) {
+//     console.error("Failed to fetch family relationships:", error);
+//     return []; // Return empty array on error
+//   }
+// }
 
 export default async function SearchPage() {
-  // Fetch both relationships and session data
-  const [relationships, session] = await Promise.all([
-    getFamilyRelationships(),
-    getIronSession<SessionData>(cookies(), sessionOptions)
-  ]);
+  // Fetch session data
+  // const [relationships, session] = await Promise.all([ // relationships no longer fetched
+  //   getFamilyRelationships(),
+  //   getIronSession<SessionData>(cookies(), sessionOptions)
+  // ]);
+  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
 
   // Create a plain object for the session data to pass to the client component
   const plainSessionData: SessionData | null = session.isLoggedIn
@@ -211,7 +212,7 @@ export default async function SearchPage() {
               </p>
             </div>
             <SearchForm
-              relationships={relationships}
+              // relationships={relationships} // Prop removed
               session={plainSessionData}
             />
           </div>
