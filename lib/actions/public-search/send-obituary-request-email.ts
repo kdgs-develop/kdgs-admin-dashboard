@@ -24,14 +24,16 @@ const requestFormSchema = z.object({
   requesterFullName: z.string().min(1, "Please enter your full name"),
   requesterCountry: z.string().min(1, "Please select your country"),
   requesterProvince: z.string().optional(),
+  requesterCity: z.string().optional(),
+  requesterPhoneNumber: z.string().optional(),
 
-  // Person details
-  surname: z.string().min(1, "Surname is required"),
+  // Person details - now optional as this is an image request for a known ref
+  surname: z.string().optional(),
   givenNames: z.string().optional(),
   maidenName: z.string().optional(),
   alsoKnownAs: z.string().optional(),
 
-  // Relatives (optional arrays)
+  // Relatives (optional arrays) - kept optional
   relatives: z
     .array(
       z.object({
@@ -41,7 +43,7 @@ const requestFormSchema = z.object({
     )
     .optional(),
 
-  // Birth info
+  // Birth info - now optional
   birthExactDate: z.string().optional(),
   birthYearRange: z
     .object({
@@ -51,7 +53,7 @@ const requestFormSchema = z.object({
     .optional(),
   birthPlace: z.string().optional(),
 
-  // Death info
+  // Death info - now optional
   deathExactDate: z.string().optional(),
   deathYearRange: z
     .object({
@@ -65,7 +67,8 @@ const requestFormSchema = z.object({
   notes: z.string().optional(),
 
   // Reference from the system
-  obituaryRef: z.string()
+  obituaryRef: z.string(), // This remains required
+  obituaryName: z.string().optional() // New field for deceased's name
 });
 
 export type ObituaryRequestFormData = z.infer<typeof requestFormSchema>;
@@ -77,75 +80,37 @@ export async function sendObituaryRequestEmail(
     // Validate form data
     const validatedData = requestFormSchema.parse(formData);
 
-    // Format relatives for email
-    const relativesText =
-      validatedData.relatives
-        ?.filter(r => r.name || r.relationship)
-        .map(
-          (rel, idx) =>
-            `Relative ${idx + 1}: ${rel.name || "N/A"} (${rel.relationship || "N/A"})`
-        )
-        .join("\n") || "None provided";
-
-    // Format birth date/range
-    let birthDateInfo = "Not provided";
-    if (validatedData.birthExactDate) {
-      birthDateInfo = validatedData.birthExactDate;
-    } else if (
-      validatedData.birthYearRange?.from ||
-      validatedData.birthYearRange?.to
-    ) {
-      birthDateInfo = `Between ${validatedData.birthYearRange?.from || "?"} and ${validatedData.birthYearRange?.to || "?"}`;
-    }
-
-    // Format death date/range
-    let deathDateInfo = "Not provided";
-    if (validatedData.deathExactDate) {
-      deathDateInfo = validatedData.deathExactDate;
-    } else if (
-      validatedData.deathYearRange?.from ||
-      validatedData.deathYearRange?.to
-    ) {
-      deathDateInfo = `Between ${validatedData.deathYearRange?.from || "?"} and ${validatedData.deathYearRange?.to || "?"}`;
-    }
-
-    // Construct email content
+    // Construct email content - Simplified for Image Request
+    // We assume obituaryName is not directly part of formData but available via obituaryRef if needed by internal lookup
     const emailContent = `
-    <h2>Obituary Record Request (Reference: ${validatedData.obituaryRef})</h2>
+    <h2>Obituary Image Request (File Number: ${validatedData.obituaryRef})</h2>
     
-    <h3>Requester Information:</h3>
-    <p>Name: ${validatedData.requesterFullName}</p>
+    <h3>Requester's Contact Information:</h3>
+    <p>Full Name: ${validatedData.requesterFullName}</p>
     <p>Email: ${validatedData.requesterEmail}</p>
+    <p>Phone Number: ${validatedData.requesterPhoneNumber || "Not provided"}</p>
     <p>Country: ${validatedData.requesterCountry}</p>
     <p>Province/State: ${validatedData.requesterProvince || "Not provided"}</p>
+    <p>City: ${validatedData.requesterCity || "Not provided"}</p>
     
-    <h3>Person to Search:</h3>
-    <p>Surname: ${validatedData.surname}</p>
-    <p>Given Names: ${validatedData.givenNames || "Not provided"}</p>
-    <p>Maiden Name: ${validatedData.maidenName || "Not provided"}</p>
-    <p>Also Known As: ${validatedData.alsoKnownAs || "Not provided"}</p>
-    
-    <h3>Relatives:</h3>
-    <pre>${relativesText}</pre>
-    
-    <h3>Birth Information:</h3>
-    <p>Date: ${birthDateInfo}</p>
-    <p>Place: ${validatedData.birthPlace || "Not provided"}</p>
-    
-    <h3>Death Information:</h3>
-    <p>Date: ${deathDateInfo}</p>
-    <p>Place: ${validatedData.deathPlace || "Not provided"}</p>
-    
-    <h3>Additional Notes:</h3>
-    <p>${validatedData.notes || "None provided"}</p>
+    <h3>Deceased Information (from original record):</h3>
+    <p>File Number: ${validatedData.obituaryRef}</p>
+    ${validatedData.obituaryName ? `<p>Name: ${validatedData.obituaryName}</p>` : ""}
+    <p><em>(Note: Deceased details are based on the File Number provided. This request is for the associated image.)</em></p>
+
+    ${validatedData.notes ? `<h3>Additional Notes from Requester:</h3><p>${validatedData.notes}</p>` : "<p>No additional notes provided.</p>"}
     `;
+
+    // The detailed sections for person to search, relatives, birth/death info are less relevant for an image request
+    // If these details are still sent (as optional placeholders from client), they are available in validatedData
+    // but the email is now focused on the image request for the given obituaryRef.
 
     // Send email using Resend
     const result = await resend.emails.send({
       from: `${OBITUARY_FROM_NAME} <${OBITUARY_FROM_EMAIL}>`,
       to: [OBITUARY_REQUESTS_EMAIL],
       cc: [validatedData.requesterEmail], // Send a copy to the requester
-      subject: `Obituary Record Request (Ref: ${validatedData.obituaryRef})`,
+      subject: `Obituary Image Request (File No: ${validatedData.obituaryRef})`,
       html: emailContent,
       replyTo: validatedData.requesterEmail
     });
