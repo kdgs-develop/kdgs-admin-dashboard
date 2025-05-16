@@ -23,17 +23,8 @@ import {
   AccordionItem,
   AccordionTrigger
 } from "@/components/ui/accordion";
-import { FamilyRelationship } from "@prisma/client";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import {
   searchObituaries,
-  SearchResult,
   SearchResponse
 } from "@/lib/actions/public-search/search-obituaries";
 import { SearchResults } from "./search-results";
@@ -147,11 +138,10 @@ interface CurrentSearchCriteria extends SearchFormValues {
 }
 
 interface SearchFormProps {
-  relationships: FamilyRelationship[];
   session?: SessionData | null;
 }
 
-export function SearchForm({ relationships, session }: SearchFormProps) {
+export function SearchForm({ session }: SearchFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [searchData, setSearchData] = useState<SearchResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -780,7 +770,6 @@ export function SearchForm({ relationships, session }: SearchFormProps) {
                       </TabsContent>
                     </Tabs>
                   </div>
-                  
                 </div>
               </AccordionContent>
             </AccordionItem>
