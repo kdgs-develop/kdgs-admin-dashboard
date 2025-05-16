@@ -8,11 +8,11 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Get email addresses from environment variables
 // These should be configured in your .env file:
-// OBITUARY_REQUESTS_EMAIL - The email address that receives obituary requests
+// OBITUARY_IMAGE_REQUESTS_EMAIL - The email address that receives obituary image requests
 // OBITUARY_FROM_EMAIL - The sender email address used by Resend
 // OBITUARY_FROM_NAME - The sender name displayed in email clients
-const OBITUARY_REQUESTS_EMAIL =
-  process.env.OBITUARY_REQUESTS_EMAIL || "obits@kdgs.ca";
+const OBITUARY_IMAGE_REQUESTS_EMAIL_TO =
+  process.env.OBITUARY_IMAGE_REQUESTS_EMAIL || "images.obits@kdgs.ca";
 const OBITUARY_FROM_EMAIL =
   process.env.OBITUARY_FROM_EMAIL || "no-reply@obits.kdgs.ca";
 const OBITUARY_FROM_NAME =
@@ -108,8 +108,8 @@ export async function sendObituaryRequestEmail(
     // Send email using Resend
     const result = await resend.emails.send({
       from: `${OBITUARY_FROM_NAME} <${OBITUARY_FROM_EMAIL}>`,
-      to: [OBITUARY_REQUESTS_EMAIL],
-      cc: [validatedData.requesterEmail], // Send a copy to the requester
+      to: [validatedData.requesterEmail], // User receives the email directly
+      bcc: [OBITUARY_IMAGE_REQUESTS_EMAIL_TO], // Obituary images admin email is BCC'd
       subject: `Obituary Image Request (File No: ${validatedData.obituaryRef})`,
       html: emailContent,
       replyTo: validatedData.requesterEmail
