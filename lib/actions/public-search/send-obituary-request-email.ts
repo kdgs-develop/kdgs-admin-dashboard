@@ -9,14 +9,14 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // Get email addresses from environment variables
 // These should be configured in your .env file:
 // OBITUARY_IMAGE_REQUESTS_EMAIL - The email address that receives obituary image requests
-// OBITUARY_FROM_EMAIL - The sender email address used by Resend
-// OBITUARY_FROM_NAME - The sender name displayed in email clients
+// OBITUARY_IMAGE_REQUESTS_FROM_EMAIL - The sender email address used by Resend
+// OBITUARY_IMAGE_REQUESTS_FROM_NAME - The sender name displayed in email clients
 const OBITUARY_IMAGE_REQUESTS_EMAIL_TO =
   process.env.OBITUARY_IMAGE_REQUESTS_EMAIL || "images.obits@kdgs.ca";
-const OBITUARY_FROM_EMAIL =
-  process.env.OBITUARY_FROM_EMAIL || "no-reply@obits.kdgs.ca";
-const OBITUARY_FROM_NAME =
-  process.env.OBITUARY_FROM_NAME || "KDGS Obituary Requests";
+const OBITUARY_IMAGE_REQUESTS_FROM_EMAIL =
+  process.env.RESEND_FROM_EMAIL || "no-reply@obits.kdgs.ca";
+const OBITUARY_IMAGE_REQUESTS_FROM_NAME =
+  process.env.OBITUARY_IMAGE_REQUESTS_FROM_NAME || "KDGS Obituary Image Requests";
 
 // Define validation schema for form data
 const requestFormSchema = z.object({
@@ -107,7 +107,7 @@ export async function sendObituaryRequestEmail(
 
     // Send email using Resend
     const result = await resend.emails.send({
-      from: `${OBITUARY_FROM_NAME} <${OBITUARY_FROM_EMAIL}>`,
+      from: `${OBITUARY_IMAGE_REQUESTS_FROM_NAME} <${OBITUARY_IMAGE_REQUESTS_FROM_EMAIL}>`,
       to: [validatedData.requesterEmail], // User receives the email directly
       bcc: [OBITUARY_IMAGE_REQUESTS_EMAIL_TO], // Obituary images admin email is BCC'd
       subject: `Obituary Image Request (File No: ${validatedData.obituaryRef})`,
