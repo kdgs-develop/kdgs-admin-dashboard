@@ -6,6 +6,15 @@ import { ArrowDown } from "lucide-react";
 import { getIronSession } from "iron-session";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { cookies } from "next/headers";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from "@/components/ui/accordion";
+import { FeedbackForm } from "./components/contact-forms/feedback-form";
+import { NewObituaryForm } from "./components/contact-forms/new-obituary-form";
+import { VolunteerInterestForm } from "./components/contact-forms/volunteer-interest-form";
 
 export const metadata: Metadata = {
   title: "Search Obituary Records - KDGS",
@@ -218,6 +227,61 @@ export default async function SearchPage() {
           </div>
         </div>
       </main>
+
+      {/* Contact Us Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-[#003B5C] tracking-tight">
+                Contact Us
+              </h2>
+              <p className="mt-4 text-lg text-gray-600">
+                Have questions, feedback, or want to contribute? Choose the
+                appropriate form below.
+              </p>
+            </div>
+
+            <Accordion type="single" collapsible className="w-full space-y-4">
+              <AccordionItem
+                value="feedback"
+                className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm"
+              >
+                <AccordionTrigger className="text-xl font-semibold text-[#003B5C] hover:no-underline">
+                  Feedback or Report an Issue
+                </AccordionTrigger>
+                <AccordionContent className="pt-4">
+                  <FeedbackForm />
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem
+                value="new-obituary"
+                className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm"
+              >
+                <AccordionTrigger className="text-xl font-semibold text-[#003B5C] hover:no-underline">
+                  Submit New Obituary Information
+                </AccordionTrigger>
+                <AccordionContent className="pt-4">
+                  <NewObituaryForm />
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem
+                value="volunteer"
+                className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm"
+              >
+                <AccordionTrigger className="text-xl font-semibold text-[#003B5C] hover:no-underline">
+                  Volunteer Interest
+                </AccordionTrigger>
+                <AccordionContent className="pt-4">
+                  <VolunteerInterestForm />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
