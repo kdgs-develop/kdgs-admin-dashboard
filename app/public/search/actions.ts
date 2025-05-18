@@ -136,8 +136,7 @@ const NewObituarySubmissionFormSchema = z.object({
   deathDate: z.string().optional(), // Combined field for date and place
   knownRelatives: z.string().optional(),
   notes: z.string().optional(),
-  obituaryFile: z
-    .instanceof(File)
+  obituaryFile: (typeof File !== "undefined" ? z.instanceof(File) : z.any())
     .optional() // For file uploads
     .refine(
       file => !file || file.size <= 5 * 1024 * 1024,
