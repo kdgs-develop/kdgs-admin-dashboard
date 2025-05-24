@@ -45,9 +45,7 @@ export function FeedbackForm() {
           Feedback Form
         </h3>
         <p className="text-sm text-gray-600">
-          Report errors, omissions, or concerns about information you've
-          received. We aim to correct any issues and resend updated information
-          at no extra cost.
+        Report errors, omissions, or concerns about information you've received. We aim to correct any issues and resend updated information at no extra cost.
         </p>
       </div>
 
@@ -110,7 +108,7 @@ export function FeedbackForm() {
           name="issueDescription"
           rows={5}
           required
-          placeholder="Please provide details of the error, omission, or your complaint."
+          placeholder="Please provide details of the error, omission or concern."
         />
         {state.errors?.issueDescription && (
           <p className="text-sm text-red-500 mt-1">
