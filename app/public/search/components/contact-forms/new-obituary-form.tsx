@@ -53,14 +53,17 @@ export function NewObituaryForm() {
 
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
-      <div>
-        <h3 className="text-xl font-semibold text-gray-800 mb-1">
-          New Obituary Submission
-        </h3>
+      <div className="space-y-2">
         <p className="text-sm text-gray-600">
           Request indexing of an unlisted obituary or submit one for a person
           who lived/died in Central Okanagan. Please provide your contact
           details first.
+        </p>
+        <p className="text-sm text-gray-600">
+        If the request is for someone not in our index and for whom you do not have a copy of the obituary, there will be an extra research charge for non-members. If you have a copy to submit with the source information, you will receive a copy of our indexing and the uploaded image free.
+        </p>
+        <p className="text-sm text-gray-600">
+        Please provide your contact details first.
         </p>
       </div>
 
@@ -211,8 +214,25 @@ export function NewObituaryForm() {
         )}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="obituaryFile">Upload Obituary File (Optional)</Label>
+      <div>
+        <Label htmlFor="citation">
+          If you have a copy of an obituary to submit, include publication name and date of publication.
+        </Label>
+        <Input
+          id="citation"
+          name="citation"
+          type="text"
+          placeholder="e.g., Kelowna Daily Courier, Jan 15, 2024"
+        />
+        {state.errors?.citation && (
+          <p className="text-sm text-red-500 mt-1">
+            {state.errors.citation[0]}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <Label htmlFor="obituaryFile">Attach Obituary</Label>
         <Input
           id="obituaryFile"
           name="obituaryFile"
@@ -233,23 +253,6 @@ export function NewObituaryForm() {
         <p className="text-xs text-gray-500">
           Max file size: 5MB. Accepted formats: PDF, JPG, PNG, WEBP.
         </p>
-      </div>
-
-      <div>
-        <Label htmlFor="citation">
-          Citation (if uploading file: publication name and date)
-        </Label>
-        <Input
-          id="citation"
-          name="citation"
-          type="text"
-          placeholder="e.g., Kelowna Daily Courier, Jan 15, 2024"
-        />
-        {state.errors?.citation && (
-          <p className="text-sm text-red-500 mt-1">
-            {state.errors.citation[0]}
-          </p>
-        )}
       </div>
 
       <div className="pt-2">
