@@ -15,6 +15,9 @@ import {
 import { FeedbackForm } from "./components/contact-forms/feedback-form";
 import { NewObituaryForm } from "./components/contact-forms/new-obituary-form";
 import { VolunteerInterestForm } from "./components/contact-forms/volunteer-interest-form";
+import { FeedbackDialogTrigger } from "./components/feedback-dialog-trigger";
+import { NewObituaryDialogTrigger } from "./components/new-obituary-dialog-trigger";
+import { VolunteerInterestDialogTrigger } from "./components/volunteer-interest-dialog-trigger";
 
 export const metadata: Metadata = {
   title: "Search Central Okanagan Obituary Records - KDGS",
@@ -247,22 +250,22 @@ export default async function SearchPage() {
                     <span className="text-green-600 self-start">•</span>
                     <span>
                       Do you have a question, wish to report an issue or give us
-                      feedback? <span className="font-medium">Feedback</span>
+                      feedback? <FeedbackDialogTrigger />
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-green-600 self-start">•</span>
                     <span>
-                      Do you have or wish to request an obituary not yet found in
-                      our collection for someone who lived or died in Kelowna?{" "}
-                      <span className="font-medium">Submit</span>
+                      Do you have or wish to request an obituary not yet found
+                      in our collection for someone who lived or died in
+                      Kelowna? <NewObituaryDialogTrigger />
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-green-600 self-start">•</span>
                     <span>
                       Are you willing to volunteer to serve on our committee?{" "}
-                      <span className="font-medium">Volunteer</span>
+                      <VolunteerInterestDialogTrigger />
                     </span>
                   </li>
                 </ul>
@@ -270,41 +273,7 @@ export default async function SearchPage() {
             </div>
 
             <Accordion type="single" collapsible className="w-full space-y-4">
-              <AccordionItem
-                value="feedback"
-                className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm"
-              >
-                <AccordionTrigger className="text-xl font-semibold text-[#003B5C] hover:no-underline">
-                  Feedback or Report an Issue
-                </AccordionTrigger>
-                <AccordionContent className="pt-4">
-                  <FeedbackForm />
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem
-                value="new-obituary"
-                className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm"
-              >
-                <AccordionTrigger className="text-xl font-semibold text-[#003B5C] hover:no-underline">
-                  Submit New Obituary Information
-                </AccordionTrigger>
-                <AccordionContent className="pt-4">
-                  <NewObituaryForm />
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem
-                value="volunteer"
-                className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm"
-              >
-                <AccordionTrigger className="text-xl font-semibold text-[#003B5C] hover:no-underline">
-                  Volunteer Interest
-                </AccordionTrigger>
-                <AccordionContent className="pt-4">
-                  <VolunteerInterestForm />
-                </AccordionContent>
-              </AccordionItem>
+              {/* AccordionItem for volunteer removed */}
             </Accordion>
           </div>
         </div>
