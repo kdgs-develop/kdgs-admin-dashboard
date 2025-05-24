@@ -96,8 +96,7 @@ export default async function SearchPage() {
                   </ul>
                   <p>
                     If you're planning to download multiple obituaries, consider
-                    becoming a member! Membership offers great benefits and
-                    savings. Learn more about membership options and sign up at{" "}
+                    becoming a member! Membership offers many great benefits. Learn more about membership options and sign up at{" "}
                     <a
                       href="https://kdgs.ca/membership/"
                       target="_blank"
