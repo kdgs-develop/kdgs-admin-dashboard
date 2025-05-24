@@ -152,10 +152,7 @@ export default async function SearchPage() {
                   </h4>
                 </div>
                 <p className="text-gray-600 text-sm">
-                  Enter the surname of the deceased person. The search will
-                  include maiden names, where given, in the results. If you
-                  don't find what you're looking for, try variant spellings
-                  (e.g., THOMPSON vs. THOMSON).
+                Enter the surname of the deceased person. The search will include other surnames, such as maiden names or other married names where given, in the results. If you don't find what you're looking for, try initial three or four letters of a surname as THOM will bring you THOM OR THOMAS, THOMPSON OR THOMSON. For other surnames, try possible alternative spellings such as READ vs REID.
                 </p>
               </div>
 
@@ -170,8 +167,7 @@ export default async function SearchPage() {
                   </h4>
                 </div>
                 <p className="text-gray-600 text-sm">
-                  If you get too many results, add the deceased person's given
-                  names to narrow down the search results.
+                If you find too many results, add the deceased person's given name or names to narrow down the search results. You can also search by nickname(s) if used in the obituary.
                 </p>
               </div>
 
@@ -186,8 +182,7 @@ export default async function SearchPage() {
                   </h4>
                 </div>
                 <p className="text-gray-600 text-sm">
-                  Add relatives' surnames and given names to further refine your
-                  search, especially useful for common surnames.
+                Search for relatives' surnames and given names to find the obituary of the person you are seeking or use it to further refine your search, especially useful for common surnames.
                 </p>
               </div>
 
@@ -197,11 +192,10 @@ export default async function SearchPage() {
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#003B5C] text-white text-sm font-medium">
                     4
                   </div>
-                  <h4 className="font-medium text-[#003B5C]">Use Dates</h4>
+                  <h4 className="font-medium text-[#003B5C]">Use Date or Range</h4>
                 </div>
                 <p className="text-gray-600 text-sm">
-                  If needed, add death or birth information. You can use full or
-                  partial dates to narrow down your search.
+                If needed, add exact death date or date range to narrow your search.
                 </p>
               </div>
             </div>
@@ -210,14 +204,8 @@ export default async function SearchPage() {
           <div className="bg-gray-50 rounded-2xl shadow-2xl p-8 border border-gray-200">
             <div className="mb-8">
               <h2 className="text-2xl font-semibold text-[#003B5C] mb-2">
-                Begin Your Search
+                Search Database
               </h2>
-              <p className="text-gray-600">
-                Start by entering the surname of the deceased person you are
-                looking for. The search will automatically include maiden names.
-                If you get too many results, you can add given names, relatives,
-                or life events to narrow down your search.
-              </p>
             </div>
             <SearchForm
               // relationships={relationships} // Prop removed
