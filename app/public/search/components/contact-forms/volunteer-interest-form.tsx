@@ -20,7 +20,10 @@ const initialState: VolunteerInterestFormState = {
 };
 
 const areasOfInterestOptions = [
-  { id: "collecting", label: "Collecting obituaries from online or print sources" },
+  {
+    id: "collecting",
+    label: "Collecting obituaries from online or print sources"
+  },
   { id: "indexing", label: "Indexing" },
   { id: "scanning", label: "Scanning" },
   { id: "filing", label: "General sorting/preparing/filing obituaries" }
@@ -57,11 +60,14 @@ export function VolunteerInterestForm() {
     <form ref={formRef} action={formAction} className="space-y-6">
       <div>
         <p className="text-sm text-gray-600">
-        Help us collect, index and process obituaries to preserve them for family historians or other researchers. Let us know your area of interest! We have a variety of tasks and provide training, so limited computer experience is not a barrier.
+          Help us collect, index and process obituaries to preserve them for
+          family historians or other researchers. Let us know your area of
+          interest! We have a variety of tasks and provide training, so limited
+          computer experience is not a barrier.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="name">Full Name</Label>
           <Input id="name" name="name" type="text" required />
@@ -69,6 +75,9 @@ export function VolunteerInterestForm() {
             <p className="text-sm text-red-500 mt-1">{state.errors.name[0]}</p>
           )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="email">Email Address</Label>
           <Input id="email" name="email" type="email" required />
@@ -78,7 +87,7 @@ export function VolunteerInterestForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="phone">Phone Number (Optional)</Label>
           <Input id="phone" name="phone" type="tel" />
@@ -86,6 +95,9 @@ export function VolunteerInterestForm() {
             <p className="text-sm text-red-500 mt-1">{state.errors.phone[0]}</p>
           )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
         <div className="space-y-2">
           <Label>KDGS Member Status</Label>
           <RadioGroup
@@ -114,7 +126,7 @@ export function VolunteerInterestForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4">
         <div className="space-y-2">
           <Label>Primary Computer Type</Label>
           <RadioGroup
@@ -147,6 +159,9 @@ export function VolunteerInterestForm() {
             </p>
           )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="computerExperience">
             Level of Computer Experience
@@ -206,14 +221,18 @@ export function VolunteerInterestForm() {
       </div>
 
       <p className="text-xs text-gray-500">
-      Note: Proofreading and database admin roles are typically assigned to experienced volunteers. We evaluate your work in indexing to determine if and when you are ready to take on the advanced roles should you be interested in them, We will have an informal interview after receiving your completed form.
+        Note: Proofreading and database admin roles are typically assigned to
+        experienced volunteers. We evaluate your work in indexing to determine
+        if and when you are ready to take on the advanced roles should you be
+        interested in them, We will have an informal interview after receiving
+        your completed form.
       </p>
 
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2">
+      <div className="flex flex-col items-stretch gap-4 pt-2">
         <SubmitButton />
         {state.message && (
           <p
-            className={`text-sm ${state.success ? "text-green-600" : "text-red-600"} mt-2 sm:mt-0 text-center sm:text-right`}
+            className={`text-sm ${state.success ? "text-green-600" : "text-red-600"} text-center`}
           >
             {state.message}
           </p>
