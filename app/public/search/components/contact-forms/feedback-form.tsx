@@ -40,14 +40,9 @@ export function FeedbackForm() {
 
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
-      <div>
-        <h3 className="text-xl font-semibold text-gray-800 mb-1">
-          Feedback Form
-        </h3>
         <p className="text-sm text-gray-600">
         Report errors, omissions, or concerns about information you've received. We aim to correct any issues and resend updated information at no extra cost.
         </p>
-      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
         <div>
