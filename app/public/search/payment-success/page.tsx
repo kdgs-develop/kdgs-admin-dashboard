@@ -126,7 +126,7 @@ async function PaymentDetails({
                       PDF Report Included
                     </AlertTitle>
                     <AlertDescription className="text-blue-700">
-                      A PDF report containing the obituary details is included
+                      A PDF report containing the obituary indexing details is included
                       with your image download.
                     </AlertDescription>
                   </Alert>
