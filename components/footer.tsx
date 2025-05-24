@@ -13,7 +13,7 @@ export function Footer() {
         >
           kdgs.ca
         </a>{" "}
-        | Developed by Javier Gongora — Vyoniq Technologies
+        | Powered by Vyoniq Technologies
       </span>
     </footer>
   );
