@@ -24,11 +24,11 @@ export function FeedbackDialogTrigger() {
           Feedback
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] flex flex-col max-h-[85vh]">
+      <DialogContent className="sm:max-w-[425px] flex flex-col max-h-[85vh] p-6">
         <DialogHeader>
           <DialogTitle>Feedback</DialogTitle>
         </DialogHeader>
-        <div className="overflow-y-auto flex-grow pt-4">
+        <div className="overflow-y-auto flex-grow px-2 pt-2">
           <FeedbackForm />
         </div>
       </DialogContent>
