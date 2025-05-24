@@ -521,7 +521,9 @@ export function RequestObituaryDialog({
         return (
           <div>
             <p className="text-sm text-muted-foreground mb-2">
-            Please provide your contact information below. Our team will use this to inform you when the image is ready for downloading or if we are unable to provide one for the following obituary:
+              Please provide your contact information below. Our team will use
+              this to inform you when the image is ready for downloading or if
+              we are unable to provide one for the following obituary:
             </p>
             <div className="mb-4 p-3 bg-slate-50 rounded-md border border-slate-200">
               <p className="text-sm font-medium text-slate-700">
@@ -537,155 +539,129 @@ export function RequestObituaryDialog({
                 onSubmit={form.handleSubmit(handleSendRequest)}
                 className="space-y-4"
               >
-                <ScrollArea className="h-[450px] px-1">
-                  {" "}
-                  {/* Adjusted height */}
-                  <div className="space-y-6 px-1">
-                    <div className="space-y-4">
-                      <h4 className="font-medium">Your Contact Information</h4>
+                <div className="space-y-6 px-1">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Your Contact Information</h4>
 
+                    <FormField
+                      control={form.control}
+                      name="requesterEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="your@email.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="requesterFullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Full Name *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your full name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="requesterEmail"
+                        name="requesterCountry"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="your@email.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="requesterFullName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Your full name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="requesterCountry"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Country *</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select country" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {POPULAR_COUNTRIES.map(country => (
-                                    <SelectItem
-                                      key={country.value}
-                                      value={country.value}
-                                    >
-                                      {country.label}
-                                    </SelectItem>
-                                  ))}
-
-                                  <SelectItem value="divider" disabled>
-                                    ────────────────
+                            <FormLabel>Country *</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select country" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="max-h-60">
+                                {POPULAR_COUNTRIES.map(country => (
+                                  <SelectItem
+                                    key={country.value}
+                                    value={country.value}
+                                  >
+                                    {country.label}
                                   </SelectItem>
+                                ))}
 
-                                  {ALL_COUNTRIES.filter(
-                                    country =>
-                                      !POPULAR_COUNTRIES.some(
-                                        popular =>
-                                          popular.value === country.value
-                                      )
-                                  ).map(country => (
-                                    <SelectItem
-                                      key={country.value}
-                                      value={country.value}
-                                    >
-                                      {country.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                                <SelectItem value="divider" disabled>
+                                  ────────────────
+                                </SelectItem>
 
-                        <FormField
-                          control={form.control}
-                          name="requesterProvince"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Province/State</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Province or State"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="requesterCity"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>City</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Your city" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="requesterPhoneNumber"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Phone Number</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Optional: (555) 123-4567"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
+                                {ALL_COUNTRIES.filter(
+                                  country =>
+                                    !POPULAR_COUNTRIES.some(
+                                      popular => popular.value === country.value
+                                    )
+                                ).map(country => (
+                                  <SelectItem
+                                    key={country.value}
+                                    value={country.value}
+                                  >
+                                    {country.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    <div className="space-y-4 pt-2">
-                      <h4 className="font-medium">Additional Notes</h4>
                       <FormField
                         control={form.control}
-                        name="notes"
+                        name="requesterProvince"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Notes</FormLabel>
+                            <FormLabel>Province/State</FormLabel>
                             <FormControl>
-                              <Textarea
-                                placeholder="Any additional information that might help with the search"
+                              <Input
+                                placeholder="Province or State"
                                 {...field}
-                                rows={3}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="requesterCity"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your city" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="requesterPhoneNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Optional: (555) 123-4567"
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
@@ -694,7 +670,28 @@ export function RequestObituaryDialog({
                       />
                     </div>
                   </div>
-                </ScrollArea>
+
+                  <div className="space-y-4 pt-2">
+                    <h4 className="font-medium">Additional Notes</h4>
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Notes</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Any additional information that might help with the search"
+                              {...field}
+                              rows={3}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
 
                 <DialogFooter className="pt-4">
                   <Button
@@ -817,7 +814,9 @@ export function RequestObituaryDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className="py-4 min-h-[150px]">{renderContent()}</div>
+        <ScrollArea className="max-h-[80vh]">
+          <div className="py-4 pr-6">{renderContent()}</div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
