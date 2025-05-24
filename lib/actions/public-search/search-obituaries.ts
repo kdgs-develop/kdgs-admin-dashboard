@@ -15,19 +15,13 @@ const searchInputSchema = z.object({
   givenNames: z.string().optional(),
   maidenName: z.string().optional(),
   relatives: z.array(relativeSchema).optional(),
-  birthDay: z.string().optional(),
-  birthMonth: z.string().optional(),
-  birthYear: z.string().optional(),
-  birthYearFrom: z.string().optional(),
-  birthYearTo: z.string().optional(),
-  birthPlace: z.string().optional(),
+  // birthPlace: z.string().optional(), // Removed as per user request
   deathDay: z.string().optional(),
   deathMonth: z.string().optional(),
   deathYear: z.string().optional(),
   deathYearFrom: z.string().optional(),
   deathYearTo: z.string().optional(),
   deathPlace: z.string().optional(),
-  birthDateType: z.enum(["exact", "range"]).optional(),
   deathDateType: z.enum(["exact", "range"]).optional(),
   page: z.number().int().positive().default(1),
   pageSize: z.number().int().positive().default(10)
@@ -190,125 +184,6 @@ export async function searchObituaries(
       }
     }
 
-    // Birth Date
-    const birthDateType = searchCriteria.birthDateType ?? "exact";
-    if (birthDateType === "exact") {
-      const year = parseInt(searchCriteria.birthYear || "", 10);
-      const month = parseInt(searchCriteria.birthMonth || "", 10);
-      const day = parseInt(searchCriteria.birthDay || "", 10);
-
-      if (!isNaN(year)) {
-        if (!isNaN(month) && !isNaN(day)) {
-          // Full date provided (year + month + day)
-          if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-            const targetDate = new Date(Date.UTC(year, month - 1, day));
-            if (!isNaN(targetDate.getTime())) {
-              conditions.push({ birthDate: { equals: targetDate } });
-            } else {
-              console.warn(
-                `Invalid exact birth date components: ${year}-${month}-${day}`
-              );
-              // Fallback to year-month search
-              if (month >= 1 && month <= 12) {
-                const startMonth = new Date(Date.UTC(year, month - 1, 1));
-                const lastDay = new Date(year, month, 0).getDate(); // Get last day of month
-                const endMonth = new Date(
-                  Date.UTC(year, month - 1, lastDay, 23, 59, 59, 999)
-                );
-                conditions.push({
-                  birthDate: { gte: startMonth, lte: endMonth }
-                });
-              } else {
-                // Fallback to year search
-                const startYear = new Date(Date.UTC(year, 0, 1));
-                const endYear = new Date(
-                  Date.UTC(year, 11, 31, 23, 59, 59, 999)
-                );
-                conditions.push({
-                  birthDate: { gte: startYear, lte: endYear }
-                });
-              }
-            }
-          } else {
-            // Invalid month/day values, fallback to year-month or year search
-            if (month >= 1 && month <= 12) {
-              const startMonth = new Date(Date.UTC(year, month - 1, 1));
-              const lastDay = new Date(year, month, 0).getDate();
-              const endMonth = new Date(
-                Date.UTC(year, month - 1, lastDay, 23, 59, 59, 999)
-              );
-              conditions.push({
-                birthDate: { gte: startMonth, lte: endMonth }
-              });
-            } else {
-              const startYear = new Date(Date.UTC(year, 0, 1));
-              const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-              conditions.push({ birthDate: { gte: startYear, lte: endYear } });
-            }
-          }
-        } else if (!isNaN(month)) {
-          // Only year and month provided
-          if (month >= 1 && month <= 12) {
-            const startMonth = new Date(Date.UTC(year, month - 1, 1));
-            const lastDay = new Date(year, month, 0).getDate();
-            const endMonth = new Date(
-              Date.UTC(year, month - 1, lastDay, 23, 59, 59, 999)
-            );
-            conditions.push({ birthDate: { gte: startMonth, lte: endMonth } });
-          } else {
-            // Invalid month, fallback to year search
-            const startYear = new Date(Date.UTC(year, 0, 1));
-            const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-            conditions.push({ birthDate: { gte: startYear, lte: endYear } });
-          }
-        } else {
-          // Only year provided
-          const startYear = new Date(Date.UTC(year, 0, 1));
-          const endYear = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-          conditions.push({ birthDate: { gte: startYear, lte: endYear } });
-        }
-      }
-      // Adding new case: Month only (no year) provided
-      else if (!isNaN(month) && month >= 1 && month <= 12) {
-        // Create an OR condition for this month across all years (up to 150 years)
-        const monthConditions: any[] = [];
-        const currentYear = new Date().getFullYear();
-        // Create a range spanning many years to cover all possible records
-        for (let year = currentYear - 150; year <= currentYear; year++) {
-          const startMonth = new Date(Date.UTC(year, month - 1, 1));
-          const lastDay = new Date(year, month, 0).getDate();
-          const endMonth = new Date(
-            Date.UTC(year, month - 1, lastDay, 23, 59, 59, 999)
-          );
-          monthConditions.push({
-            birthDate: { gte: startMonth, lte: endMonth }
-          });
-        }
-        conditions.push({ OR: monthConditions });
-      }
-      // Day only (no year or month) - throw an error
-      else if (!isNaN(day) && day >= 1 && day <= 31) {
-        throw new Error(
-          "Please specify at least a year when searching by day."
-        );
-      }
-    } else if (birthDateType === "range") {
-      // Range logic remains the same
-      const yearFrom = parseInt(searchCriteria.birthYearFrom || "", 10);
-      const yearTo = parseInt(searchCriteria.birthYearTo || "", 10);
-      const rangeConditions: { gte?: Date; lte?: Date } = {};
-      if (!isNaN(yearFrom)) {
-        const date = new Date(Date.UTC(yearFrom, 0, 1));
-        if (!isNaN(date.getTime())) rangeConditions.gte = date;
-      }
-      if (!isNaN(yearTo)) {
-        const date = new Date(Date.UTC(yearTo, 11, 31, 23, 59, 59, 999));
-        if (!isNaN(date.getTime())) rangeConditions.lte = date;
-      }
-      if (Object.keys(rangeConditions).length > 0) {
-        conditions.push({ birthDate: rangeConditions });
-      }
-    }
     // Death Date
     const deathDateType = searchCriteria.deathDateType ?? "exact";
     if (deathDateType === "exact") {
@@ -429,6 +304,7 @@ export async function searchObituaries(
       }
     }
     // Place conditions
+    /* // Removed birthPlace logic as per user request
     if (searchCriteria.birthPlace) {
       conditions.push({
         OR: [
@@ -458,6 +334,7 @@ export async function searchObituaries(
         ]
       });
     }
+    */
     if (searchCriteria.deathPlace) {
       conditions.push({
         OR: [
