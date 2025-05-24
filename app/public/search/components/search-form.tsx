@@ -306,11 +306,6 @@ export function SearchForm({ session }: SearchFormProps) {
                 <h3 className="font-medium text-[#003B5C]">
                   Deceased Subject (Start Here)
                 </h3>
-                <p className="text-sm text-gray-500">
-                  Enter details about the deceased subject you are searching
-                  for. We suggest entering the surname first and then narrow
-                  down your results with the given names if needed.
-                </p>
               </div>
 
               <div className="space-y-4">
@@ -368,9 +363,6 @@ export function SearchForm({ session }: SearchFormProps) {
                   <h3 className="font-medium text-[#003B5C]">
                     Relatives (Optional)
                   </h3>
-                  <p className="text-sm text-gray-500">
-                    Add relatives details to refine your search
-                  </p>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-6 py-4 bg-green-50">
@@ -453,9 +445,6 @@ export function SearchForm({ session }: SearchFormProps) {
                   <h3 className="font-medium text-[#003B5C]">
                     Death Information (Optional)
                   </h3>
-                  <p className="text-sm text-gray-500">
-                    Add death details to refine your search
-                  </p>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-6 py-4 bg-gray-100">
