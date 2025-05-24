@@ -62,26 +62,6 @@ const searchFormSchema = z
       .transform(val => val?.toUpperCase()),
     givenNames: z.string().optional(),
     relatives: z.array(relativeSchema).optional(),
-    birthDay: z
-      .string()
-      .optional()
-      .refine(val => !val || /^\d{1,2}$/.test(val), "Invalid day"),
-    birthMonth: z
-      .string()
-      .optional()
-      .refine(val => !val || /^\d{1,2}$/.test(val), "Invalid month"),
-    birthYear: z
-      .string()
-      .optional()
-      .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
-    birthYearFrom: z
-      .string()
-      .optional()
-      .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
-    birthYearTo: z
-      .string()
-      .optional()
-      .refine(val => !val || /^\d{4}$/.test(val), "Invalid year"),
     deathDay: z
       .string()
       .optional()
@@ -105,19 +85,6 @@ const searchFormSchema = z
   })
   .refine(
     data => {
-      // If birthDay is provided but either birthYear or birthMonth is not, return false
-      if (data.birthDay && (!data.birthYear || !data.birthMonth)) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Please provide both year and month when searching by day",
-      path: ["birthDay"] // This will show the error on the birthDay field
-    }
-  )
-  .refine(
-    data => {
       // If deathDay is provided but either deathYear or deathMonth is not, return false
       if (data.deathDay && (!data.deathYear || !data.deathMonth)) {
         return false;
@@ -133,7 +100,6 @@ const searchFormSchema = z
 type SearchFormValues = z.infer<typeof searchFormSchema>;
 
 interface CurrentSearchCriteria extends SearchFormValues {
-  birthDateType: "exact" | "range";
   deathDateType: "exact" | "range";
 }
 
@@ -146,9 +112,6 @@ export function SearchForm({ session }: SearchFormProps) {
   const [searchData, setSearchData] = useState<SearchResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
-  const [birthDateType, setBirthDateType] = useState<"exact" | "range">(
-    "exact"
-  );
   const [deathDateType, setDeathDateType] = useState<"exact" | "range">(
     "exact"
   );
@@ -177,11 +140,6 @@ export function SearchForm({ session }: SearchFormProps) {
       surname: "",
       givenNames: "",
       relatives: [{ surname: "", givenNames: "" }],
-      birthDay: "",
-      birthMonth: "",
-      birthYear: "",
-      birthYearFrom: "",
-      birthYearTo: "",
       deathDay: "",
       deathMonth: "",
       deathYear: "",
@@ -305,7 +263,6 @@ export function SearchForm({ session }: SearchFormProps) {
   async function onSubmit(formData: SearchFormValues) {
     const newCriteria: CurrentSearchCriteria = {
       ...formData,
-      birthDateType: birthDateType,
       deathDateType: deathDateType
     };
     setCurrentSearchCriteria(newCriteria);
@@ -623,153 +580,6 @@ export function SearchForm({ session }: SearchFormProps) {
                       </div>
                     </TabsContent>
                   </Tabs>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Birth Information & Places Section */}
-            <AccordionItem
-              value="advanced-search"
-              className="border border-gray-200 rounded-lg overflow-hidden"
-            >
-              <AccordionTrigger className="px-6 py-4 bg-blue-50 hover:no-underline">
-                <div className="flex flex-col items-start text-left">
-                  <h3 className="font-medium text-[#003B5C]">
-                    Birth Information (Optional)
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Add birth details to refine your search
-                  </p>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-6 py-4 bg-blue-50">
-                <div className="space-y-6">
-                  {/* Birth Information */}
-                  <div className="space-y-4">
-                    <p className="font-medium text-[#003B5C] text-sm">
-                      Birth Information
-                    </p>
-                    <Tabs
-                      defaultValue="exact"
-                      className="w-full"
-                      onValueChange={value =>
-                        setBirthDateType(value as "exact" | "range")
-                      }
-                    >
-                      <TabsList className="grid w-full grid-cols-2 mb-4">
-                        <TabsTrigger value="exact">Exact Date</TabsTrigger>
-                        <TabsTrigger value="range">Year Range</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="exact">
-                        <div className="grid grid-cols-3 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="birthYear"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-[#003B5C] font-medium">
-                                  Year
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="YYYY (Optional)"
-                                    {...field}
-                                    maxLength={4}
-                                    className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                                  />
-                                </FormControl>
-                                <FormMessage className="text-red-500" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="birthMonth"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-[#003B5C] font-medium">
-                                  Month
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="MM (Optional)"
-                                    {...field}
-                                    maxLength={2}
-                                    className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                                  />
-                                </FormControl>
-                                <FormMessage className="text-red-500" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="birthDay"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-[#003B5C] font-medium">
-                                  Day
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="DD (Optional)"
-                                    {...field}
-                                    maxLength={2}
-                                    className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                                  />
-                                </FormControl>
-                                <FormMessage className="text-red-500" />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="range">
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="birthYearFrom"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-[#003B5C] font-medium">
-                                  Year From
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="YYYY (Optional)"
-                                    {...field}
-                                    maxLength={4}
-                                    className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                                  />
-                                </FormControl>
-                                <FormMessage className="text-red-500" />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="birthYearTo"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-[#003B5C] font-medium">
-                                  Year To
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="YYYY (Optional)"
-                                    {...field}
-                                    maxLength={4}
-                                    className="border-gray-200 focus:border-[#003B5C] focus:ring-[#003B5C] rounded-lg"
-                                  />
-                                </FormControl>
-                                <FormMessage className="text-red-500" />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                  </div>
                 </div>
               </AccordionContent>
             </AccordionItem>
