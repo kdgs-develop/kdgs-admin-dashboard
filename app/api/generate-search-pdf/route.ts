@@ -317,8 +317,7 @@ export async function POST(req: NextRequest) {
       // Footer parts - matching the format from generate-pdf/[reference]/route.ts
       const copyrightText = `© ${currentYear} Kelowna & District Genealogical Society`;
       const websiteText = "kdgs.ca";
-      const developerText =
-        " | Developed by Javier Gongora — Vyoniq Technologies";
+      const developerText = " | Powered by Vyoniq Technologies";
 
       // Draw copyright text in black
       page.drawText(copyrightText, {

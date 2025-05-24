@@ -154,7 +154,7 @@ export async function POST(request: Request) {
       // Add footer with generation date
       const footerText =
         "Compiled by © 2025 Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8";
-      const copyrightText = "Developed by Javier Gongora — Vyoniq Technologies";
+      const copyrightText = "Powered by Vyoniq Technologies";
       const generationDate = `Generated on ${format(new Date(), "yyyy-MM-dd")}`;
 
       page.drawText(footerText, {

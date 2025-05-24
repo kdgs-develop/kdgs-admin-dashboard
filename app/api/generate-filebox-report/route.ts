@@ -139,7 +139,7 @@ export async function POST(request: Request) {
         // Add footer
         const footerText =
           "Compiled by Kelowna & District Genealogical Society PO Box 21105 Kelowna BC Canada V1Y 9N8";
-        const copyrightText = `© ${new Date().getFullYear()} Kelowna & District Genealogical Society | Developed by Javier Gongora — Vyoniq Technologies`;
+        const copyrightText = `© ${new Date().getFullYear()} Kelowna & District Genealogical Society | Powered by Vyoniq Technologies`;
         const generationDate = `Generated on ${format(new Date(), "yyyy-MM-dd")}`;
 
         page.drawText(footerText, {
