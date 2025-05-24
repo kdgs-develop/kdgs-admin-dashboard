@@ -60,17 +60,21 @@ export function NewObituaryForm() {
           details first.
         </p>
         <p className="text-sm text-gray-600">
-        If the request is for someone not in our index and for whom you do not have a copy of the obituary, there will be an extra research charge for non-members. If you have a copy to submit with the source information, you will receive a copy of our indexing and the uploaded image free.
+          If the request is for someone not in our index and for whom you do not
+          have a copy of the obituary, there will be an extra research charge
+          for non-members. If you have a copy to submit with the source
+          information, you will receive a copy of our indexing and the uploaded
+          image free.
         </p>
         <p className="text-sm text-gray-600">
-        Please provide your contact details first.
+          Please provide your contact details first.
         </p>
       </div>
 
       {/* Submitter Information Section */}
       <div className="space-y-4 border-b border-gray-200 pb-6">
         <h4 className="text-lg font-medium text-gray-700">Your Information</h4>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <Label htmlFor="requestorName">Your Name</Label>
             <Input
@@ -113,7 +117,7 @@ export function NewObituaryForm() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="surname">Surname</Label>
           <Input id="surname" name="surname" type="text" />
@@ -123,6 +127,9 @@ export function NewObituaryForm() {
             </p>
           )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="givenNames">Given Names</Label>
           <Input id="givenNames" name="givenNames" type="text" />
@@ -134,7 +141,7 @@ export function NewObituaryForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="maidenName">Maiden Name (if applicable)</Label>
           <Input id="maidenName" name="maidenName" type="text" />
@@ -144,6 +151,9 @@ export function NewObituaryForm() {
             </p>
           )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="alsoKnownAs">
             Also Known As (nicknames, other surnames)
@@ -157,7 +167,7 @@ export function NewObituaryForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="birthDate">Date or Range & Place of Birth</Label>
           <Input
@@ -172,6 +182,9 @@ export function NewObituaryForm() {
             </p>
           )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="deathDate">Date or Range & Place of Death</Label>
           <Input
@@ -187,7 +200,6 @@ export function NewObituaryForm() {
           )}
         </div>
       </div>
-      {/* Removed birthPlace and deathPlace as combined with date fields based on schema description "Date or Range and Place of Birth/Death" */}
 
       <div>
         <Label htmlFor="knownRelatives">
@@ -216,7 +228,8 @@ export function NewObituaryForm() {
 
       <div>
         <Label htmlFor="citation">
-          If you have a copy of an obituary to submit, include publication name and date of publication.
+          If you have a copy of an obituary to submit, include publication name
+          and date of publication.
         </Label>
         <Input
           id="citation"
@@ -264,11 +277,11 @@ export function NewObituaryForm() {
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2">
+      <div className="flex flex-col items-stretch gap-4 pt-2">
         <SubmitButton />
         {state.message && (
           <p
-            className={`text-sm ${state.success ? "text-green-600" : "text-red-600"} mt-2 sm:mt-0 text-center sm:text-right`}
+            className={`text-sm ${state.success ? "text-green-600" : "text-red-600"} text-center`}
           >
             {state.message}
           </p>
