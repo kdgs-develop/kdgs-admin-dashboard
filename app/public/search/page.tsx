@@ -239,19 +239,33 @@ export default async function SearchPage() {
                 Contact Us
               </h2>
               <div className="text-left space-y-4">
-              <p className="mt-4 text-lg text-gray-600">
-                Choose the appropriate form below.
-              </p>
-              <p>
-              Do you have a question, wish to report an issue or give us feedback? Feedback 
-              </p>
-              <p className="text-gray-600">
-                Do you have or wish to request an obituary not yet found in our collection for
-              someone who lived or died in Kelowna? Submit
-              </p>
-              <p>
-              Are you willing to volunteer to serve on our committee? Volunteer
-              </p>
+                <p className="mt-4 text-lg text-gray-600">
+                  Choose the appropriate form below.
+                </p>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-600 self-start">•</span>
+                    <span>
+                      Do you have a question, wish to report an issue or give us
+                      feedback? <span className="font-medium">Feedback</span>
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-600 self-start">•</span>
+                    <span>
+                      Do you have or wish to request an obituary not yet found in
+                      our collection for someone who lived or died in Kelowna?{" "}
+                      <span className="font-medium">Submit</span>
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-green-600 self-start">•</span>
+                    <span>
+                      Are you willing to volunteer to serve on our committee?{" "}
+                      <span className="font-medium">Volunteer</span>
+                    </span>
+                  </li>
+                </ul>
               </div>
             </div>
 
