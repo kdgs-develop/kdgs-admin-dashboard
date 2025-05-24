@@ -24,11 +24,11 @@ export function VolunteerInterestDialogTrigger() {
           Volunteer
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] flex flex-col max-h-[85vh]">
+      <DialogContent className="sm:max-w-[425px] flex flex-col max-h-[85vh] p-6">
         <DialogHeader>
           <DialogTitle>Volunteer</DialogTitle>
         </DialogHeader>
-        <div className="overflow-y-auto flex-grow pt-4">
+        <div className="overflow-y-auto flex-grow px-2 pt-2">
           <VolunteerInterestForm />
         </div>
       </DialogContent>
