@@ -38,7 +38,7 @@ function SubmitButton() {
       disabled={pending}
       className="w-full sm:w-auto"
     >
-      {pending ? "Submitting..." : "Submit Volunteer Interest"}
+      {pending ? "Submitting..." : "Submit"}
     </Button>
   );
 }
