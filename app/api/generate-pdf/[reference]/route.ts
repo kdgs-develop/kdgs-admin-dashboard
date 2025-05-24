@@ -422,8 +422,7 @@ export async function GET(
       const currentYearFooter = new Date().getFullYear();
       const copyrightText = `© ${currentYearFooter} Kelowna & District Genealogical Society`;
       const websiteText = "kdgs.ca";
-      const developerText =
-        " | Developed by Javier Gongora — Vyoniq Technologies";
+      const developerText = " | Powered by Vyoniq Technologies";
 
       const footerLineY = BOTTOM_MARGIN - 10; // Y from bottom for pdf-lib text (e.g. 30 from bottom is y=30)
 
