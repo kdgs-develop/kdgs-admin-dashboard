@@ -40,11 +40,13 @@ export function FeedbackForm() {
 
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
-        <p className="text-sm text-gray-600">
-        Report errors, omissions, or concerns about information you've received. We aim to correct any issues and resend updated information at no extra cost.
-        </p>
+      <p className="text-sm text-gray-600">
+        Report errors, omissions, or concerns about information you've received.
+        We aim to correct any issues and resend updated information at no extra
+        cost.
+      </p>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="fileNumber">File Number</Label>
           <Input id="fileNumber" name="fileNumber" type="text" required />
@@ -54,6 +56,9 @@ export function FeedbackForm() {
             </p>
           )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="deceasedFullName">Deceased Person's Full Name</Label>
           <Input
@@ -70,7 +75,7 @@ export function FeedbackForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="requestorName">Your Name</Label>
           <Input id="requestorName" name="requestorName" type="text" required />
@@ -80,6 +85,9 @@ export function FeedbackForm() {
             </p>
           )}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="requestorEmail">Your Email</Label>
           <Input
@@ -112,11 +120,11 @@ export function FeedbackForm() {
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2">
+      <div className="flex flex-col items-stretch gap-4 pt-2">
         <SubmitButton />
         {state.message && (
           <p
-            className={`text-sm ${state.success ? "text-green-600" : "text-red-600"} mt-2 sm:mt-0 text-center sm:text-right`}
+            className={`text-sm ${state.success ? "text-green-600" : "text-red-600"} text-center`}
           >
             {state.message}
           </p>
