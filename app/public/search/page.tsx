@@ -17,7 +17,7 @@ import { NewObituaryForm } from "./components/contact-forms/new-obituary-form";
 import { VolunteerInterestForm } from "./components/contact-forms/volunteer-interest-form";
 
 export const metadata: Metadata = {
-  title: "Search Obituary Records - KDGS",
+  title: "Search Central Okanagan Obituary Records - KDGS",
   description:
     "Search through our collection of Central Okanagan obituary records to discover your family history"
 };
@@ -63,7 +63,7 @@ export default async function SearchPage() {
             <div className="bg-white/70 rounded-2xl shadow-2xl p-8 border border-white/10">
               <div className="space-y-8">
                 <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
-                  Search Obituary Records
+                  Search Central Okanagan Obituary Records
                 </h1>
                 <div className="text-gray-800 leading-7 space-y-4">
                   <p>
@@ -96,7 +96,9 @@ export default async function SearchPage() {
                   </ul>
                   <p>
                     If you're planning to download multiple obituaries, consider
-                    becoming a member! Membership offers many great benefits. Learn more about membership options and sign up at{" "}
+                    becoming a member! Membership offers many great benefits for
+                    those researching their family history. Learn more about
+                    membership options and sign up at{" "}
                     <a
                       href="https://kdgs.ca/membership/"
                       target="_blank"
@@ -152,7 +154,13 @@ export default async function SearchPage() {
                   </h4>
                 </div>
                 <p className="text-gray-600 text-sm">
-                Enter the surname of the deceased person. The search will include other surnames, such as maiden names or other married names where given, in the results. If you don't find what you're looking for, try initial three or four letters of a surname as THOM will bring you THOM OR THOMAS, THOMPSON OR THOMSON. For other surnames, try possible alternative spellings such as READ vs REID.
+                  Enter the surname of the deceased person. The search will
+                  include other surnames, such as maiden names or other married
+                  names where given, in the results. If you don't find what
+                  you're looking for, try initial three or four letters of a
+                  surname as THOM will bring you THOM OR THOMAS, THOMPSON OR
+                  THOMSON. For other surnames, try possible alternative
+                  spellings such as READ vs REID.
                 </p>
               </div>
 
@@ -167,7 +175,9 @@ export default async function SearchPage() {
                   </h4>
                 </div>
                 <p className="text-gray-600 text-sm">
-                If you find too many results, add the deceased person's given name or names to narrow down the search results. You can also search by nickname(s) if used in the obituary.
+                  If you find too many results, add the deceased person's given
+                  name or names to narrow down the search results. You can also
+                  search by nickname(s) if used in the obituary.
                 </p>
               </div>
 
@@ -182,7 +192,9 @@ export default async function SearchPage() {
                   </h4>
                 </div>
                 <p className="text-gray-600 text-sm">
-                Search for relatives' surnames and given names to find the obituary of the person you are seeking or use it to further refine your search, especially useful for common surnames.
+                  Search for relatives' surnames and given names to find the
+                  obituary of the person you are seeking or use it to further
+                  refine your search, especially useful for common surnames.
                 </p>
               </div>
 
@@ -192,10 +204,13 @@ export default async function SearchPage() {
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#003B5C] text-white text-sm font-medium">
                     4
                   </div>
-                  <h4 className="font-medium text-[#003B5C]">Use Date or Range</h4>
+                  <h4 className="font-medium text-[#003B5C]">
+                    Use Date or Range
+                  </h4>
                 </div>
                 <p className="text-gray-600 text-sm">
-                If needed, add exact death date or date range to narrow your search.
+                  If needed, add exact death date or date range to narrow your
+                  search.
                 </p>
               </div>
             </div>
@@ -223,10 +238,21 @@ export default async function SearchPage() {
               <h2 className="text-3xl font-bold text-[#003B5C] tracking-tight">
                 Contact Us
               </h2>
+              <div className="text-left space-y-4">
               <p className="mt-4 text-lg text-gray-600">
-                Have questions, feedback, or want to contribute? Choose the
-                appropriate form below.
+                Choose the appropriate form below.
               </p>
+              <p>
+              Do you have a question, wish to report an issue or give us feedback? Feedback 
+              </p>
+              <p className="text-gray-600">
+                Do you have or wish to request an obituary not yet found in our collection for
+              someone who lived or died in Kelowna? Submit
+              </p>
+              <p>
+              Are you willing to volunteer to serve on our committee? Volunteer
+              </p>
+              </div>
             </div>
 
             <Accordion type="single" collapsible className="w-full space-y-4">
