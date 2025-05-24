@@ -20,10 +20,10 @@ const initialState: VolunteerInterestFormState = {
 };
 
 const areasOfInterestOptions = [
-  { id: "collecting", label: "Collecting obituaries from online/newspapers" },
+  { id: "collecting", label: "Collecting obituaries from online or print sources" },
   { id: "indexing", label: "Indexing" },
   { id: "scanning", label: "Scanning" },
-  { id: "filing", label: "General sorting/filing of obituaries" }
+  { id: "filing", label: "General sorting/preparing/filing obituaries" }
 ];
 
 function SubmitButton() {
@@ -35,7 +35,7 @@ function SubmitButton() {
       disabled={pending}
       className="w-full sm:w-auto"
     >
-      {pending ? "Submitting..." : "Submit Interest Form"}
+      {pending ? "Submitting..." : "Submit Volunteer Interest"}
     </Button>
   );
 }
@@ -56,12 +56,8 @@ export function VolunteerInterestForm() {
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
       <div>
-        <h3 className="text-xl font-semibold text-gray-800 mb-1">
-          Volunteer Interest Form
-        </h3>
         <p className="text-sm text-gray-600">
-          Interested in volunteering? Let us know! We provide training, so
-          limited computer experience is acceptable.
+        Help us collect, index and process obituaries to preserve them for family historians or other researchers. Let us know your area of interest! We have a variety of tasks and provide training, so limited computer experience is not a barrier.
         </p>
       </div>
 
@@ -210,9 +206,7 @@ export function VolunteerInterestForm() {
       </div>
 
       <p className="text-xs text-gray-500">
-        Please note: Proofreading and database admin roles are typically
-        assigned to experienced volunteers. We will follow up with an interview
-        before any role assignment.
+      Note: Proofreading and database admin roles are typically assigned to experienced volunteers. We evaluate your work in indexing to determine if and when you are ready to take on the advanced roles should you be interested in them, We will have an informal interview after receiving your completed form.
       </p>
 
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2">
