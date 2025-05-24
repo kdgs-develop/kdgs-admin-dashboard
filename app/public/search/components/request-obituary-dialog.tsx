@@ -449,8 +449,8 @@ export function RequestObituaryDialog({
                   </AlertTitle>
                   <AlertDescription className="text-blue-700">
                     {isLoggedIn
-                      ? "A PDF report containing the obituary details is also included with your image download."
-                      : "A PDF report containing the obituary details is included at no extra cost when you purchase access to the image record(s)."}
+                      ? "A PDF report containing the obituary indexing details is also included with your image download."
+                      : "A PDF report containing the obituary indexing details is included at no extra cost when you purchase access to the image record(s)."}
                   </AlertDescription>
                 </Alert>
               </>
