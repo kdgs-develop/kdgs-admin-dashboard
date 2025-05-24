@@ -521,9 +521,7 @@ export function RequestObituaryDialog({
         return (
           <div>
             <p className="text-sm text-muted-foreground mb-2">
-              Please provide your contact information below. Our team will use
-              this to get in touch regarding the image request for the following
-              obituary:
+            Please provide your contact information below. Our team will use this to inform you when the image is ready for downloading or if we are unable to provide one for the following obituary:
             </p>
             <div className="mb-4 p-3 bg-slate-50 rounded-md border border-slate-200">
               <p className="text-sm font-medium text-slate-700">
