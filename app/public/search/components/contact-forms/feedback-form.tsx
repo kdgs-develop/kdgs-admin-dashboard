@@ -48,8 +48,8 @@ export function FeedbackForm() {
 
       <div className="grid grid-cols-1 gap-4">
         <div>
-          <Label htmlFor="fileNumber">File Number</Label>
-          <Input id="fileNumber" name="fileNumber" type="text" required />
+          <Label htmlFor="fileNumber">File Number (Optional)</Label>
+          <Input id="fileNumber" name="fileNumber" type="text" />
           {state.errors?.fileNumber && (
             <p className="text-sm text-red-500 mt-1">
               {state.errors.fileNumber[0]}
@@ -60,12 +60,11 @@ export function FeedbackForm() {
 
       <div className="grid grid-cols-1 gap-4">
         <div>
-          <Label htmlFor="deceasedFullName">Deceased Person's Full Name</Label>
+          <Label htmlFor="deceasedFullName">Deceased Person's Full Name (Optional)</Label>
           <Input
             id="deceasedFullName"
             name="deceasedFullName"
             type="text"
-            required
           />
           {state.errors?.deceasedFullName && (
             <p className="text-sm text-red-500 mt-1">
