@@ -28,10 +28,8 @@ interface ActionResult {
 
 // Schema for Feedback Form
 const FeedbackFormSchema = z.object({
-  fileNumber: z.string().min(1, "File Number is required."),
-  deceasedFullName: z
-    .string()
-    .min(1, "Deceased Person's Full Name is required."),
+  fileNumber: z.string().optional(),
+  deceasedFullName: z.string().optional(),
   requestorName: z.string().min(1, "Your Name is required."),
   requestorEmail: z.string().email("Invalid email address."),
   issueDescription: z.string().min(1, "Description of the Issue is required.")
@@ -93,11 +91,11 @@ export async function submitFeedback(
       from: FROM_EMAIL,
       to: FEEDBACK_TARGET_EMAIL, // Use configurable target email
       replyTo: requestorEmail,
-      subject: `New Feedback Received - File: ${fileNumber}`,
+      subject: `New Feedback Received${fileNumber ? ` - File: ${fileNumber}` : ""}`,
       html: `
         <h2>New Feedback Received</h2>
-        <p><strong>File Number:</strong> ${fileNumber}</p>
-        <p><strong>Deceased Person's Full Name:</strong> ${deceasedFullName}</p>
+        <p><strong>File Number:</strong> ${fileNumber || "N/A"}</p>
+        <p><strong>Deceased Person's Full Name:</strong> ${deceasedFullName || "N/A"}</p>
         <p><strong>Requestor's Name:</strong> ${requestorName}</p>
         <p><strong>Requestor's Email:</strong> ${requestorEmail}</p>
         <p><strong>Description of the Issue:</strong></p>
@@ -150,7 +148,12 @@ const NewObituarySubmissionFormSchema = z.object({
         ),
       "Only .pdf, .jpg, .jpeg, .png and .webp formats are supported."
     ),
-  citation: z.string().optional()
+  citation: z.string().optional(),
+  imageUrl: z
+    .string()
+    .url("Please enter a valid URL for the image.")
+    .optional()
+    .or(z.literal(""))
 });
 
 export type NewObituaryFormState = {
@@ -168,6 +171,7 @@ export type NewObituaryFormState = {
     notes?: string[];
     obituaryFile?: string[];
     citation?: string[];
+    imageUrl?: string[];
   };
   success: boolean;
 };
@@ -188,7 +192,8 @@ export async function submitNewObituary(
     knownRelatives: formData.get("knownRelatives"),
     notes: formData.get("notes"),
     obituaryFile: formData.get("obituaryFile"),
-    citation: formData.get("citation")
+    citation: formData.get("citation"),
+    imageUrl: formData.get("imageUrl")
   });
 
   if (!validatedFields.success) {
@@ -240,6 +245,10 @@ export async function submitNewObituary(
       <p><strong>Notes:</strong></p>
       <p>${data.notes ? data.notes.replace(/\\n/g, "<br>") : "N/A"}</p>
     `;
+
+    if (data.imageUrl) {
+      emailHtmlBody += `<p><strong>Image URL:</strong> <a href="${data.imageUrl}">${data.imageUrl}</a></p>`;
+    }
 
     if (attachments.length > 0) {
       emailHtmlBody += `<p><strong>Citation:</strong> ${data.citation || "N/A (File Attached)"}</p>`;
