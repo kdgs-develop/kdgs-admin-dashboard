@@ -245,6 +245,21 @@ export function NewObituaryForm() {
       </div>
 
       <div>
+        <Label htmlFor="imageUrl">Image URL (if obituary is online)</Label>
+        <Input
+          id="imageUrl"
+          name="imageUrl"
+          type="url"
+          placeholder="e.g., https://example.com/obituary.jpg"
+        />
+        {state.errors?.imageUrl && (
+          <p className="text-sm text-red-500 mt-1">
+            {state.errors.imageUrl[0]}
+          </p>
+        )}
+      </div>
+
+      <div>
         <Label htmlFor="obituaryFile">Attach Obituary</Label>
         <Input
           id="obituaryFile"
