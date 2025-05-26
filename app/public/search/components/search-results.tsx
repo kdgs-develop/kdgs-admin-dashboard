@@ -105,9 +105,8 @@ export function SearchResults({
         <ShoppingCart className="h-4 w-4 text-blue-600" />
         <AlertTitle>No Results Found</AlertTitle>
         <AlertDescription>
-          Your search did not match any obituary records. Try broadening your
-          search criteria or check for variant spellings in the surname (e.g.,
-          THOMPSON vs. THOMSON).
+        Try broadening your search criteria or check for variant spellings in the
+        surname (e.g., READ vs. REID).
         </AlertDescription>
       </Alert>
     );
