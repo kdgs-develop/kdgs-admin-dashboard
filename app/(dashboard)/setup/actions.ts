@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { clerkClient } from "@clerk/nextjs/server";
 import { Prisma, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { fetchOrdersMonthlyData } from "@/app/actions/fetchOrdersMonthlyData";
 
 interface CreateGenealogistParams {
   firstName: string;
@@ -2100,5 +2101,188 @@ export async function getPeriodicalsByCityId(cityId: number) {
   } catch (error) {
     console.error("Error fetching periodicals by city:", error);
     throw new Error("Failed to fetch periodicals by city");
+  }
+}
+
+export async function getOrders(
+  page: number,
+  perPage: number,
+  memberFilter: "all" | "members" | "non-members" = "all"
+) {
+  const skip = (page - 1) * perPage;
+
+  // Build where clause based on member filter
+  const where: any = {};
+  if (memberFilter === "members") {
+    where.isMember = true;
+  } else if (memberFilter === "non-members") {
+    where.isMember = false;
+  }
+
+  const [orders, totalCount] = await prisma.$transaction([
+    prisma.order.findMany({
+      where,
+      skip,
+      take: perPage,
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: {
+          select: {
+            items: true
+          }
+        }
+      }
+    }),
+    prisma.order.count({ where })
+  ]);
+
+  return {
+    orders,
+    totalCount,
+    totalPages: Math.ceil(totalCount / perPage)
+  };
+}
+
+export async function searchOrders(
+  searchTerm: string,
+  page: number,
+  perPage: number,
+  memberFilter: "all" | "members" | "non-members" = "all"
+) {
+  const skip = (page - 1) * perPage;
+
+  // Build where clause based on search term and member filter
+  const where: any = {
+    OR: [
+      { customerEmail: { contains: searchTerm, mode: "insensitive" } },
+      { customerFullName: { contains: searchTerm, mode: "insensitive" } },
+      { id: { contains: searchTerm, mode: "insensitive" } }
+    ]
+  };
+
+  // Add member filter condition
+  if (memberFilter === "members") {
+    where.isMember = true;
+  } else if (memberFilter === "non-members") {
+    where.isMember = false;
+  }
+
+  const [orders, totalCount] = await prisma.$transaction([
+    prisma.order.findMany({
+      where,
+      skip,
+      take: perPage,
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: {
+          select: {
+            items: true
+          }
+        }
+      }
+    }),
+    prisma.order.count({ where })
+  ]);
+
+  return {
+    orders,
+    totalCount,
+    totalPages: Math.ceil(totalCount / perPage)
+  };
+}
+
+export async function getOrderItems(orderId: string) {
+  try {
+    // First, get the order with items
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: true
+      }
+    });
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    // Return all items and count
+    return {
+      items: order.items,
+      order: {
+        id: order.id,
+        customerEmail: order.customerEmail,
+        customerFullName: order.customerFullName,
+        status: order.status,
+        totalAmount: order.totalAmount,
+        currency: order.currency,
+        createdAt: order.createdAt,
+        isMember: order.isMember
+      },
+      count: order.items.length
+    };
+  } catch (error) {
+    console.error("Error fetching order items:", error);
+    throw new Error("Failed to fetch order items");
+  }
+}
+
+export async function updateOrderStatus(id: string, status: string) {
+  try {
+    const order = await prisma.order.update({
+      where: { id },
+      data: { status: status as any }
+    });
+    revalidatePath("/");
+    return order;
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    throw new Error("Failed to update order status");
+  }
+}
+
+export async function deleteOrder(id: string) {
+  try {
+    await prisma.order.delete({
+      where: { id }
+    });
+    revalidatePath("/");
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    throw new Error("Failed to delete order");
+  }
+}
+
+export async function getOrderCounts() {
+  try {
+    const [totalCount, memberCount, nonMemberCount] = await prisma.$transaction(
+      [
+        prisma.order.count(),
+        prisma.order.count({
+          where: { isMember: true }
+        }),
+        prisma.order.count({
+          where: { isMember: false }
+        })
+      ]
+    );
+
+    return {
+      totalCount,
+      memberCount,
+      nonMemberCount
+    };
+  } catch (error) {
+    console.error("Error getting order counts:", error);
+    throw new Error("Failed to get order counts");
+  }
+}
+
+export async function getMonthlyOrdersData(year?: number) {
+  try {
+    const currentYear = year || new Date().getFullYear();
+    return await fetchOrdersMonthlyData(currentYear);
+  } catch (error) {
+    console.error("Error fetching monthly orders data:", error);
+    throw new Error("Failed to fetch monthly orders data");
   }
 }
