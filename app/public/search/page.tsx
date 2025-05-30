@@ -258,7 +258,7 @@ export default async function SearchPage() {
                     <span>
                       Do you have or wish to request an obituary not yet found
                       in our collection for someone who lived or died in
-                      Kelowna? <NewObituaryDialogTrigger />
+                      Central Okanagan? <NewObituaryDialogTrigger />
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
