@@ -222,8 +222,6 @@ export function RequestObituaryDialog({
     );
 
     try {
-      // Record the member download as a completed order
-      // This can stay as it might be relevant for members even with zip download
       const orderResult = await recordMemberDownload({
         obituaryRef: reference,
         obituaryName: obituaryName || reference,
@@ -238,7 +236,8 @@ export function RequestObituaryDialog({
         );
       }
 
-      const downloadUrl = `/api/download-all-files/${encodeURIComponent(reference)}`;
+      const cacheBuster = `cb=${new Date().getTime()}`;
+      const downloadUrl = `/api/download-all-files/${encodeURIComponent(reference)}?${cacheBuster}`;
       console.log(
         "Attempting to download zip from URL (RequestObituaryDialog):",
         downloadUrl
