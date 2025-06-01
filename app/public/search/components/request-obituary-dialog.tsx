@@ -148,17 +148,22 @@ export function RequestObituaryDialog({
       } else {
         setStep("authCheck");
         setIsGuestFlow(false);
+        setError(null);
+        setDetails(null);
+        fetchDetails(obituaryRef, "authCheck", "authCheck");
       }
-      setError(null);
-      setDetails(null);
       setDownloadError(null);
       setIsDownloading(false);
       form.reset();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, obituaryRef, session?.isLoggedIn]);
+  }, [isOpen, obituaryRef, session?.isLoggedIn, form]);
 
-  const fetchDetails = async (ref: string) => {
+  const fetchDetails = async (
+    ref: string,
+    nextStepOnSuccess: RequestStep = "infoDisplay",
+    nextStepOnError: RequestStep = "error"
+  ) => {
     setStep("loadingDetails");
     setError(null);
     setDetails(null);
@@ -166,18 +171,18 @@ export function RequestObituaryDialog({
       const result = await getObituaryDetails(ref);
       if (result.error) {
         setError(result.error);
-        setStep("error");
+        setStep(nextStepOnError);
       } else if (result.data) {
         setDetails(result.data);
-        setStep("infoDisplay");
+        setStep(nextStepOnSuccess);
       } else {
         setError("Failed to retrieve details.");
-        setStep("error");
+        setStep(nextStepOnError);
       }
     } catch (err) {
       console.error("Fetch details error:", err);
       setError("An unexpected error occurred fetching details.");
-      setStep("error");
+      setStep(nextStepOnError);
     }
   };
 
@@ -747,14 +752,76 @@ export function RequestObituaryDialog({
       default:
         return (
           <div className="space-y-4">
-            <p>
+            {/* Display error if fetching details failed */}
+            {error && step === "authCheck" && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error Loading Details</AlertTitle>
+                <AlertDescription>
+                  {error || "Could not load obituary details."}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Display details if available */}
+            {details && !error && (
+              <>
+                {details.hasImages ? (
+                  <>
+                    <Alert className="bg-green-50 border-green-200">
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <AlertTitle className="text-green-800">
+                        Image Record Available
+                      </AlertTitle>
+                      <AlertDescription className="text-green-700">
+                        This obituary has {details.imageCount} image record(s).
+                        Members can download for free. Guests may proceed to
+                        view purchase options ($10 CAD + fees).
+                      </AlertDescription>
+                    </Alert>
+                    <Alert className="bg-blue-50 border-blue-200">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      <AlertTitle className="text-blue-800">
+                        PDF Report Included
+                      </AlertTitle>
+                      <AlertDescription className="text-blue-700">
+                        A PDF report with indexing details is included. Free for
+                        members, or with guest purchase.
+                      </AlertDescription>
+                    </Alert>
+                  </>
+                ) : (
+                  <Alert className="bg-yellow-50 border-yellow-200">
+                    <Info className="h-4 w-4 text-yellow-600" />
+                    <AlertTitle className="text-yellow-800">
+                      No Image Record Found
+                    </AlertTitle>
+                    <AlertDescription className="text-yellow-700">
+                      We do not currently have a digitized image for this
+                      record. Members or guests can submit an email request to
+                      our team to search for it.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </>
+            )}
+
+            {/* Fallback if details are not loaded and no error, e.g. initial state before fetch completes */}
+            {!details && !error && step === "authCheck" && (
+              <p className="text-sm text-muted-foreground">
+                Loading record information...
+              </p>
+            )}
+
+            <p className="pt-2">
               To download available obituary images and PDF reports for free,
               please sign in with your KDGS membership credentials.
             </p>
             <p className="text-sm text-muted-foreground">
               Alternatively, you can proceed as a guest. Image records for
-              guests may require payment (details shown on the next step). If no
-              image is found, you can submit an email request.
+              guests may require payment (details shown on the next step if
+              applicable). If no image is found, you can submit an email
+              request.
             </p>
             <DialogFooter className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
               <Button onClick={onSignInRequest} className="w-full">
