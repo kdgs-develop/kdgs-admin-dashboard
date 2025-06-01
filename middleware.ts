@@ -6,7 +6,8 @@ const isPublicRoute = createRouteMatcher([
   "/api/generate-pdf(.*)",
   "/api/download-image(.*)",
   "/api/webhooks/stripe(.*)",
-  "/public/search(.*)"
+  "/public/search(.*)",
+  "/api/download-all-files(.*)"
 ]);
 
 export default clerkMiddleware((auth, req) => {
