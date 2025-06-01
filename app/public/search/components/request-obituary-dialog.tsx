@@ -58,7 +58,6 @@ import {
   getObituaryDetails,
   ObituaryDetails
 } from "@/lib/actions/public-search/get-obituary-details";
-import { getObituaryImageUrls } from "@/lib/actions/public-search/get-obituary-image-urls";
 import {
   sendObituaryRequestEmail,
   type ObituaryRequestFormData
@@ -192,55 +191,6 @@ export function RequestObituaryDialog({
     fetchDetails(obituaryRef);
   };
 
-  const triggerImageDownloads = (filenames: string[]) => {
-    filenames.forEach((filename, index) => {
-      setTimeout(() => {
-        try {
-          const link = document.createElement("a");
-          link.href = `/api/download-image/${encodeURIComponent(filename)}`;
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } catch (error) {
-          console.error(
-            "Error triggering image download for:",
-            filename,
-            error
-          );
-        }
-      }, index * 700);
-    });
-  };
-
-  const triggerPdfDownload = async (reference: string) => {
-    try {
-      const pdfResponse = await fetch(
-        `/api/generate-pdf/${encodeURIComponent(reference)}`
-      );
-      if (!pdfResponse.ok) {
-        const errorBody = await pdfResponse.text();
-        throw new Error(
-          `Failed to generate PDF: ${pdfResponse.statusText} ${errorBody}`.trim()
-        );
-      }
-      const pdfBlob = await pdfResponse.blob();
-      const pdfUrl = window.URL.createObjectURL(pdfBlob);
-      const pdfLink = document.createElement("a");
-      pdfLink.href = pdfUrl;
-      pdfLink.download = `obituary_report_${reference}.pdf`;
-      document.body.appendChild(pdfLink);
-      pdfLink.click();
-      document.body.removeChild(pdfLink);
-      window.URL.revokeObjectURL(pdfUrl);
-    } catch (error) {
-      console.error("Error downloading PDF:", error);
-      throw new Error(
-        `Failed to download PDF report. ${error instanceof Error ? error.message : ""}`.trim()
-      );
-    }
-  };
-
   const handleAddToCartClick = () => {
     if (details?.reference && obituaryName && details !== null) {
       onAddToCart(details.reference, obituaryName, details.hasImages);
@@ -264,10 +214,16 @@ export function RequestObituaryDialog({
     setIsDownloading(true);
     setDownloadError(null);
     const reference = details.reference;
-    let errorMessages: string[] = [];
+    console.log(
+      "NEW ZIP DOWNLOAD LOGIC TRIGGERED (RequestObituaryDialog) for ref:",
+      reference,
+      "at",
+      new Date().toISOString()
+    );
 
     try {
       // Record the member download as a completed order
+      // This can stay as it might be relevant for members even with zip download
       const orderResult = await recordMemberDownload({
         obituaryRef: reference,
         obituaryName: obituaryName || reference,
@@ -277,44 +233,27 @@ export function RequestObituaryDialog({
 
       if (!orderResult.success) {
         console.warn(
-          "Failed to record download as order, but continuing download:",
+          "Failed to record download as order, but continuing zip download:",
           orderResult.error
         );
       }
 
-      try {
-        await triggerPdfDownload(reference);
-      } catch (pdfError) {
-        if (pdfError instanceof Error) {
-          errorMessages.push(pdfError.message);
-        } else {
-          errorMessages.push("An unknown error occurred downloading the PDF.");
-        }
-      }
+      const downloadUrl = `/api/download-all-files/${encodeURIComponent(reference)}`;
+      console.log(
+        "Attempting to download zip from URL (RequestObituaryDialog):",
+        downloadUrl
+      );
 
-      if (details.imageCount > 0) {
-        const result = await getObituaryImageUrls(reference);
-
-        if (result.error) {
-          errorMessages.push(result.error);
-        } else if (result.message && !result.imageNames) {
-          errorMessages.push(result.message);
-        } else if (result.imageNames && result.imageNames.length > 0) {
-          triggerImageDownloads(result.imageNames);
-        } else {
-          errorMessages.push(
-            "Could not find image files to download, although expected."
-          );
-        }
-      }
-
-      if (errorMessages.length > 0) {
-        setDownloadError(errorMessages.join(" \n "));
-      }
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `obituary_files_${reference}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (err) {
-      console.error("Download process error:", err);
+      console.error("Zip download process error (RequestObituaryDialog):", err);
       setDownloadError(
-        `An unexpected error occurred during the download process. ${errorMessages.join(" \n ")}`.trim()
+        `An unexpected error occurred during the download. ${err instanceof Error ? err.message : ""}`.trim()
       );
     } finally {
       setIsDownloading(false);
