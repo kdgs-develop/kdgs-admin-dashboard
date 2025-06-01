@@ -122,7 +122,7 @@ export function ShoppingCart({
         <Button
           variant="default"
           size="icon"
-          className="fixed bottom-16 right-6 h-14 w-14 rounded-full shadow-lg z-[999] 
+          className="fixed bottom-24 md:bottom-16 right-6 h-14 w-14 rounded-full shadow-lg z-[999] 
                      bg-[#003B5C] hover:bg-[#004d7a] text-white"
           aria-label={`Shopping Cart: ${itemCount} items`}
         >
