@@ -29,8 +29,12 @@ export function DownloadButton({ obituaryRef }: DownloadButtonProps) {
     setDownloadError(null);
 
     try {
-      const downloadUrl = `/api/download-all-files/${encodeURIComponent(obituaryRef)}`;
-      console.log("Attempting to download from URL:", downloadUrl);
+      const cacheBuster = `cb=${new Date().getTime()}`;
+      const downloadUrl = `/api/download-all-files/${encodeURIComponent(obituaryRef)}?${cacheBuster}`;
+      console.log(
+        "Attempting to download from URL (PaymentSuccess):",
+        downloadUrl
+      );
 
       const link = document.createElement("a");
       link.href = downloadUrl;
@@ -39,7 +43,10 @@ export function DownloadButton({ obituaryRef }: DownloadButtonProps) {
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      console.error("Download process error in NEW logic:", err);
+      console.error(
+        "Download process error in NEW logic (PaymentSuccess):",
+        err
+      );
       setDownloadError(
         `An unexpected error occurred. If the problem persists, please contact support. ${err instanceof Error ? err.message : ""}`.trim()
       );
