@@ -58,14 +58,16 @@ export default async function PublicLayout({
 
           <div className="flex items-center space-x-4">
             <HeaderAuth session={plainSessionData} />
-            <a
-              href="https://kdgs.ca/membership/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors hidden md:inline-block"
-            >
-              Become a Member
-            </a>
+            {(!plainSessionData || !plainSessionData.isLoggedIn) && (
+              <a
+                href="https://kdgs.ca/membership/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-md transition-colors hidden md:inline-block"
+              >
+                Become a Member
+              </a>
+            )}
             <Link
               href="https://kdgs.ca"
               className="text-white text-sm hover:text-gray-200 pl-4"

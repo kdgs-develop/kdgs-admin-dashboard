@@ -11,13 +11,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const initialState: VolunteerInterestFormState = {
   message: "",
   errors: {},
   success: false
 };
+
+interface VolunteerInterestFormProps {
+  onSuccessDialogClose?: () => void;
+}
 
 const areasOfInterestOptions = [
   {
@@ -43,18 +47,40 @@ function SubmitButton() {
   );
 }
 
-export function VolunteerInterestForm() {
+export function VolunteerInterestForm({
+  onSuccessDialogClose
+}: VolunteerInterestFormProps) {
   const [state, formAction] = useFormState(
     submitVolunteerInterest,
     initialState
   );
   const formRef = useRef<HTMLFormElement>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   useEffect(() => {
     if (state.success) {
-      formRef.current?.reset();
+      setShowSuccessMessage(true);
+      const timer = setTimeout(() => {
+        formRef.current?.reset();
+        setShowSuccessMessage(false);
+        if (onSuccessDialogClose) {
+          onSuccessDialogClose();
+        }
+      }, 3000);
+      return () => clearTimeout(timer);
     }
   }, [state.success]);
+
+  if (showSuccessMessage) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6 bg-green-50 border border-green-200 rounded-md">
+        <p className="text-lg text-green-700 font-semibold">Success!</p>
+        <p className="text-sm text-green-600 text-center mt-2">
+          {state.message}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
@@ -230,7 +256,7 @@ export function VolunteerInterestForm() {
 
       <div className="flex flex-col items-stretch gap-4 pt-2">
         <SubmitButton />
-        {state.message && (
+        {state.message && !state.success && (
           <p
             className={`text-sm ${state.success ? "text-green-600" : "text-red-600"} text-center`}
           >
