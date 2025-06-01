@@ -135,19 +135,23 @@ const NewObituarySubmissionFormSchema = z.object({
   knownRelatives: z.string().optional(),
   notes: z.string().optional(),
   obituaryFile: (typeof File !== "undefined" ? z.instanceof(File) : z.any())
-    .optional() // For file uploads
     .refine(
-      file => !file || file.size <= 5 * 1024 * 1024,
+      file => file.size === 0 || file.size <= 5 * 1024 * 1024,
       `Max file size is 5MB.`
     )
     .refine(
       file =>
-        !file ||
-        ["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(
-          file.type
-        ),
+        file.size === 0 ||
+        [
+          "application/pdf",
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/jpg"
+        ].includes(file.type),
       "Only .pdf, .jpg, .jpeg, .png and .webp formats are supported."
-    ),
+    )
+    .optional(),
   citation: z.string().optional(),
   imageUrl: z
     .string()
