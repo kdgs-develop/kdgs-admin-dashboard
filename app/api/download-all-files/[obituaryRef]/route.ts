@@ -136,7 +136,9 @@ export async function GET(
       headers: {
         "Content-Disposition": `attachment; filename="${zipFilename}"`,
         "Content-Type": "application/zip",
-        "Content-Length": zipBuffer.length.toString()
+        "Content-Length": zipBuffer.length.toString(),
+        "Content-Transfer-Encoding": "binary",
+        "X-Content-Type-Options": "nosniff"
       }
     });
   } catch (error) {
