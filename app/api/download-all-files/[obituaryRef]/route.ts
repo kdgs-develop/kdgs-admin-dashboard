@@ -6,6 +6,18 @@ import { Readable } from "stream";
 import { getObituaryImageUrls } from "@/lib/actions/public-search/get-obituary-image-urls";
 import { generateObituaryPdfBytes } from "@/lib/pdf-generation";
 
+// Function to sanitize filenames for wider compatibility
+function sanitizeFilename(filename: string): string {
+  // Allow alphanumeric, dots, hyphens, underscores. Replace others.
+  // For maximum iOS safety, we might be even stricter, e.g., only A-Za-z0-9.
+  let sanitized = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+  // Prevent multiple consecutive dots or underscores if that was the replacement
+  sanitized = sanitized.replace(/\.{2,}/g, ".").replace(/_{2,}/g, "_");
+  // Ensure it doesn't start or end with a dot or underscore
+  sanitized = sanitized.replace(/^[_.]+|[_.]+$/g, "");
+  return sanitized || "file"; // Fallback if empty after sanitize
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { obituaryRef: string } }
@@ -18,6 +30,8 @@ export async function GET(
       { status: 400 }
     );
   }
+
+  const safeObituaryRef = sanitizeFilename(obituaryRef); // Sanitize the ref for use in filenames
 
   const bucketName = process.env.MINIO_BUCKET_NAME;
   if (!bucketName) {
@@ -35,7 +49,7 @@ export async function GET(
     const pdfBytes = await generateObituaryPdfBytes(obituaryRef);
 
     if (pdfBytes) {
-      zip.file(`obituary_report_${obituaryRef}.pdf`, pdfBytes);
+      zip.file(`Report-${safeObituaryRef}.pdf`, pdfBytes);
     } else {
       // If PDF generation fails, we might still want to provide images,
       // or return an error. For now, logging and continuing.
@@ -72,9 +86,16 @@ export async function GET(
             chunks.push(chunk);
           }
           const imageNodeBuffer = Buffer.concat(chunks);
-          // Provide Uint8Array view of the buffer to JSZip
           const imageUint8Array = new Uint8Array(imageNodeBuffer);
-          zip.file(imageName, imageUint8Array);
+          // Sanitize image name for storing in zip, ensure extension is preserved
+          const extension = imageName.includes(".")
+            ? imageName.substring(imageName.lastIndexOf("."))
+            : "";
+          const baseName = imageName.includes(".")
+            ? imageName.substring(0, imageName.lastIndexOf("."))
+            : imageName;
+          const safeImageName = sanitizeFilename(baseName) + extension;
+          zip.file(safeImageName, imageUint8Array);
         } catch (imgError) {
           console.error(
             `Failed to fetch or add image ${imageName} to zip for ${obituaryRef}:`,
@@ -92,7 +113,7 @@ export async function GET(
 
     // If we have neither PDF nor images, and didn't error out earlier for PDF failure + image error:
     if (
-      zip.files[`obituary_report_${obituaryRef}.pdf`] === undefined &&
+      zip.files[`Report-${safeObituaryRef}.pdf`] === undefined &&
       Object.keys(zip.files).length === 0
     ) {
       console.error(
@@ -107,10 +128,13 @@ export async function GET(
     // --- 3. Generate and Send Zip ---
     const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
 
+    // Use sanitized ref for the downloadable zip filename
+    const zipFilename = `ObituaryFiles-${safeObituaryRef}.zip`;
+
     return new NextResponse(zipBuffer, {
       status: 200,
       headers: {
-        "Content-Disposition": `attachment; filename="obituary_files_${obituaryRef}.zip"`,
+        "Content-Disposition": `attachment; filename="${zipFilename}"`,
         "Content-Type": "application/zip",
         "Content-Length": zipBuffer.length.toString()
       }
