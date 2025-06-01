@@ -17,6 +17,10 @@ const initialState: NewObituaryFormState = {
   success: false
 };
 
+interface NewObituaryFormProps {
+  onSuccessDialogClose?: () => void;
+}
+
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -31,15 +35,26 @@ function SubmitButton() {
   );
 }
 
-export function NewObituaryForm() {
+export function NewObituaryForm({
+  onSuccessDialogClose
+}: NewObituaryFormProps) {
   const [state, formAction] = useFormState(submitNewObituary, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   useEffect(() => {
     if (state.success) {
-      formRef.current?.reset();
-      setFileName(null);
+      setShowSuccessMessage(true);
+      const timer = setTimeout(() => {
+        formRef.current?.reset();
+        setFileName(null);
+        setShowSuccessMessage(false);
+        if (onSuccessDialogClose) {
+          onSuccessDialogClose();
+        }
+      }, 3000); // Hide after 3 seconds
+      return () => clearTimeout(timer);
     }
   }, [state.success]);
 
@@ -50,6 +65,17 @@ export function NewObituaryForm() {
       setFileName(null);
     }
   };
+
+  if (showSuccessMessage) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6 bg-green-50 border border-green-200 rounded-md">
+        <p className="text-lg text-green-700 font-semibold">Success!</p>
+        <p className="text-sm text-green-600 text-center mt-2">
+          {state.message}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form ref={formRef} action={formAction} className="space-y-6">
@@ -260,7 +286,7 @@ export function NewObituaryForm() {
       </div>
 
       <div>
-        <Label htmlFor="obituaryFile">Attach Obituary</Label>
+        <Label htmlFor="obituaryFile">Attach Obituary (Optional)</Label>
         <Input
           id="obituaryFile"
           name="obituaryFile"
@@ -294,7 +320,7 @@ export function NewObituaryForm() {
 
       <div className="flex flex-col items-stretch gap-4 pt-2">
         <SubmitButton />
-        {state.message && (
+        {state.message && !state.success && (
           <p
             className={`text-sm ${state.success ? "text-green-600" : "text-red-600"} text-center`}
           >
