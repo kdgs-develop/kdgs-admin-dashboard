@@ -92,8 +92,7 @@ export default async function SearchPage() {
                     <li className="flex items-center gap-2">
                       <span className="text-green-600">•</span>
                       <span>
-                        Non-members can purchase downloads for $10 plus a
-                        handling fee.
+                        Non-members can purchase downloads for $10.00 CAD.
                       </span>
                     </li>
                   </ul>
