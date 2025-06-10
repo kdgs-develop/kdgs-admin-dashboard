@@ -12,7 +12,7 @@ import { sessionOptions, SessionData } from "@/lib/session";
 
 // Ensure Stripe secret key is available
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-03-31.basil" // Use the latest API version
+  apiVersion: "2025-05-28.basil" // Use the latest API version
 });
 
 // Define input schema matching CartItem but maybe less strict for action
