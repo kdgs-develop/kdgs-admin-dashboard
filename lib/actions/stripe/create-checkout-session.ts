@@ -53,36 +53,51 @@ export async function createCheckoutSession(cartItems: unknown): Promise<{
   }
   const validCartItems = validation.data;
 
-  // Filter items eligible for purchase (with images) and define price
-  const itemsToPurchase: PurchaseItem[] = validCartItems
-    .filter(item => item.hasImages)
-    .map(item => ({
-      ref: item.ref,
-      name: item.name,
-      price: 1000 // $10.00 CAD in cents - adjust if price varies
-    }));
-
-  if (itemsToPurchase.length === 0) {
-    return { error: "No items eligible for purchase in the cart." };
-  }
-
-  // Calculate total amount
-  const totalAmount = itemsToPurchase.reduce(
-    (sum, item) => sum + item.price,
-    0
-  );
-
-  // 3. Check for Base URL environment variable
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-  if (!baseUrl) {
-    console.error("NEXT_PUBLIC_BASE_URL environment variable is not set.");
-    return { error: "Server configuration error." };
+  // Get Price ID from environment
+  const priceId = process.env.STRIPE_PRICE_ID;
+  if (!priceId) {
+    console.error("STRIPE_PRICE_ID environment variable is not set.");
+    return { error: "Server configuration error. Please contact support." };
   }
 
   let orderId: string | null = null;
   let successToken: string | null = null;
 
   try {
+    // Fetch price from Stripe to avoid hardcoding
+    const price = await stripe.prices.retrieve(priceId);
+    if (!price || typeof price.unit_amount !== "number") {
+      console.error(`Could not retrieve a valid price for ID: ${priceId}`);
+      return { error: "Server configuration error. Pricing is unavailable." };
+    }
+    const unitAmount = price.unit_amount;
+
+    // Filter items eligible for purchase (with images) and define price
+    const itemsToPurchase: PurchaseItem[] = validCartItems
+      .filter(item => item.hasImages)
+      .map(item => ({
+        ref: item.ref,
+        name: item.name,
+        price: unitAmount // Use price from Stripe
+      }));
+
+    if (itemsToPurchase.length === 0) {
+      return { error: "No items eligible for purchase in the cart." };
+    }
+
+    // Calculate total amount
+    const totalAmount = itemsToPurchase.reduce(
+      (sum, item) => sum + item.price,
+      0
+    );
+
+    // 3. Check for Base URL environment variable
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    if (!baseUrl) {
+      console.error("NEXT_PUBLIC_BASE_URL environment variable is not set.");
+      return { error: "Server configuration error." };
+    }
+
     // Generate a unique token for the success URL
     successToken = randomUUID();
 
