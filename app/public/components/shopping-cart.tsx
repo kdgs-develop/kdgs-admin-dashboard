@@ -35,13 +35,15 @@ interface ShoppingCartProps {
   onRemoveItem: (ref: string) => void;
   onClearCart: () => void;
   setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
+  productPrice: string;
 }
 
 export function ShoppingCart({
   cartItems,
   onRemoveItem,
   onClearCart,
-  setCartItems
+  setCartItems,
+  productPrice
 }: ShoppingCartProps) {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -50,8 +52,12 @@ export function ShoppingCart({
     return null; // Don't render anything if cart is empty
   }
 
-  const itemCount = cartItems.length;
-  const totalPrice = (itemCount * 10).toFixed(2); // Calculate total price (10 CAD per item)
+  // Filter for items that are eligible for purchase (have images)
+  const itemsToPurchase = cartItems.filter(item => item.hasImages);
+  const itemCount = itemsToPurchase.length;
+
+  // Calculate total price based on eligible items and the fetched price
+  const totalPrice = (itemCount * parseFloat(productPrice)).toFixed(2);
 
   const handleCheckout = async () => {
     setIsCheckingOut(true);
@@ -65,7 +71,7 @@ export function ShoppingCart({
 
     try {
       // Filter cart items to only include those with images before sending
-      const itemsToCheckout = cartItems.filter(item => item.hasImages);
+      const itemsToCheckout = itemsToPurchase;
       if (itemsToCheckout.length === 0) {
         setCheckoutError(
           "Your cart contains no items eligible for checkout (missing images)."
@@ -176,7 +182,7 @@ export function ShoppingCart({
                   </div>
                 </div>
                 <span className="text-sm font-semibold text-primary text-right pt-1 whitespace-nowrap">
-                  $10.00 CAD
+                  ${productPrice} CAD
                 </span>
                 <Button
                   variant="ghost"
