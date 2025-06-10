@@ -632,7 +632,7 @@ export function SearchForm({ session, productPrice }: SearchFormProps) {
         <RequestObituaryDialog
           isOpen={isRequestDialogOpen}
           onOpenChange={handleCloseRequestDialog}
-          session={session}
+          session={session ?? null}
           obituaryRef={selectedRecord.obituaryReference}
           obituaryName={selectedRecord.obituaryName}
           onSignInRequest={handleSignInRequest}
