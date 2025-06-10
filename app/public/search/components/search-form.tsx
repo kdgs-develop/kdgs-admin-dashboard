@@ -105,9 +105,10 @@ interface CurrentSearchCriteria extends SearchFormValues {
 
 interface SearchFormProps {
   session?: SessionData | null;
+  productPrice: string;
 }
 
-export function SearchForm({ session }: SearchFormProps) {
+export function SearchForm({ session, productPrice }: SearchFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [searchData, setSearchData] = useState<SearchResponse | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -210,6 +211,11 @@ export function SearchForm({ session }: SearchFormProps) {
   const handleCloseRequestDialog = () => {
     setIsRequestDialogOpen(false);
     setSelectedRecord(null); // Reset selected record on close
+  };
+
+  // Handler for closing the login dialog
+  const handleCloseLoginDialog = () => {
+    setIsLoginDialogOpen(false);
   };
 
   // Placeholder handler for triggering sign-in
@@ -621,35 +627,33 @@ export function SearchForm({ session }: SearchFormProps) {
         />
       )}
 
-      {/* Render the ShoppingCart component */}
-      <ShoppingCart
-        cartItems={cartItems}
-        onRemoveItem={handleRemoveFromCart}
-        onClearCart={handleClearCart}
-        setCartItems={setCartItems}
-      />
-
       {/* Request Obituary Dialog */}
       {selectedRecord && (
         <RequestObituaryDialog
           isOpen={isRequestDialogOpen}
-          onOpenChange={open => {
-            if (!open) {
-              handleCloseRequestDialog();
-            }
-          }}
+          onOpenChange={handleCloseRequestDialog}
+          session={session}
           obituaryRef={selectedRecord.obituaryReference}
           obituaryName={selectedRecord.obituaryName}
-          session={session ?? null}
           onSignInRequest={handleSignInRequest}
           onAddToCart={handleAddToCart}
+          productPrice={productPrice}
         />
       )}
 
       {/* Login Dialog */}
       <LoginDialog
         isOpen={isLoginDialogOpen}
-        onOpenChange={setIsLoginDialogOpen}
+        onOpenChange={handleCloseLoginDialog}
+      />
+
+      {/* Floating Shopping Cart */}
+      <ShoppingCart
+        cartItems={cartItems}
+        onRemoveItem={handleRemoveFromCart}
+        onClearCart={handleClearCart}
+        setCartItems={setCartItems}
+        productPrice={productPrice}
       />
     </Form>
   );
