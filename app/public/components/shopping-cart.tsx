@@ -199,7 +199,7 @@ export function ShoppingCart({
             <div className="w-7 h-7"></div>
           </div>
           <p className="text-xs text-muted-foreground px-1 text-center">
-            Transaction fees are not included and will be added at checkout.
+            Transaction fees are included in the total price.
           </p>
           {checkoutError && (
             <p className="text-sm text-red-600 px-1 text-center">
