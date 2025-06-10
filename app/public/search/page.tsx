@@ -18,6 +18,7 @@ import { VolunteerInterestForm } from "./components/contact-forms/volunteer-inte
 import { FeedbackDialogTrigger } from "./components/feedback-dialog-trigger";
 import { NewObituaryDialogTrigger } from "./components/new-obituary-dialog-trigger";
 import { VolunteerInterestDialogTrigger } from "./components/volunteer-interest-dialog-trigger";
+import Stripe from "stripe";
 
 export const metadata: Metadata = {
   title: "Search Central Okanagan Obituary Records - KDGS",
@@ -25,25 +26,36 @@ export const metadata: Metadata = {
     "Search through our collection of Central Okanagan obituary records to discover your family history"
 };
 
-// async function getFamilyRelationships(): Promise<FamilyRelationship[]> { // Function no longer needed
-//   try {
-//     const relationships = await prisma.familyRelationship.findMany({
-//       orderBy: { name: "asc" }
-//     });
-//     return relationships;
-//   } catch (error) {
-//     console.error("Failed to fetch family relationships:", error);
-//     return []; // Return empty array on error
-//   }
-// }
+// Ensure Stripe secret key is available
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-05-28.basil" // Use the latest API version
+});
+
+async function getProductPrice(): Promise<string> {
+  const priceId = process.env.STRIPE_PRICE_ID;
+  if (!priceId) {
+    console.error("STRIPE_PRICE_ID is not set.");
+    return "Not Available"; // Fallback price
+  }
+
+  try {
+    const price = await stripe.prices.retrieve(priceId);
+    if (!price || typeof price.unit_amount !== "number") {
+      console.error(`Could not retrieve a valid price for ID: ${priceId}`);
+      return "Not Available"; // Fallback price
+    }
+    return (price.unit_amount / 100).toFixed(2);
+  } catch (error) {
+    console.error("Failed to fetch Stripe price:", error);
+    return "Not Available"; // Fallback price on error
+  }
+}
 
 export default async function SearchPage() {
-  // Fetch session data
-  // const [relationships, session] = await Promise.all([ // relationships no longer fetched
-  //   getFamilyRelationships(),
-  //   getIronSession<SessionData>(cookies(), sessionOptions)
-  // ]);
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const [session, productPrice] = await Promise.all([
+    getIronSession<SessionData>(cookies(), sessionOptions),
+    getProductPrice()
+  ]);
 
   // Create a plain object for the session data to pass to the client component
   const plainSessionData: SessionData | null = session.isLoggedIn
@@ -92,8 +104,8 @@ export default async function SearchPage() {
                     <li className="flex items-center gap-2">
                       <span className="text-green-600">•</span>
                       <span>
-                        Non-members can purchase downloads for $10 plus a
-                        handling fee.
+                        Non-members can purchase downloads for ${productPrice}{" "}
+                        CAD.
                       </span>
                     </li>
                   </ul>
@@ -228,6 +240,7 @@ export default async function SearchPage() {
             <SearchForm
               // relationships={relationships} // Prop removed
               session={plainSessionData}
+              productPrice={productPrice}
             />
           </div>
         </div>
@@ -257,8 +270,8 @@ export default async function SearchPage() {
                     <span className="text-green-600 self-start">•</span>
                     <span>
                       Do you have or wish to request an obituary not yet found
-                      in our collection for someone who lived or died in
-                      Central Okanagan? <NewObituaryDialogTrigger />
+                      in our collection for someone who lived or died in Central
+                      Okanagan? <NewObituaryDialogTrigger />
                     </span>
                   </li>
                   <li className="flex items-center gap-2">

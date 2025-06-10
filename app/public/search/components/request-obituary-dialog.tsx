@@ -84,6 +84,7 @@ interface RequestObituaryDialogProps {
   obituaryName: string | null;
   onSignInRequest: () => void;
   onAddToCart: (ref: string, name: string, hasImages: boolean) => void;
+  productPrice: string;
 }
 
 export function RequestObituaryDialog({
@@ -93,7 +94,8 @@ export function RequestObituaryDialog({
   obituaryRef,
   obituaryName,
   onSignInRequest,
-  onAddToCart
+  onAddToCart,
+  productPrice
 }: RequestObituaryDialogProps) {
   const [step, setStep] = useState<RequestStep>("authCheck");
   const [details, setDetails] = useState<ObituaryDetails | null>(null);
@@ -382,7 +384,7 @@ export function RequestObituaryDialog({
                   <AlertDescription className="text-green-700">
                     {isLoggedIn
                       ? `This obituary has ${details.imageCount} image record(s) available for download.`
-                      : `This obituary has ${details.imageCount} image record(s). As a guest, access costs $10 CAD + fees.`}
+                      : `This obituary has ${details.imageCount} image record(s). As a guest, access costs $${productPrice} CAD.`}
                   </AlertDescription>
                 </Alert>
                 <Alert className="bg-blue-50 border-blue-200">
@@ -714,7 +716,7 @@ export function RequestObituaryDialog({
                       <AlertDescription className="text-green-700">
                         This obituary has {details.imageCount} image record(s).
                         Members can download for free. Guests may proceed to
-                        view purchase options ($10 CAD + fees).
+                        view purchase options (${productPrice} CAD).
                       </AlertDescription>
                     </Alert>
                     <Alert className="bg-blue-50 border-blue-200">

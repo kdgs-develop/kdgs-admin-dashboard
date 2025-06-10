@@ -5,7 +5,7 @@ import { z } from "zod";
 
 // Ensure Stripe secret key is available
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-03-31.basil" // Use the same API version as createCheckoutSession
+  apiVersion: "2025-05-28.basil" // Use the same API version as createCheckoutSession
 });
 
 const inputSchema = z.string().startsWith("cs_"); // Basic validation for checkout session ID format
