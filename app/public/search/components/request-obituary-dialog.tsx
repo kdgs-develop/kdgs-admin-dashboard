@@ -382,7 +382,7 @@ export function RequestObituaryDialog({
                   <AlertDescription className="text-green-700">
                     {isLoggedIn
                       ? `This obituary has ${details.imageCount} image record(s) available for download.`
-                      : `This obituary has ${details.imageCount} image record(s). As a guest, access costs $10 CAD + fees.`}
+                      : `This obituary has ${details.imageCount} image record(s). As a guest, access costs $10 CAD.`}
                   </AlertDescription>
                 </Alert>
                 <Alert className="bg-blue-50 border-blue-200">
