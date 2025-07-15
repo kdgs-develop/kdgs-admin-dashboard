@@ -44,12 +44,20 @@ const formSchema = z.object({
   surname: z
     .string()
     .min(1, "Surname is required")
-    .toUpperCase()
+    .refine(val => !val.startsWith(" "), {
+      message:
+        "Surname cannot start with a space. Please remove the leading space."
+    })
+    .transform(val => val.toUpperCase())
     .transform(val => val.padEnd(4, " "))
     .transform(val => val.replace(/[^A-Za-z\s]/g, "")),
   givenNames: z
     .string()
     .min(1, "Given names are required")
+    .refine(val => !val.startsWith(" "), {
+      message:
+        "Given names cannot start with a space. Please remove the leading space."
+    })
     .transform(val =>
       val
         .split(" ")
@@ -120,6 +128,13 @@ export function CreateFileNumberDialog({
   const handleGenerateFileNumber = async () => {
     setIsGenerating(true);
     try {
+      // Trigger form validation first
+      const isValid = await form.trigger();
+      if (!isValid) {
+        setIsGenerating(false);
+        return;
+      }
+
       const { surname, givenNames, deathDate } = form.getValues();
 
       if (!surname || !givenNames || !deathDate) {
@@ -129,6 +144,7 @@ export function CreateFileNumberDialog({
             "Please fill in all fields before generating a file number.",
           variant: "destructive"
         });
+        setIsGenerating(false);
         return;
       }
 
