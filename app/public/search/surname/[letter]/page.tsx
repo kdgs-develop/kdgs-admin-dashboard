@@ -12,6 +12,9 @@ import Stripe from "stripe";
 
 const PAGE_SIZE = 100;
 
+// Enable ISR with daily revalidation (24 hours)
+export const revalidate = 86400;
+
 // Ensure Stripe secret key is available
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-05-28.basil" // Use the latest API version
@@ -41,12 +44,6 @@ interface AlphabeticalSearchPageProps {
   params: {
     letter: string;
   };
-}
-
-export async function generateStaticParams() {
-  return "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(letter => ({
-    letter
-  }));
 }
 
 export async function generateMetadata({
