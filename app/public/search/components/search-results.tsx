@@ -53,6 +53,7 @@ interface SearchResultsProps {
   onOpenRequestDialog: (obituaryRef: string, obituaryName: string) => void;
   isLoggedIn: boolean;
   isPartialMatch?: boolean;
+  showPageSizeChanger?: boolean;
 }
 
 export function SearchResults({
@@ -67,7 +68,8 @@ export function SearchResults({
   onPageSizeChange,
   onOpenRequestDialog,
   isLoggedIn,
-  isPartialMatch
+  isPartialMatch,
+  showPageSizeChanger = true
 }: SearchResultsProps) {
   const totalPages = Math.ceil(totalCount / pageSize);
   const pageSizes = [10, 25, 50, 100];
@@ -105,8 +107,8 @@ export function SearchResults({
         <ShoppingCart className="h-4 w-4 text-blue-600" />
         <AlertTitle>No Results Found</AlertTitle>
         <AlertDescription>
-        Try broadening your search criteria or check for variant spellings in the
-        surname (e.g., READ vs. REID).
+          Try broadening your search criteria or check for variant spellings in
+          the surname (e.g., READ vs. REID).
         </AlertDescription>
       </Alert>
     );
@@ -207,24 +209,26 @@ export function SearchResults({
 
         <div className="flex items-center gap-4">
           {/* Page Size Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Rows per page:</span>
-            <Select
-              value={String(pageSize)}
-              onValueChange={value => onPageSizeChange(Number(value))}
-            >
-              <SelectTrigger className="h-8 w-[70px]">
-                <SelectValue placeholder={pageSize} />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {pageSizes.map(size => (
-                  <SelectItem key={size} value={String(size)}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {showPageSizeChanger && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Rows per page:</span>
+              <Select
+                value={String(pageSize)}
+                onValueChange={value => onPageSizeChange(Number(value))}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder={pageSize} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {pageSizes.map(size => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Page Navigation */}
           <div className="flex items-center gap-2">
