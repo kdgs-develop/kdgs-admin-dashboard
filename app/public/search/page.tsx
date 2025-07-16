@@ -24,7 +24,14 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Search Central Okanagan Obituary Records - KDGS",
   description:
-    "Search through our collection of Central Okanagan obituary records to discover your family history"
+    "Search through our collection of Central Okanagan obituary records to discover your family history",
+  robots: "index, follow",
+  openGraph: {
+    title: "Search Central Okanagan Obituary Records - KDGS",
+    description: "Search through our collection of Central Okanagan obituary records to discover your family history",
+    url: "https://dashboard.kdgs.ca/public/search",
+    siteName: "KDGS Obituary Search"
+  }
 };
 
 // Ensure Stripe secret key is available
