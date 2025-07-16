@@ -1,13 +1,37 @@
 import React, { useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage
+} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
 import { CityWithRelations, PeriodicalWithRelations } from "@/types/prisma";
 import ComboboxFormField from "@/components/ui/combo-form-field";
@@ -21,36 +45,40 @@ const formSchema = z.object({
 type EditPeriodicalDialogProps = {
   isOpen: boolean;
   onClose: () => void;
-  onEditPeriodical: (name: string, url?: string | null, cityId?: number | null) => Promise<void>;
+  onEditPeriodical: (
+    name: string,
+    url?: string | null,
+    cityId?: number | null
+  ) => Promise<void>;
   onDeletePeriodical: (id: number) => Promise<void>;
   periodical: PeriodicalWithRelations | null;
   cities: CityWithRelations[];
 };
 
-function EditPeriodicalDialog({ 
-  isOpen, 
-  onClose, 
-  onEditPeriodical, 
-  onDeletePeriodical, 
+function EditPeriodicalDialog({
+  isOpen,
+  onClose,
+  onEditPeriodical,
+  onDeletePeriodical,
   periodical,
-  cities 
+  cities
 }: EditPeriodicalDialogProps) {
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: periodical?.name || '',
-      url: periodical?.url || '',
+      name: periodical?.name || "",
+      url: periodical?.url || "",
       cityId: periodical?.cityId || null
-    },
+    }
   });
 
   useEffect(() => {
     if (periodical) {
       form.reset({
-        name: periodical.name || '',
-        url: periodical.url || '',
+        name: periodical.name || "",
+        url: periodical.url || "",
         cityId: periodical.cityId || null
       });
     }
@@ -62,9 +90,12 @@ function EditPeriodicalDialog({
       onClose();
     } catch (error) {
       toast({
-        title: 'Error updating periodical',
-        description: error instanceof Error ? error.message : 'Failed to update periodical',
-        variant: 'destructive'
+        title: "Error updating periodical",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to update periodical",
+        variant: "destructive"
       });
     }
   };
@@ -73,9 +104,9 @@ function EditPeriodicalDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Periodical</DialogTitle>
+          <DialogTitle>Edit Publication</DialogTitle>
           <DialogDescription>
-            Update the information for this periodical.
+            Update the information for this publication.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -112,13 +143,16 @@ function EditPeriodicalDialog({
               label="Location (Optional)"
               placeholder="Select a location"
               emptyText="No location found."
-              items={cities.map((city) => ({
+              items={cities.map(city => ({
                 id: city.id,
-                name: city.name ?? '',
-                province: city.province ?? undefined,
-                country: city.country
-                  ? { name: city.country.name }
-                  : undefined
+                name: city.name ?? "",
+                city: {
+                  name: city.name ?? "",
+                  province: city.province ?? undefined,
+                  country: city.country
+                    ? { name: city.country.name }
+                    : undefined
+                }
               }))}
             />
             <DialogFooter className="flex justify-between items-center">
@@ -133,13 +167,16 @@ function EditPeriodicalDialog({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the publication.
+                      This action cannot be undone. This will permanently delete
+                      the publication.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => periodical && onDeletePeriodical(periodical.id)}
+                      onClick={() =>
+                        periodical && onDeletePeriodical(periodical.id)
+                      }
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                       Delete
@@ -161,4 +198,4 @@ function EditPeriodicalDialog({
   );
 }
 
-export default EditPeriodicalDialog; 
+export default EditPeriodicalDialog;
