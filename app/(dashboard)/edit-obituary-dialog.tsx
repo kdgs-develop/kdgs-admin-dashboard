@@ -23,6 +23,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { MetadataDateField } from "@/components/ui/metadata-date-display";
+import {
+  formatContentDate,
+  formatMetadataTimestamp,
+  getCurrentTimestamp,
+  formatForDateInput
+} from "@/lib/date-utils";
 import { getUserData, getImageRotation } from "@/lib/db";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -400,7 +407,7 @@ export function EditObituaryDialog({
     if (!hasImages) return;
     form.setValue("proofread", checked);
     if (checked) {
-      form.setValue("proofreadDate", new Date());
+      form.setValue("proofreadDate", getCurrentTimestamp());
       form.setValue("proofreadBy", currentUserFullName || "");
     } else {
       form.setValue("proofreadDate", null);
@@ -415,24 +422,13 @@ export function EditObituaryDialog({
 
       // Set the current user and timestamp for editing right before saving
       obituaryData.editedBy = currentUserFullName || "";
+      obituaryData.editedOn = getCurrentTimestamp();
 
-      // Ensure we're using UTC dates for storage
-      obituaryData.editedOn = new Date();
+      // Content dates: preserve as date-only (no timezone conversion needed)
+      // The Date constructor will be handled by Prisma correctly for @db.Date fields
 
-      // Ensure other dates are properly handled for UTC storage
-      if (obituaryData.birthDate) {
-        obituaryData.birthDate = new Date(obituaryData.birthDate);
-      } else {
-        obituaryData.birthDate = null;
-      }
-      if (obituaryData.deathDate) {
-        obituaryData.deathDate = new Date(obituaryData.deathDate);
-      }
-      if (obituaryData.publishDate) {
-        obituaryData.publishDate = new Date(obituaryData.publishDate);
-      } else {
-        obituaryData.publishDate = null;
-      }
+      // Metadata timestamps: ensure they're proper Date objects for storage
+      // These will be stored as full timestamps with timezone info
       if (obituaryData.proofreadDate) {
         obituaryData.proofreadDate = new Date(obituaryData.proofreadDate);
       } else {
@@ -442,11 +438,6 @@ export function EditObituaryDialog({
         obituaryData.enteredOn = new Date(obituaryData.enteredOn);
       } else {
         obituaryData.enteredOn = null;
-      }
-      if (obituaryData.editedOn) {
-        obituaryData.editedOn = new Date(obituaryData.editedOn);
-      } else {
-        obituaryData.editedOn = null;
       }
 
       // Format relatives' names
@@ -690,6 +681,7 @@ export function EditObituaryDialog({
       titleId: obituary.titleId || undefined,
       givenNames: obituary.givenNames || "",
       maidenName: obituary.maidenName || "",
+      // Content dates: preserve as-is for consistent display
       birthDate: obituary.birthDate ? new Date(obituary.birthDate) : undefined,
       birthCityId: obituary.birthCityId || undefined,
       deathDate: obituary.deathDate ? new Date(obituary.deathDate) : undefined,
@@ -704,6 +696,7 @@ export function EditObituaryDialog({
       column: obituary.column || "",
       notes: obituary.notes || "",
       proofread: obituary.proofread || false,
+      // Metadata timestamps: preserve as full timestamps
       proofreadDate: obituary.proofreadDate
         ? new Date(obituary.proofreadDate)
         : null,
@@ -1613,30 +1606,31 @@ export function EditObituaryDialog({
                     />
                   </div>
                   <div className="space-y-2">
-                    <FormField
-                      control={form.control}
-                      name="proofreadDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-xs">
-                            Proofread Date
-                          </FormLabel>
-                          {role === "ADMIN" || role === "PROOFREADER" ? (
+                    {role === "ADMIN" || role === "PROOFREADER" ? (
+                      <FormField
+                        control={form.control}
+                        name="proofreadDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel className="text-xs">
+                              Proofread Date
+                            </FormLabel>
                             <DatePicker
                               date={field.value}
                               setDate={field.onChange}
                             />
-                          ) : (
-                            <Input
-                              type="date"
-                              className="h-8 text-sm"
-                              disabled
-                            />
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ) : (
+                      <MetadataDateField
+                        date={form.watch("proofreadDate")}
+                        label="Proofread Date"
+                        showAsCard={true}
+                        isDisabled={true}
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <FormField
@@ -1668,95 +1662,59 @@ export function EditObituaryDialog({
                   <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
                     Metadata
                   </h3>
-                  <div className="space-y-2">
-                    <FormField
-                      control={form.control}
-                      name="enteredBy"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Entered By</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              className="h-8 text-sm"
-                              disabled={role !== "ADMIN" && role !== "ROOT"}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="enteredOn"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-xs">Entered On</FormLabel>
-                          {role === "ADMIN" ? (
-                            <DatePicker
-                              date={field.value}
-                              setDate={field.onChange}
-                            />
-                          ) : (
-                            <Input
-                              type="date"
-                              className="h-8 text-sm"
-                              disabled
-                              value={
-                                field.value
-                                  ? new Date(field.value).toLocaleDateString(
-                                      "en-CA"
-                                    )
-                                  : ""
-                              }
-                            />
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <FormField
-                      control={form.control}
-                      name="editedBy"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Edited By</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              className="h-8 text-sm"
-                              disabled={role !== "ADMIN"}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="editedOn"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-xs">Edited On</FormLabel>
-                          {role === "ADMIN" ? (
-                            <DatePicker
-                              date={field.value}
-                              setDate={field.onChange}
-                            />
-                          ) : (
-                            <Input
-                              type="date"
-                              className="h-8 text-sm"
-                              disabled
-                              value={new Date().toLocaleDateString("en-CA")}
-                            />
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="enteredBy"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">
+                              Entered By
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                className="h-8 text-sm"
+                                disabled={role !== "ADMIN" && role !== "ROOT"}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <MetadataDateField
+                        date={form.watch("enteredOn")}
+                        label="Entered On"
+                        showAsCard={true}
+                        isDisabled={role !== "ADMIN"}
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="editedBy"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Edited By</FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                className="h-8 text-sm"
+                                disabled={role !== "ADMIN"}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <MetadataDateField
+                        date={form.watch("editedOn")}
+                        label="Edited On"
+                        showAsCard={true}
+                        isDisabled={role !== "ADMIN"}
+                      />
+                    </div>
                   </div>
                   <div className="flex gap-2 items-start">
                     <ComboboxFormField

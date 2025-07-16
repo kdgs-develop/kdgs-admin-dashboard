@@ -55,13 +55,13 @@ type EditPeriodicalDialogProps = {
   cities: CityWithRelations[];
 };
 
-function EditPeriodicalDialog({
-  isOpen,
-  onClose,
-  onEditPeriodical,
-  onDeletePeriodical,
+function EditPeriodicalDialog({ 
+  isOpen, 
+  onClose, 
+  onEditPeriodical, 
+  onDeletePeriodical, 
   periodical,
-  cities
+  cities 
 }: EditPeriodicalDialogProps) {
   const { toast } = useToast();
 
@@ -148,10 +148,10 @@ function EditPeriodicalDialog({
                 name: city.name ?? "",
                 city: {
                   name: city.name ?? "",
-                  province: city.province ?? undefined,
-                  country: city.country
-                    ? { name: city.country.name }
-                    : undefined
+                province: city.province ?? undefined,
+                country: city.country
+                  ? { name: city.country.name }
+                  : undefined
                 }
               }))}
             />
@@ -198,4 +198,4 @@ function EditPeriodicalDialog({
   );
 }
 
-export default EditPeriodicalDialog;
+export default EditPeriodicalDialog; 
