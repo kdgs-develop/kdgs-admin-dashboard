@@ -88,7 +88,7 @@ export function AddCemeteryDialog({ isOpen, onClose, onAddCemetery, cities, init
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Cemetery</DialogTitle>
+          <DialogTitle>Add New Interment Place</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -97,7 +97,7 @@ export function AddCemeteryDialog({ isOpen, onClose, onAddCemetery, cities, init
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cemetery Name</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -110,7 +110,7 @@ export function AddCemeteryDialog({ isOpen, onClose, onAddCemetery, cities, init
               name="cityId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>City</FormLabel>
+                  <FormLabel>Location</FormLabel>
                   <Popover open={open} onOpenChange={setOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
