@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/login(.*)",
@@ -13,7 +14,18 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware((auth, req) => {
-  if (!isPublicRoute(req)) auth().protect();
+  // Allow indexing for public search routes
+  if (req.nextUrl.pathname.startsWith("/public/search")) {
+    const response = NextResponse.next();
+    // Remove any noindex headers and explicitly allow indexing
+    response.headers.delete("X-Robots-Tag");
+    response.headers.set("X-Robots-Tag", "index, follow");
+    return response;
+  }
+
+  if (!isPublicRoute(req)) {
+    auth().protect();
+  }
 });
 
 export const config = {
