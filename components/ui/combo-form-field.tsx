@@ -5,23 +5,23 @@ import {
   CommandInput,
   CommandItem,
   CommandList
-} from '@/components/ui/command';
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger
-} from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button } from './button';
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "./button";
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage
-} from './form';
+} from "./form";
 
 type ComboboxFormFieldProps = {
   control: any;
@@ -59,7 +59,7 @@ function ComboboxFormField({
   onAddItem
 }: ComboboxFormFieldProps) {
   const [open, setOpen] = useState(false);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const commandRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -73,7 +73,7 @@ function ComboboxFormField({
     setOpen(isOpen);
     if (isOpen) {
       setTimeout(() => {
-        commandRef.current?.querySelector('input')?.focus();
+        commandRef.current?.querySelector("input")?.focus();
       }, 0);
     }
   }, []);
@@ -110,24 +110,27 @@ function ComboboxFormField({
                   role="combobox"
                   aria-expanded={open}
                   className={cn(
-                    'max-w-md justify-between h-8 text-sm',
-                    !field.value && 'text-muted-foreground'
+                    "max-w-md justify-between h-8 text-sm",
+                    !field.value && "text-muted-foreground"
                   )}
                 >
                   {field.value
-                    ? items.find((item) => item.id === field.value)
+                    ? items.find(item => item.id === field.value)
                       ? (() => {
-                          const item = items.find((i) => i.id === field.value);
-                          const locationInfo = item?.city 
-                            ? [
-                                item.city.name,
-                                item.city.province,
-                                item.city.country?.name
-                              ].filter(Boolean).join(' - ')
-                            : '';
-                          return locationInfo 
-                            ? `${item?.name} (${locationInfo})`
-                            : item?.name;
+                          const item = items.find(i => i.id === field.value);
+                          if (
+                            item?.city &&
+                            (item.city.province || item.city.country?.name)
+                          ) {
+                            const locationInfo = [
+                              item.city.province,
+                              item.city.country?.name
+                            ]
+                              .filter(Boolean)
+                              .join(" - ");
+                            return `${item.name} - ${locationInfo}`;
+                          }
+                          return item?.name;
                         })()
                       : placeholder
                     : placeholder}
@@ -137,8 +140,8 @@ function ComboboxFormField({
             </PopoverTrigger>
             <PopoverContent
               className="w-min-fit p-0 z-50"
-              style={{ pointerEvents: 'auto' }}
-              onInteractOutside={(e) => {
+              style={{ pointerEvents: "auto" }}
+              onInteractOutside={e => {
                 e.preventDefault();
                 setOpen(false);
               }}
@@ -168,9 +171,12 @@ function ComboboxFormField({
                       Create a new location
                     </Button> */}
                   </CommandEmpty>
-                  <CommandGroup className="h-[200px] overflow-y-auto" onWheel={(e) => {
-                    e.currentTarget.scrollTop += e.deltaY;
-                  }}>
+                  <CommandGroup
+                    className="h-[200px] overflow-y-auto"
+                    onWheel={e => {
+                      e.currentTarget.scrollTop += e.deltaY;
+                    }}
+                  >
                     <CommandItem
                       value="None"
                       onSelect={() => {
@@ -180,20 +186,24 @@ function ComboboxFormField({
                     >
                       <Check
                         className={cn(
-                          'mr-2 h-4 w-4',
-                          field.value === undefined || null ? 'opacity-100' : 'opacity-0'
+                          "mr-2 h-4 w-4",
+                          field.value === undefined || null
+                            ? "opacity-100"
+                            : "opacity-0"
                         )}
                       />
                       None
                     </CommandItem>
-                    {items.map((item) => (
+                    {items.map(item => (
                       <CommandItem
                         value={[
                           item.name,
                           item.city?.name,
                           item.city?.province,
                           item.city?.country?.name
-                        ].filter(Boolean).join(' ')}
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
                         key={item.id}
                         onSelect={() => {
                           field.onChange(item.id);
@@ -202,21 +212,24 @@ function ComboboxFormField({
                       >
                         <Check
                           className={cn(
-                            'mr-2 h-4 w-4',
-                            item.id === field.value ? 'opacity-100' : 'opacity-0'
+                            "mr-2 h-4 w-4",
+                            item.id === field.value
+                              ? "opacity-100"
+                              : "opacity-0"
                           )}
                         />
                         <div className="flex flex-col">
-                          <span>{item.name}</span>
-                          {item.city && (
-                            <span className="text-xs text-muted-foreground">
-                              {[
-                                item.city.name,
-                                item.city.province,
-                                item.city.country?.name
-                              ].filter(Boolean).join(' - ')}
-                            </span>
-                          )}
+                          <span>
+                            {item.city &&
+                            (item.city.province || item.city.country?.name)
+                              ? `${item.name} - ${[
+                                  item.city.province,
+                                  item.city.country?.name
+                                ]
+                                  .filter(Boolean)
+                                  .join(" - ")}`
+                              : item.name}
+                          </span>
                         </div>
                       </CommandItem>
                     ))}
