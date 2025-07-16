@@ -115,10 +115,7 @@ export function AlphabeticalResults({
     console.log("Cart cleared");
   }, []);
 
-  // Handler for closing the login dialog
-  const handleCloseLoginDialog = () => {
-    setIsLoginDialogOpen(false);
-  };
+
 
   return (
     <>
@@ -164,7 +161,6 @@ export function AlphabeticalResults({
       <LoginDialog
         isOpen={isLoginDialogOpen}
         onOpenChange={setIsLoginDialogOpen}
-        onClose={handleCloseLoginDialog}
       />
     </>
   );
