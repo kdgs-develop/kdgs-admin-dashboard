@@ -53,13 +53,21 @@ export async function generateMetadata({
 
   if (letter.length !== 1 || !/^[A-Z]$/.test(letter)) {
     return {
-      title: "Invalid Page"
+      title: "Invalid Page",
+      robots: "noindex, nofollow"
     };
   }
 
   return {
     title: `Obituaries: Surnames Starting with '${letter}' - KDGS`,
-    description: `Browse the collection of obituaries for surnames starting with the letter ${letter}.`
+    description: `Browse the collection of obituaries for surnames starting with the letter ${letter}.`,
+    robots: "index, follow",
+    openGraph: {
+      title: `Obituaries: Surnames Starting with '${letter}' - KDGS`,
+      description: `Browse the collection of obituaries for surnames starting with the letter ${letter}.`,
+      url: `https://dashboard.kdgs.ca/public/search/surname/${letter}`,
+      siteName: "KDGS Obituary Search"
+    }
   };
 }
 
