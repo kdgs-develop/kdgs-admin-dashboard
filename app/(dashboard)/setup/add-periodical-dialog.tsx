@@ -129,10 +129,10 @@ function AddPeriodicalDialog({
                 name: city.name ?? "",
                 city: {
                   name: city.name ?? "",
-                  province: city.province ?? undefined,
-                  country: city.country
-                    ? { name: city.country.name }
-                    : undefined
+                province: city.province ?? undefined,
+                country: city.country
+                  ? { name: city.country.name }
+                  : undefined
                 }
               }))}
             />
@@ -146,4 +146,4 @@ function AddPeriodicalDialog({
   );
 }
 
-export default AddPeriodicalDialog;
+export default AddPeriodicalDialog; 
