@@ -621,7 +621,7 @@ export function CemeteryAdministration() {
             cities={cities}
             initialValues={{
               name: searchName,
-              cityId: searchCityId
+              cityId: searchCityId ? parseInt(searchCityId) : undefined
             }}
           />
 
