@@ -50,7 +50,7 @@ model Obituary {
   column         String?       @db.VarChar(8)
   notes          String?
   proofread      Boolean       @default(false)
-  proofreadDate  DateTime?     @db.Date
+  proofreadDate  DateTime?
   proofreadBy    String?
   enteredBy      String?
   enteredOn      DateTime?     @default(now())
