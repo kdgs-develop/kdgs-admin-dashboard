@@ -8,16 +8,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import ComboboxFormField from '@/components/ui/combo-form-field';
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import ComboboxFormField from "@/components/ui/combo-form-field";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -25,17 +25,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Trash2 } from "lucide-react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 const formSchema = z.object({
-  name: z.string().min(1, 'Cemetery name is required'),
-  cityId: z.number().min(1, 'City is required')
+  name: z.string().min(1, "Cemetery name is required"),
+  cityId: z.number().min(1, "City is required")
 });
 
 type EditCemeteryDialogProps = {
@@ -52,7 +52,12 @@ type EditCemeteryDialogProps = {
     name: string | null;
     city: { id: number; name: string; country: { name: string } };
   } | null;
-  cities: { id: number; name: string; country: { name: string } }[];
+  cities: {
+    id: number;
+    name: string;
+    province?: string | null;
+    country: { name: string };
+  }[];
 };
 
 function EditCemeteryDialog({
@@ -66,7 +71,7 @@ function EditCemeteryDialog({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: cemetery?.name || '',
+      name: cemetery?.name || "",
       cityId: cemetery?.city?.id || 0
     }
   });
@@ -74,7 +79,7 @@ function EditCemeteryDialog({
   useEffect(() => {
     if (cemetery) {
       form.reset({
-        name: cemetery.name || '',
+        name: cemetery.name || "",
         cityId: cemetery.city?.id || 0
       });
     }
@@ -90,7 +95,7 @@ function EditCemeteryDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Cemetery</DialogTitle>
+          <DialogTitle>Edit Interment Place</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -99,7 +104,7 @@ function EditCemeteryDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cemetery Name</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -110,13 +115,19 @@ function EditCemeteryDialog({
             <ComboboxFormField
               control={form.control}
               name="cityId"
-              label="City"
+              label="Location"
               placeholder="Select a city"
               emptyText="No city found."
-              items={cities.map((city) => ({
+              items={cities.map(city => ({
                 id: city.id,
                 name: city.name,
-                country: city.country ? { name: city.country.name } : undefined
+                city: {
+                  name: city.name,
+                  province: city.province ?? undefined,
+                  country: city.country
+                    ? { name: city.country.name }
+                    : undefined
+                }
               }))}
             />
             <DialogFooter className="flex justify-between">

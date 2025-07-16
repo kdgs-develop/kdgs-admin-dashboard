@@ -118,19 +118,37 @@ function ComboboxFormField({
                     ? items.find(item => item.id === field.value)
                       ? (() => {
                           const item = items.find(i => i.id === field.value);
-                          if (
-                            item?.city &&
-                            (item.city.province || item.city.country?.name)
-                          ) {
-                            const locationInfo = [
-                              item.city.province,
-                              item.city.country?.name
-                            ]
-                              .filter(Boolean)
-                              .join(" - ");
-                            return `${item.name} - ${locationInfo}`;
+                          if (item) {
+                            const cityName =
+                              item.name && item.name !== "null"
+                                ? item.name
+                                : null;
+                            const province =
+                              item.city?.province &&
+                              item.city.province !== "null"
+                                ? item.city.province
+                                : null;
+                            const country =
+                              item.city?.country?.name &&
+                              item.city.country.name !== "null"
+                                ? item.city.country.name
+                                : null;
+
+                            const locationParts = [province, country].filter(
+                              Boolean
+                            );
+
+                            if (cityName && locationParts.length > 0) {
+                              return `${cityName} - ${locationParts.join(" - ")}`;
+                            } else if (cityName) {
+                              return cityName;
+                            } else if (locationParts.length > 0) {
+                              return locationParts.join(" - ");
+                            }
+
+                            return "Unnamed";
                           }
-                          return item?.name;
+                          return placeholder;
                         })()
                       : placeholder
                     : placeholder}
@@ -220,15 +238,36 @@ function ComboboxFormField({
                         />
                         <div className="flex flex-col">
                           <span>
-                            {item.city &&
-                            (item.city.province || item.city.country?.name)
-                              ? `${item.name} - ${[
-                                  item.city.province,
-                                  item.city.country?.name
-                                ]
-                                  .filter(Boolean)
-                                  .join(" - ")}`
-                              : item.name}
+                            {(() => {
+                              const cityName =
+                                item.name && item.name !== "null"
+                                  ? item.name
+                                  : null;
+                              const province =
+                                item.city?.province &&
+                                item.city.province !== "null"
+                                  ? item.city.province
+                                  : null;
+                              const country =
+                                item.city?.country?.name &&
+                                item.city.country.name !== "null"
+                                  ? item.city.country.name
+                                  : null;
+
+                              const locationParts = [province, country].filter(
+                                Boolean
+                              );
+
+                              if (cityName && locationParts.length > 0) {
+                                return `${cityName} - ${locationParts.join(" - ")}`;
+                              } else if (cityName) {
+                                return cityName;
+                              } else if (locationParts.length > 0) {
+                                return locationParts.join(" - ");
+                              }
+
+                              return "Unnamed";
+                            })()}
                           </span>
                         </div>
                       </CommandItem>
