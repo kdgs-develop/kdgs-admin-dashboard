@@ -187,7 +187,7 @@ export function ShoppingCart({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10 flex-shrink-0"
+                  className="h-7 w-7 text-gray-500 hover:text-gray-700 hover:bg-gray-100 flex-shrink-0"
                   onClick={() => onRemoveItem(item.ref)}
                   aria-label={`Remove ${item.name} from cart`}
                 >
