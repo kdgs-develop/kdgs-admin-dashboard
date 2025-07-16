@@ -19,6 +19,7 @@ import { FeedbackDialogTrigger } from "./components/feedback-dialog-trigger";
 import { NewObituaryDialogTrigger } from "./components/new-obituary-dialog-trigger";
 import { VolunteerInterestDialogTrigger } from "./components/volunteer-interest-dialog-trigger";
 import Stripe from "stripe";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Search Central Okanagan Obituary Records - KDGS",
@@ -245,6 +246,33 @@ export default async function SearchPage() {
           </div>
         </div>
       </main>
+
+      {/* Browse by Surname Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-[#003B5C] tracking-tight">
+                Browse by Surname
+              </h2>
+              <p className="mt-4 text-lg text-gray-600">
+                Or browse all entries alphabetically by last name.
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map(letter => (
+                <Link
+                  key={letter}
+                  href={`/public/search/surname/${letter}`}
+                  className="w-12 h-12 flex items-center justify-center bg-gray-100 text-gray-700 font-medium rounded-md hover:bg-[#003B5C] hover:text-white transition-colors"
+                >
+                  {letter}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Contact Us Section */}
       <section className="py-16 bg-gray-50">
