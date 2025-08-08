@@ -107,7 +107,7 @@ export default async function AlphabeticalSearchPage({
               Back to Main Search
             </Link>
             <h1 className="text-4xl font-bold text-gray-900 tracking-tight mt-4">
-              Surnames Starting with "{letter}"
+              Obituary Records by Surname Starting with "{letter}"
             </h1>
             <p className="mt-2 text-lg text-gray-600">
               {totalCount > 0
