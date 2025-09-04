@@ -185,10 +185,12 @@ The Public Search Page is a user-friendly portal designed for KDGS members and t
 
 ### KDGS Admin Dashboard
 
-#### 📋 Dashboard Overview
+#### 🔐 Authentication
 
-![Admin Dashboard Main Interface](screenshots/admin-dashboard/dashboard-main-interface.png)
-_Main dashboard interface showing navigation, recent obituaries, and quick statistics_
+![Admin Dashboard Login Page](screenshots/admin-dashboard/admin-login-page.png)
+_Modern two-column login page with branding, features overview, and secure authentication_
+
+
 
 #### 📝 Obituary Management
 
