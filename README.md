@@ -115,6 +115,8 @@ The KDGS Admin Dashboard is a sophisticated internal management system designed 
 
 The Public Search Page is a user-friendly portal designed for KDGS members and the general public to access the society's extensive obituary collection. It provides powerful search capabilities, e-commerce functionality for purchasing digital obituaries, and forms for requesting additional genealogical services.
 
+**Access**: [Public Search Portal](https://dashboard.kdgs.ca/public/search)
+
 ### Tech Stack
 
 - **Framework**: [Next.js 14](https://nextjs.org) (with App Router)
