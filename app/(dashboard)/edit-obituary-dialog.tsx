@@ -1076,6 +1076,8 @@ export function EditObituaryDialog({
                             : undefined
                         }))}
                       />
+                    </div>
+                    <div className="col-span-2 mt-2">
                       <ComboboxFormField
                         control={form.control}
                         name="cemeteryId"
@@ -1084,16 +1086,16 @@ export function EditObituaryDialog({
                         emptyText="No interment place found."
                         items={cemeteries.map(cemetery => ({
                           id: cemetery.id,
-                          name: cemetery.name,
-                          city: cemetery.city
-                            ? {
-                                name: cemetery.city.name,
-                                province: cemetery.city.province ?? undefined,
-                                country: cemetery.city.country
-                                  ? { name: cemetery.city.country.name }
-                                  : undefined
-                              }
-                            : undefined
+                          name: cemetery.city
+                            ? [
+                                cemetery.name,
+                                cemetery.city.name,
+                                cemetery.city.province,
+                                cemetery.city.country?.name
+                              ]
+                                .filter(Boolean)
+                                .join(" - ")
+                            : cemetery.name
                         }))}
                       />
                     </div>
