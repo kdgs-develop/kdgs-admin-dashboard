@@ -1247,60 +1247,59 @@ export function EditObituaryDialog({
                   <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
                     Publication Information
                   </h3>
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                    <div className="space-y-4">
-                      <ComboboxFormField
-                        control={form.control}
-                        name="periodicalId"
-                        label="Publication"
-                        placeholder="Select a periodical"
-                        emptyText="No periodical found."
-                        items={localPeriodicals.map(periodical => ({
-                          id: periodical.id,
-                          name: periodical.name,
-                          city: periodical.city
+                  <div className="space-y-4">
+                    <ComboboxFormField
+                      control={form.control}
+                      name="periodicalId"
+                      label="Publication"
+                      placeholder="Select a periodical"
+                      emptyText="No periodical found."
+                      items={localPeriodicals.map(periodical => ({
+                        id: periodical.id,
+                        name: periodical.city
+                          ? [
+                              periodical.name,
+                              periodical.city.name,
+                              periodical.city.province,
+                              periodical.city.country?.name
+                            ]
+                              .filter(Boolean)
+                              .join(" - ")
+                          : periodical.name
+                      }))}
+                      onAddItem={async name => {
+                        const newPeriodical = await addPeriodical(name);
+                        const formattedPeriodical = {
+                          id: newPeriodical.id,
+                          name: newPeriodical.name || "",
+                          city: newPeriodical.city
                             ? {
-                                name: periodical.city.name || "",
-                                province: periodical.city.province || undefined,
-                                country: periodical.city.country
-                                  ? { name: periodical.city.country.name }
-                                  : undefined
+                                name: newPeriodical.city.name || "",
+                                province: newPeriodical.city.province,
+                                country: newPeriodical.city.country
                               }
-                            : undefined
-                        }))}
-                        onAddItem={async name => {
-                          const newPeriodical = await addPeriodical(name);
-                          const formattedPeriodical = {
-                            id: newPeriodical.id,
-                            name: newPeriodical.name || "",
-                            city: newPeriodical.city
-                              ? {
-                                  name: newPeriodical.city.name || "",
-                                  province: newPeriodical.city.province,
-                                  country: newPeriodical.city.country
-                                }
-                              : null
-                          };
-                          setLocalPeriodicals([
-                            ...localPeriodicals,
-                            formattedPeriodical
-                          ]);
-                          return {
-                            id: newPeriodical.id,
-                            name: newPeriodical.name || "",
-                            city: newPeriodical.city
-                              ? {
-                                  name: newPeriodical.city.name || "",
-                                  province:
-                                    newPeriodical.city.province || undefined,
-                                  country: newPeriodical.city.country
-                                    ? { name: newPeriodical.city.country.name }
-                                    : undefined
-                                }
-                              : undefined
-                          };
-                        }}
-                      />
+                            : null
+                        };
+                        setLocalPeriodicals([
+                          ...localPeriodicals,
+                          formattedPeriodical
+                        ]);
+                        return {
+                          id: newPeriodical.id,
+                          name: newPeriodical.city
+                            ? [
+                                newPeriodical.name,
+                                newPeriodical.city.name,
+                                newPeriodical.city.province,
+                                newPeriodical.city.country?.name
+                              ]
+                                .filter(Boolean)
+                                .join(" - ")
+                            : newPeriodical.name || ""
+                        };
+                      }}
+                    />
+                    <div className="grid grid-cols-3 gap-x-6 gap-y-4">
                       <FormField
                         control={form.control}
                         name="publishDate"
@@ -1317,8 +1316,6 @@ export function EditObituaryDialog({
                           </FormItem>
                         )}
                       />
-                    </div>
-                    <div className="-mt-2">
                       <FormField
                         control={form.control}
                         name="page"
