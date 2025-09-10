@@ -435,6 +435,20 @@ function createSpecialSearchCondition(
     }),
     "@generalLocation": val => ({
       place: { contains: val, mode: Prisma.QueryMode.insensitive }
+    }),
+    "@relatives.surname": val => ({
+      relatives: {
+        some: {
+          surname: { contains: val, mode: Prisma.QueryMode.insensitive }
+        }
+      }
+    }),
+    "@relatives.givenNames": val => ({
+      relatives: {
+        some: {
+          givenNames: { contains: val, mode: Prisma.QueryMode.insensitive }
+        }
+      }
     })
   };
   return specialSearchMap[keyword]?.(value, extra, fourth) ?? null;
@@ -593,10 +607,12 @@ export async function getObituariesGeneratePDF(
   return {
     obituaries: obituaries.map(obituary => ({
       ...obituary,
-      fileBox: obituary.fileBox ? {
-        ...obituary.fileBox,
-        id: 0 // Add required id field with default value
-      } : null
+      fileBox: obituary.fileBox
+        ? {
+            ...obituary.fileBox,
+            id: 0 // Add required id field with default value
+          }
+        : null
     }))
   };
 }
