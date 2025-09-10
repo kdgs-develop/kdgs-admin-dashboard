@@ -20,6 +20,7 @@ import { OrdersAdministration } from "./orders-administration";
 import { PeriodicalAdministration } from "./periodical-administration";
 import { RelationshipAdministration } from "./relationship-administration";
 import { TitleAdministration } from "./title-administration";
+import { SharedDataProvider } from "./shared-data-context";
 
 export default async function SetupPage() {
   const { userId } = auth();
@@ -47,7 +48,7 @@ export default async function SetupPage() {
               <FileBoxAdministration />
               <BatchNumberAdministration />
               {isAdmin && (
-                <>
+                <SharedDataProvider>
                   <BulkUpload />
                   <OrdersAdministration />
                   <CountryAdministration />
@@ -58,7 +59,7 @@ export default async function SetupPage() {
                   <TitleAdministration />
                   <GenealogistAdministration />
                   <AdminBackup />
-                </>
+                </SharedDataProvider>
               )}
             </CardContent>
           </CardHeader>
