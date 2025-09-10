@@ -113,7 +113,15 @@ export async function generateObituaryPdfBytes(
         title: true,
         birthCity: { include: { country: true } },
         deathCity: { include: { country: true } },
-        cemetery: true,
+        cemetery: {
+          include: {
+            city: {
+              include: {
+                country: true
+              }
+            }
+          }
+        },
         periodical: true,
         fileBox: true,
         relatives: {
@@ -349,6 +357,15 @@ export async function generateObituaryPdfBytes(
       .filter(Boolean)
       .join(", ");
     drawObituaryKeyValuePair("Place of Death", deathPlace);
+    const internmentPlace = [
+      obituary.cemetery?.name,
+      obituary.cemetery?.city?.name,
+      obituary.cemetery?.city?.province,
+      obituary.cemetery?.city?.country?.name
+    ]
+      .filter(Boolean)
+      .join(", ");
+    drawObituaryKeyValuePair("Internment Place", internmentPlace);
     currentY += LINE_HEIGHT * 0.5;
 
     if (obituary.alsoKnownAs && obituary.alsoKnownAs.length > 0) {

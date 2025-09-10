@@ -35,7 +35,15 @@ type ObituaryWithAllRelations = Prisma.ObituaryGetPayload<{
         country: true;
       };
     };
-    cemetery: true;
+    cemetery: {
+      include: {
+        city: {
+          include: {
+            country: true;
+          };
+        };
+      };
+    };
     periodical: true;
     fileBox: true;
     relatives: {
@@ -246,6 +254,21 @@ export default function ObituaryPage() {
                     {obituary.deathCity?.province || ""}
                     {obituary.deathCity?.province ? ", " : ""}
                     {obituary.deathCity?.country?.name || ""}
+                  </dd>
+                </div>
+                <div className="flex">
+                  <dt className="font-medium text-gray-600 w-1/3">
+                    Internment Place:
+                  </dt>
+                  <dd className="w-2/3">
+                    {[
+                      obituary.cemetery?.name,
+                      obituary.cemetery?.city?.name,
+                      obituary.cemetery?.city?.province,
+                      obituary.cemetery?.city?.country?.name
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
                   </dd>
                 </div>
               </dl>
