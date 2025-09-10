@@ -2,12 +2,17 @@
 
 import { useSearchParams } from "next/navigation";
 import { ObituariesTable } from "./obituaries-table";
+import {
+  SearchLoadingProvider,
+  useSearchLoading
+} from "./search-loading-context";
 
-export default function ObituaryIndexPage() {
+function ObituaryPageContent() {
   const searchParams = useSearchParams();
   const offset = parseInt(searchParams.get("offset") ?? "0", 10);
   const limit = parseInt(searchParams.get("limit") ?? "5", 10);
   const search = searchParams.get("q") ?? "";
+  const { setIsSearchLoading } = useSearchLoading();
 
   return (
     <div className="container mx-auto p-4 max-w-[calc(4xl)]">
@@ -16,7 +21,16 @@ export default function ObituaryIndexPage() {
         limit={limit}
         search={search}
         refreshTrigger={0}
+        onLoadingChange={setIsSearchLoading}
       />
     </div>
+  );
+}
+
+export default function ObituaryIndexPage() {
+  return (
+    <SearchLoadingProvider>
+      <ObituaryPageContent />
+    </SearchLoadingProvider>
   );
 }
