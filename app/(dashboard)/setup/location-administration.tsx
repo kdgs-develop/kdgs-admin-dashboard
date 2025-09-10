@@ -48,12 +48,20 @@ import EditLocationDialog from "./edit-location-dialog";
 import { RelatedObituariesDialog } from "./related-obituaries-dialog";
 import { RelatedCemeteriesDialog } from "./related-cemeteries-dialog";
 import { RelatedPeriodicalsDialog } from "./related-periodicals-dialog";
+import { useSharedData } from "./shared-data-context";
 
 export function LocationAdministration() {
-  const [cities, setCities] = useState<any[]>([]);
-  const [countries, setCountries] = useState<{ id: number; name: string }[]>(
-    []
-  );
+  const {
+    cities,
+    countries,
+    refreshCities,
+    refreshCountries,
+    initializeData,
+    isInitialized
+  } = useSharedData();
+
+  // Local cities state for pagination and search
+  const [localCities, setLocalCities] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState<any>(null);
@@ -129,20 +137,6 @@ export function LocationAdministration() {
   // Flag to track if we should fetch relations
   const shouldFetchRelations = useRef(false);
 
-  const refreshCountries = useCallback(async () => {
-    try {
-      const updatedCountries = await getCountries(1, 1000);
-      setCountries(updatedCountries.countries);
-    } catch (error) {
-      console.error("Error fetching countries:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch countries",
-        variant: "destructive"
-      });
-    }
-  }, [toast]);
-
   useEffect(() => {
     // Only run this effect when expanded or when page changes while expanded
     if (!isExpanded) return;
@@ -158,7 +152,7 @@ export function LocationAdministration() {
             currentPage,
             itemsPerPage
           );
-          setCities(result.cities);
+          setLocalCities(result.cities);
           setTotalPages(result.totalPages);
 
           // Only fetch relations when flag is true
@@ -167,13 +161,12 @@ export function LocationAdministration() {
             shouldFetchRelations.current = false;
           }
         } else {
-          const [citiesResult, countriesResult] = await Promise.all([
-            getCitiesWithPagination(currentPage, itemsPerPage),
-            getCountries(1, 100)
-          ]);
-          setCities(citiesResult.cities);
+          const citiesResult = await getCitiesWithPagination(
+            currentPage,
+            itemsPerPage
+          );
+          setLocalCities(citiesResult.cities);
           setTotalPages(citiesResult.totalPages);
-          setCountries(countriesResult.countries);
 
           // Only fetch relations when flag is true
           if (shouldFetchRelations.current) {
@@ -206,6 +199,19 @@ export function LocationAdministration() {
     searchCountryId,
     toast
   ]);
+
+  // Initialize shared data when component expands
+  useEffect(() => {
+    if (isExpanded && !isInitialized) {
+      initializeData().catch(error => {
+        toast({
+          title: "Error",
+          description: "Failed to initialize data",
+          variant: "destructive"
+        });
+      });
+    }
+  }, [isExpanded, isInitialized, initializeData, toast]);
 
   // Initial load - set flag to fetch relations
   useEffect(() => {
@@ -348,10 +354,13 @@ export function LocationAdministration() {
     try {
       const newCity = await addCity(name, province, countryId);
 
-      // Only refetch if the component is expanded
+      // Refresh shared cities data
+      await refreshCities();
+
+      // Only refetch local pagination if the component is expanded
       if (isExpanded) {
         const result = await getCitiesWithPagination(1, itemsPerPage);
-        setCities(result.cities);
+        setLocalCities(result.cities);
         setTotalPages(result.totalPages);
         // Reset to page 1 after adding
         setCurrentPage(1);
@@ -384,10 +393,13 @@ export function LocationAdministration() {
     try {
       await updateCity(id, name, province, countryId);
 
-      // Only refetch if the component is expanded
+      // Refresh shared cities data
+      await refreshCities();
+
+      // Only refetch local pagination if the component is expanded
       if (isExpanded) {
         const result = await getCitiesWithPagination(currentPage, itemsPerPage);
-        setCities(result.cities);
+        setLocalCities(result.cities);
         setTotalPages(result.totalPages);
 
         // Fetch counts for updated data
@@ -414,10 +426,13 @@ export function LocationAdministration() {
     try {
       await deleteCity(id);
 
-      // Only refetch if the component is expanded
+      // Refresh shared cities data
+      await refreshCities();
+
+      // Only refetch local pagination if the component is expanded
       if (isExpanded) {
         const result = await getCitiesWithPagination(currentPage, itemsPerPage);
-        setCities(result.cities);
+        setLocalCities(result.cities);
         setTotalPages(result.totalPages);
 
         // Fetch counts for updated data
@@ -462,7 +477,7 @@ export function LocationAdministration() {
         1,
         itemsPerPage
       );
-      setCities(result.cities);
+      setLocalCities(result.cities);
       setTotalPages(result.totalPages);
 
       // Fetch relations inline for immediate response
@@ -499,7 +514,7 @@ export function LocationAdministration() {
 
     try {
       const result = await getCitiesWithPagination(1, itemsPerPage);
-      setCities(result.cities);
+      setLocalCities(result.cities);
       setTotalPages(result.totalPages);
 
       // Fetch relations inline for immediate response
@@ -583,7 +598,13 @@ export function LocationAdministration() {
                 onOpenChange={open => {
                   setIsCountryDropdownOpen(open);
                   if (open) {
-                    refreshCountries();
+                    refreshCountries().catch(error => {
+                      toast({
+                        title: "Error",
+                        description: "Failed to refresh countries",
+                        variant: "destructive"
+                      });
+                    });
                   }
                 }}
               >
@@ -626,10 +647,10 @@ export function LocationAdministration() {
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : cities.length > 0 ? (
+          ) : localCities.length > 0 ? (
             <>
               <div className="grid gap-2">
-                {cities.map(city => (
+                {localCities.map(city => (
                   <div
                     key={city.id}
                     className="p-2 border rounded flex justify-between items-center"
