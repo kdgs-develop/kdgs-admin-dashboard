@@ -1,20 +1,28 @@
-'use server';
+"use server";
 
-import minioClient from '@/lib/minio-client';
-import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
-import { createHash } from 'crypto';
+import minioClient from "@/lib/minio-client";
+import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import { createHash } from "crypto";
 
 type ObituaryWithRelations = Prisma.ObituaryGetPayload<{
   include: {
     title: true;
-    cemetery: true;
+    cemetery: {
+      include: {
+        city: {
+          include: {
+            country: true;
+          };
+        };
+      };
+    };
     periodical: true;
     fileBox: true;
     relatives: {
       include: {
-        familyRelationship: true
-      }
+        familyRelationship: true;
+      };
     };
     alsoKnownAs: true;
     birthCity: {
@@ -37,7 +45,15 @@ export async function fetchObituaryByReferenceAction(
     where: { reference },
     include: {
       title: true,
-      cemetery: true,
+      cemetery: {
+        include: {
+          city: {
+            include: {
+              country: true
+            }
+          }
+        }
+      },
       periodical: true,
       fileBox: true,
       relatives: {
@@ -68,22 +84,22 @@ export async function fetchImagesForObituaryAction(
 
   return new Promise((resolve, reject) => {
     const images: string[] = [];
-    stream.on('data', (obj) => {
+    stream.on("data", obj => {
       if (obj.name && obj.name.startsWith(reference)) {
         images.push(obj.name);
       }
     });
-    stream.on('error', reject);
-    stream.on('end', () => resolve(images));
+    stream.on("error", reject);
+    stream.on("end", () => resolve(images));
   });
 }
 
 export async function generatePublicHashAction(
   obituaryId: number
 ): Promise<string> {
-  const hash = createHash('sha256')
+  const hash = createHash("sha256")
     .update(`${obituaryId}-${process.env.HASH_SECRET}`)
-    .digest('hex');
+    .digest("hex");
 
   // Check if the hash already exists
   const existingHash = await prisma.obituary.findUnique({
@@ -103,7 +119,7 @@ export async function generatePublicHashAction(
 }
 
 export async function getPublicObituaryByHash(hash: string) {
-  console.log('getPublicObituaryByHash', hash);
+  console.log("getPublicObituaryByHash", hash);
   if (!hash) return null;
 
   try {
@@ -123,7 +139,15 @@ export async function getPublicObituaryByHash(hash: string) {
             country: true
           }
         },
-        cemetery: true,
+        cemetery: {
+          include: {
+            city: {
+              include: {
+                country: true
+              }
+            }
+          }
+        },
         periodical: true,
         fileBox: true,
         relatives: true,
@@ -132,12 +156,12 @@ export async function getPublicObituaryByHash(hash: string) {
     });
 
     // Log for debugging
-    console.log('Fetching obituary with hash:', hash);
-    console.log('Found obituary:', obituary ? 'yes' : 'no');
+    console.log("Fetching obituary with hash:", hash);
+    console.log("Found obituary:", obituary ? "yes" : "no");
 
     return obituary;
   } catch (error) {
-    console.error('Error in getPublicObituaryByHash:', error);
+    console.error("Error in getPublicObituaryByHash:", error);
     throw error; // Let the client handle the error
   }
 }
