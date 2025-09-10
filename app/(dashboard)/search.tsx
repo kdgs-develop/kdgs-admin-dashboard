@@ -3,6 +3,7 @@
 import { Spinner } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSearchLoading } from "./search-loading-context";
 import {
   Select,
   SelectContent,
@@ -108,6 +109,19 @@ export function SearchInput() {
   const [isDownloading, setIsDownloading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { userId } = useAuth();
+
+  // Try to use the search loading context, but don't fail if not available
+  let isSearchLoading = false;
+  try {
+    const { isSearchLoading: contextLoading } = useSearchLoading();
+    isSearchLoading = contextLoading;
+  } catch {
+    // Context not available, fall back to isPending
+    isSearchLoading = isPending;
+  }
+
+  // Use combined loading state (either URL transition or table loading)
+  const isLoading = isPending || isSearchLoading;
 
   useEffect(() => {
     setContext(pathname.startsWith("/images") ? "images" : "obituaries");
@@ -278,15 +292,26 @@ export function SearchInput() {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isLoading) return; // Prevent multiple submissions
     const formData = new FormData(e.currentTarget);
     searchAction(formData);
   }
 
   return (
-    <div className="relative ml-auto flex gap-2 flex-1 md:grow-0">
+    <div
+      className={cn(
+        "relative ml-auto flex gap-2 flex-1 md:grow-0 transition-opacity duration-200",
+        isLoading && "opacity-90"
+      )}
+    >
       {context === "obituaries" && (
-        <Select onValueChange={handleSearchOptionChange}>
-          <SelectTrigger className="w-[220px] lg:w-[280px] xl:w-[320px]">
+        <Select onValueChange={handleSearchOptionChange} disabled={isLoading}>
+          <SelectTrigger
+            className={cn(
+              "w-[220px] lg:w-[280px] xl:w-[320px]",
+              isLoading && "opacity-50 cursor-not-allowed"
+            )}
+          >
             <SelectValue placeholder="Search type..." />
           </SelectTrigger>
           <SelectContent className="min-w-[220px] lg:min-w-[280px] xl:min-w-[320px]">
@@ -307,9 +332,13 @@ export function SearchInput() {
       )}
 
       <div className="flex gap-2 flex-1">
-        <form action={searchAction} className="relative flex flex-1 gap-2">
+        <form onSubmit={handleSubmit} className="relative flex flex-1 gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-[.75rem] h-4 w-4 text-muted-foreground" />
+            {isLoading ? (
+              <Spinner className="absolute left-2.5 top-[.75rem] h-4 w-4 text-muted-foreground animate-spin" />
+            ) : (
+              <Search className="absolute left-2.5 top-[.75rem] h-4 w-4 text-muted-foreground" />
+            )}
             <HighlightedSearchInput
               ref={inputRef}
               name="q"
@@ -317,21 +346,25 @@ export function SearchInput() {
               value={searchValue}
               onChange={e => setSearchValue(e.target.value)}
               placeholder={`Search ${context}...`}
+              disabled={isLoading}
             />
           </div>
 
           <Button
             type="submit"
             variant="default"
-            disabled={isPending}
-            className="flex gap-2 items-center w-28"
+            disabled={isLoading}
+            className={cn(
+              "flex gap-2 items-center w-28 transition-all duration-200",
+              isLoading && "bg-primary/80 cursor-not-allowed"
+            )}
           >
-            {isPending ? (
-              <Spinner className="h-4 w-4" />
+            {isLoading ? (
+              <Spinner className="h-4 w-4 animate-spin" />
             ) : (
               <Search className="h-4 w-4" />
             )}
-            {isPending ? "Searching..." : "Search"}
+            {isLoading ? "Searching..." : "Search"}
           </Button>
         </form>
 
