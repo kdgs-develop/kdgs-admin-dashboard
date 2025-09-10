@@ -12,6 +12,7 @@ import {
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow
@@ -54,12 +55,14 @@ export function ObituariesTable({
   offset,
   limit,
   search,
-  refreshTrigger
+  refreshTrigger,
+  onLoadingChange
 }: {
   offset: number;
   limit: number;
   search: string;
   refreshTrigger: number;
+  onLoadingChange?: (isLoading: boolean) => void;
 }) {
   const router = useRouter();
   const [obituaries, setObituaries] = useState<ObituaryType[]>([]);
@@ -77,6 +80,7 @@ export function ObituariesTable({
   const [loadingButton, setLoadingButton] = useState<"prev" | "next" | null>(
     null
   );
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -89,13 +93,18 @@ export function ObituariesTable({
   }, []);
 
   useEffect(() => {
-    fetchObituariesAction(offset, limit, search).then(
-      ({ obituaries, total }) => {
+    setIsLoadingData(true);
+    onLoadingChange?.(true);
+    fetchObituariesAction(offset, limit, search)
+      .then(({ obituaries, total }) => {
         setObituaries(obituaries ?? []);
         setTotalObituaries(total);
-      }
-    );
-  }, [offset, limit, search, refreshTrigger]);
+      })
+      .finally(() => {
+        setIsLoadingData(false);
+        onLoadingChange?.(false);
+      });
+  }, [offset, limit, search, refreshTrigger, onLoadingChange]);
 
   function prevPage() {
     setLoadingButton("prev");
@@ -168,38 +177,74 @@ export function ObituariesTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {obituaries.map(
-                obituary =>
-                  obituary && (
-                    <Obituary
-                      key={obituary.id}
-                      obituary={obituary}
-                      onUpdate={() => {
-                        fetchObituariesAction(offset, limit, search).then(
-                          ({ obituaries, total }) => {
-                            setObituaries(obituaries ?? []);
-                            setTotalObituaries(total);
-                          }
-                        );
-                      }}
-                      role={role}
-                    />
-                  )
-              )}
+              {isLoadingData
+                ? // Loading skeleton rows
+                  Array.from({ length: limit }).map((_, index) => (
+                    <TableRow key={`loading-${index}`}>
+                      <TableCell>
+                        <div className="h-4 bg-muted animate-pulse rounded w-20"></div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-muted animate-pulse rounded w-24"></div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-muted animate-pulse rounded w-32"></div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-muted animate-pulse rounded w-20"></div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-muted animate-pulse rounded w-12"></div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-muted animate-pulse rounded w-16"></div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-muted animate-pulse rounded w-8"></div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                : obituaries.map(
+                    obituary =>
+                      obituary && (
+                        <Obituary
+                          key={obituary.id}
+                          obituary={obituary}
+                          onUpdate={() => {
+                            setIsLoadingData(true);
+                            fetchObituariesAction(offset, limit, search)
+                              .then(({ obituaries, total }) => {
+                                setObituaries(obituaries ?? []);
+                                setTotalObituaries(total);
+                              })
+                              .finally(() => {
+                                setIsLoadingData(false);
+                              });
+                          }}
+                          role={role}
+                        />
+                      )
+                  )}
             </TableBody>
           </Table>
         </CardContent>
         <CardFooter className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="text-sm text-muted-foreground">
-              Showing {Math.min(offset + 1, totalObituaries)}-
-              {Math.min(offset + limit, totalObituaries)} of {totalObituaries}{" "}
-              obituaries
+              {isLoadingData ? (
+                <div className="h-4 bg-muted animate-pulse rounded w-48"></div>
+              ) : (
+                <>
+                  Showing {Math.min(offset + 1, totalObituaries)}-
+                  {Math.min(offset + limit, totalObituaries)} of{" "}
+                  {totalObituaries} obituaries
+                </>
+              )}
             </div>
             <Select
               value={limit.toString()}
               onValueChange={handleItemsPerPageChange}
-              disabled={loadingButton !== null}
+              disabled={loadingButton !== null || isLoadingData}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Items per page" />
@@ -216,7 +261,7 @@ export function ObituariesTable({
           <div className="space-x-2">
             <Button
               onClick={prevPage}
-              disabled={offset === 0 || loadingButton !== null}
+              disabled={offset === 0 || loadingButton !== null || isLoadingData}
               variant="outline"
               size="sm"
               className="w-[80px]"
@@ -230,7 +275,9 @@ export function ObituariesTable({
             <Button
               onClick={nextPage}
               disabled={
-                offset + limit >= totalObituaries || loadingButton !== null
+                offset + limit >= totalObituaries ||
+                loadingButton !== null ||
+                isLoadingData
               }
               variant="outline"
               size="sm"
