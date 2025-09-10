@@ -49,6 +49,7 @@ import { AddCemeteryDialog } from "./add-cemetery-dialog";
 import { EditCemeteryDialog } from "./edit-cemetery-dialog";
 import { RelatedCemeteryObituariesDialog } from "./related-cemetery-obituaries-dialog";
 import { Badge } from "@/components/ui/badge";
+import { useSharedData } from "./shared-data-context";
 import {
   Select,
   SelectContent,
@@ -65,8 +66,9 @@ type City = {
 } | null;
 
 export function CemeteryAdministration() {
+  const { cities, formattedCities, initializeData, isInitialized } =
+    useSharedData();
   const [cemeteries, setCemeteries] = useState<any[]>([]);
-  const [cities, setCities] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCemetery, setSelectedCemetery] = useState<any>(null);
@@ -101,13 +103,12 @@ export function CemeteryAdministration() {
 
     try {
       setIsLoading(true);
-      const [cemeteriesResult, citiesResult] = await Promise.all([
-        getCemeteriesWithPagination(currentPage, itemsPerPage),
-        getCities()
-      ]);
+      const cemeteriesResult = await getCemeteriesWithPagination(
+        currentPage,
+        itemsPerPage
+      );
       setCemeteries(cemeteriesResult.cemeteries);
       setTotalPages(cemeteriesResult.totalPages);
-      setCities(citiesResult);
       setIsDataFetched(true);
 
       if (cemeteriesResult.cemeteries.length > 0) {
@@ -162,6 +163,19 @@ export function CemeteryAdministration() {
       fetchData();
     }
   }, [currentPage, itemsPerPage, isExpanded]);
+
+  // Initialize shared data when component expands
+  useEffect(() => {
+    if (isExpanded && !isInitialized) {
+      initializeData().catch(error => {
+        toast({
+          title: "Error",
+          description: "Failed to initialize shared data",
+          variant: "destructive"
+        });
+      });
+    }
+  }, [isExpanded, isInitialized, initializeData, toast]);
 
   // Safe filtering effect
   useEffect(() => {
@@ -618,7 +632,7 @@ export function CemeteryAdministration() {
             isOpen={isDialogOpen}
             onClose={() => setIsDialogOpen(false)}
             onAddCemetery={handleAddCemetery}
-            cities={cities}
+            cities={formattedCities}
             initialValues={{
               name: searchName,
               cityId: searchCityId ? parseInt(searchCityId) : undefined
@@ -634,7 +648,7 @@ export function CemeteryAdministration() {
             onEditCemetery={handleEditCemetery}
             onDeleteCemetery={handleDeleteCemetery}
             cemetery={selectedCemetery}
-            cities={cities}
+            cities={formattedCities}
           />
 
           <RelatedCemeteryObituariesDialog

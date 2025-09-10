@@ -35,6 +35,7 @@ import AddPeriodicalDialog from "./add-periodical-dialog";
 import EditPeriodicalDialog from "./edit-periodical-dialog";
 import { CityWithRelations, PeriodicalWithRelations } from "@/types/prisma";
 import { RelatedPeriodicalObituariesDialog } from "./related-periodical-obituaries-dialog";
+import { useSharedData } from "./shared-data-context";
 import {
   Select,
   SelectContent,
@@ -51,12 +52,12 @@ interface PeriodicalData {
 // Use only Prisma types to include to Periodical types its relationship City
 
 export function PeriodicalAdministration() {
+  const { cities, initializeData, isInitialized } = useSharedData();
   const [periodicalData, setPeriodicalData] = useState<PeriodicalData>({
     periodicals: [],
     totalCount: 0,
     totalPages: 0
   });
-  const [cities, setCities] = useState<CityWithRelations[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchName, setSearchName] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -150,20 +151,6 @@ export function PeriodicalAdministration() {
     }
   };
 
-  const fetchCities = async () => {
-    try {
-      const citiesResult = await getCities();
-      setCities(citiesResult);
-    } catch (error) {
-      toast({
-        title: "Error fetching cities",
-        description:
-          error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive"
-      });
-    }
-  };
-
   useEffect(() => {
     // Only fetch when expanded
     if (isExpanded) {
@@ -171,11 +158,18 @@ export function PeriodicalAdministration() {
     }
   }, [currentPage, isExpanded, itemsPerPage]);
 
+  // Initialize shared data when component expands
   useEffect(() => {
-    if (isExpanded) {
-      fetchCities();
+    if (isExpanded && !isInitialized) {
+      initializeData().catch(error => {
+        toast({
+          title: "Error",
+          description: "Failed to initialize shared data",
+          variant: "destructive"
+        });
+      });
     }
-  }, [isExpanded]);
+  }, [isExpanded, isInitialized, initializeData, toast]);
 
   const handleSearch = async () => {
     if (!isExpanded) return;
