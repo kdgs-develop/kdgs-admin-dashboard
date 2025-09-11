@@ -109,16 +109,7 @@ export function SearchInput() {
   const [isDownloading, setIsDownloading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { userId } = useAuth();
-
-  // Try to use the search loading context, but don't fail if not available
-  let isSearchLoading = false;
-  try {
-    const { isSearchLoading: contextLoading } = useSearchLoading();
-    isSearchLoading = contextLoading;
-  } catch {
-    // Context not available, fall back to isPending
-    isSearchLoading = isPending;
-  }
+  const { isSearchLoading } = useSearchLoading();
 
   // Use combined loading state (either URL transition or table loading)
   const isLoading = isPending || isSearchLoading;
