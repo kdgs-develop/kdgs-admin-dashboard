@@ -85,6 +85,10 @@ model Relative {
   familyRelationshipId String?
   familyRelationship   FamilyRelationship? @relation(fields: [familyRelationshipId], references: [id])
   Obituary             Obituary            @relation(fields: [obituaryId], references: [id])
+
+  @@index([surname])
+  @@index([givenNames])
+  @@index([obituaryId])
 }
 
 model AlsoKnownAs {

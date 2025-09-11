@@ -1,23 +1,24 @@
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { getUserRole } from '@/lib/db';
-import { currentUser, User } from '@clerk/nextjs/server';
-import { Analytics } from '@vercel/analytics/react';
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { getUserRole } from "@/lib/db";
+import { currentUser, User } from "@clerk/nextjs/server";
+import { Analytics } from "@vercel/analytics/react";
 import {
   FileText,
   Home,
   Image as LucideImage,
   PanelLeft,
   Settings
-} from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { TransitionWrapper } from '../providers';
-import { DashboardBreadcrumb } from './dashboard-breadcrumb';
-import { DesktopNav } from './desktop-nav';
-import { SearchInput } from './search';
-import { UserClerkButton } from './user-clerk-button';
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { TransitionWrapper } from "../providers";
+import { DashboardBreadcrumb } from "./dashboard-breadcrumb";
+import { DashboardClientWrapper } from "./dashboard-client-wrapper";
+import { DesktopNav } from "./desktop-nav";
+import { SearchInput } from "./search";
+import { UserClerkButton } from "./user-clerk-button";
 
 export default async function DashboardLayout({
   children
@@ -25,28 +26,30 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const authUser: User | null = await currentUser();
-  if (!authUser) redirect('/login');
+  if (!authUser) redirect("/login");
   const userRole = await getUserRole();
 
   return (
     <div className="flex h-[calc(100vh-100px)] w-full bg-background">
       <DesktopNav role={userRole} />
-      <div className="flex flex-1 flex-col transition-all duration-300 ease-in-out pt-2">
-        <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 z-20">
-          <MobileNav />
-          <DashboardBreadcrumb />
-          <SearchInput />
-          <UserClerkButton />
-        </header>
-        <main className="flex-1">
-          <div className="p-3">
-            <TransitionWrapper>{children}</TransitionWrapper>
-          </div>
-        </main>
-        <footer>
-          <Analytics />
-        </footer>
-      </div>
+      <DashboardClientWrapper>
+        <div className="flex flex-1 flex-col transition-all duration-300 ease-in-out pt-2">
+          <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 z-20">
+            <MobileNav />
+            <DashboardBreadcrumb />
+            <SearchInput />
+            <UserClerkButton />
+          </header>
+          <main className="flex-1">
+            <div className="p-3">
+              <TransitionWrapper>{children}</TransitionWrapper>
+            </div>
+          </main>
+          <footer>
+            <Analytics />
+          </footer>
+        </div>
+      </DashboardClientWrapper>
     </div>
   );
 }
@@ -68,7 +71,7 @@ function MobileNav() {
           >
             <Image
               className="h-4 w-4 transition-all group-hover:scale-110"
-              src={'/icon.png'}
+              src={"/icon.png"}
               alt="Logo"
               width={64}
               height={64}
