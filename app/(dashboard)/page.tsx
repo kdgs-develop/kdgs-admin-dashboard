@@ -2,12 +2,9 @@
 
 import { useSearchParams } from "next/navigation";
 import { ObituariesTable } from "./obituaries-table";
-import {
-  SearchLoadingProvider,
-  useSearchLoading
-} from "./search-loading-context";
+import { useSearchLoading } from "./search-loading-context";
 
-function ObituaryPageContent() {
+export default function ObituaryIndexPage() {
   const searchParams = useSearchParams();
   const offset = parseInt(searchParams.get("offset") ?? "0", 10);
   const limit = parseInt(searchParams.get("limit") ?? "5", 10);
@@ -24,13 +21,5 @@ function ObituaryPageContent() {
         onLoadingChange={setIsSearchLoading}
       />
     </div>
-  );
-}
-
-export default function ObituaryIndexPage() {
-  return (
-    <SearchLoadingProvider>
-      <ObituaryPageContent />
-    </SearchLoadingProvider>
   );
 }
