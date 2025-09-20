@@ -9,7 +9,18 @@ export const metadata = {
   description:
     "Secure administrative interface for the Kelowna and District Genealogical Society. Manage obituaries, member records, and genealogical resources efficiently with this Next.js-powered dashboard, featuring Clerk authentication, Postgres database, and a responsive Tailwind CSS design.",
   copyright: `© ${new Date().getFullYear()} Kelowna & District Genealogical Society | Powered by Vyoniq Technologies`,
-  creator: "Kelowna & District Genealogical Society"
+  creator: "Kelowna & District Genealogical Society",
+  icons: {
+    icon: [
+      {
+        url: "/kdgs.png",
+        sizes: "32x32",
+        type: "image/png"
+      }
+    ],
+    shortcut: "/kdgs.png",
+    apple: "/kdgs.png"
+  }
 };
 
 export default function RootLayout({
@@ -117,6 +128,11 @@ export default function RootLayout({
   return (
     <Providers>
       <html lang="en">
+        <head>
+          <link rel="icon" href="/kdgs.png" type="image/png" />
+          <link rel="shortcut icon" href="/kdgs.png" type="image/png" />
+          <link rel="apple-touch-icon" href="/kdgs.png" />
+        </head>
         <body>
           <div className="pb-16">{children}</div>
           <Toaster />
