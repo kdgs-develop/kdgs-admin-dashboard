@@ -37,6 +37,7 @@ export default async function PublicLayout({
                 height={40}
                 className="h-10 w-auto"
                 priority
+                unoptimized
               />
             </Link>
             <nav className="hidden md:flex space-x-4">
