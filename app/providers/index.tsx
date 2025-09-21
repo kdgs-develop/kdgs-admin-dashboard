@@ -27,7 +27,7 @@ export function usePathnameContext() {
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider afterSignOutUrl={"/login"}>
+    <ClerkProvider afterSignOutUrl={"/login"} signInFallbackRedirectUrl={"/dashboard"}>
       <TooltipProvider>
         <PathnameProvider>{children}</PathnameProvider>
       </TooltipProvider>
