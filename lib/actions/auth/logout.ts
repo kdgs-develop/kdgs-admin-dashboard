@@ -10,6 +10,5 @@ export async function logout() {
   session.destroy(); // Clears the session data and cookie
   console.log("Session destroyed.");
   // Optional: Redirect user after logout
-  redirect("/public/search"); // Or wherever you want them to go
+  redirect("/"); // Or wherever you want them to go
 }
- 
