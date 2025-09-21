@@ -1,14 +1,14 @@
-import { updateObituaryImageNames } from '@/app/(dashboard)/actions';
-import { prisma } from '@/lib/prisma';
-import { Client } from 'minio';
-import { NextRequest, NextResponse } from 'next/server';
-import { Readable } from 'stream';
+import { updateObituaryImageNames } from "@/app/dashboard/actions";
+import { prisma } from "@/lib/prisma";
+import { Client } from "minio";
+import { NextRequest, NextResponse } from "next/server";
+import { Readable } from "stream";
 const minioClient = new Client({
   endPoint: process.env.MINIO_ENDPOINT!,
   port: parseInt(process.env.MINIO_PORT!),
-  useSSL: process.env.MINIO_USE_SSL === 'true',
+  useSSL: process.env.MINIO_USE_SSL === "true",
   accessKey: process.env.MINIO_ACCESS_KEY!,
-  secretKey: process.env.MINIO_SECRET_KEY!,
+  secretKey: process.env.MINIO_SECRET_KEY!
 });
 
 const BUCKET_NAME = process.env.MINIO_BUCKET_NAME!;
@@ -16,20 +16,23 @@ const MAX_RETRIES = 3;
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
-  const file = formData.get('file') as File;
+  const file = formData.get("file") as File;
 
   if (!file) {
-    return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
   try {
     await uploadFile(file);
     // Add image name to obituary imagesNames property
-    
+
     return NextResponse.json({ message: `Successfully uploaded ${file.name}` });
   } catch (error) {
-    console.error('Upload error:', error);
-    return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
+    console.error("Upload error:", error);
+    return NextResponse.json(
+      { error: "Failed to upload file" },
+      { status: 500 }
+    );
   }
 }
 
@@ -44,7 +47,7 @@ async function uploadFile(file: File): Promise<void> {
         file.name,
         fileStream,
         file.size,
-        { 'Content-Type': file.type }
+        { "Content-Type": file.type }
       );
 
       const size = file.size;
@@ -69,7 +72,9 @@ async function uploadFile(file: File): Promise<void> {
     } catch (error) {
       console.error(`Attempt ${attempt + 1} failed for ${file.name}:`, error);
       if (attempt === MAX_RETRIES - 1) {
-        throw new Error(`Failed to upload ${file.name} after ${MAX_RETRIES} attempts`);
+        throw new Error(
+          `Failed to upload ${file.name} after ${MAX_RETRIES} attempts`
+        );
       }
     }
   }
