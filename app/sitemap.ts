@@ -1,12 +1,12 @@
 import { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://dashboard.kdgs.ca";
+  const baseUrl = "https://search.kdgs.ca";
 
   // Main search page
   const mainPages = [
     {
-      url: `${baseUrl}/public/search`,
+      url: `${baseUrl}`,
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
       priority: 1.0
@@ -17,7 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const alphabeticalPages = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     .split("")
     .map(letter => ({
-      url: `${baseUrl}/public/search/surname/${letter}`,
+      url: `${baseUrl}/surname/${letter}`,
       lastModified: new Date(),
       changeFrequency: "daily" as const,
       priority: 0.8
