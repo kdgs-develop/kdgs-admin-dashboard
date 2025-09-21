@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useRef, useCallback } from "react";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
@@ -8,19 +8,25 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
+  CommandList
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "./form";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "./form";
 import { Button } from "./button";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-import AddCityDialog from "@/app/(dashboard)/setup/add-city-dialog";
-import { addCity } from "@/app/(dashboard)/setup/actions";
+import AddCityDialog from "@/app/dashboard/setup/add-city-dialog";
+import { addCity } from "@/app/dashboard/setup/actions";
 
 type ComboboxFormFieldProps = {
   control: any;
@@ -28,8 +34,22 @@ type ComboboxFormFieldProps = {
   label: string;
   placeholder: string;
   emptyText: string;
-  items: { id: number; name: string; province?: string; country?: { name: string } }[];
-  onAddItem?: (name: string | null, province: string | null, countryId: number) => Promise<{ id: number; name: string, province?: string, country?: { name: string } }>;
+  items: {
+    id: number;
+    name: string;
+    province?: string;
+    country?: { name: string };
+  }[];
+  onAddItem?: (
+    name: string | null,
+    province: string | null,
+    countryId: number
+  ) => Promise<{
+    id: number;
+    name: string;
+    province?: string;
+    country?: { name: string };
+  }>;
   countries: { id: number; name: string }[]; // Add this prop for country options
 };
 
@@ -40,7 +60,7 @@ function ComboboxFormFieldAdmin({
   placeholder,
   emptyText,
   items,
-  countries,
+  countries
 }: ComboboxFormFieldProps) {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -51,20 +71,25 @@ function ComboboxFormFieldAdmin({
     setOpen(isOpen);
     if (isOpen) {
       setTimeout(() => {
-        commandRef.current?.querySelector('input')?.focus();
+        commandRef.current?.querySelector("input")?.focus();
       }, 0);
     }
   }, []);
 
-  const handleAddItem = async (name: string | null, province: string | null, countryId: number) => {
+  const handleAddItem = async (
+    name: string | null,
+    province: string | null,
+    countryId: number
+  ) => {
     try {
       const newCity = await addCity(name, province, countryId);
       return newCity;
     } catch (error) {
       toast({
-        title: 'Error adding city',
-        description: error instanceof Error ? error.message : 'Failed to add city',
-        variant: 'destructive'
+        title: "Error adding city",
+        description:
+          error instanceof Error ? error.message : "Failed to add city",
+        variant: "destructive"
       });
       throw error;
     }
@@ -90,23 +115,23 @@ function ComboboxFormFieldAdmin({
                   )}
                 >
                   {field.value
-                    ? items.find((item) => item.id === field.value)?.name
+                    ? items.find(item => item.id === field.value)?.name
                     : placeholder}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </FormControl>
             </PopoverTrigger>
-            <PopoverContent 
-              className="w-min-fit p-0 z-50" 
-              style={{ pointerEvents: 'auto' }}
-              onInteractOutside={(e) => {
+            <PopoverContent
+              className="w-min-fit p-0 z-50"
+              style={{ pointerEvents: "auto" }}
+              onInteractOutside={e => {
                 e.preventDefault();
                 setOpen(false);
               }}
             >
               <Command ref={commandRef}>
-                <CommandInput 
-                  placeholder={`Search ${label.toLowerCase()}...`} 
+                <CommandInput
+                  placeholder={`Search ${label.toLowerCase()}...`}
                   value={inputValue}
                   onValueChange={setInputValue}
                 />
@@ -124,7 +149,7 @@ function ComboboxFormFieldAdmin({
                     </Button>
                   </CommandEmpty>
                   <CommandGroup>
-                    {items.map((item) => (
+                    {items.map(item => (
                       <CommandItem
                         value={item.name}
                         key={item.id}
@@ -154,7 +179,6 @@ function ComboboxFormFieldAdmin({
             isOpen={isDialogOpen}
             onClose={() => setIsDialogOpen(false)}
             onAddCity={async (name, province, countryId) => {
-              
               try {
                 const newItem = await handleAddItem(name, province, countryId);
                 if (newItem) {
@@ -163,7 +187,7 @@ function ComboboxFormFieldAdmin({
                   setIsDialogOpen(false);
                 }
               } catch (error) {
-                console.error('Error in onAddCity:', error);
+                console.error("Error in onAddCity:", error);
               }
             }}
             countries={countries}

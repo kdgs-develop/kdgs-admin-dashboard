@@ -21,12 +21,12 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "dashboard.kdgs.ca",
+        hostname: "search.kdgs.ca",
         pathname: "/**"
       },
       {
         protocol: "https",
-        hostname: "*.dashboard.kdgs.ca",
+        hostname: "*.search.kdgs.ca",
         pathname: "/**"
       }
     ]

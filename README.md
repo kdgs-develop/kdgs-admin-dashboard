@@ -29,7 +29,7 @@ A comprehensive admin interface for managing obituaries, genealogical resources,
 
 A public-facing search portal where KDGS members and the general public can search through the society's extensive obituary collection, purchase digital copies, and request genealogical research services.
 
-**Access**: [Public Search Portal](https://dashboard.kdgs.ca/public/search)
+**Access**: [Public Search Portal](<https://search.kdgs.ca)>)
 
 ---
 
@@ -115,7 +115,7 @@ The KDGS Admin Dashboard is a sophisticated internal management system designed 
 
 The Public Search Page is a user-friendly portal designed for KDGS members and the general public to access the society's extensive obituary collection. It provides powerful search capabilities, e-commerce functionality for purchasing digital obituaries, and forms for requesting additional genealogical services.
 
-**Access**: [Public Search Portal](https://dashboard.kdgs.ca/public/search)
+**Access**: [Public Search Portal](<https://search.kdgs.ca>)
 
 ### Tech Stack
 
@@ -332,7 +332,7 @@ The public search page is integrated within the same repository and shares the d
 
 1. **Access the public search**
 
-   - Navigate to [http://localhost:3000/public/search](http://localhost:3000/public/search)
+   - Navigate to [http://localhost:3000/(public)/(search)](<http://localhost:3000/(public)/(search)>)
 
 2. **Configuration**
    - Ensure Stripe keys are configured for payment processing

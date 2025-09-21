@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/login(.*)",
-  "/public/obituary(.*)",
+  "/obituary(.*)",
   "/api/generate-pdf(.*)",
   "/api/download-image(.*)",
   "/api/webhooks/stripe(.*)",
-  "/public/search(.*)",
+  "/",
   "/api/download-all-files(.*)",
   "/robots.txt",
   "/sitemap.xml"
@@ -15,7 +15,10 @@ const isPublicRoute = createRouteMatcher([
 
 export default clerkMiddleware((auth, req) => {
   // Allow indexing for public search routes
-  if (req.nextUrl.pathname.startsWith("/public/search")) {
+  if (
+    req.nextUrl.pathname === "/" ||
+    req.nextUrl.pathname.startsWith("/surname/")
+  ) {
     const response = NextResponse.next();
     // Remove any noindex headers and explicitly allow indexing
     response.headers.delete("X-Robots-Tag");
