@@ -58,7 +58,7 @@ export const OrderConfirmationEmailTemplate: React.FC<
                   }}
                 >
                   <img
-                    src="https://dashboard.kdgs.ca/kdgs.png"
+                    src="https://search.kdgs.ca/kdgs.png"
                     alt="Kelowna & District Genealogical Society Logo"
                     width={200}
                     style={{
@@ -217,7 +217,7 @@ export const OrderConfirmationEmailTemplate: React.FC<
                   >
                     Want to find more records?{" "}
                     <a
-                      href="https://dashboard.kdgs.ca/public/search"
+                      href="https://search.kdgs.ca"
                       target="_blank"
                       style={{ color: "#1a73e8" }}
                     >
