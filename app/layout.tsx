@@ -81,10 +81,10 @@ export default function RootLayout({
                   Please update your bookmarks to use the new address.
                 </p>
                 <a
-                  href="https://dashboard.kdgs.ca"
+                  href="https://search.kdgs.ca"
                   className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
-                  Go to dashboard.kdgs.ca
+                  Go to search.kdgs.ca
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="ml-2 h-4 w-4"
