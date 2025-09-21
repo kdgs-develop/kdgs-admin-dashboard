@@ -1,6 +1,6 @@
 "use server";
 
-import { getEtag } from "@/app/(dashboard)/images/minio-actions";
+import { getEtag } from "@/app/dashboard/images/minio-actions";
 import { auth } from "@clerk/nextjs/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
