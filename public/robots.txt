@@ -1,13 +1,13 @@
 User-agent: *
 
 # Allow public search functionality
-Allow: /public/search
-Allow: /public/obituary/
+Allow: /
+Allow: /obituary/
 
 # Block dashboard and admin areas  
-Disallow: /(dashboard)/
+Disallow: /dashboard/
 Disallow: /api/
 Disallow: /login
 
 # Point to our sitemap
-Sitemap: https://dashboard.kdgs.ca/sitemap.xml 
+Sitemap: https://search.kdgs.ca/sitemap.xml 
