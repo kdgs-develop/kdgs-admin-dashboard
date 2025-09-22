@@ -1,6 +1,5 @@
 import "./globals.css";
 
-import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
 import Providers from "./providers";
 
@@ -134,9 +133,8 @@ export default function RootLayout({
           <link rel="apple-touch-icon" href="/kdgs.png" />
         </head>
         <body>
-          <div className="pb-16">{children}</div>
+          {children}
           <Toaster />
-          <Footer />
         </body>
       </html>
     </Providers>
