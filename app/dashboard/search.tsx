@@ -89,7 +89,7 @@ const HighlightedSearchInput = forwardRef<
         ref={ref}
         value={value}
         className={cn(
-          "w-full rounded-lg bg-background pl-8 md:w-[280px] lg:w-[330px] xl:w-[430px]",
+          "w-full rounded-lg bg-background pl-10 min-w-[200px] h-10",
           command && "text-foreground"
         )}
       />
@@ -115,7 +115,9 @@ export function SearchInput() {
   const isLoading = isPending || isSearchLoading;
 
   useEffect(() => {
-    setContext(pathname.startsWith("/dashboard/images") ? "images" : "obituaries");
+    setContext(
+      pathname.startsWith("/dashboard/images") ? "images" : "obituaries"
+    );
   }, [pathname]);
 
   function searchAction(formData: FormData) {
@@ -124,7 +126,7 @@ export function SearchInput() {
     params.set("q", value);
     params.set("offset", "0");
     startTransition(() => {
-      const baseUrl = context === "images" ? "/images" : "/";
+      const baseUrl = context === "images" ? "/dashboard/images" : "/dashboard";
       router.push(`${baseUrl}?${params.toString()}`);
     });
   }
@@ -291,88 +293,101 @@ export function SearchInput() {
   return (
     <div
       className={cn(
-        "relative ml-auto flex gap-2 flex-1 md:grow-0 transition-opacity duration-200",
+        "relative w-full transition-opacity duration-200",
         isLoading && "opacity-90"
       )}
     >
-      {context === "obituaries" && (
-        <Select onValueChange={handleSearchOptionChange} disabled={isLoading}>
-          <SelectTrigger
-            className={cn(
-              "w-[220px] lg:w-[280px] xl:w-[320px]",
-              isLoading && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            <SelectValue placeholder="Search type..." />
-          </SelectTrigger>
-          <SelectContent className="min-w-[220px] lg:min-w-[280px] xl:min-w-[320px]">
-            {SEARCH_OPTIONS.map(option => (
-              <SelectItem
-                key={option.value}
-                value={option.value}
-                disabled={option.disabled}
-                className={
-                  option.disabled ? "font-semibold text-muted-foreground" : ""
-                }
-              >
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      <div className="flex gap-2 flex-1">
-        <form onSubmit={handleSubmit} className="relative flex flex-1 gap-2">
-          <div className="relative flex-1">
-            {isLoading ? (
-              <Spinner className="absolute left-2.5 top-[.75rem] h-4 w-4 text-muted-foreground animate-spin" />
-            ) : (
-              <Search className="absolute left-2.5 top-[.75rem] h-4 w-4 text-muted-foreground" />
-            )}
-            <HighlightedSearchInput
-              ref={inputRef}
-              name="q"
-              type="search"
-              value={searchValue}
-              onChange={e => setSearchValue(e.target.value)}
-              placeholder={`Search ${context}...`}
+      <div className="flex flex-col gap-4 p-4 bg-muted/20 rounded-lg border">
+        {context === "obituaries" && (
+          <div className="w-full">
+            <Select
+              onValueChange={handleSearchOptionChange}
               disabled={isLoading}
-            />
+            >
+              <SelectTrigger
+                className={cn(
+                  "w-full h-10 bg-background",
+                  isLoading && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <SelectValue placeholder="Search type..." />
+              </SelectTrigger>
+              <SelectContent className="min-w-[200px]">
+                {SEARCH_OPTIONS.map(option => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    disabled={option.disabled}
+                    className={
+                      option.disabled
+                        ? "font-semibold text-muted-foreground"
+                        : ""
+                    }
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+        )}
 
-          <Button
-            type="submit"
-            variant="default"
-            disabled={isLoading}
-            className={cn(
-              "flex gap-2 items-center w-28 transition-all duration-200",
-              isLoading && "bg-primary/80 cursor-not-allowed"
-            )}
-          >
-            {isLoading ? (
-              <Spinner className="h-4 w-4 animate-spin" />
-            ) : (
-              <Search className="h-4 w-4" />
-            )}
-            {isLoading ? "Searching..." : "Search"}
-          </Button>
+        <form onSubmit={handleSubmit} className="w-full">
+          <div className="flex flex-col md:flex-row gap-2 w-full">
+            {/* Search Input - Full width on mobile, flexible on desktop */}
+            <div className="relative flex-1 md:min-w-[200px]">
+              {isLoading ? (
+                <Spinner className="absolute left-3 top-[0.75rem] h-4 w-4 text-muted-foreground animate-spin" />
+              ) : (
+                <Search className="absolute left-3 top-[0.75rem] h-4 w-4 text-muted-foreground" />
+              )}
+              <HighlightedSearchInput
+                ref={inputRef}
+                name="q"
+                type="search"
+                value={searchValue}
+                onChange={e => setSearchValue(e.target.value)}
+                placeholder={`Search ${context}...`}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Button Group - Stays together and aligned to the right */}
+            <div className="flex gap-2 md:flex-shrink-0">
+              <Button
+                type="submit"
+                variant="default"
+                disabled={isLoading}
+                className={cn(
+                  "flex gap-2 items-center justify-center min-w-[100px] h-10 transition-all duration-200",
+                  isLoading && "bg-primary/80 cursor-not-allowed"
+                )}
+              >
+                {isLoading ? (
+                  <Spinner className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
+                {isLoading ? "Searching..." : "Search"}
+              </Button>
+
+              <Button
+                type="button"
+                variant="default"
+                onClick={handleDownloadReport}
+                disabled={isDownloading || !searchValue}
+                className="flex gap-2 items-center justify-center whitespace-nowrap bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 min-w-[120px] h-10"
+              >
+                {isDownloading ? (
+                  <Spinner className="h-4 w-4" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                PDF Report
+              </Button>
+            </div>
+          </div>
         </form>
-
-        <Button
-          type="button"
-          variant="default"
-          onClick={handleDownloadReport}
-          disabled={isDownloading || !searchValue}
-          className="flex gap-2 items-center whitespace-nowrap bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 w-32 h-10"
-        >
-          {isDownloading ? (
-            <Spinner className="h-4 w-4" />
-          ) : (
-            <Download className="h-4 w-4" />
-          )}
-          PDF Report
-        </Button>
       </div>
     </div>
   );
