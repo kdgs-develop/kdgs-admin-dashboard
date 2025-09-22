@@ -248,84 +248,179 @@ export function ImageTable({ initialSearchQuery = "" }) {
                   </p>
                 </div>
               ) : images.length > 0 ? (
-                <div
-                  ref={tableContentRef}
-                  className="flex-grow overflow-auto"
-                  style={{ height: tableHeight }}
-                >
-                  <Table>
-                    <TableHeader>
-                      <TableRow className={cn(isCompactMode && "h-8")}>
-                        <TableHead>File Name</TableHead>
-                        <TableHead>Format</TableHead>
-                        <TableHead>Size</TableHead>
-                        <TableHead>Last Modified</TableHead>
-                        <TableHead>Has Obituary</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {images.map(image => (
-                        <TableRow
-                          key={image.name}
-                          className={cn(isCompactMode && "h-10")}
-                        >
-                          <TableCell className={cn(isCompactMode && "py-1")}>
-                            {image.name?.split(".")[0] ?? "Unnamed"}
-                          </TableCell>
-                          <TableCell className={cn(isCompactMode && "py-1")}>
-                            {image.name?.split(".").pop() ?? "Unknown"}
-                          </TableCell>
-                          <TableCell className={cn(isCompactMode && "py-1")}>
-                            {((image.size ?? 0) / 1024).toFixed(2)} KB
-                          </TableCell>
-                          <TableCell className={cn(isCompactMode && "py-1")}>
-                            {image.lastModified?.toLocaleString() ?? "Unknown"}
-                          </TableCell>
-                          <TableCell className={cn(isCompactMode && "py-1")}>
-                            {image.obituary ? "Yes" : "No"}
-                          </TableCell>
-                          <TableCell className={cn(isCompactMode && "py-1")}>
-                            <div className="flex space-x-2">
-                              <Button
-                                onClick={() => setSelectedImage(image)}
-                                size="sm"
-                                className={cn(
-                                  "bg-gray-600 hover:bg-gray-700 text-white transition-colors duration-200",
-                                  isCompactMode && "h-7 text-xs px-2"
-                                )}
-                              >
-                                View
-                              </Button>
-                              <Button
-                                onClick={() => setSelectedImageToEdit(image)}
-                                size="sm"
-                                disabled={role !== "ADMIN"}
-                                className={cn(
-                                  "bg-gray-500 hover:bg-gray-600 text-white transition-colors duration-200",
-                                  isCompactMode && "h-7 text-xs px-2"
-                                )}
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                onClick={() => setSelectedImageToRename(image)}
-                                size="sm"
-                                disabled={role !== "ADMIN"}
-                                className={cn(
-                                  "bg-gray-400 hover:bg-gray-500 text-white transition-colors duration-200",
-                                  isCompactMode && "h-7 text-xs px-2"
-                                )}
-                              >
-                                Rename
-                              </Button>
-                            </div>
-                          </TableCell>
+                <>
+                  {/* Desktop Table View (>=900px) */}
+                  <div className="hidden images:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className={cn(isCompactMode && "h-8")}>
+                          <TableHead>File Name</TableHead>
+                          <TableHead>Format</TableHead>
+                          <TableHead>Size</TableHead>
+                          <TableHead>Last Modified</TableHead>
+                          <TableHead>Has Obituary</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {images.map(image => (
+                          <TableRow
+                            key={image.name}
+                            className={cn(isCompactMode && "h-10")}
+                          >
+                            <TableCell className={cn(isCompactMode && "py-1")}>
+                              {image.name?.split(".")[0] ?? "Unnamed"}
+                            </TableCell>
+                            <TableCell className={cn(isCompactMode && "py-1")}>
+                              {image.name?.split(".").pop() ?? "Unknown"}
+                            </TableCell>
+                            <TableCell className={cn(isCompactMode && "py-1")}>
+                              {((image.size ?? 0) / 1024).toFixed(2)} KB
+                            </TableCell>
+                            <TableCell className={cn(isCompactMode && "py-1")}>
+                              {image.lastModified?.toLocaleString() ??
+                                "Unknown"}
+                            </TableCell>
+                            <TableCell className={cn(isCompactMode && "py-1")}>
+                              {image.obituary ? "Yes" : "No"}
+                            </TableCell>
+                            <TableCell className={cn(isCompactMode && "py-1")}>
+                              <div className="flex space-x-2">
+                                <Button
+                                  onClick={() => setSelectedImage(image)}
+                                  size="sm"
+                                  className={cn(
+                                    "bg-gray-600 hover:bg-gray-700 text-white transition-colors duration-200",
+                                    isCompactMode && "h-7 text-xs px-2"
+                                  )}
+                                >
+                                  View
+                                </Button>
+                                <Button
+                                  onClick={() => setSelectedImageToEdit(image)}
+                                  size="sm"
+                                  disabled={role !== "ADMIN"}
+                                  className={cn(
+                                    "bg-gray-500 hover:bg-gray-600 text-white transition-colors duration-200",
+                                    isCompactMode && "h-7 text-xs px-2"
+                                  )}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  onClick={() =>
+                                    setSelectedImageToRename(image)
+                                  }
+                                  size="sm"
+                                  disabled={role !== "ADMIN"}
+                                  className={cn(
+                                    "bg-gray-400 hover:bg-gray-500 text-white transition-colors duration-200",
+                                    isCompactMode && "h-7 text-xs px-2"
+                                  )}
+                                >
+                                  Rename
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile Card View (<900px) */}
+                  <div className="images:hidden space-y-4">
+                    {images.map(image => (
+                      <div
+                        key={image.name}
+                        className="border rounded-lg p-4 bg-card"
+                      >
+                        {/* First Row - Main Information */}
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-3">
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              File Name:
+                            </span>
+                            <div className="font-mono text-xs break-all">
+                              {image.name?.split(".")[0] ?? "Unnamed"}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Format:
+                            </span>
+                            <div className="uppercase">
+                              {image.name?.split(".").pop() ?? "Unknown"}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Size:
+                            </span>
+                            <div>
+                              {((image.size ?? 0) / 1024).toFixed(2)} KB
+                            </div>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-600">
+                              Has Obituary:
+                            </span>
+                            <div
+                              className={cn(
+                                "font-medium",
+                                image.obituary
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                              )}
+                            >
+                              {image.obituary ? "Yes" : "No"}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Second Row - Date and Actions */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-border/50">
+                          <div className="text-sm">
+                            <span className="font-medium text-gray-600">
+                              Last Modified:
+                            </span>
+                            <span className="ml-1">
+                              {image.lastModified?.toLocaleString() ??
+                                "Unknown"}
+                            </span>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => setSelectedImage(image)}
+                              size="sm"
+                              className="bg-gray-600 hover:bg-gray-700 text-white transition-colors duration-200 flex-1 sm:flex-none"
+                            >
+                              View
+                            </Button>
+                            <Button
+                              onClick={() => setSelectedImageToEdit(image)}
+                              size="sm"
+                              disabled={role !== "ADMIN"}
+                              className="bg-gray-500 hover:bg-gray-600 text-white transition-colors duration-200 flex-1 sm:flex-none"
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              onClick={() => setSelectedImageToRename(image)}
+                              size="sm"
+                              disabled={role !== "ADMIN"}
+                              className="bg-gray-400 hover:bg-gray-500 text-white transition-colors duration-200 flex-1 sm:flex-none"
+                            >
+                              Rename
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <div className="flex-grow flex items-center justify-center">
                   <p className="text-sm text-muted-foreground text-center">
@@ -336,107 +431,101 @@ export function ImageTable({ initialSearchQuery = "" }) {
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2 p-3">
-          {/* Top row with filter controls */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="text-sm text-muted-foreground">
-                Images per page
+        <CardFooter className="flex flex-col space-y-3 p-3 border-t bg-muted/30">
+          {/* Controls Row */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            {/* Left side - Filters and Controls */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Per page:</span>
+                <Select
+                  value={imagesPerPage.toString()}
+                  onValueChange={value => setImagesPerPage(Number(value))}
+                >
+                  <SelectTrigger className="w-[70px] h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                    <SelectItem value="250">250</SelectItem>
+                    <SelectItem value="500">500</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select
-                value={imagesPerPage.toString()}
-                onValueChange={value => setImagesPerPage(Number(value))}
-              >
-                <SelectTrigger className="w-[80px]">
-                  <SelectValue placeholder="Images per page" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                  <SelectItem value="250">250</SelectItem>
-                  <SelectItem value="500">500</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <div className="text-sm text-muted-foreground">
-                Filter by Obituary
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Obituary:</span>
+                <Select
+                  value={obituaryFilter}
+                  onValueChange={value => {
+                    setObituaryFilter(value as "all" | "has" | "no");
+                    loadImages(true);
+                  }}
+                >
+                  <SelectTrigger className="w-[90px] h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="has">Has</SelectItem>
+                    <SelectItem value="no">No</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select
-                value={obituaryFilter}
-                onValueChange={value => {
-                  setObituaryFilter(value as "all" | "has" | "no");
-                  loadImages(true);
-                }}
-              >
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Filter by Obituary" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="has">Has Obituary</SelectItem>
-                  <SelectItem value="no">No Obituary</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <div className="text-sm text-muted-foreground">Order by</div>
-              <Select
-                value={orderBy}
-                onValueChange={(value: OrderField) => {
-                  setIsLoading(true);
-                  setOrderBy(value);
-                  setImages([]);
-                  loadImages(true);
-                }}
-              >
-                <SelectTrigger className="w-[220px]">
-                  <SelectValue placeholder="Order by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lastModifiedDesc">
-                    Last Modified (Newest First)
-                  </SelectItem>
-                  <SelectItem value="lastModifiedAsc">
-                    Last Modified (Oldest First)
-                  </SelectItem>
-                  <SelectItem value="fileNameAsc">File Name (A-Z)</SelectItem>
-                  <SelectItem value="fileNameDesc">File Name (Z-A)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Sort:</span>
+                <Select
+                  value={orderBy}
+                  onValueChange={(value: OrderField) => {
+                    setIsLoading(true);
+                    setOrderBy(value);
+                    setImages([]);
+                    loadImages(true);
+                  }}
+                >
+                  <SelectTrigger className="w-[140px] h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lastModifiedDesc">
+                      Newest First
+                    </SelectItem>
+                    <SelectItem value="lastModifiedAsc">
+                      Oldest First
+                    </SelectItem>
+                    <SelectItem value="fileNameAsc">Name A-Z</SelectItem>
+                    <SelectItem value="fileNameDesc">Name Z-A</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="flex items-center">
               <Button
-                onClick={() => {
-                  setIsCompactMode(!isCompactMode);
-                }}
+                onClick={() => setIsCompactMode(!isCompactMode)}
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-1"
+                className="h-8 text-xs px-3"
               >
-                {isCompactMode ? "Normal View" : "Compact View"}
+                {isCompactMode ? "Normal" : "Compact"}
               </Button>
             </div>
-          </div>
 
-          {/* Bottom row with pagination and count */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded">
+            {/* Right side - Total count */}
+            <div className="flex items-center gap-2 bg-background px-3 py-1 rounded-md border">
               {isCountLoading ? (
-                <Spinner className="h-3 w-3 mr-2" />
+                <Spinner className="h-3 w-3" />
               ) : (
                 <span className="text-sm font-medium">{totalImages}</span>
               )}
-              <span className="text-sm text-muted-foreground ml-1">
-                images total
-              </span>
+              <span className="text-xs text-muted-foreground">total</span>
             </div>
+          </div>
 
-            <div className="space-x-2">
+          {/* Navigation Row */}
+          <div className="flex items-center justify-center">
+            <div className="flex items-center gap-2">
               <Button
                 onClick={handlePrevPage}
                 disabled={
@@ -444,6 +533,7 @@ export function ImageTable({ initialSearchQuery = "" }) {
                 }
                 variant="outline"
                 size="sm"
+                className="h-8 px-3 text-xs"
               >
                 Previous
               </Button>
@@ -452,8 +542,9 @@ export function ImageTable({ initialSearchQuery = "" }) {
                 disabled={!hasMore || isLoading}
                 variant="outline"
                 size="sm"
+                className="h-8 px-3 text-xs"
               >
-                {isLoading ? <Spinner className="h-4 w-4" /> : "Next"}
+                {isLoading ? <Spinner className="h-3 w-3" /> : "Next"}
               </Button>
             </div>
           </div>
