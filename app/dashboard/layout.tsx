@@ -14,11 +14,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { TransitionWrapper } from "../providers";
-import { DashboardBreadcrumb } from "./dashboard-breadcrumb";
 import { DashboardClientWrapper } from "./dashboard-client-wrapper";
 import { DesktopNav } from "./desktop-nav";
 import { SearchInput } from "./search";
 import { UserClerkButton } from "./user-clerk-button";
+import { Footer } from "@/components/footer";
 
 export default async function DashboardLayout({
   children
@@ -30,26 +30,47 @@ export default async function DashboardLayout({
   const userRole = await getUserRole();
 
   return (
-    <div className="flex h-[calc(100vh-100px)] w-full bg-background">
-      <DesktopNav role={userRole} />
-      <DashboardClientWrapper>
-        <div className="flex flex-1 flex-col transition-all duration-300 ease-in-out pt-2">
-          <header className="sticky top-0 flex h-14 items-center gap-4 border-b bg-background px-4 z-20">
-            <MobileNav />
-            <DashboardBreadcrumb />
-            <SearchInput />
-            <UserClerkButton />
-          </header>
-          <main className="flex-1">
-            <div className="p-3">
-              <TransitionWrapper>{children}</TransitionWrapper>
-            </div>
-          </main>
-          <footer>
-            <Analytics />
-          </footer>
-        </div>
-      </DashboardClientWrapper>
+    <div className="h-screen flex flex-col" style={{ height: "100dvh" }}>
+      <div className="flex flex-1 w-full bg-background overflow-hidden">
+        <DesktopNav role={userRole} />
+        <DashboardClientWrapper>
+          <div className="flex flex-1 flex-col transition-all duration-300 ease-in-out pt-2">
+            <header className="sticky top-0 border-b bg-background z-20">
+              {/* Top Row - Always visible with different content based on screen size */}
+              <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
+                {/* Left side - Mobile nav button (only < 1080px) */}
+                <div className="flex items-center">
+                  <MobileNav />
+                </div>
+
+                {/* Center - App title (always visible) */}
+                <div className="flex-1 flex items-center justify-center">
+                  <h1 className="text-sm font-medium text-muted-foreground">
+                    KDGS Admin Dashboard
+                  </h1>
+                </div>
+
+                {/* Right side - User auth button (always visible) */}
+                <div className="flex items-center">
+                  <UserClerkButton />
+                </div>
+              </div>
+
+              {/* Search Components Row */}
+              <div className="px-4 py-3">
+                <SearchInput />
+              </div>
+            </header>
+            <main className="flex-1 overflow-auto">
+              <div className="p-3">
+                <TransitionWrapper>{children}</TransitionWrapper>
+              </div>
+            </main>
+          </div>
+        </DashboardClientWrapper>
+      </div>
+      <Footer />
+      <Analytics />
     </div>
   );
 }
@@ -58,7 +79,7 @@ function MobileNav() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button size="icon" variant="outline" className="sm:hidden">
+        <Button size="icon" variant="outline" className="nav:hidden">
           <PanelLeft className="h-5 w-5" />
           <span className="sr-only">Toggle Menu</span>
         </Button>
@@ -67,17 +88,18 @@ function MobileNav() {
         <nav className="grid gap-6 text-lg font-medium">
           <Link
             href="/dashboard"
-            className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+            className="group flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg text-lg font-semibold md:text-base"
           >
             <Image
-              className="h-4 w-4 transition-all group-hover:scale-110"
-              src={"/icon.png"}
-              alt="Logo"
-              width={64}
-              height={64}
+              className="h-8 w-auto transition-all group-hover:scale-105"
+              src="/kdgs.png"
+              alt="KDGS Logo"
+              width={120}
+              height={40}
+              priority
+              unoptimized
             />
-
-            <span className="sr-only">Obituary Dashboard</span>
+            <span className="sr-only">KDGS Dashboard</span>
           </Link>
           <Link
             href="/dashboard"
