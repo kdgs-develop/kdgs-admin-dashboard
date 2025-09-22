@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Spinner } from '@/components/icons';
-import { Button } from '@/components/ui/button';
+import { Spinner } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,7 +9,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -17,17 +17,17 @@ import {
   TableHead,
   TableHeader,
   TableRow
-} from '@/components/ui/table';
-import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
-import { Download, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+} from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { Download, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   deleteReportAction,
   fetchReportsAction,
   getReportUrlAction
-} from './actions';
-import { DeleteReportDialog } from './delete-report-dialog';
+} from "./actions";
+import { DeleteReportDialog } from "./delete-report-dialog";
 
 const REPORTS_PER_PAGE = 5;
 
@@ -65,11 +65,11 @@ export function ReportsTable() {
       setReports(reports as Report[]);
       setTotalReports(total);
     } catch (error) {
-      console.error('Error loading reports:', error);
+      console.error("Error loading reports:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to load reports. Please try again.',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to load reports. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -78,39 +78,39 @@ export function ReportsTable() {
 
   async function handleDownload(report: Report) {
     try {
-      const fileName = report.fileName
+      const fileName = report.fileName;
       const url = await getReportUrlAction(fileName);
       const response = await fetch(url, {
         headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="${fileName}"`,
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${fileName}"`
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to download report');
+        throw new Error("Failed to download report");
       }
 
       // Create a new blob with application/pdf MIME type
       const blob = await response.blob();
       // Create the URL and force download with the correct filename
       const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
       link.download = fileName;
       link.click();
       window.URL.revokeObjectURL(downloadUrl);
 
       toast({
-        title: 'Success',
-        description: 'Report downloaded successfully'
+        title: "Success",
+        description: "Report downloaded successfully"
       });
     } catch (error) {
-      console.error('Error downloading report:', error);
+      console.error("Error downloading report:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to download report',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to download report",
+        variant: "destructive"
       });
     }
   }
@@ -119,15 +119,15 @@ export function ReportsTable() {
     try {
       await deleteReportAction(report.id, report.fileName);
       toast({
-        title: 'Success',
-        description: 'Report deleted successfully'
+        title: "Success",
+        description: "Report deleted successfully"
       });
       loadReports();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to delete report',
-        variant: 'destructive'
+        title: "Error",
+        description: "Failed to delete report",
+        variant: "destructive"
       });
     }
     setSelectedReport(null);
@@ -154,51 +154,133 @@ export function ReportsTable() {
             No reports found
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>File Name</TableHead>
-                <TableHead>Search Query</TableHead>
-                <TableHead>Created By</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Date Created</TableHead>
-                <TableHead>Total Results</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reports.map((report) => (
-                <TableRow key={report.id}>
-                  <TableCell>{report.fileName}</TableCell>
-                  <TableCell>{report.searchQuery}</TableCell>
-                  <TableCell>{report.createdBy.fullName}</TableCell>
-                  <TableCell>{report.role}</TableCell>
-                  <TableCell>
-                    {format(new Date(report.createdAt), 'yyyy-MM-dd HH:mm')}
-                  </TableCell>
-                  <TableCell>{report.totalResults}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
+          <>
+            {/* Desktop Table View (>=900px) */}
+            <div className="hidden reports:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>File Name</TableHead>
+                    <TableHead>Search Query</TableHead>
+                    <TableHead>Created By</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Date Created</TableHead>
+                    <TableHead>Total Results</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reports.map(report => (
+                    <TableRow key={report.id}>
+                      <TableCell>{report.fileName}</TableCell>
+                      <TableCell>{report.searchQuery}</TableCell>
+                      <TableCell>{report.createdBy.fullName}</TableCell>
+                      <TableCell>{report.role}</TableCell>
+                      <TableCell>
+                        {format(new Date(report.createdAt), "yyyy-MM-dd HH:mm")}
+                      </TableCell>
+                      <TableCell>{report.totalResults}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            onClick={() => handleDownload(report)}
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            onClick={() => setSelectedReport(report)}
+                            size="sm"
+                            variant="destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Card View (<900px) */}
+            <div className="reports:hidden space-y-4">
+              {reports.map(report => (
+                <div key={report.id} className="border rounded-lg p-4 bg-card">
+                  {/* First Row - Main Information */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-3">
+                    <div>
+                      <span className="font-medium text-gray-600">
+                        File Name:
+                      </span>
+                      <div className="font-mono text-xs break-all">
+                        {report.fileName}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">
+                        Search Query:
+                      </span>
+                      <div className="truncate">{report.searchQuery}</div>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">
+                        Created By:
+                      </span>
+                      <div>{report.createdBy.fullName}</div>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">Role:</span>
+                      <div>{report.role}</div>
+                    </div>
+                  </div>
+
+                  {/* Second Row - Date, Results, and Actions */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-border/50">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-600">Date:</span>
+                        <span className="ml-1">
+                          {format(
+                            new Date(report.createdAt),
+                            "yyyy-MM-dd HH:mm"
+                          )}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          Results:
+                        </span>
+                        <span className="ml-1">{report.totalResults}</span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
                       <Button
                         onClick={() => handleDownload(report)}
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-green-600 hover:bg-green-700 text-white flex-1 sm:flex-none"
                       >
-                        <Download className="h-4 w-4" />
+                        <Download className="h-4 w-4 mr-1" />
+                        Download
                       </Button>
                       <Button
                         onClick={() => setSelectedReport(report)}
                         size="sm"
                         variant="destructive"
+                        className="flex-1 sm:flex-none"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </div>
+                </div>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          </>
         )}
       </CardContent>
       <CardFooter className="flex items-center justify-between">
@@ -207,7 +289,7 @@ export function ReportsTable() {
         </div>
         <div className="space-x-2">
           <Button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             variant="outline"
             size="sm"
@@ -216,7 +298,7 @@ export function ReportsTable() {
           </Button>
           <Button
             onClick={() =>
-              setCurrentPage((prev) =>
+              setCurrentPage(prev =>
                 Math.min(prev + 1, Math.ceil(totalReports / REPORTS_PER_PAGE))
               )
             }
