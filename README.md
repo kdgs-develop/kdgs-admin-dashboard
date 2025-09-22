@@ -21,7 +21,7 @@ This repository contains two complementary applications that together provide a 
 
 A comprehensive admin interface for managing obituaries, genealogical resources, and image files. Features role-based access control, advanced search capabilities, and full CRUD operations for genealogical data.
 
-**Access**: [Admin Dashboard](https://kdgs-admin-dashboard.vercel.app)
+**Access**: [Admin Dashboard](https://search.kdgs.ca/dashboard)
 
 ---
 
