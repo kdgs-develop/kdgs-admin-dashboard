@@ -53,7 +53,8 @@ export function Obituary({
 
   return (
     <>
-      <TableRow>
+      {/* Desktop Table Row */}
+      <TableRow className="hidden table:table-row">
         <TableCell className="whitespace-pre">{obituary.reference}</TableCell>
         <TableCell>{obituary.surname ?? "N/A"}</TableCell>
         <TableCell>{obituary.givenNames ?? "N/A"}</TableCell>
@@ -121,6 +122,122 @@ export function Obituary({
                 Delete
               </Button>
             )}
+          </div>
+        </TableCell>
+      </TableRow>
+
+      {/* Mobile Card Layout */}
+      <TableRow className="table:hidden">
+        <TableCell colSpan={7} className="p-0">
+          <div className="p-3 border-b">
+            {/* Three-column layout for medium screens (600px-1014px) */}
+            <div className="grid grid-cols-1 card:grid-cols-3 gap-4">
+              {/* Left Column - Main Info */}
+              <div className="card:col-span-2 space-y-2">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-600">
+                      File Number:
+                    </span>
+                    <div className="font-mono">{obituary.reference}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">
+                      Death Date:
+                    </span>
+                    <div>
+                      {obituary.deathDate
+                        ? obituary.deathDate.toISOString().split("T")[0]
+                        : "N/A"}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Surname:</span>
+                    <div>{obituary.surname ?? "N/A"}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">
+                      Given Names:
+                    </span>
+                    <div>{obituary.givenNames ?? "N/A"}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Images:</span>
+                    <div className="text-xs">
+                      {obituary.images && obituary.images.length > 0 ? (
+                        obituary.images.length === 1 ? (
+                          <span className="truncate">
+                            {obituary.images[0].name}
+                          </span>
+                        ) : (
+                          `${obituary.images.length} images`
+                        )
+                      ) : (
+                        "No images"
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Status:</span>
+                    <div>
+                      <Badge
+                        variant={obituary.proofread ? "outline" : "destructive"}
+                        className="text-xs"
+                      >
+                        {obituary.proofread ? "Proofread" : "Not Proofread"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Action Buttons */}
+              <div className="flex card:flex-col gap-2 pt-1 card:pt-0">
+                {/* Primary Action - View Report */}
+                <Button
+                  onClick={handleViewClick}
+                  size="sm"
+                  className="bg-gray-600 hover:bg-gray-700 text-white transition-colors duration-200 w-full card:w-full"
+                >
+                  View Report
+                </Button>
+
+                {/* Secondary Actions - Edit and Delete */}
+                {(role === "ADMIN" ||
+                  role === "PROOFREADER" ||
+                  role === "INDEXER" ||
+                  role === "ADMIN") && (
+                  <>
+                    {(role === "ADMIN" ||
+                      role === "PROOFREADER" ||
+                      role === "INDEXER") && (
+                      <Button
+                        onClick={handleEditClick}
+                        size="sm"
+                        disabled={
+                          role !== "ADMIN" &&
+                          role !== "PROOFREADER" &&
+                          role !== "INDEXER"
+                        }
+                        className="bg-gray-500 hover:bg-gray-600 text-white transition-colors duration-200 flex-1 card:w-full card:flex-none"
+                      >
+                        Edit
+                      </Button>
+                    )}
+                    {role === "ADMIN" && (
+                      <Button
+                        onClick={handleDeleteClick}
+                        size="sm"
+                        disabled={role !== "ADMIN"}
+                        className="bg-gray-400 hover:bg-gray-500 text-white transition-colors duration-200 flex-1 card:w-full card:flex-none"
+                      >
+                        Delete
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </TableCell>
       </TableRow>
