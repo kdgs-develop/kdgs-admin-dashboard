@@ -27,39 +27,37 @@ export function DesktopNav({ role }: DesktopNavProps) {
   return (
     <aside
       className={cn(
-        "hidden sm:flex flex-col border-r min-h-screen pt-2 overflow-hidden",
+        "hidden nav:flex flex-col border-r min-h-screen pt-2 overflow-hidden",
         "transition-[width] duration-300 ease-in-out",
         isOpen ? "w-[135px]" : "w-14",
         "bg-background"
       )}
     >
       <nav className="flex flex-col px-1 py-2.5 pl-2.5 sticky top-0">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
           <Link
             href="/dashboard"
-            className="flex h-9 w-full items-center gap-3 rounded-lg text-lg font-semibold whitespace-nowrap"
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-2 py-2 mb-2",
+              isOpen ? "w-full justify-start" : "w-10 justify-center"
+            )}
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shrink-0">
+            <div className="flex items-center justify-center shrink-0">
               <Image
-                className="h-4 w-4"
-                src={"/icon.png"}
-                alt="Logo"
-                width={64}
-                height={64}
+                className={cn(
+                  "transition-all duration-300",
+                  isOpen ? "h-8 w-auto" : "h-6 w-auto"
+                )}
+                src="/kdgs.png"
+                alt="KDGS Logo"
+                width={120}
+                height={40}
+                priority
+                unoptimized
               />
             </div>
-            <span
-              className={cn(
-                "text-[12pt] font-bold transition-opacity duration-300 ml-[-7px]",
-                isOpen ? "opacity-100" : "opacity-0"
-              )}
-            >
-              KDGS
-            </span>
           </Link>
-        </div>
 
-        <div className="mt-4 flex flex-col gap-1">
           <NavItem href="/dashboard" label="Index" isOpen={isOpen}>
             <Home className="h-5 w-5" />
           </NavItem>
