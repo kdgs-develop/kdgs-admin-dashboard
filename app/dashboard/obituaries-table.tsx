@@ -109,7 +109,7 @@ export function ObituariesTable({
   function prevPage() {
     setLoadingButton("prev");
     const newOffset = Math.max(offset - limit, 0);
-    router.push(`/?offset=${newOffset}&limit=${limit}&q=${search}`, {
+    router.push(`/dashboard/?offset=${newOffset}&limit=${limit}&q=${search}`, {
       scroll: false
     });
   }
@@ -117,7 +117,7 @@ export function ObituariesTable({
   function nextPage() {
     setLoadingButton("next");
     const newOffset = offset + limit;
-    router.push(`/?offset=${newOffset}&limit=${limit}&q=${search}`, {
+    router.push(`/dashboard/?offset=${newOffset}&limit=${limit}&q=${search}`, {
       scroll: false
     });
   }
@@ -125,7 +125,9 @@ export function ObituariesTable({
   function handleItemsPerPageChange(value: string) {
     setLoadingButton(null);
     const newLimit = parseInt(value, 10);
-    router.push(`/?offset=0&limit=${newLimit}&q=${search}`, { scroll: false });
+    router.push(`/dashboard/?offset=0&limit=${newLimit}&q=${search}`, {
+      scroll: false
+    });
   }
 
   useEffect(() => {
@@ -162,74 +164,107 @@ export function ObituariesTable({
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>File Number</TableHead>
-                <TableHead>Surname</TableHead>
-                <TableHead>Given Names</TableHead>
-                <TableHead>Death Date</TableHead>
-                <TableHead>Images</TableHead>
-                <TableHead>Proofread</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoadingData
-                ? // Loading skeleton rows
-                  Array.from({ length: limit }).map((_, index) => (
-                    <TableRow key={`loading-${index}`}>
-                      <TableCell>
-                        <div className="h-4 bg-muted animate-pulse rounded w-20"></div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="h-4 bg-muted animate-pulse rounded w-24"></div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="h-4 bg-muted animate-pulse rounded w-32"></div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="h-4 bg-muted animate-pulse rounded w-20"></div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="h-4 bg-muted animate-pulse rounded w-12"></div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="h-4 bg-muted animate-pulse rounded w-16"></div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="h-4 bg-muted animate-pulse rounded w-8"></div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                : obituaries.map(
-                    obituary =>
-                      obituary && (
-                        <Obituary
-                          key={obituary.id}
-                          obituary={obituary}
-                          onUpdate={() => {
-                            setIsLoadingData(true);
-                            fetchObituariesAction(offset, limit, search)
-                              .then(({ obituaries, total }) => {
-                                setObituaries(obituaries ?? []);
-                                setTotalObituaries(total);
-                              })
-                              .finally(() => {
-                                setIsLoadingData(false);
-                              });
-                          }}
-                          role={role}
-                        />
-                      )
-                  )}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="hidden table:table-header-group">
+                <TableRow>
+                  <TableHead>File Number</TableHead>
+                  <TableHead>Surname</TableHead>
+                  <TableHead>Given Names</TableHead>
+                  <TableHead>Death Date</TableHead>
+                  <TableHead>Images</TableHead>
+                  <TableHead>Proofread</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoadingData
+                  ? // Loading skeleton rows
+                    Array.from({ length: limit }).map((_, index) => (
+                      <>
+                        {/* Desktop Loading Skeleton */}
+                        <TableRow
+                          key={`loading-${index}`}
+                          className="hidden table:table-row"
+                        >
+                          <TableCell>
+                            <div className="h-4 bg-muted animate-pulse rounded w-20"></div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="h-4 bg-muted animate-pulse rounded w-24"></div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="h-4 bg-muted animate-pulse rounded w-32"></div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="h-4 bg-muted animate-pulse rounded w-20"></div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="h-4 bg-muted animate-pulse rounded w-12"></div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="h-4 bg-muted animate-pulse rounded w-16"></div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="h-4 bg-muted animate-pulse rounded w-8"></div>
+                          </TableCell>
+                        </TableRow>
+                        {/* Mobile Loading Skeleton */}
+                        <TableRow
+                          key={`loading-mobile-${index}`}
+                          className="table:hidden"
+                        >
+                          <TableCell colSpan={7} className="p-0">
+                            <div className="p-4 space-y-3 border-b">
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="h-4 bg-muted animate-pulse rounded w-20"></div>
+                                <div className="h-4 bg-muted animate-pulse rounded w-24"></div>
+                                <div className="h-4 bg-muted animate-pulse rounded w-32"></div>
+                                <div className="h-4 bg-muted animate-pulse rounded w-20"></div>
+                              </div>
+                              <div className="space-y-2">
+                                <div className="h-4 bg-muted animate-pulse rounded w-16"></div>
+                                <div className="h-4 bg-muted animate-pulse rounded w-12"></div>
+                              </div>
+                              <div className="flex gap-2">
+                                <div className="h-8 bg-muted animate-pulse rounded flex-1"></div>
+                                <div className="h-8 bg-muted animate-pulse rounded flex-1"></div>
+                                <div className="h-8 bg-muted animate-pulse rounded flex-1"></div>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      </>
+                    ))
+                  : obituaries.map(
+                      obituary =>
+                        obituary && (
+                          <Obituary
+                            key={obituary.id}
+                            obituary={obituary}
+                            onUpdate={() => {
+                              setIsLoadingData(true);
+                              fetchObituariesAction(offset, limit, search)
+                                .then(({ obituaries, total }) => {
+                                  setObituaries(obituaries ?? []);
+                                  setTotalObituaries(total);
+                                })
+                                .finally(() => {
+                                  setIsLoadingData(false);
+                                });
+                            }}
+                            role={role}
+                          />
+                        )
+                    )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
-        <CardFooter className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <CardFooter className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
             <div className="text-sm text-muted-foreground">
               {isLoadingData ? (
                 <div className="h-4 bg-muted animate-pulse rounded w-48"></div>
@@ -258,7 +293,7 @@ export function ObituariesTable({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-x-2">
+          <div className="flex gap-2 w-full sm:w-auto justify-end">
             <Button
               onClick={prevPage}
               disabled={offset === 0 || loadingButton !== null || isLoadingData}
