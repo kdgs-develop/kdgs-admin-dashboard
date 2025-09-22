@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { HeaderAuth } from "./components/header-auth"; // Import the new component
 import { LogOut } from "lucide-react"; // Import LogOut icon
+import { Footer } from "@/components/footer";
 
 // Layout becomes an async component to fetch session
 export default async function PublicLayout({
@@ -79,6 +80,7 @@ export default async function PublicLayout({
 
       {/* Wrap children in a main element that grows */}
       <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 }
