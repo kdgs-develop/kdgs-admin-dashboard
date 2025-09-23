@@ -30,6 +30,15 @@ const nextConfig = {
         pathname: "/**"
       }
     ]
+  },
+  async redirects() {
+    return [
+      {
+        source: "/public/search",
+        destination: "https://search.kdgs.ca",
+        permanent: true
+      }
+    ];
   }
 };
 
