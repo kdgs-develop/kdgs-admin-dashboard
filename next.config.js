@@ -34,12 +34,29 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: "/public/search",
-        destination: "https://search.kdgs.ca",
-        permanent: true
-      }
+        source: '/:path*', // Match all paths on the subdomain
+        has: [
+          {
+            type: 'host',
+            value: 'dashboard.kdgs.ca', // Source subdomain
+          },
+        ],
+        destination: 'https://search.kdgs.ca', // Target subdomain
+        permanent: true, // 301 redirect for SEO
+      },
+      {
+        source: '/public/search', // Match this path on the subdomain
+        has: [
+          {
+            type: 'host',
+            value: 'dashboard.kdgs.ca', // Source subdomain
+          },
+        ],
+        destination: 'https://search.kdgs.ca/dashboard', // Target subdomain
+        permanent: true, // 301 redirect for SEO
+      },
     ];
-  }
+  },
 };
 
 module.exports = nextConfig;
