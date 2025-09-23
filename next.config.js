@@ -34,7 +34,7 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: "/public/search",
+        source: "/",
         has: [
           {
             type: "host",
@@ -45,7 +45,7 @@ const nextConfig = {
         permanent: true
       },
       {
-        source: "/:path*", // Match all paths on the subdomain
+        source: "/public/search", // Match all paths on the subdomain
         has: [
           {
             type: "host",
