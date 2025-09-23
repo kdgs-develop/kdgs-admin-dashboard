@@ -34,14 +34,14 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/:path*', // Match all paths on the subdomain
+        source: '/', // Match this path on the subdomain
         has: [
           {
             type: 'host',
             value: 'dashboard.kdgs.ca', // Source subdomain
           },
         ],
-        destination: 'https://search.kdgs.ca', // Target subdomain
+        destination: 'https://search.kdgs.ca/dashboard', // Target subdomain
         permanent: true, // 301 redirect for SEO
       },
       {
@@ -52,7 +52,7 @@ const nextConfig = {
             value: 'dashboard.kdgs.ca', // Source subdomain
           },
         ],
-        destination: 'https://search.kdgs.ca/dashboard', // Target subdomain
+        destination: 'https://search.kdgs.ca', // Target subdomain
         permanent: true, // 301 redirect for SEO
       },
     ];
