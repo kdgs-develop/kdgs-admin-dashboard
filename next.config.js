@@ -34,6 +34,17 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/public/search",
+        has: [
+          {
+            type: "host",
+            value: "dashboard.kdgs.ca"
+          }
+        ],
+        destination: "https://search.kdgs.ca/dashboard",
+        permanent: true
+      },
+      {
         source: "/:path*", // Match all paths on the subdomain
         has: [
           {
