@@ -55,7 +55,13 @@ interface BatchNumberData {
   totalPages: number;
 }
 
-export function BatchNumberAdministration() {
+interface BatchNumberAdministrationProps {
+  forceExpanded?: boolean;
+}
+
+export function BatchNumberAdministration({
+  forceExpanded = false
+}: BatchNumberAdministrationProps) {
   const [batchData, setBatchData] = useState<BatchNumberData>({
     batchNumbers: [],
     totalCount: 0,
@@ -73,7 +79,7 @@ export function BatchNumberAdministration() {
     latestEditorRole?: string | null;
   } | null>(null);
   const { toast } = useToast();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(forceExpanded);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
@@ -265,22 +271,26 @@ export function BatchNumberAdministration() {
   return (
     <Card>
       <CardHeader
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={handleToggleExpand}
+        className={`flex flex-row items-center justify-between ${
+          !forceExpanded ? "cursor-pointer" : ""
+        }`}
+        onClick={!forceExpanded ? handleToggleExpand : undefined}
       >
         <div>
           <CardTitle>Batch Number Management</CardTitle>
-          {!isExpanded && (
+          {!isExpanded && !forceExpanded && (
             <CardDescription>Click to manage batch numbers</CardDescription>
           )}
         </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </Button>
+        {!forceExpanded && (
+          <Button variant="ghost" size="icon">
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+        )}
       </CardHeader>
       {isExpanded && (
         <CardContent className="space-y-4">
