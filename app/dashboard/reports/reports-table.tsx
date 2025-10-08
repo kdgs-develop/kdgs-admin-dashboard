@@ -29,7 +29,7 @@ import {
 } from "./actions";
 import { DeleteReportDialog } from "./delete-report-dialog";
 
-const REPORTS_PER_PAGE = 5;
+const REPORTS_PER_PAGE = 10;
 
 interface Report {
   id: string;
