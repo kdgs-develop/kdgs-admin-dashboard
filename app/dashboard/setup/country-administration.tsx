@@ -47,7 +47,13 @@ interface CountryData {
   totalPages: number;
 }
 
-export function CountryAdministration() {
+interface CountryAdministrationProps {
+  forceExpanded?: boolean;
+}
+
+export function CountryAdministration({
+  forceExpanded = false
+}: CountryAdministrationProps) {
   const [countryData, setCountryData] = useState<CountryData>({
     countries: [],
     totalCount: 0,
@@ -61,7 +67,7 @@ export function CountryAdministration() {
     name: string;
   } | null>(null);
   const { toast } = useToast();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(forceExpanded);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
