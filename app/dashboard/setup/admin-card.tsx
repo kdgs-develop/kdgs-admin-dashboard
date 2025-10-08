@@ -121,6 +121,9 @@ export function AdminCard({
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
           <div className="mt-4">{children}</div>
         </DialogContent>
       </Dialog>
