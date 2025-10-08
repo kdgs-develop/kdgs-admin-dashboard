@@ -15,7 +15,6 @@ import { PeriodicalAdministration } from "./periodical-administration";
 import { RelationshipAdministration } from "./relationship-administration";
 import { TitleAdministration } from "./title-administration";
 import { SharedDataProvider } from "./shared-data-context";
-import { getAdminStats } from "./admin-stats";
 
 export default async function SetupPage() {
   const { userId } = auth();
@@ -29,22 +28,21 @@ export default async function SetupPage() {
     redirect("/dashboard");
 
   const isAdmin = user?.role === "ADMIN";
-  const stats = await getAdminStats();
 
   const coreManagementCards = [
     {
       title: "File Boxes",
       description: "Manage file box assignments and tracking",
       iconName: "Archive",
-      stats: [{ label: "Total File Boxes", value: stats.fileBoxes.count }],
-      component: <FileBoxAdministration />
+      component: <FileBoxAdministration />,
+      colorScheme: "blue" as const
     },
     {
       title: "Batch Numbers",
       description: "Create and manage batch number assignments",
       iconName: "BarChart3",
-      stats: [{ label: "Total Batches", value: stats.batchNumbers.count }],
-      component: <BatchNumberAdministration />
+      component: <BatchNumberAdministration />,
+      colorScheme: "blue" as const
     }
   ];
 
@@ -53,49 +51,49 @@ export default async function SetupPage() {
       title: "Countries",
       description: "Manage country reference data",
       iconName: "Globe",
-      stats: [{ label: "Countries", value: stats.countries.count }],
       component: <CountryAdministration />,
-      isAdminOnly: true
+      isAdminOnly: true,
+      colorScheme: "green" as const
     },
     {
       title: "Locations",
       description: "Manage city and location data",
       iconName: "MapPin",
-      stats: [{ label: "Locations", value: stats.locations.count }],
       component: <LocationAdministration />,
-      isAdminOnly: true
+      isAdminOnly: true,
+      colorScheme: "green" as const
     },
     {
       title: "Publications",
       description: "Manage newspaper and periodical references",
       iconName: "Newspaper",
-      stats: [{ label: "Publications", value: stats.periodicals.count }],
       component: <PeriodicalAdministration />,
-      isAdminOnly: true
+      isAdminOnly: true,
+      colorScheme: "green" as const
     },
     {
       title: "Relationships",
       description: "Manage family relationship types",
       iconName: "UserCheck",
-      stats: [{ label: "Relationships", value: stats.relationships.count }],
       component: <RelationshipAdministration />,
-      isAdminOnly: true
+      isAdminOnly: true,
+      colorScheme: "green" as const
     },
     {
-      title: "Cemeteries",
-      description: "Manage cemetery information",
+      title: "Interment Places",
+      description: "Manage cemetery and interment location information",
       iconName: "Building2",
-      stats: [{ label: "Cemeteries", value: stats.cemeteries.count }],
       component: <CemeteryAdministration />,
-      isAdminOnly: true
+      isAdminOnly: true,
+      colorScheme: "green" as const
     },
     {
       title: "Titles",
       description: "Manage professional and honorary titles",
       iconName: "FileText",
-      stats: [{ label: "Titles", value: stats.titles.count }],
       component: <TitleAdministration />,
-      isAdminOnly: true
+      isAdminOnly: true,
+      colorScheme: "green" as const
     }
   ];
 
@@ -104,17 +102,17 @@ export default async function SetupPage() {
       title: "Genealogists",
       description: "Manage user accounts and permissions",
       iconName: "Users",
-      stats: [{ label: "Users", value: stats.genealogists.count }],
       component: <GenealogistAdministration />,
-      isAdminOnly: true
+      isAdminOnly: true,
+      colorScheme: "purple" as const
     },
     {
       title: "Orders",
       description: "View and manage customer orders",
       iconName: "Database",
-      stats: [{ label: "Orders", value: stats.orders.count }],
       component: <OrdersAdministration />,
-      isAdminOnly: true
+      isAdminOnly: true,
+      colorScheme: "purple" as const
     }
   ];
 
@@ -124,14 +122,16 @@ export default async function SetupPage() {
       description: "Upload multiple files and images at once",
       iconName: "Upload",
       component: <BulkUpload />,
-      isAdminOnly: true
+      isAdminOnly: true,
+      colorScheme: "amber" as const
     },
     {
       title: "System Backup",
       description: "Create and manage database backups",
       iconName: "Settings",
       component: <AdminBackup />,
-      isAdminOnly: true
+      isAdminOnly: true,
+      colorScheme: "amber" as const
     }
   ];
 
@@ -157,7 +157,7 @@ export default async function SetupPage() {
                 title={card.title}
                 description={card.description}
                 iconName={card.iconName}
-                stats={card.stats}
+                colorScheme={card.colorScheme}
               >
                 {card.component}
               </AdminCard>
@@ -176,8 +176,8 @@ export default async function SetupPage() {
                   title={card.title}
                   description={card.description}
                   iconName={card.iconName}
-                  stats={card.stats}
                   isAdminOnly={card.isAdminOnly}
+                  colorScheme={card.colorScheme}
                 >
                   <SharedDataProvider>{card.component}</SharedDataProvider>
                 </AdminCard>
@@ -197,8 +197,8 @@ export default async function SetupPage() {
                   title={card.title}
                   description={card.description}
                   iconName={card.iconName}
-                  stats={card.stats}
                   isAdminOnly={card.isAdminOnly}
+                  colorScheme={card.colorScheme}
                 >
                   <SharedDataProvider>{card.component}</SharedDataProvider>
                 </AdminCard>
@@ -219,6 +219,7 @@ export default async function SetupPage() {
                   description={card.description}
                   iconName={card.iconName}
                   isAdminOnly={card.isAdminOnly}
+                  colorScheme={card.colorScheme}
                 >
                   <SharedDataProvider>{card.component}</SharedDataProvider>
                 </AdminCard>
