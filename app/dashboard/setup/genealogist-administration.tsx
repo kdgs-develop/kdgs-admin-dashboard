@@ -94,7 +94,13 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function GenealogistAdministration() {
+interface GenealogistAdministrationProps {
+  forceExpanded?: boolean;
+}
+
+export function GenealogistAdministration({
+  forceExpanded = false
+}: GenealogistAdministrationProps) {
   const dashboard_url = process.env.NEXT_PUBLIC_DASHBOARD_URL!;
   const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!;
   const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!;
@@ -149,7 +155,7 @@ export function GenealogistAdministration() {
     }
   });
 
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(forceExpanded);
 
   const fetchGenealogists = async (page: number) => {
     if (isLoading) return;
@@ -453,24 +459,28 @@ export function GenealogistAdministration() {
   return (
     <Card className="w-[calc(100%)]">
       <CardHeader
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={handleToggleExpanded}
+        className={`flex flex-row items-center justify-between ${
+          !forceExpanded ? "cursor-pointer" : ""
+        }`}
+        onClick={!forceExpanded ? handleToggleExpanded : undefined}
       >
         <div>
           <CardTitle>Genealogist Administration</CardTitle>
-          {!isExpanded && (
+          {!isExpanded && !forceExpanded && (
             <CardDescription>
               Click to manage genealogists and user roles
             </CardDescription>
           )}
         </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </Button>
+        {!forceExpanded && (
+          <Button variant="ghost" size="icon">
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+        )}
       </CardHeader>
       {isExpanded && (
         <CardContent>
@@ -480,7 +490,6 @@ export function GenealogistAdministration() {
             </div>
           ) : (
             <div className="space-y-8">
-
               {/* Statistics Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg border">
                 <div className="text-center">
@@ -670,8 +679,6 @@ export function GenealogistAdministration() {
                   </div>
                 </form>
               </Form>
-
-              
 
               <div className="overflow-x-auto border rounded-md">
                 <Table>
