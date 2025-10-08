@@ -1,13 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -20,10 +13,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
   Plus,
   Search,
   LinkIcon,
@@ -68,7 +59,6 @@ export function LocationAdministration() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
   const [isDataFetched, setIsDataFetched] = useState(false);
 
@@ -138,10 +128,7 @@ export function LocationAdministration() {
   const shouldFetchRelations = useRef(false);
 
   useEffect(() => {
-    // Only run this effect when expanded or when page changes while expanded
-    if (!isExpanded) return;
-
-    // First expansion - initially fetch data
+    // Fetch data when component mounts or when dependencies change
     async function fetchData() {
       try {
         if (isSearchMode) {
@@ -190,7 +177,6 @@ export function LocationAdministration() {
     // Always fetch data when expanded or on page changes
     fetchData();
   }, [
-    isExpanded,
     currentPage,
     itemsPerPage,
     isSearchMode,
@@ -200,9 +186,9 @@ export function LocationAdministration() {
     toast
   ]);
 
-  // Initialize shared data when component expands
+  // Initialize shared data when component mounts
   useEffect(() => {
-    if (isExpanded && !isInitialized) {
+    if (!isInitialized) {
       initializeData().catch(error => {
         toast({
           title: "Error",
@@ -211,14 +197,14 @@ export function LocationAdministration() {
         });
       });
     }
-  }, [isExpanded, isInitialized, initializeData, toast]);
+  }, [isInitialized, initializeData, toast]);
 
   // Initial load - set flag to fetch relations
   useEffect(() => {
-    if (isExpanded && !isDataFetched) {
+    if (!isDataFetched) {
       shouldFetchRelations.current = true;
     }
-  }, [isExpanded, isDataFetched]);
+  }, [isDataFetched]);
 
   const fetchRelationData = async (citiesList: any[]) => {
     try {
@@ -357,18 +343,16 @@ export function LocationAdministration() {
       // Refresh shared cities data
       await refreshCities();
 
-      // Only refetch local pagination if the component is expanded
-      if (isExpanded) {
-        const result = await getCitiesWithPagination(1, itemsPerPage);
-        setLocalCities(result.cities);
-        setTotalPages(result.totalPages);
-        // Reset to page 1 after adding
-        setCurrentPage(1);
-        setIsSearchMode(false);
+      // Refetch local pagination
+      const result = await getCitiesWithPagination(1, itemsPerPage);
+      setLocalCities(result.cities);
+      setTotalPages(result.totalPages);
+      // Reset to page 1 after adding
+      setCurrentPage(1);
+      setIsSearchMode(false);
 
-        // Fetch counts for new data
-        await fetchRelationData(result.cities);
-      }
+      // Fetch counts for new data
+      await fetchRelationData(result.cities);
 
       toast({
         title: "Success",
@@ -396,15 +380,13 @@ export function LocationAdministration() {
       // Refresh shared cities data
       await refreshCities();
 
-      // Only refetch local pagination if the component is expanded
-      if (isExpanded) {
-        const result = await getCitiesWithPagination(currentPage, itemsPerPage);
-        setLocalCities(result.cities);
-        setTotalPages(result.totalPages);
+      // Refetch local pagination
+      const result = await getCitiesWithPagination(currentPage, itemsPerPage);
+      setLocalCities(result.cities);
+      setTotalPages(result.totalPages);
 
-        // Fetch counts for updated data
-        await fetchRelationData(result.cities);
-      }
+      // Fetch counts for updated data
+      await fetchRelationData(result.cities);
 
       toast({
         title: "Success",
@@ -429,15 +411,13 @@ export function LocationAdministration() {
       // Refresh shared cities data
       await refreshCities();
 
-      // Only refetch local pagination if the component is expanded
-      if (isExpanded) {
-        const result = await getCitiesWithPagination(currentPage, itemsPerPage);
-        setLocalCities(result.cities);
-        setTotalPages(result.totalPages);
+      // Refetch local pagination
+      const result = await getCitiesWithPagination(currentPage, itemsPerPage);
+      setLocalCities(result.cities);
+      setTotalPages(result.totalPages);
 
-        // Fetch counts for updated data
-        await fetchRelationData(result.cities);
-      }
+      // Fetch counts for updated data
+      await fetchRelationData(result.cities);
 
       toast({
         title: "Success",
@@ -456,9 +436,6 @@ export function LocationAdministration() {
   };
 
   const handleSearch = async () => {
-    // Only search if expanded
-    if (!isExpanded) return;
-
     // Update the actual search parameters from local state
     setSearchName(localSearchName);
     setSearchProvince(localSearchProvince);
@@ -496,9 +473,6 @@ export function LocationAdministration() {
   };
 
   const handleClearSearch = async () => {
-    // Only reset if expanded
-    if (!isExpanded) return;
-
     // Reset both local and actual search state
     setLocalSearchName("");
     setLocalSearchProvince("");
@@ -536,9 +510,7 @@ export function LocationAdministration() {
     setCurrentPage(1); // Reset to page 1 when changing items per page
 
     // Set flag to fetch relations for the new set of items
-    if (isExpanded) {
-      shouldFetchRelations.current = true;
-    }
+    shouldFetchRelations.current = true;
   };
 
   const handleOpenAddDialog = () => {
@@ -553,316 +525,290 @@ export function LocationAdministration() {
   };
 
   return (
-    <Card>
-      <CardHeader
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div>
-          <CardTitle>Location Management</CardTitle>
-          {!isExpanded && (
-            <CardDescription>
-              Click to manage locations and search records
-            </CardDescription>
-          )}
+    <div className="space-y-4">
+      <div className="flex space-x-4">
+        <div className="flex-1">
+          <Input
+            placeholder="Search by name"
+            value={localSearchName}
+            onChange={e => setLocalSearchName(e.target.value)}
+          />
         </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
+        <div className="flex-1">
+          <Input
+            placeholder="Search by province"
+            value={localSearchProvince}
+            onChange={e => setLocalSearchProvince(e.target.value)}
+          />
+        </div>
+        <div className="flex-1">
+          <Select
+            value={localSearchCountryId}
+            onValueChange={setLocalSearchCountryId}
+            onOpenChange={open => {
+              setIsCountryDropdownOpen(open);
+              if (open) {
+                refreshCountries().catch(error => {
+                  toast({
+                    title: "Error",
+                    description: "Failed to refresh countries",
+                    variant: "destructive"
+                  });
+                });
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a country" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[200px] overflow-y-auto">
+              <SelectItem value="all">All Countries</SelectItem>
+              {countries.map(country => (
+                <SelectItem key={country.id} value={country.id.toString()}>
+                  {country.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={handleSearch} variant="secondary">
+          <Search className="mr-2 h-4 w-4" />
+          Search
         </Button>
-      </CardHeader>
-      {isExpanded && (
-        <CardContent className="space-y-4">
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search by name"
-                value={localSearchName}
-                onChange={e => setLocalSearchName(e.target.value)}
-              />
-            </div>
-            <div className="flex-1">
-              <Input
-                placeholder="Search by province"
-                value={localSearchProvince}
-                onChange={e => setLocalSearchProvince(e.target.value)}
-              />
-            </div>
-            <div className="flex-1">
-              <Select
-                value={localSearchCountryId}
-                onValueChange={setLocalSearchCountryId}
-                onOpenChange={open => {
-                  setIsCountryDropdownOpen(open);
-                  if (open) {
-                    refreshCountries().catch(error => {
-                      toast({
-                        title: "Error",
-                        description: "Failed to refresh countries",
-                        variant: "destructive"
-                      });
-                    });
-                  }
-                }}
+        <Button
+          onClick={handleClearSearch}
+          variant="outline"
+          disabled={
+            !isSearchMode &&
+            localSearchName === "" &&
+            localSearchProvince === "" &&
+            !localSearchCountryId
+          }
+        >
+          Reset
+        </Button>
+        <Button onClick={handleOpenAddDialog} variant="outline">
+          <Plus className="mr-2 h-4 w-4" />
+          Add New
+        </Button>
+      </div>
+
+      {!isDataFetched ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : localCities.length > 0 ? (
+        <>
+          <div className="grid gap-2">
+            {localCities.map(city => (
+              <div
+                key={city.id}
+                className="p-2 border rounded flex justify-between items-center"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a country" />
+                <div>
+                  <span className="font-medium">{city.name || ""}</span>
+                  {city.province && (
+                    <span className="ml-2 text-muted-foreground">
+                      {city.province}
+                    </span>
+                  )}
+                  {city.country && (
+                    <span className="ml-2 text-sm text-muted-foreground">
+                      ({city.country.name})
+                    </span>
+                  )}
+                </div>
+                <div className="flex space-x-2">
+                  {/* Show loading state for relations */}
+                  {loadingCityIds.includes(city.id) && (
+                    <span className="text-xs text-muted-foreground flex items-center">
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Loading relations...
+                    </span>
+                  )}
+
+                  {/* Only show relation buttons when not loading */}
+                  {!loadingCityIds.includes(city.id) &&
+                    city.id !== undefined &&
+                    city.id !== null &&
+                    obituaryCounts[city.id] !== undefined &&
+                    obituaryCounts[city.id].totalCount > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1 px-2 text-xs bg-amber-50 hover:bg-amber-100 border-amber-200"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setRelatedCity({
+                            id: city.id,
+                            name: city.name
+                          });
+                          setIsRelatedDialogOpen(true);
+                        }}
+                      >
+                        <LinkIcon className="h-3 w-3" />
+                        {obituaryCounts[city.id].birthCount} Birth,{" "}
+                        {obituaryCounts[city.id].deathCount} Death
+                      </Button>
+                    )}
+                  {!loadingCityIds.includes(city.id) &&
+                    city.id !== undefined &&
+                    city.id !== null &&
+                    cemeteryCounts[city.id] !== undefined &&
+                    cemeteryCounts[city.id] > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1 px-2 text-xs bg-purple-50 hover:bg-purple-100 border-purple-200"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setCemeteryRelatedCity({
+                            id: city.id,
+                            name: city.name
+                          });
+                          setIsCemeteriesDialogOpen(true);
+                        }}
+                      >
+                        <Building className="h-3 w-3" />
+                        {cemeteryCounts[city.id]} Interments
+                      </Button>
+                    )}
+                  {!loadingCityIds.includes(city.id) &&
+                    city.id !== undefined &&
+                    city.id !== null &&
+                    periodicalCounts[city.id] !== undefined &&
+                    periodicalCounts[city.id] > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setPeriodicalRelatedCity({
+                            id: city.id,
+                            name: city.name
+                          });
+                          setIsPeriodicalsDialogOpen(true);
+                        }}
+                      >
+                        <Newspaper className="h-3 w-3" />
+                        {periodicalCounts[city.id]} Publications
+                      </Button>
+                    )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={e => {
+                      e.stopPropagation();
+                      setSelectedCity(city);
+                      setIsEditDialogOpen(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between items-center">
+            <div>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={handleItemsPerPageChange}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Items per page" />
                 </SelectTrigger>
-                <SelectContent className="max-h-[200px] overflow-y-auto">
-                  <SelectItem value="all">All Countries</SelectItem>
-                  {countries.map(country => (
-                    <SelectItem key={country.id} value={country.id.toString()}>
-                      {country.name}
-                    </SelectItem>
-                  ))}
+                <SelectContent>
+                  <SelectItem value="10">10 per page</SelectItem>
+                  <SelectItem value="25">25 per page</SelectItem>
+                  <SelectItem value="50">50 per page</SelectItem>
+                  <SelectItem value="100">100 per page</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={handleSearch} variant="secondary">
-              <Search className="mr-2 h-4 w-4" />
-              Search
-            </Button>
-            <Button
-              onClick={handleClearSearch}
-              variant="outline"
-              disabled={
-                !isSearchMode &&
-                localSearchName === "" &&
-                localSearchProvince === "" &&
-                !localSearchCountryId
-              }
-            >
-              Reset
-            </Button>
-            <Button onClick={handleOpenAddDialog} variant="outline">
-              <Plus className="mr-2 h-4 w-4" />
-              Add New
-            </Button>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="py-2 px-3 text-sm">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  handlePageChange(Math.min(currentPage + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-
-          {!isDataFetched ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : localCities.length > 0 ? (
-            <>
-              <div className="grid gap-2">
-                {localCities.map(city => (
-                  <div
-                    key={city.id}
-                    className="p-2 border rounded flex justify-between items-center"
-                  >
-                    <div>
-                      <span className="font-medium">{city.name || ""}</span>
-                      {city.province && (
-                        <span className="ml-2 text-muted-foreground">
-                          {city.province}
-                        </span>
-                      )}
-                      {city.country && (
-                        <span className="ml-2 text-sm text-muted-foreground">
-                          ({city.country.name})
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex space-x-2">
-                      {/* Show loading state for relations */}
-                      {loadingCityIds.includes(city.id) && (
-                        <span className="text-xs text-muted-foreground flex items-center">
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          Loading relations...
-                        </span>
-                      )}
-
-                      {/* Only show relation buttons when not loading */}
-                      {!loadingCityIds.includes(city.id) &&
-                        city.id !== undefined &&
-                        city.id !== null &&
-                        obituaryCounts[city.id] !== undefined &&
-                        obituaryCounts[city.id].totalCount > 0 && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-1 px-2 text-xs bg-amber-50 hover:bg-amber-100 border-amber-200"
-                            onClick={e => {
-                              e.stopPropagation();
-                              setRelatedCity({
-                                id: city.id,
-                                name: city.name
-                              });
-                              setIsRelatedDialogOpen(true);
-                            }}
-                          >
-                            <LinkIcon className="h-3 w-3" />
-                            {obituaryCounts[city.id].birthCount} Birth,{" "}
-                            {obituaryCounts[city.id].deathCount} Death
-                          </Button>
-                        )}
-                      {!loadingCityIds.includes(city.id) &&
-                        city.id !== undefined &&
-                        city.id !== null &&
-                        cemeteryCounts[city.id] !== undefined &&
-                        cemeteryCounts[city.id] > 0 && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-1 px-2 text-xs bg-purple-50 hover:bg-purple-100 border-purple-200"
-                            onClick={e => {
-                              e.stopPropagation();
-                              setCemeteryRelatedCity({
-                                id: city.id,
-                                name: city.name
-                              });
-                              setIsCemeteriesDialogOpen(true);
-                            }}
-                          >
-                            <Building className="h-3 w-3" />
-                            {cemeteryCounts[city.id]} Interments
-                          </Button>
-                        )}
-                      {!loadingCityIds.includes(city.id) &&
-                        city.id !== undefined &&
-                        city.id !== null &&
-                        periodicalCounts[city.id] !== undefined &&
-                        periodicalCounts[city.id] > 0 && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-1 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
-                            onClick={e => {
-                              e.stopPropagation();
-                              setPeriodicalRelatedCity({
-                                id: city.id,
-                                name: city.name
-                              });
-                              setIsPeriodicalsDialogOpen(true);
-                            }}
-                          >
-                            <Newspaper className="h-3 w-3" />
-                            {periodicalCounts[city.id]} Publications
-                          </Button>
-                        )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setSelectedCity(city);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between items-center">
-                <div>
-                  <Select
-                    value={itemsPerPage.toString()}
-                    onValueChange={handleItemsPerPageChange}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Items per page" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10 per page</SelectItem>
-                      <SelectItem value="25">25 per page</SelectItem>
-                      <SelectItem value="50">50 per page</SelectItem>
-                      <SelectItem value="100">100 per page</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      handlePageChange(Math.max(currentPage - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="py-2 px-3 text-sm">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      handlePageChange(Math.min(currentPage + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="py-8 text-center text-muted-foreground">
-              No locations found
-            </div>
-          )}
-
-          <AddLocationDialog
-            isOpen={isDialogOpen}
-            onClose={() => setIsDialogOpen(false)}
-            onAddCity={handleAddCity}
-            countries={countries}
-            refetchCountries={refreshCountries}
-            initialValues={{
-              name: localSearchName,
-              province: localSearchProvince,
-              countryId: localSearchCountryId
-            }}
-          />
-
-          <EditLocationDialog
-            isOpen={isEditDialogOpen}
-            onClose={() => {
-              setIsEditDialogOpen(false);
-              setSelectedCity(null);
-            }}
-            onEditCity={handleEditCity}
-            onDeleteCity={handleDeleteCity}
-            city={selectedCity}
-            countries={countries}
-          />
-
-          <RelatedObituariesDialog
-            isOpen={isRelatedDialogOpen}
-            onClose={() => {
-              setIsRelatedDialogOpen(false);
-              setRelatedCity(null);
-            }}
-            city={relatedCity}
-          />
-
-          <RelatedCemeteriesDialog
-            isOpen={isCemeteriesDialogOpen}
-            onClose={() => {
-              setIsCemeteriesDialogOpen(false);
-              setCemeteryRelatedCity(null);
-            }}
-            city={cemeteryRelatedCity}
-          />
-
-          <RelatedPeriodicalsDialog
-            isOpen={isPeriodicalsDialogOpen}
-            onClose={() => {
-              setIsPeriodicalsDialogOpen(false);
-              setPeriodicalRelatedCity(null);
-            }}
-            city={periodicalRelatedCity}
-          />
-        </CardContent>
+        </>
+      ) : (
+        <div className="py-8 text-center text-muted-foreground">
+          No locations found
+        </div>
       )}
-    </Card>
+
+      <AddLocationDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onAddCity={handleAddCity}
+        countries={countries}
+        refetchCountries={refreshCountries}
+        initialValues={{
+          name: localSearchName,
+          province: localSearchProvince,
+          countryId: localSearchCountryId
+        }}
+      />
+
+      <EditLocationDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setSelectedCity(null);
+        }}
+        onEditCity={handleEditCity}
+        onDeleteCity={handleDeleteCity}
+        city={selectedCity}
+        countries={countries}
+      />
+
+      <RelatedObituariesDialog
+        isOpen={isRelatedDialogOpen}
+        onClose={() => {
+          setIsRelatedDialogOpen(false);
+          setRelatedCity(null);
+        }}
+        city={relatedCity}
+      />
+
+      <RelatedCemeteriesDialog
+        isOpen={isCemeteriesDialogOpen}
+        onClose={() => {
+          setIsCemeteriesDialogOpen(false);
+          setCemeteryRelatedCity(null);
+        }}
+        city={cemeteryRelatedCity}
+      />
+
+      <RelatedPeriodicalsDialog
+        isOpen={isPeriodicalsDialogOpen}
+        onClose={() => {
+          setIsPeriodicalsDialogOpen(false);
+          setPeriodicalRelatedCity(null);
+        }}
+        city={periodicalRelatedCity}
+      />
+    </div>
   );
 }
