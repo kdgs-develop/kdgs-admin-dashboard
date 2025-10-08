@@ -136,7 +136,7 @@ export function ObituariesTable({
 
   return (
     <>
-      <Card className="w-full mb-4">
+      <Card className="w-full mb-4 bg-blue-50/50 border-blue-100 shadow-sm">
         <CardHeader className="flex flex-row items-start justify-between gap-2">
           <div>
             <CardTitle className="mb-1">Obituary Index</CardTitle>
@@ -163,11 +163,11 @@ export function ObituariesTable({
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="bg-blue-50/30">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader className="hidden table:table-header-group">
-                <TableRow>
+                <TableRow className="bg-blue-100/50">
                   <TableHead>File Number</TableHead>
                   <TableHead>Surname</TableHead>
                   <TableHead>Given Names</TableHead>
@@ -263,11 +263,11 @@ export function ObituariesTable({
             </Table>
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between">
+        <CardFooter className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between bg-blue-50/30 border-t border-blue-200 pt-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
             <div className="text-sm text-muted-foreground">
               {isLoadingData ? (
-                <div className="h-4 bg-muted animate-pulse rounded w-48"></div>
+                <div className="h-4 bg-blue-200 animate-pulse rounded w-48"></div>
               ) : (
                 <>
                   Showing {Math.min(offset + 1, totalObituaries)}-
