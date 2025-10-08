@@ -64,7 +64,7 @@ export function RelationshipAdministration() {
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [obituaryCounts, setObituaryCounts] = useState<Record<string, number>>(
@@ -421,7 +421,6 @@ export function RelationshipAdministration() {
                       <SelectValue placeholder="Items per page" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="5">5 per page</SelectItem>
                       <SelectItem value="10">10 per page</SelectItem>
                       <SelectItem value="25">25 per page</SelectItem>
                       <SelectItem value="50">50 per page</SelectItem>
