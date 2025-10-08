@@ -42,6 +42,7 @@ interface AdminCardProps {
   children: React.ReactNode;
   isAdminOnly?: boolean;
   className?: string;
+  colorScheme?: "blue" | "green" | "purple" | "amber";
 }
 
 const iconMap = {
@@ -66,19 +67,50 @@ export function AdminCard({
   stats = [],
   children,
   isAdminOnly = false,
-  className = ""
+  className = "",
+  colorScheme = "blue"
 }: AdminCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const Icon = iconMap[iconName as keyof typeof iconMap];
 
+  // Define color schemes with subtle, professional colors
+  const colorSchemes = {
+    blue: {
+      card: "bg-blue-50/50 border-blue-100",
+      icon: "bg-blue-100",
+      iconColor: "text-blue-600",
+      stats: "text-blue-700"
+    },
+    green: {
+      card: "bg-emerald-50/50 border-emerald-100",
+      icon: "bg-emerald-100",
+      iconColor: "text-emerald-600",
+      stats: "text-emerald-700"
+    },
+    purple: {
+      card: "bg-purple-50/50 border-purple-100",
+      icon: "bg-purple-100",
+      iconColor: "text-purple-600",
+      stats: "text-purple-700"
+    },
+    amber: {
+      card: "bg-amber-50/50 border-amber-100",
+      icon: "bg-amber-100",
+      iconColor: "text-amber-600",
+      stats: "text-amber-700"
+    }
+  };
+
+  const colors = colorSchemes[colorScheme];
+
   return (
     <>
-      <Card className={`h-full flex flex-col ${className}`}>
+      <Card className={`h-full flex flex-col ${colors.card} ${className}`}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Icon className="h-5 w-5 text-primary" />
+              <div className={`p-2 ${colors.icon} rounded-lg`}>
+                <Icon className={`h-5 w-5 ${colors.iconColor}`} />
               </div>
               <div>
                 <CardTitle className="text-lg">{title}</CardTitle>
@@ -94,21 +126,7 @@ export function AdminCard({
             {description}
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col justify-between">
-          {stats.length > 0 && (
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-2xl font-bold text-primary">
-                    {stat.value}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        <CardContent className="flex-1 flex flex-col justify-end">
           <Button
             onClick={() => setIsOpen(true)}
             className="w-full"
