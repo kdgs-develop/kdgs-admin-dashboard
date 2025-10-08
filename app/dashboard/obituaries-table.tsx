@@ -285,7 +285,6 @@ export function ObituariesTable({
                 <SelectValue placeholder="Items per page" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="5">5 per page</SelectItem>
                 <SelectItem value="10">10 per page</SelectItem>
                 <SelectItem value="25">25 per page</SelectItem>
                 <SelectItem value="50">50 per page</SelectItem>
