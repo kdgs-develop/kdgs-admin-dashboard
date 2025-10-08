@@ -51,6 +51,8 @@ import {
   EyeOff,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Loader2
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -60,6 +62,8 @@ import {
   createGenealogist,
   deleteGenealogist,
   getGenealogists,
+  getGenealogistsWithPagination,
+  getGenealogistStats,
   updateGenealogist,
   updateGenealogistPassword,
   cleanupOrphanedGenealogists
@@ -72,6 +76,11 @@ interface Genealogist {
   email: string;
   phone: string | null;
   role: string | null;
+}
+
+interface GenealogistStats {
+  totalCount: number;
+  roleStats: Record<string, number>;
 }
 
 const formSchema = z.object({
@@ -113,6 +122,17 @@ export function GenealogistAdministration() {
   const [isSending, setIsSending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [genealogistData, setGenealogistData] = useState({
+    genealogists: [] as Genealogist[],
+    totalCount: 0,
+    totalPages: 0
+  });
+  const [stats, setStats] = useState<GenealogistStats>({
+    totalCount: 0,
+    roleStats: {}
+  });
 
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
@@ -131,13 +151,14 @@ export function GenealogistAdministration() {
 
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const fetchGenealogists = async () => {
+  const fetchGenealogists = async (page: number) => {
     if (isLoading) return;
 
     setIsLoading(true);
     try {
-      const fetchedGenealogists = await getGenealogists();
-      setGenealogists(fetchedGenealogists);
+      const data = await getGenealogistsWithPagination(page, itemsPerPage);
+      setGenealogistData(data);
+      setGenealogists(data.genealogists);
       setIsDataFetched(true);
     } catch (error) {
       console.error("Error fetching genealogists:", error);
@@ -147,12 +168,26 @@ export function GenealogistAdministration() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const statistics = await getGenealogistStats();
+      setStats(statistics);
+    } catch (error) {
+      console.error("Error fetching genealogist statistics:", error);
+      toast({
+        title: "Error fetching statistics",
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     // Only fetch data when component is expanded
-    if (isExpanded && !isDataFetched) {
-      initializeAdminPanel();
+    if (isExpanded) {
+      fetchGenealogists(currentPage);
+      fetchStats();
     }
-  }, [isExpanded]);
+  }, [currentPage, itemsPerPage, isExpanded]);
 
   const initializeAdminPanel = async () => {
     if (isLoading) return;
@@ -164,9 +199,8 @@ export function GenealogistAdministration() {
       console.log("Synchronization completed:", cleanupResults);
 
       // Then fetch the updated list
-      const updatedGenealogists = await getGenealogists();
-      setGenealogists(updatedGenealogists);
-      setIsDataFetched(true);
+      await fetchGenealogists(1);
+      setCurrentPage(1);
     } catch (error) {
       console.error("Error initializing admin panel:", error);
       toast({
@@ -222,7 +256,9 @@ export function GenealogistAdministration() {
 
       toast({ title: "Genealogist created successfully" });
       if (isExpanded) {
-        fetchGenealogists();
+        await fetchGenealogists(1);
+        await fetchStats();
+        setCurrentPage(1);
       }
       form.reset();
     } catch (error) {
@@ -338,7 +374,8 @@ export function GenealogistAdministration() {
         await deleteGenealogist(selectedGenealogist.id);
       }
       if (isExpanded) {
-        fetchGenealogists();
+        fetchGenealogists(currentPage);
+        fetchStats();
       }
     } catch (error) {
       console.error("Error in handleConfirmAction:", error);
@@ -368,7 +405,8 @@ export function GenealogistAdministration() {
       });
       toast({ title: "Genealogist updated successfully" });
       if (isExpanded) {
-        fetchGenealogists();
+        fetchGenealogists(currentPage);
+        fetchStats();
       }
       setIsEditDialogOpen(false);
     } catch (error) {
@@ -381,7 +419,8 @@ export function GenealogistAdministration() {
       setIsLoading(true);
       await cleanupOrphanedGenealogists();
       if (isExpanded) {
-        await fetchGenealogists();
+        await fetchGenealogists(currentPage);
+        await fetchStats();
       }
       toast({
         title: "Cleanup completed",
@@ -404,6 +443,11 @@ export function GenealogistAdministration() {
     setIsExpanded(newExpandedState);
 
     // If expanding and data hasn't been fetched yet, useEffect will trigger initialization
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to page 1 when changing items per page
   };
 
   return (
@@ -436,6 +480,29 @@ export function GenealogistAdministration() {
             </div>
           ) : (
             <div className="space-y-8">
+
+              {/* Statistics Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg border">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary">
+                    {stats.totalCount}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Total Genealogists
+                  </div>
+                </div>
+                {Object.entries(stats.roleStats).map(([role, count]) => (
+                  <div key={role} className="text-center">
+                    <div className="text-2xl font-bold text-primary">
+                      {count}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {role === "NO_ROLE" ? "No Role" : role}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
@@ -604,6 +671,8 @@ export function GenealogistAdministration() {
                 </form>
               </Form>
 
+              
+
               <div className="overflow-x-auto border rounded-md">
                 <Table>
                   <TableHeader className="bg-muted/50">
@@ -705,6 +774,54 @@ export function GenealogistAdministration() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <div>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={handleItemsPerPageChange}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Items per page" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10 per page</SelectItem>
+                      <SelectItem value="25">25 per page</SelectItem>
+                      <SelectItem value="50">50 per page</SelectItem>
+                      <SelectItem value="100">100 per page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1 || isLoading}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="py-2 px-3 text-sm">
+                    Page {currentPage} of {genealogistData.totalPages || 1}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage(prev =>
+                        Math.min(prev + 1, genealogistData.totalPages)
+                      )
+                    }
+                    disabled={
+                      currentPage === genealogistData.totalPages || isLoading
+                    }
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               <DeleteConfirmationDialog
