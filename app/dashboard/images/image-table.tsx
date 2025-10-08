@@ -227,8 +227,8 @@ export function ImageTable({ initialSearchQuery = "" }) {
 
   return (
     <div className="pb-0">
-      <Card className="flex flex-col h-full mb-0">
-        <CardContent className="p-0 flex-grow overflow-hidden">
+      <Card className="flex flex-col h-full mb-0 bg-blue-50/50 border-blue-100">
+        <CardContent className="p-0 flex-grow overflow-hidden bg-blue-50/30">
           {error ? (
             <div className="w-full h-full flex flex-col items-center justify-center">
               <p className="text-red-500 mb-4">{error}</p>
@@ -253,7 +253,12 @@ export function ImageTable({ initialSearchQuery = "" }) {
                   <div className="hidden images:block">
                     <Table>
                       <TableHeader>
-                        <TableRow className={cn(isCompactMode && "h-8")}>
+                        <TableRow
+                          className={cn(
+                            "bg-blue-100/50",
+                            isCompactMode && "h-8"
+                          )}
+                        >
                           <TableHead>File Name</TableHead>
                           <TableHead>Format</TableHead>
                           <TableHead>Size</TableHead>
@@ -266,7 +271,10 @@ export function ImageTable({ initialSearchQuery = "" }) {
                         {images.map(image => (
                           <TableRow
                             key={image.name}
-                            className={cn(isCompactMode && "h-10")}
+                            className={cn(
+                              "hover:bg-blue-100/50 transition-colors duration-200",
+                              isCompactMode && "h-10"
+                            )}
                           >
                             <TableCell className={cn(isCompactMode && "py-1")}>
                               {image.name?.split(".")[0] ?? "Unnamed"}
@@ -333,7 +341,7 @@ export function ImageTable({ initialSearchQuery = "" }) {
                     {images.map(image => (
                       <div
                         key={image.name}
-                        className="border rounded-lg p-4 bg-card"
+                        className="border border-blue-200 rounded-lg p-4 bg-blue-50/30 hover:bg-blue-100/30 transition-colors duration-200"
                       >
                         {/* First Row - Main Information */}
                         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-3">
@@ -431,7 +439,7 @@ export function ImageTable({ initialSearchQuery = "" }) {
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex flex-col space-y-3 p-3 border-t bg-muted/30">
+        <CardFooter className="flex flex-col space-y-3 p-3 border-t border-blue-200 bg-blue-50/30">
           {/* Controls Row */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             {/* Left side - Filters and Controls */}
