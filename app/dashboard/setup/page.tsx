@@ -37,14 +37,14 @@ export default async function SetupPage() {
       description: "Manage file box assignments and tracking",
       iconName: "Archive",
       stats: [{ label: "Total File Boxes", value: stats.fileBoxes.count }],
-      component: <FileBoxAdministration forceExpanded={true} />
+      component: <FileBoxAdministration />
     },
     {
       title: "Batch Numbers",
       description: "Create and manage batch number assignments",
       iconName: "BarChart3",
       stats: [{ label: "Total Batches", value: stats.batchNumbers.count }],
-      component: <BatchNumberAdministration forceExpanded={true} />
+      component: <BatchNumberAdministration />
     }
   ];
 
@@ -54,7 +54,7 @@ export default async function SetupPage() {
       description: "Manage country reference data",
       iconName: "Globe",
       stats: [{ label: "Countries", value: stats.countries.count }],
-      component: <CountryAdministration forceExpanded={true} />,
+      component: <CountryAdministration />,
       isAdminOnly: true
     },
     {
@@ -62,15 +62,15 @@ export default async function SetupPage() {
       description: "Manage city and location data",
       iconName: "MapPin",
       stats: [{ label: "Locations", value: stats.locations.count }],
-      component: <LocationAdministration forceExpanded={true} />,
+      component: <LocationAdministration />,
       isAdminOnly: true
     },
     {
-      title: "Periodicals",
+      title: "Publications",
       description: "Manage newspaper and periodical references",
       iconName: "Newspaper",
-      stats: [{ label: "Periodicals", value: stats.periodicals.count }],
-      component: <PeriodicalAdministration forceExpanded={true} />,
+      stats: [{ label: "Publications", value: stats.periodicals.count }],
+      component: <PeriodicalAdministration />,
       isAdminOnly: true
     },
     {
@@ -78,7 +78,7 @@ export default async function SetupPage() {
       description: "Manage family relationship types",
       iconName: "UserCheck",
       stats: [{ label: "Relationships", value: stats.relationships.count }],
-      component: <RelationshipAdministration forceExpanded={true} />,
+      component: <RelationshipAdministration />,
       isAdminOnly: true
     },
     {
@@ -86,7 +86,7 @@ export default async function SetupPage() {
       description: "Manage cemetery information",
       iconName: "Building2",
       stats: [{ label: "Cemeteries", value: stats.cemeteries.count }],
-      component: <CemeteryAdministration forceExpanded={true} />,
+      component: <CemeteryAdministration />,
       isAdminOnly: true
     },
     {
@@ -94,7 +94,7 @@ export default async function SetupPage() {
       description: "Manage professional and honorary titles",
       iconName: "FileText",
       stats: [{ label: "Titles", value: stats.titles.count }],
-      component: <TitleAdministration forceExpanded={true} />,
+      component: <TitleAdministration />,
       isAdminOnly: true
     }
   ];
@@ -105,7 +105,7 @@ export default async function SetupPage() {
       description: "Manage user accounts and permissions",
       iconName: "Users",
       stats: [{ label: "Users", value: stats.genealogists.count }],
-      component: <GenealogistAdministration forceExpanded={true} />,
+      component: <GenealogistAdministration />,
       isAdminOnly: true
     },
     {
@@ -113,7 +113,7 @@ export default async function SetupPage() {
       description: "View and manage customer orders",
       iconName: "Database",
       stats: [{ label: "Orders", value: stats.orders.count }],
-      component: <OrdersAdministration forceExpanded={true} />,
+      component: <OrdersAdministration />,
       isAdminOnly: true
     }
   ];
@@ -123,14 +123,14 @@ export default async function SetupPage() {
       title: "Bulk Upload",
       description: "Upload multiple files and images at once",
       iconName: "Upload",
-      component: <BulkUpload forceExpanded={true} />,
+      component: <BulkUpload />,
       isAdminOnly: true
     },
     {
       title: "System Backup",
       description: "Create and manage database backups",
       iconName: "Settings",
-      component: <AdminBackup forceExpanded={true} />,
+      component: <AdminBackup />,
       isAdminOnly: true
     }
   ];
