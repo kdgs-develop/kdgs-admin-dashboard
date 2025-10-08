@@ -1,20 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
   Edit,
   Loader2,
   Plus,
@@ -64,7 +55,6 @@ export function PeriodicalAdministration() {
   const [selectedPeriodical, setSelectedPeriodical] =
     useState<PeriodicalWithRelations | null>(null);
   const { toast } = useToast();
-  const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
@@ -152,15 +142,12 @@ export function PeriodicalAdministration() {
   };
 
   useEffect(() => {
-    // Only fetch when expanded
-    if (isExpanded) {
-      fetchPeriodicals(currentPage);
-    }
-  }, [currentPage, isExpanded, itemsPerPage]);
+    fetchPeriodicals(currentPage);
+  }, [currentPage, itemsPerPage]);
 
   // Initialize shared data when component expands
   useEffect(() => {
-    if (isExpanded && !isInitialized) {
+    if (!isInitialized) {
       initializeData().catch(error => {
         toast({
           title: "Error",
@@ -169,11 +156,9 @@ export function PeriodicalAdministration() {
         });
       });
     }
-  }, [isExpanded, isInitialized, initializeData, toast]);
+  }, [isInitialized, initializeData, toast]);
 
   const handleSearch = async () => {
-    if (!isExpanded) return;
-
     setIsLoading(true);
     try {
       if (!searchName.trim()) {
@@ -225,10 +210,8 @@ export function PeriodicalAdministration() {
         description: "Publication added successfully"
       });
 
-      if (isExpanded) {
-        await fetchPeriodicals(1);
-        setCurrentPage(1);
-      }
+      await fetchPeriodicals(1);
+      setCurrentPage(1);
     } catch (error) {
       toast({
         title: "Error adding publication",
@@ -255,9 +238,7 @@ export function PeriodicalAdministration() {
       setIsEditDialogOpen(false);
       setSelectedPeriodical(null);
 
-      if (isExpanded) {
-        fetchPeriodicals(currentPage);
-      }
+      fetchPeriodicals(currentPage);
     } catch (error) {
       toast({
         title: "Error updating publication",
@@ -282,9 +263,7 @@ export function PeriodicalAdministration() {
       setIsEditDialogOpen(false);
       setSelectedPeriodical(null);
 
-      if (isExpanded) {
-        fetchPeriodicals(currentPage);
-      }
+      fetchPeriodicals(currentPage);
     } catch (error) {
       toast({
         title: "Error deleting publication",
@@ -297,16 +276,7 @@ export function PeriodicalAdministration() {
     }
   };
 
-  const handleToggleExpanded = () => {
-    const newExpandedState = !isExpanded;
-    setIsExpanded(newExpandedState);
-
-    // If expanding and data hasn't been fetched yet, we'll let the useEffect trigger the fetch
-  };
-
   const handleClearSearch = async () => {
-    if (!isExpanded) return;
-
     setSearchName("");
     await fetchPeriodicals(1);
     setCurrentPage(1);
@@ -318,231 +288,199 @@ export function PeriodicalAdministration() {
   };
 
   return (
-    <Card>
-      <CardHeader
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={handleToggleExpanded}
-      >
-        <div>
-          <CardTitle>Publication Management</CardTitle>
-          {!isExpanded && (
-            <CardDescription>
-              Click to manage publications and search records
-            </CardDescription>
-          )}
+    <div className="space-y-4">
+      <div className="flex space-x-4">
+        <div className="flex-1">
+          <Input
+            placeholder="Search by name"
+            value={searchName}
+            onChange={e => setSearchName(e.target.value)}
+          />
         </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
+        <Button onClick={handleSearch} variant="secondary" disabled={isLoading}>
+          {isLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            <ChevronDown className="h-4 w-4" />
+            <Search className="mr-2 h-4 w-4" />
           )}
+          Search
         </Button>
-      </CardHeader>
-      {isExpanded && (
-        <CardContent className="space-y-4">
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search by name"
-                value={searchName}
-                onChange={e => setSearchName(e.target.value)}
-              />
-            </div>
-            <Button
-              onClick={handleSearch}
-              variant="secondary"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="mr-2 h-4 w-4" />
-              )}
-              Search
-            </Button>
-            <Button
-              onClick={handleClearSearch}
-              variant="outline"
-              disabled={isLoading || !searchName}
-            >
-              Reset
-            </Button>
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              variant="outline"
-              disabled={isLoading}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add New
-            </Button>
-          </div>
+        <Button
+          onClick={handleClearSearch}
+          variant="outline"
+          disabled={isLoading || !searchName}
+        >
+          Reset
+        </Button>
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          variant="outline"
+          disabled={isLoading}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Add New
+        </Button>
+      </div>
 
-          {isLoading && !isDataFetched ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : periodicalData.periodicals.length > 0 ? (
-            <>
-              <div className="mt-4">
-                <h3 className="text-sm font-medium mb-2">
-                  Found Publications:
-                </h3>
-                <div className="space-y-2">
-                  {periodicalData.periodicals.map(periodical => (
-                    <div
-                      key={periodical.id}
-                      className="p-3 border rounded flex justify-between items-center hover:bg-accent"
-                    >
-                      <div>
-                        <span className="text-sm">{periodical.name}</span>
+      {isLoading && !isDataFetched ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : periodicalData.periodicals.length > 0 ? (
+        <>
+          <div className="mt-4">
+            <h3 className="text-sm font-medium mb-2">Found Publications:</h3>
+            <div className="space-y-2">
+              {periodicalData.periodicals.map(periodical => (
+                <div
+                  key={periodical.id}
+                  className="p-3 border rounded flex justify-between items-center hover:bg-accent"
+                >
+                  <div>
+                    <span className="text-sm">{periodical.name}</span>
 
-                        <span className="ml-2 text-sm text-muted-foreground">
-                          {periodical.url ? `${periodical.url} ` : ""}
+                    <span className="ml-2 text-sm text-muted-foreground">
+                      {periodical.url ? `${periodical.url} ` : ""}
 
+                      {periodical.city?.name && (
+                        <>
+                          (
                           {periodical.city?.name && (
                             <>
-                              (
-                              {periodical.city?.name && (
-                                <>
-                                  {periodical.city.name}
-                                  {periodical.city.province &&
-                                    ` - ${periodical.city.province}`}
-                                  {periodical.city.country?.name &&
-                                    ` - ${periodical.city.country.name}`}
-                                </>
-                              )}
-                              )
+                              {periodical.city.name}
+                              {periodical.city.province &&
+                                ` - ${periodical.city.province}`}
+                              {periodical.city.country?.name &&
+                                ` - ${periodical.city.country.name}`}
                             </>
                           )}
-                        </span>
-                      </div>
-                      <div className="flex space-x-2">
-                        {loadingRelationIds.includes(periodical.id) ? (
-                          <span className="text-xs text-muted-foreground flex items-center">
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                            Loading...
-                          </span>
-                        ) : obituaryCounts[periodical.id] > 0 ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-1 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
-                            onClick={e => {
-                              e.stopPropagation();
-                              setRelatedPeriodical({
-                                id: periodical.id,
-                                name: periodical.name
-                              });
-                              setIsRelatedDialogOpen(true);
-                            }}
-                          >
-                            <LinkIcon className="h-3 w-3" />
-                            {obituaryCounts[periodical.id]} Obituaries
-                          </Button>
-                        ) : null}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setSelectedPeriodical(periodical);
-                            setIsEditDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                          )
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex space-x-2">
+                    {loadingRelationIds.includes(periodical.id) ? (
+                      <span className="text-xs text-muted-foreground flex items-center">
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Loading...
+                      </span>
+                    ) : obituaryCounts[periodical.id] > 0 ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setRelatedPeriodical({
+                            id: periodical.id,
+                            name: periodical.name
+                          });
+                          setIsRelatedDialogOpen(true);
+                        }}
+                      >
+                        <LinkIcon className="h-3 w-3" />
+                        {obituaryCounts[periodical.id]} Obituaries
+                      </Button>
+                    ) : null}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={e => {
+                        e.stopPropagation();
+                        setSelectedPeriodical(periodical);
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-
-              {/* Pagination Controls */}
-              <div className="flex justify-between items-center">
-                <div>
-                  <Select
-                    value={itemsPerPage.toString()}
-                    onValueChange={handleItemsPerPageChange}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Items per page" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10 per page</SelectItem>
-                      <SelectItem value="25">25 per page</SelectItem>
-                      <SelectItem value="50">50 per page</SelectItem>
-                      <SelectItem value="100">100 per page</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage(prev => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1 || isLoading}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="py-2 px-3 text-sm">
-                    Page {currentPage} of {periodicalData.totalPages || 1}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage(prev =>
-                        Math.min(prev + 1, periodicalData.totalPages)
-                      )
-                    }
-                    disabled={
-                      currentPage === periodicalData.totalPages || isLoading
-                    }
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          ) : isDataFetched ? (
-            <div className="py-8 text-center text-muted-foreground">
-              No publications found
+              ))}
             </div>
-          ) : null}
+          </div>
 
-          <AddPeriodicalDialog
-            isOpen={isDialogOpen}
-            onClose={() => setIsDialogOpen(false)}
-            onAddPeriodical={handleAddPeriodical}
-            initialName={searchName}
-            cities={cities}
-          />
+          {/* Pagination Controls */}
+          <div className="flex justify-between items-center">
+            <div>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={handleItemsPerPageChange}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Items per page" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10 per page</SelectItem>
+                  <SelectItem value="25">25 per page</SelectItem>
+                  <SelectItem value="50">50 per page</SelectItem>
+                  <SelectItem value="100">100 per page</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1 || isLoading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="py-2 px-3 text-sm">
+                Page {currentPage} of {periodicalData.totalPages || 1}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage(prev =>
+                    Math.min(prev + 1, periodicalData.totalPages)
+                  )
+                }
+                disabled={
+                  currentPage === periodicalData.totalPages || isLoading
+                }
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </>
+      ) : isDataFetched ? (
+        <div className="py-8 text-center text-muted-foreground">
+          No publications found
+        </div>
+      ) : null}
 
-          <EditPeriodicalDialog
-            isOpen={isEditDialogOpen}
-            onClose={() => {
-              setIsEditDialogOpen(false);
-              setSelectedPeriodical(null);
-            }}
-            onEditPeriodical={handleEditPeriodical}
-            onDeletePeriodical={handleDeletePeriodical}
-            periodical={selectedPeriodical as PeriodicalWithRelations | null}
-            cities={cities}
-          />
+      <AddPeriodicalDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onAddPeriodical={handleAddPeriodical}
+        initialName={searchName}
+        cities={cities}
+      />
 
-          <RelatedPeriodicalObituariesDialog
-            isOpen={isRelatedDialogOpen}
-            onClose={() => {
-              setIsRelatedDialogOpen(false);
-              setRelatedPeriodical(null);
-            }}
-            periodical={relatedPeriodical}
-          />
-        </CardContent>
-      )}
-    </Card>
+      <EditPeriodicalDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setSelectedPeriodical(null);
+        }}
+        onEditPeriodical={handleEditPeriodical}
+        onDeletePeriodical={handleDeletePeriodical}
+        periodical={selectedPeriodical as PeriodicalWithRelations | null}
+        cities={cities}
+      />
+
+      <RelatedPeriodicalObituariesDialog
+        isOpen={isRelatedDialogOpen}
+        onClose={() => {
+          setIsRelatedDialogOpen(false);
+          setRelatedPeriodical(null);
+        }}
+        periodical={relatedPeriodical}
+      />
+    </div>
   );
 }
