@@ -25,7 +25,13 @@ import {
 import AddFileBoxDialog from "./add-filebox-dialog";
 import EditFileBoxDialog from "./edit-filebox-dialog";
 
-export function FileBoxAdministration() {
+interface FileBoxAdministrationProps {
+  forceExpanded?: boolean;
+}
+
+export function FileBoxAdministration({
+  forceExpanded = false
+}: FileBoxAdministrationProps) {
   const [fileBoxes, setFileBoxes] = useState<
     { id: number; year: number; number: number; obituaryCount: number }[]
   >([]);
@@ -39,7 +45,7 @@ export function FileBoxAdministration() {
     number: number;
   } | null>(null);
   const { toast } = useToast();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(forceExpanded);
   const [currentOpenFileBoxId, setCurrentOpenFileBoxId] = useState<
     number | null
   >(null);
@@ -244,24 +250,28 @@ export function FileBoxAdministration() {
   return (
     <Card>
       <CardHeader
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={() => setIsExpanded(!isExpanded)}
+        className={`flex flex-row items-center justify-between ${
+          !forceExpanded ? "cursor-pointer" : ""
+        }`}
+        onClick={!forceExpanded ? () => setIsExpanded(!isExpanded) : undefined}
       >
         <div>
           <CardTitle>File Box Management</CardTitle>
-          {!isExpanded && (
+          {!isExpanded && !forceExpanded && (
             <CardDescription>
               Click to manage file boxes and search records
             </CardDescription>
           )}
         </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </Button>
+        {!forceExpanded && (
+          <Button variant="ghost" size="icon">
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+        )}
       </CardHeader>
       {isExpanded && (
         <CardContent className="space-y-4">
