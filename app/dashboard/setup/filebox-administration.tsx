@@ -1,16 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronDown, ChevronUp, Edit, Plus, Search } from "lucide-react";
+import { Edit, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   addFileBox,
@@ -25,13 +18,7 @@ import {
 import AddFileBoxDialog from "./add-filebox-dialog";
 import EditFileBoxDialog from "./edit-filebox-dialog";
 
-interface FileBoxAdministrationProps {
-  forceExpanded?: boolean;
-}
-
-export function FileBoxAdministration({
-  forceExpanded = false
-}: FileBoxAdministrationProps) {
+export function FileBoxAdministration() {
   const [fileBoxes, setFileBoxes] = useState<
     { id: number; year: number; number: number; obituaryCount: number }[]
   >([]);
@@ -45,19 +32,18 @@ export function FileBoxAdministration({
     number: number;
   } | null>(null);
   const { toast } = useToast();
-  const [isExpanded, setIsExpanded] = useState(forceExpanded);
   const [currentOpenFileBoxId, setCurrentOpenFileBoxId] = useState<
     number | null
   >(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
 
-  // Only fetch data when component is expanded and data hasn't been fetched yet
+  // Fetch data when component mounts
   useEffect(() => {
-    if (isExpanded && !isDataFetched) {
+    if (!isDataFetched) {
       fetchData();
     }
-  }, [isExpanded, isDataFetched]);
+  }, [isDataFetched]);
 
   const fetchData = async () => {
     if (isLoading) return;
@@ -248,33 +234,7 @@ export function FileBoxAdministration({
   };
 
   return (
-    <Card>
-      <CardHeader
-        className={`flex flex-row items-center justify-between ${
-          !forceExpanded ? "cursor-pointer" : ""
-        }`}
-        onClick={!forceExpanded ? () => setIsExpanded(!isExpanded) : undefined}
-      >
-        <div>
-          <CardTitle>File Box Management</CardTitle>
-          {!isExpanded && !forceExpanded && (
-            <CardDescription>
-              Click to manage file boxes and search records
-            </CardDescription>
-          )}
-        </div>
-        {!forceExpanded && (
-          <Button variant="ghost" size="icon">
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
-        )}
-      </CardHeader>
-      {isExpanded && (
-        <CardContent className="space-y-4">
+    <div className="space-y-4">
           <div className="flex space-x-4">
             <div className="flex-1">
               <Input
@@ -407,8 +367,6 @@ export function FileBoxAdministration({
             onDeleteFileBox={handleDeleteFileBox}
             fileBox={selectedFileBox}
           />
-        </CardContent>
-      )}
-    </Card>
+    </div>
   );
 }
