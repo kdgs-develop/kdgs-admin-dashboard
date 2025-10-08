@@ -1,13 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
@@ -18,11 +11,7 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { format } from "date-fns";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-interface BulkUploadProps {
-  forceExpanded?: boolean;
-}
-
-export function BulkUpload({ forceExpanded = false }: BulkUploadProps) {
+export function BulkUpload() {
   const [files, setFiles] = useState<FileList | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -34,7 +23,6 @@ export function BulkUpload({ forceExpanded = false }: BulkUploadProps) {
       status: "uploaded" | "skipped" | "overwritten" | "failed";
     }[]
   >([]);
-  const [isExpanded, setIsExpanded] = useState(forceExpanded);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiles(e.target.files);
@@ -243,33 +231,7 @@ export function BulkUpload({ forceExpanded = false }: BulkUploadProps) {
   }, [uploadResults]);
 
   return (
-    <Card className="w-[calc(100%)]">
-      <CardHeader
-        className={`flex flex-row items-center justify-between ${
-          !forceExpanded ? "cursor-pointer" : ""
-        }`}
-        onClick={!forceExpanded ? () => setIsExpanded(!isExpanded) : undefined}
-      >
-        <div>
-          <CardTitle>Bulk Upload</CardTitle>
-          {!isExpanded && !forceExpanded && (
-            <CardDescription>
-              Click to manage bulk image uploads
-            </CardDescription>
-          )}
-        </div>
-        {!forceExpanded && (
-          <Button variant="ghost" size="icon">
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
-        )}
-      </CardHeader>
-      {isExpanded && (
-        <CardContent className="text-sm text-muted-foreground">
+    <div className="space-y-4">
           <div className="space-y-4">
             <Input
               type="file"
@@ -306,14 +268,12 @@ export function BulkUpload({ forceExpanded = false }: BulkUploadProps) {
               </div>
             )}
           </div>
-        </CardContent>
-      )}
       <OverwriteConfirmationDialog
         isOpen={overwriteDialogOpen}
         onConfirm={overwriteHandlers.handleConfirm}
         onCancel={overwriteHandlers.handleCancel}
         fileName={currentFile?.name || ""}
       />
-    </Card>
+    </div>
   );
 }
