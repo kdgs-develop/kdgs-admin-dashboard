@@ -2,13 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -49,8 +42,6 @@ import {
   Edit2,
   Eye,
   EyeOff,
-  ChevronDown,
-  ChevronUp,
   ChevronLeft,
   ChevronRight,
   Loader2
@@ -94,13 +85,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface GenealogistAdministrationProps {
-  forceExpanded?: boolean;
-}
-
-export function GenealogistAdministration({
-  forceExpanded = false
-}: GenealogistAdministrationProps) {
+export function GenealogistAdministration() {
   const dashboard_url = process.env.NEXT_PUBLIC_DASHBOARD_URL!;
   const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!;
   const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!;
@@ -155,8 +140,6 @@ export function GenealogistAdministration({
     }
   });
 
-  const [isExpanded, setIsExpanded] = useState(forceExpanded);
-
   const fetchGenealogists = async (page: number) => {
     if (isLoading) return;
 
@@ -188,12 +171,10 @@ export function GenealogistAdministration({
   };
 
   useEffect(() => {
-    // Only fetch data when component is expanded
-    if (isExpanded) {
-      fetchGenealogists(currentPage);
-      fetchStats();
-    }
-  }, [currentPage, itemsPerPage, isExpanded]);
+    // Fetch data when component mounts
+    fetchGenealogists(currentPage);
+    fetchStats();
+  }, [currentPage, itemsPerPage]);
 
   const initializeAdminPanel = async () => {
     if (isLoading) return;
@@ -261,11 +242,9 @@ export function GenealogistAdministration({
       }
 
       toast({ title: "Genealogist created successfully" });
-      if (isExpanded) {
-        await fetchGenealogists(1);
-        await fetchStats();
-        setCurrentPage(1);
-      }
+      await fetchGenealogists(1);
+      await fetchStats();
+      setCurrentPage(1);
       form.reset();
     } catch (error) {
       console.error("Error creating genealogist:", error);
@@ -379,10 +358,8 @@ export function GenealogistAdministration({
       } else if (confirmAction === "delete") {
         await deleteGenealogist(selectedGenealogist.id);
       }
-      if (isExpanded) {
-        fetchGenealogists(currentPage);
-        fetchStats();
-      }
+      fetchGenealogists(currentPage);
+      fetchStats();
     } catch (error) {
       console.error("Error in handleConfirmAction:", error);
       throw error; // Rethrow the error to be caught in handleConfirmAction
@@ -410,10 +387,8 @@ export function GenealogistAdministration({
         role: editRole as Role
       });
       toast({ title: "Genealogist updated successfully" });
-      if (isExpanded) {
-        fetchGenealogists(currentPage);
-        fetchStats();
-      }
+      fetchGenealogists(currentPage);
+      fetchStats();
       setIsEditDialogOpen(false);
     } catch (error) {
       toast({ title: "Error updating genealogist", variant: "destructive" });
@@ -444,462 +419,410 @@ export function GenealogistAdministration({
     }
   };
 
-  const handleToggleExpanded = () => {
-    const newExpandedState = !isExpanded;
-    setIsExpanded(newExpandedState);
-
-    // If expanding and data hasn't been fetched yet, useEffect will trigger initialization
-  };
-
   const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(Number(value));
     setCurrentPage(1); // Reset to page 1 when changing items per page
   };
 
   return (
-    <Card className="w-[calc(100%)]">
-      <CardHeader
-        className={`flex flex-row items-center justify-between ${
-          !forceExpanded ? "cursor-pointer" : ""
-        }`}
-        onClick={!forceExpanded ? handleToggleExpanded : undefined}
-      >
-        <div>
-          <CardTitle>Genealogist Administration</CardTitle>
-          {!isExpanded && !forceExpanded && (
-            <CardDescription>
-              Click to manage genealogists and user roles
-            </CardDescription>
-          )}
+    <div className="space-y-8">
+      {isLoading && !isDataFetched ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-        {!forceExpanded && (
-          <Button variant="ghost" size="icon">
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
-        )}
-      </CardHeader>
-      {isExpanded && (
-        <CardContent>
-          {isLoading && !isDataFetched ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      ) : (
+        <div className="space-y-8">
+          {/* Statistics Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg border">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">
+                {stats.totalCount}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Total Genealogists
+              </div>
             </div>
-          ) : (
-            <div className="space-y-8">
-              {/* Statistics Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg border">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">
-                    {stats.totalCount}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Total Genealogists
-                  </div>
+            {Object.entries(stats.roleStats).map(([role, count]) => (
+              <div key={role} className="text-center">
+                <div className="text-2xl font-bold text-primary">{count}</div>
+                <div className="text-sm text-muted-foreground">
+                  {role === "NO_ROLE" ? "No Role" : role}
                 </div>
-                {Object.entries(stats.roleStats).map(([role, count]) => (
-                  <div key={role} className="text-center">
-                    <div className="text-2xl font-bold text-primary">
-                      {count}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {role === "NO_ROLE" ? "No Role" : role}
-                    </div>
-                  </div>
-                ))}
               </div>
+            ))}
+          </div>
 
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-4"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-md bg-card">
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>First Name</FormLabel>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-md bg-card">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="First Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Last Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Phone" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Controller
+                        name="role"
+                        control={form.control}
+                        render={({ field }) => (
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select Role" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="VIEWER">Viewer</SelectItem>
+                              <SelectItem value="SCANNER">Scanner</SelectItem>
+                              <SelectItem value="INDEXER">Indexer</SelectItem>
+                              <SelectItem value="PROOFREADER">
+                                Proofreader
+                              </SelectItem>
+                              <SelectItem value="PROCESS_MANAGER">
+                                Process Manager
+                              </SelectItem>
+                              <SelectItem value="ADMIN">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <div className="flex space-x-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={generateSecurePassword}
+                          className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 text-xs"
+                        >
+                          Generate
+                        </Button>
+                        <div className="relative flex-grow">
                           <FormControl>
-                            <Input placeholder="First Name" {...field} />
+                            <Input
+                              placeholder="Password"
+                              type={showPassword ? "text" : "password"}
+                              className="pr-10 focus-visible:ring-1 focus-visible:ring-primary/50"
+                              {...field}
+                            />
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Last Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Last Name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Email" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Phone" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Role</FormLabel>
-                          <Controller
-                            name="role"
-                            control={form.control}
-                            render={({ field }) => (
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select Role" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="VIEWER">Viewer</SelectItem>
-                                  <SelectItem value="SCANNER">
-                                    Scanner
-                                  </SelectItem>
-                                  <SelectItem value="INDEXER">
-                                    Indexer
-                                  </SelectItem>
-                                  <SelectItem value="PROOFREADER">
-                                    Proofreader
-                                  </SelectItem>
-                                  <SelectItem value="PROCESS_MANAGER">
-                                    Process Manager
-                                  </SelectItem>
-                                  <SelectItem value="ADMIN">Admin</SelectItem>
-                                </SelectContent>
-                              </Select>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0 top-0 h-full opacity-70 hover:opacity-100"
+                            onClick={togglePasswordVisibility}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-muted-foreground" />
                             )}
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <div className="flex space-x-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={generateSecurePassword}
-                              className="bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 text-xs"
-                            >
-                              Generate
-                            </Button>
-                            <div className="relative flex-grow">
-                              <FormControl>
-                                <Input
-                                  placeholder="Password"
-                                  type={showPassword ? "text" : "password"}
-                                  className="pr-10 focus-visible:ring-1 focus-visible:ring-primary/50"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute right-0 top-0 h-full opacity-70 hover:opacity-100"
-                                onClick={togglePasswordVisibility}
-                              >
-                                {showPassword ? (
-                                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                ) : (
-                                  <Eye className="h-4 w-4 text-muted-foreground" />
-                                )}
-                              </Button>
-                            </div>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="flex justify-end mt-8 space-x-3">
-                    <Button
-                      onClick={handleManualCleanup}
-                      variant="outline"
-                      className="text-sm border-slate-200 hover:bg-slate-100"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : null}
-                      Refresh Genealogists List
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="w-full md:w-auto bg-primary hover:bg-primary/90"
-                      variant="default"
-                      disabled={isLoading}
-                    >
-                      Create Genealogist
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-
-              <div className="overflow-x-auto border rounded-md">
-                <Table>
-                  <TableHeader className="bg-muted/50">
-                    <TableRow>
-                      <TableHead className="font-medium">Name</TableHead>
-                      <TableHead className="font-medium">Email</TableHead>
-                      <TableHead className="font-medium">Phone</TableHead>
-                      <TableHead className="font-medium">Role</TableHead>
-                      <TableHead className="font-medium">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {genealogists.map(genealogist => (
-                      <TableRow
-                        key={genealogist.id}
-                        className="hover:bg-muted/50 transition-colors"
-                      >
-                        <TableCell className="font-medium">
-                          {genealogist.fullName || "N/A"}
-                        </TableCell>
-                        <TableCell>{genealogist.email}</TableCell>
-                        <TableCell>{genealogist.phone || "N/A"}</TableCell>
-                        <TableCell>
-                          {genealogist.role ? (
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                genealogist.role === "ADMIN"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : genealogist.role === "VIEWER"
-                                    ? "bg-blue-100 text-blue-800"
-                                    : genealogist.role === "SCANNER"
-                                      ? "bg-green-100 text-green-800"
-                                      : genealogist.role === "INDEXER"
-                                        ? "bg-yellow-100 text-yellow-800"
-                                        : genealogist.role === "PROOFREADER"
-                                          ? "bg-orange-100 text-orange-800"
-                                          : genealogist.role ===
-                                              "PROCESS_MANAGER"
-                                            ? "bg-indigo-100 text-indigo-800"
-                                            : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {genealogist.role}
-                            </span>
-                          ) : (
-                            "N/A"
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={e => {
-                                e.stopPropagation();
-                                openEditDialog(genealogist);
-                              }}
-                              disabled={
-                                genealogist.email ===
-                                  "kdgs.develop@gmail.com" || isLoading
-                              }
-                              className="h-8 w-8 p-0"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleSendNewPassword(genealogist);
-                              }}
-                              disabled={
-                                genealogist.email ===
-                                  "kdgs.develop@gmail.com" || isLoading
-                              }
-                              className="text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
-                            >
-                              Send New Password
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleDeleteGenealogist(genealogist);
-                              }}
-                              disabled={
-                                genealogist.email ===
-                                  "kdgs.develop@gmail.com" || isLoading
-                              }
-                              className="text-xs text-red-600 bg-red-50 hover:bg-red-100 border-red-200"
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                          </Button>
+                        </div>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
+              <div className="flex justify-end mt-8 space-x-3">
+                <Button
+                  onClick={handleManualCleanup}
+                  variant="outline"
+                  className="text-sm border-slate-200 hover:bg-slate-100"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  Refresh Genealogists List
+                </Button>
+                <Button
+                  type="submit"
+                  className="w-full md:w-auto bg-primary hover:bg-primary/90"
+                  variant="default"
+                  disabled={isLoading}
+                >
+                  Create Genealogist
+                </Button>
+              </div>
+            </form>
+          </Form>
 
-              <div className="flex justify-between items-center">
-                <div>
-                  <Select
-                    value={itemsPerPage.toString()}
-                    onValueChange={handleItemsPerPageChange}
+          <div className="overflow-x-auto border rounded-md">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="font-medium">Name</TableHead>
+                  <TableHead className="font-medium">Email</TableHead>
+                  <TableHead className="font-medium">Phone</TableHead>
+                  <TableHead className="font-medium">Role</TableHead>
+                  <TableHead className="font-medium">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {genealogists.map(genealogist => (
+                  <TableRow
+                    key={genealogist.id}
+                    className="hover:bg-muted/50 transition-colors"
                   >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Items per page" />
+                    <TableCell className="font-medium">
+                      {genealogist.fullName || "N/A"}
+                    </TableCell>
+                    <TableCell>{genealogist.email}</TableCell>
+                    <TableCell>{genealogist.phone || "N/A"}</TableCell>
+                    <TableCell>
+                      {genealogist.role ? (
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            genealogist.role === "ADMIN"
+                              ? "bg-purple-100 text-purple-800"
+                              : genealogist.role === "VIEWER"
+                                ? "bg-blue-100 text-blue-800"
+                                : genealogist.role === "SCANNER"
+                                  ? "bg-green-100 text-green-800"
+                                  : genealogist.role === "INDEXER"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : genealogist.role === "PROOFREADER"
+                                      ? "bg-orange-100 text-orange-800"
+                                      : genealogist.role === "PROCESS_MANAGER"
+                                        ? "bg-indigo-100 text-indigo-800"
+                                        : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {genealogist.role}
+                        </span>
+                      ) : (
+                        "N/A"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            openEditDialog(genealogist);
+                          }}
+                          disabled={
+                            genealogist.email === "kdgs.develop@gmail.com" ||
+                            isLoading
+                          }
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleSendNewPassword(genealogist);
+                          }}
+                          disabled={
+                            genealogist.email === "kdgs.develop@gmail.com" ||
+                            isLoading
+                          }
+                          className="text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
+                        >
+                          Send New Password
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleDeleteGenealogist(genealogist);
+                          }}
+                          disabled={
+                            genealogist.email === "kdgs.develop@gmail.com" ||
+                            isLoading
+                          }
+                          className="text-xs text-red-600 bg-red-50 hover:bg-red-100 border-red-200"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <div>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={handleItemsPerPageChange}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Items per page" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10 per page</SelectItem>
+                  <SelectItem value="25">25 per page</SelectItem>
+                  <SelectItem value="50">50 per page</SelectItem>
+                  <SelectItem value="100">100 per page</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1 || isLoading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="py-2 px-3 text-sm">
+                Page {currentPage} of {genealogistData.totalPages || 1}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage(prev =>
+                    Math.min(prev + 1, genealogistData.totalPages)
+                  )
+                }
+                disabled={
+                  currentPage === genealogistData.totalPages || isLoading
+                }
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <DeleteConfirmationDialog
+            isOpen={isConfirmDialogOpen}
+            onClose={() => setIsConfirmDialogOpen(false)}
+            onConfirm={handleConfirmAction}
+            action={confirmAction as "delete" | "newPassword"}
+          />
+
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Genealogist</DialogTitle>
+                <DialogDescription>
+                  Update the phone number and role of the genealogist. Click
+                  save when you're done.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-phone" className="text-right">
+                    Phone
+                  </Label>
+                  <Input
+                    id="edit-phone"
+                    value={editPhone}
+                    onChange={e => setEditPhone(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit-role" className="text-right">
+                    Role
+                  </Label>
+                  <Select value={editRole} onValueChange={setEditRole}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="10">10 per page</SelectItem>
-                      <SelectItem value="25">25 per page</SelectItem>
-                      <SelectItem value="50">50 per page</SelectItem>
-                      <SelectItem value="100">100 per page</SelectItem>
+                      <SelectItem value="VIEWER">Viewer</SelectItem>
+                      <SelectItem value="SCANNER">Scanner</SelectItem>
+                      <SelectItem value="INDEXER">Indexer</SelectItem>
+                      <SelectItem value="PROOFREADER">Proofreader</SelectItem>
+                      <SelectItem value="PROCESS_MANAGER">
+                        Process Manager
+                      </SelectItem>
+                      <SelectItem value="ADMIN">Admin</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage(prev => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1 || isLoading}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="py-2 px-3 text-sm">
-                    Page {currentPage} of {genealogistData.totalPages || 1}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage(prev =>
-                        Math.min(prev + 1, genealogistData.totalPages)
-                      )
-                    }
-                    disabled={
-                      currentPage === genealogistData.totalPages || isLoading
-                    }
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
-
-              <DeleteConfirmationDialog
-                isOpen={isConfirmDialogOpen}
-                onClose={() => setIsConfirmDialogOpen(false)}
-                onConfirm={handleConfirmAction}
-                action={confirmAction as "delete" | "newPassword"}
-              />
-
-              <Dialog
-                open={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-              >
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Edit Genealogist</DialogTitle>
-                    <DialogDescription>
-                      Update the phone number and role of the genealogist. Click
-                      save when you're done.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-phone" className="text-right">
-                        Phone
-                      </Label>
-                      <Input
-                        id="edit-phone"
-                        value={editPhone}
-                        onChange={e => setEditPhone(e.target.value)}
-                        className="col-span-3"
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="edit-role" className="text-right">
-                        Role
-                      </Label>
-                      <Select value={editRole} onValueChange={setEditRole}>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="VIEWER">Viewer</SelectItem>
-                          <SelectItem value="SCANNER">Scanner</SelectItem>
-                          <SelectItem value="INDEXER">Indexer</SelectItem>
-                          <SelectItem value="PROOFREADER">
-                            Proofreader
-                          </SelectItem>
-                          <SelectItem value="PROCESS_MANAGER">
-                            Process Manager
-                          </SelectItem>
-                          <SelectItem value="ADMIN">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      type="submit"
-                      onClick={handleEditGenealogist}
-                      disabled={isLoading}
-                    >
-                      Save changes
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-          )}
-        </CardContent>
+              <DialogFooter>
+                <Button
+                  type="submit"
+                  onClick={handleEditGenealogist}
+                  disabled={isLoading}
+                >
+                  Save changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }
