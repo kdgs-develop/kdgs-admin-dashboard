@@ -137,14 +137,14 @@ export function ReportsTable() {
   const endIndex = Math.min(startIndex + REPORTS_PER_PAGE, totalReports);
 
   return (
-    <Card>
+    <Card className="bg-blue-50/50 border-blue-100 shadow-sm">
       <CardHeader>
         <CardTitle>Generated Reports</CardTitle>
         <CardDescription>
           View and manage your generated search reports
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="bg-blue-50/30">
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
             <Spinner className="h-8 w-8" />
@@ -159,7 +159,7 @@ export function ReportsTable() {
             <div className="hidden reports:block">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-blue-100/50">
                     <TableHead>File Name</TableHead>
                     <TableHead>Search Query</TableHead>
                     <TableHead>Created By</TableHead>
@@ -171,7 +171,10 @@ export function ReportsTable() {
                 </TableHeader>
                 <TableBody>
                   {reports.map(report => (
-                    <TableRow key={report.id}>
+                    <TableRow
+                      key={report.id}
+                      className="hover:bg-blue-100/50 transition-colors duration-200"
+                    >
                       <TableCell>{report.fileName}</TableCell>
                       <TableCell>{report.searchQuery}</TableCell>
                       <TableCell>{report.createdBy.fullName}</TableCell>
@@ -185,7 +188,7 @@ export function ReportsTable() {
                           <Button
                             onClick={() => handleDownload(report)}
                             size="sm"
-                            className="bg-green-600 hover:bg-green-700 text-white"
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
                           >
                             <Download className="h-4 w-4" />
                           </Button>
@@ -207,7 +210,10 @@ export function ReportsTable() {
             {/* Mobile Card View (<900px) */}
             <div className="reports:hidden space-y-4">
               {reports.map(report => (
-                <div key={report.id} className="border rounded-lg p-4 bg-card">
+                <div
+                  key={report.id}
+                  className="border border-blue-200 rounded-lg p-4 bg-blue-50/30 hover:bg-blue-100/30 transition-colors duration-200"
+                >
                   {/* First Row - Main Information */}
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-3">
                     <div>
@@ -261,7 +267,7 @@ export function ReportsTable() {
                       <Button
                         onClick={() => handleDownload(report)}
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white flex-1 sm:flex-none"
+                        className="bg-blue-600 hover:bg-blue-700 text-white flex-1 sm:flex-none"
                       >
                         <Download className="h-4 w-4 mr-1" />
                         Download
@@ -283,7 +289,7 @@ export function ReportsTable() {
           </>
         )}
       </CardContent>
-      <CardFooter className="flex items-center justify-between">
+      <CardFooter className="flex items-center justify-between bg-blue-50/30 border-t border-blue-200 pt-6">
         <div className="text-sm text-muted-foreground">
           Showing {startIndex + 1}-{endIndex} of {totalReports} reports
         </div>
