@@ -65,7 +65,13 @@ type City = {
   country?: { name: string } | null;
 } | null;
 
-export function CemeteryAdministration() {
+interface CemeteryAdministrationProps {
+  forceExpanded?: boolean;
+}
+
+export function CemeteryAdministration({
+  forceExpanded = false
+}: CemeteryAdministrationProps) {
   const { cities, formattedCities, initializeData, isInitialized } =
     useSharedData();
   const [cemeteries, setCemeteries] = useState<any[]>([]);
@@ -75,7 +81,7 @@ export function CemeteryAdministration() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(forceExpanded);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const { toast } = useToast();
@@ -374,24 +380,28 @@ export function CemeteryAdministration() {
   return (
     <Card>
       <CardHeader
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={handleToggleExpanded}
+        className={`flex flex-row items-center justify-between ${
+          !forceExpanded ? "cursor-pointer" : ""
+        }`}
+        onClick={!forceExpanded ? handleToggleExpanded : undefined}
       >
         <div>
           <CardTitle>Interment Place Management</CardTitle>
-          {!isExpanded && (
+          {!isExpanded && !forceExpanded && (
             <CardDescription>
               Click to manage interment places and search records
             </CardDescription>
           )}
         </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </Button>
+        {!forceExpanded && (
+          <Button variant="ghost" size="icon">
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+        )}
       </CardHeader>
       {isExpanded && (
         <CardContent className="space-y-4">
