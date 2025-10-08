@@ -47,7 +47,13 @@ interface TitleData {
   totalPages: number;
 }
 
-export function TitleAdministration() {
+interface TitleAdministrationProps {
+  forceExpanded?: boolean;
+}
+
+export function TitleAdministration({
+  forceExpanded = false
+}: TitleAdministrationProps) {
   const [titleData, setTitleData] = useState<TitleData>({
     titles: [],
     totalCount: 0,
@@ -61,7 +67,7 @@ export function TitleAdministration() {
     name: string | null;
   } | null>(null);
   const { toast } = useToast();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(forceExpanded);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
@@ -277,24 +283,28 @@ export function TitleAdministration() {
   return (
     <Card>
       <CardHeader
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={handleToggleExpanded}
+        className={`flex flex-row items-center justify-between ${
+          !forceExpanded ? "cursor-pointer" : ""
+        }`}
+        onClick={!forceExpanded ? handleToggleExpanded : undefined}
       >
         <div>
           <CardTitle>Title Management</CardTitle>
-          {!isExpanded && (
+          {!isExpanded && !forceExpanded && (
             <CardDescription>
               Click to manage titles and search records
             </CardDescription>
           )}
         </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </Button>
+        {!forceExpanded && (
+          <Button variant="ghost" size="icon">
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+        )}
       </CardHeader>
       {isExpanded && (
         <CardContent className="space-y-4">
