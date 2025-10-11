@@ -114,6 +114,127 @@ export async function getGenealogists() {
   }
 }
 
+export async function getGenealogistsWithPagination(
+  page: number = 1,
+  pageSize: number = 10
+) {
+  try {
+    const skip = (page - 1) * pageSize;
+
+    // Get total count first
+    const totalCount = await prisma.genealogist.count();
+
+    // Get paginated genealogists
+    const genealogists = await prisma.genealogist.findMany({
+      skip,
+      take: pageSize,
+      select: {
+        id: true,
+        clerkId: true,
+        fullName: true,
+        phone: true,
+        role: true
+      },
+      orderBy: {
+        fullName: "asc"
+      }
+    });
+
+    const genealogistsWithEmail = await Promise.all(
+      genealogists.map(async genealogist => {
+        try {
+          const clerkUser = await clerkClient().users.getUser(
+            genealogist.clerkId
+          );
+          return {
+            ...genealogist,
+            email: clerkUser.emailAddresses[0]?.emailAddress || ""
+          };
+        } catch (error) {
+          // If Clerk user not found, return genealogist with empty email
+          console.warn(
+            `Clerk user not found for genealogist ${genealogist.id}`
+          );
+          return {
+            ...genealogist,
+            email: ""
+          };
+        }
+      })
+    );
+
+    // Filter out genealogists with empty emails
+    const filteredGenealogists = genealogistsWithEmail.filter(g => g.email);
+
+    return {
+      genealogists: filteredGenealogists,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize)
+    };
+  } catch (error) {
+    console.error("Error fetching genealogists with pagination:", error);
+    throw error;
+  }
+}
+
+export async function getGenealogistStats() {
+  try {
+    // Get all genealogists with their roles
+    const genealogists = await prisma.genealogist.findMany({
+      select: {
+        id: true,
+        clerkId: true,
+        role: true
+      }
+    });
+
+    // Get emails for all genealogists to filter out orphaned ones
+    const genealogistsWithEmail = await Promise.all(
+      genealogists.map(async genealogist => {
+        try {
+          const clerkUser = await clerkClient().users.getUser(
+            genealogist.clerkId
+          );
+          return {
+            ...genealogist,
+            email: clerkUser.emailAddresses[0]?.emailAddress || ""
+          };
+        } catch (error) {
+          // If Clerk user not found, return genealogist with empty email
+          console.warn(
+            `Clerk user not found for genealogist ${genealogist.id}`
+          );
+          return {
+            ...genealogist,
+            email: ""
+          };
+        }
+      })
+    );
+
+    // Filter out genealogists with empty emails
+    const validGenealogists = genealogistsWithEmail.filter(g => g.email);
+
+    // Calculate role statistics
+    const roleStats = validGenealogists.reduce(
+      (acc, genealogist) => {
+        const role = genealogist.role || "NO_ROLE";
+        acc[role] = (acc[role] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    return {
+      totalCount: validGenealogists.length,
+      roleStats
+    };
+  } catch (error) {
+    console.error("Error fetching genealogist statistics:", error);
+    throw error;
+  }
+}
+
 export async function updateGenealogist({
   id,
   phone,

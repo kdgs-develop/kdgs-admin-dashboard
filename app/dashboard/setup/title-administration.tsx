@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -14,8 +7,6 @@ import {
   Plus,
   Search,
   Edit,
-  ChevronDown,
-  ChevronUp,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -61,9 +52,8 @@ export function TitleAdministration() {
     name: string | null;
   } | null>(null);
   const { toast } = useToast();
-  const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [obituaryCounts, setObituaryCounts] = useState<Record<number, number>>(
@@ -130,14 +120,10 @@ export function TitleAdministration() {
   };
 
   useEffect(() => {
-    if (isExpanded) {
-      fetchTitles(currentPage);
-    }
-  }, [currentPage, itemsPerPage, isExpanded]);
+    fetchTitles(currentPage);
+  }, [currentPage, itemsPerPage]);
 
   const handleSearch = async () => {
-    if (!isExpanded) return;
-
     setIsLoading(true);
     try {
       if (!searchName) {
@@ -182,10 +168,8 @@ export function TitleAdministration() {
         description: "Title added successfully"
       });
 
-      if (isExpanded) {
-        await fetchTitles(1);
-        setCurrentPage(1);
-      }
+      await fetchTitles(1);
+      setCurrentPage(1);
     } catch (error) {
       toast({
         title: "Error adding title",
@@ -208,9 +192,7 @@ export function TitleAdministration() {
       setIsEditDialogOpen(false);
       setSelectedTitle(null);
 
-      if (isExpanded) {
-        fetchTitles(currentPage);
-      }
+      fetchTitles(currentPage);
     } catch (error) {
       toast({
         title: "Error updating title",
@@ -233,9 +215,7 @@ export function TitleAdministration() {
       setIsEditDialogOpen(false);
       setSelectedTitle(null);
 
-      if (isExpanded) {
-        fetchTitles(currentPage);
-      }
+      fetchTitles(currentPage);
     } catch (error) {
       toast({
         title: "Error deleting title",
@@ -246,16 +226,7 @@ export function TitleAdministration() {
     }
   };
 
-  const handleToggleExpanded = () => {
-    const newExpandedState = !isExpanded;
-    setIsExpanded(newExpandedState);
-
-    // If expanding and data hasn't been fetched yet, the useEffect will handle it
-  };
-
   const handleClearSearch = async () => {
-    if (!isExpanded) return;
-
     setSearchName("");
     await fetchTitles(1);
     setCurrentPage(1);
@@ -275,199 +246,168 @@ export function TitleAdministration() {
   };
 
   return (
-    <Card>
-      <CardHeader
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={handleToggleExpanded}
-      >
-        <div>
-          <CardTitle>Title Management</CardTitle>
-          {!isExpanded && (
-            <CardDescription>
-              Click to manage titles and search records
-            </CardDescription>
-          )}
+    <div className="space-y-4">
+      <div className="flex space-x-4">
+        <div className="flex-1">
+          <Input
+            placeholder="Search by name"
+            value={searchName}
+            onChange={e => setSearchName(e.target.value)}
+          />
         </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
+        <Button onClick={handleSearch} variant="secondary" disabled={isLoading}>
+          {isLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            <ChevronDown className="h-4 w-4" />
+            <Search className="mr-2 h-4 w-4" />
           )}
+          Search
         </Button>
-      </CardHeader>
-      {isExpanded && (
-        <CardContent className="space-y-4">
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search by name"
-                value={searchName}
-                onChange={e => setSearchName(e.target.value)}
-              />
+        <Button
+          onClick={handleClearSearch}
+          variant="outline"
+          disabled={isLoading || !searchName}
+        >
+          Reset
+        </Button>
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          variant="outline"
+          disabled={isLoading}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Add New
+        </Button>
+      </div>
+
+      {isLoading && !isDataFetched ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : titleData.titles.length > 0 ? (
+        <>
+          <div className="mt-4">
+            <h3 className="text-sm font-medium mb-2">Found Titles:</h3>
+            <div className="space-y-2">
+              {titleData.titles.map(title => (
+                <div
+                  key={title.id}
+                  className="p-3 border rounded flex justify-between items-center hover:bg-accent"
+                >
+                  <span className="text-sm">{title.name}</span>
+                  <div className="flex items-center gap-2">
+                    {loadingRelationIds.includes(title.id) ? (
+                      <span className="text-xs text-muted-foreground flex items-center">
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Loading...
+                      </span>
+                    ) : obituaryCounts[title.id] > 0 ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleOpenRelatedObituaries(title);
+                        }}
+                      >
+                        <FileText className="h-3 w-3" />
+                        {obituaryCounts[title.id]} Obituaries
+                      </Button>
+                    ) : null}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={e => {
+                        e.stopPropagation();
+                        setSelectedTitle(title);
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
-            <Button
-              onClick={handleSearch}
-              variant="secondary"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="mr-2 h-4 w-4" />
-              )}
-              Search
-            </Button>
-            <Button
-              onClick={handleClearSearch}
-              variant="outline"
-              disabled={isLoading || !searchName}
-            >
-              Reset
-            </Button>
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              variant="outline"
-              disabled={isLoading}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add New
-            </Button>
           </div>
 
-          {isLoading && !isDataFetched ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="flex justify-between items-center">
+            <div>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={handleItemsPerPageChange}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Items per page" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10 per page</SelectItem>
+                  <SelectItem value="25">25 per page</SelectItem>
+                  <SelectItem value="50">50 per page</SelectItem>
+                  <SelectItem value="100">100 per page</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          ) : titleData.titles.length > 0 ? (
-            <>
-              <div className="mt-4">
-                <h3 className="text-sm font-medium mb-2">Found Titles:</h3>
-                <div className="space-y-2">
-                  {titleData.titles.map(title => (
-                    <div
-                      key={title.id}
-                      className="p-3 border rounded flex justify-between items-center hover:bg-accent"
-                    >
-                      <span className="text-sm">{title.name}</span>
-                      <div className="flex items-center gap-2">
-                        {loadingRelationIds.includes(title.id) ? (
-                          <span className="text-xs text-muted-foreground flex items-center">
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                            Loading...
-                          </span>
-                        ) : obituaryCounts[title.id] > 0 ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-1 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
-                            onClick={e => {
-                              e.stopPropagation();
-                              handleOpenRelatedObituaries(title);
-                            }}
-                          >
-                            <FileText className="h-3 w-3" />
-                            {obituaryCounts[title.id]} Obituaries
-                          </Button>
-                        ) : null}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setSelectedTitle(title);
-                            setIsEditDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <div>
-                  <Select
-                    value={itemsPerPage.toString()}
-                    onValueChange={handleItemsPerPageChange}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Items per page" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5 per page</SelectItem>
-                      <SelectItem value="10">10 per page</SelectItem>
-                      <SelectItem value="25">25 per page</SelectItem>
-                      <SelectItem value="50">50 per page</SelectItem>
-                      <SelectItem value="100">100 per page</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage(prev => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1 || isLoading}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="py-2 px-3 text-sm">
-                    Page {currentPage} of {titleData.totalPages || 1}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage(prev =>
-                        Math.min(prev + 1, titleData.totalPages)
-                      )
-                    }
-                    disabled={currentPage === titleData.totalPages || isLoading}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          ) : isDataFetched ? (
-            <div className="py-8 text-center text-muted-foreground">
-              No titles found
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1 || isLoading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="py-2 px-3 text-sm">
+                Page {currentPage} of {titleData.totalPages || 1}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage(prev =>
+                    Math.min(prev + 1, titleData.totalPages)
+                  )
+                }
+                disabled={currentPage === titleData.totalPages || isLoading}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-          ) : null}
+          </div>
+        </>
+      ) : isDataFetched ? (
+        <div className="py-8 text-center text-muted-foreground">
+          No titles found
+        </div>
+      ) : null}
 
-          <AddTitleDialog
-            isOpen={isDialogOpen}
-            onClose={() => setIsDialogOpen(false)}
-            onAddTitle={handleAddTitle}
-            initialName={searchName}
-          />
+      <AddTitleDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onAddTitle={handleAddTitle}
+        initialName={searchName}
+      />
 
-          <EditTitleDialog
-            isOpen={isEditDialogOpen}
-            onClose={() => {
-              setIsEditDialogOpen(false);
-              setSelectedTitle(null);
-            }}
-            onEditTitle={handleEditTitle}
-            onDeleteTitle={handleDeleteTitle}
-            title={selectedTitle as { id: number; name: string } | null}
-          />
+      <EditTitleDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setSelectedTitle(null);
+        }}
+        onEditTitle={handleEditTitle}
+        onDeleteTitle={handleDeleteTitle}
+        title={selectedTitle as { id: number; name: string } | null}
+      />
 
-          <RelatedTitleObituariesDialog
-            isOpen={isRelatedDialogOpen}
-            onClose={() => {
-              setIsRelatedDialogOpen(false);
-              setRelatedTitle(null);
-            }}
-            title={relatedTitle}
-          />
-        </CardContent>
-      )}
-    </Card>
+      <RelatedTitleObituariesDialog
+        isOpen={isRelatedDialogOpen}
+        onClose={() => {
+          setIsRelatedDialogOpen(false);
+          setRelatedTitle(null);
+        }}
+        title={relatedTitle}
+      />
+    </div>
   );
 }

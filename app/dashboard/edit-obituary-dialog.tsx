@@ -892,8 +892,8 @@ export function EditObituaryDialog({
                 className="space-y-8"
               >
                 {/* Personal Information - Enhanced section with better visual separation */}
-                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                <div className="bg-blue-50/50 border-blue-100 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-blue-200 text-blue-900">
                     Personal Information
                   </h3>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-4">
@@ -1002,8 +1002,8 @@ export function EditObituaryDialog({
                 </div>
 
                 {/* Dates and Location Information */}
-                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                <div className="bg-emerald-50/50 border-emerald-100 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-emerald-200 text-emerald-900">
                     Dates and Location
                   </h3>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-4">
@@ -1103,8 +1103,8 @@ export function EditObituaryDialog({
                 </div>
 
                 {/* Also Known As */}
-                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                <div className="bg-purple-50/50 border-purple-100 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-purple-200 text-purple-900">
                     Also Known As
                   </h3>
                   <div className="space-y-4">
@@ -1195,8 +1195,8 @@ export function EditObituaryDialog({
                 </div>
 
                 {/* Obituary Files */}
-                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                <div className="bg-amber-50/50 border-amber-100 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-amber-200 text-amber-900">
                     Add New Images
                   </h3>
                   <div className="space-y-4">
@@ -1243,8 +1243,8 @@ export function EditObituaryDialog({
                 </div>
 
                 {/* Publication Information */}
-                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                <div className="bg-emerald-50/50 border-emerald-100 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-emerald-200 text-emerald-900">
                     Publication Information
                   </h3>
                   <div className="space-y-4">
@@ -1347,8 +1347,8 @@ export function EditObituaryDialog({
                 </div>
 
                 {/* Relatives */}
-                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                <div className="bg-purple-50/50 border-purple-100 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-purple-200 text-purple-900">
                     Relatives
                   </h3>
                   <div className="space-y-4">
@@ -1521,8 +1521,8 @@ export function EditObituaryDialog({
                 </div>
 
                 {/* Additional Information */}
-                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                <div className="bg-blue-50/50 border-blue-100 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-blue-200 text-blue-900">
                     Additional Information
                   </h3>
                   <div className="flex items-center space-x-2 mb-2">
@@ -1574,8 +1574,8 @@ export function EditObituaryDialog({
                 </div>
 
                 {/* Proofread Information */}
-                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                <div className="bg-emerald-50/50 border-emerald-100 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-emerald-200 text-emerald-900">
                     Proofread Information
                   </h3>
                   <div className="col-span-2">
@@ -1657,8 +1657,8 @@ export function EditObituaryDialog({
                 </div>
 
                 {/* Metadata */}
-                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                <div className="bg-amber-50/50 border-amber-100 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-amber-200 text-amber-900">
                     Metadata
                   </h3>
                   <div className="grid grid-cols-2 gap-x-6 gap-y-4">
@@ -1757,8 +1757,8 @@ export function EditObituaryDialog({
                 </div>
 
                 {/* File Box */}
-                <div className="bg-card/60 rounded-lg p-5 border shadow-sm">
-                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b">
+                <div className="bg-purple-50/50 border-purple-100 rounded-lg p-5 border shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-purple-200 text-purple-900">
                     Document Storage
                   </h3>
                   <ComboboxFormField
@@ -1821,7 +1821,7 @@ export function EditObituaryDialog({
             className="overflow-y-auto p-4 border-l bg-muted/20 flex flex-col"
             style={{ width: `calc(100% - ${splitPosition}%)` }}
           >
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-4 mt-6">
               <h3 className="text-lg font-semibold">Image Previews</h3>
 
               {/* Repositioned Hide Images button */}

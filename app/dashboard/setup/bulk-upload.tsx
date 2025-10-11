@@ -1,22 +1,15 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { toast } from '@/hooks/use-toast';
-import path from 'path';
-import { useCallback, useState } from 'react';
-import { OverwriteConfirmationDialog } from './overwrite-confirmation-dialog';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { format } from 'date-fns';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "@/hooks/use-toast";
+import path from "path";
+import { useCallback, useState } from "react";
+import { OverwriteConfirmationDialog } from "./overwrite-confirmation-dialog";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { format } from "date-fns";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export function BulkUpload() {
   const [files, setFiles] = useState<FileList | null>(null);
@@ -25,9 +18,11 @@ export function BulkUpload() {
   const [overwriteDialogOpen, setOverwriteDialogOpen] = useState(false);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [uploadResults, setUploadResults] = useState<
-    { fileName: string; status: 'uploaded' | 'skipped' | 'overwritten' | 'failed' }[]
+    {
+      fileName: string;
+      status: "uploaded" | "skipped" | "overwritten" | "failed";
+    }[]
   >([]);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiles(e.target.files);
@@ -36,9 +31,9 @@ export function BulkUpload() {
   const handleUpload = useCallback(() => {
     if (!files || files.length === 0) {
       toast({
-        title: 'No Files Selected',
-        description: 'Please select files to upload.',
-        variant: 'destructive'
+        title: "No Files Selected",
+        description: "Please select files to upload.",
+        variant: "destructive"
       });
       return;
     }
@@ -49,41 +44,44 @@ export function BulkUpload() {
     processNextFile(Array.from(files), 0);
   }, [files]);
 
-  const uploadFile = useCallback(async (file: File): Promise<'uploaded' | 'skipped' | 'overwritten'> => {
-    const formData = new FormData();
-    formData.append('file', file);
+  const uploadFile = useCallback(
+    async (file: File): Promise<"uploaded" | "skipped" | "overwritten"> => {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const filenameWithoutExt = path.parse(file.name).name;
-    const checkResponse = await fetch(
-      `/api/check-file-exists?filename=${encodeURIComponent(filenameWithoutExt)}`,
-      { method: 'GET' }
-    );
+      const filenameWithoutExt = path.parse(file.name).name;
+      const checkResponse = await fetch(
+        `/api/check-file-exists?filename=${encodeURIComponent(filenameWithoutExt)}`,
+        { method: "GET" }
+      );
 
-    if (!checkResponse.ok) {
-      throw new Error('Failed to check file existence');
-    }
+      if (!checkResponse.ok) {
+        throw new Error("Failed to check file existence");
+      }
 
-    const { exists } = await checkResponse.json();
+      const { exists } = await checkResponse.json();
 
-    if (exists) {
-      return new Promise((resolve) => {
-        setOverwriteDialogOpen(true);
-        const handleConfirm = async () => {
-          setOverwriteDialogOpen(false);
-          await performUpload(formData);
-          resolve('overwritten');
-        };
-        const handleCancel = () => {
-          setOverwriteDialogOpen(false);
-          resolve('skipped');
-        };
-        setOverwriteHandlers({ handleConfirm, handleCancel });
-      });
-    } else {
-      await performUpload(formData);
-      return 'uploaded';
-    }
-  }, []);
+      if (exists) {
+        return new Promise(resolve => {
+          setOverwriteDialogOpen(true);
+          const handleConfirm = async () => {
+            setOverwriteDialogOpen(false);
+            await performUpload(formData);
+            resolve("overwritten");
+          };
+          const handleCancel = () => {
+            setOverwriteDialogOpen(false);
+            resolve("skipped");
+          };
+          setOverwriteHandlers({ handleConfirm, handleCancel });
+        });
+      } else {
+        await performUpload(formData);
+        return "uploaded";
+      }
+    },
+    []
+  );
 
   const processNextFile = useCallback(
     async (remainingFiles: File[], index: number) => {
@@ -98,20 +96,17 @@ export function BulkUpload() {
 
       try {
         const status = await uploadFile(file);
-        setUploadResults((prev) => [
-          ...prev,
-          { fileName: file.name, status }
-        ]);
+        setUploadResults(prev => [...prev, { fileName: file.name, status }]);
       } catch (error) {
-        console.error('Upload error:', error);
-        setUploadResults((prev) => [
+        console.error("Upload error:", error);
+        setUploadResults(prev => [
           ...prev,
-          { fileName: file.name, status: 'failed' }
+          { fileName: file.name, status: "failed" }
         ]);
         toast({
-          title: 'Upload Failed',
-          description: `Failed to upload ${file.name}. ${error instanceof Error ? error.message : 'Unknown error'}`,
-          variant: 'destructive'
+          title: "Upload Failed",
+          description: `Failed to upload ${file.name}. ${error instanceof Error ? error.message : "Unknown error"}`,
+          variant: "destructive"
         });
       }
 
@@ -123,8 +118,8 @@ export function BulkUpload() {
   );
 
   const performUpload = async (formData: FormData) => {
-    const uploadResponse = await fetch('/api/bulk-upload', {
-      method: 'POST',
+    const uploadResponse = await fetch("/api/bulk-upload", {
+      method: "POST",
       body: formData
     });
 
@@ -133,7 +128,7 @@ export function BulkUpload() {
     }
 
     const result = await uploadResponse.json();
-    console.log('Upload result:', result);
+    console.log("Upload result:", result);
   };
 
   const [overwriteHandlers, setOverwriteHandlers] = useState<{
@@ -149,7 +144,7 @@ export function BulkUpload() {
     const itemsPerPage = 25; // Adjust this number as needed
 
     // Add logo
-    const logoUrl = '/kdgs.png';
+    const logoUrl = "/kdgs.png";
     const logoImage = await fetch(logoUrl).then(res => res.arrayBuffer());
     const logoImageEmbed = await pdfDoc.embedPng(logoImage);
     const logoDims = logoImageEmbed.scale(0.08);
@@ -163,26 +158,26 @@ export function BulkUpload() {
         x: 50,
         y: height - logoDims.height - 50,
         width: logoDims.width,
-        height: logoDims.height,
+        height: logoDims.height
       });
 
       // Add current date and time
-      const currentDateTime = format(new Date(), 'MMMM d, yyyy HH:mm:ss');
+      const currentDateTime = format(new Date(), "MMMM d, yyyy HH:mm:ss");
       page.drawText(currentDateTime, {
         x: width - 200,
         y: height - 4 * fontSize,
         size: fontSize,
         font: font,
-        color: rgb(0, 0, 0),
+        color: rgb(0, 0, 0)
       });
 
       // Add title
-      page.drawText('Upload Results', {
+      page.drawText("Upload Results", {
         x: 50,
         y: height - logoDims.height - 80,
         size: 16,
         font: font,
-        color: rgb(0, 0, 0),
+        color: rgb(0, 0, 0)
       });
 
       return { page, startY: height - logoDims.height - 130 };
@@ -204,7 +199,7 @@ export function BulkUpload() {
         y: currentY,
         size: fontSize,
         font: font,
-        color: rgb(0, 0, 0),
+        color: rgb(0, 0, 0)
       });
 
       currentY -= lineHeight;
@@ -218,17 +213,17 @@ export function BulkUpload() {
         y: 30,
         size: 10,
         font: font,
-        color: rgb(0, 0, 0),
+        color: rgb(0, 0, 0)
       });
     });
 
     const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
+
+    const link = document.createElement("a");
     link.href = url;
-    link.download = `upload_results_${format(new Date(), 'yyyy-MM-dd_HHmmss')}.pdf`;
+    link.download = `upload_results_${format(new Date(), "yyyy-MM-dd_HHmmss")}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -236,29 +231,7 @@ export function BulkUpload() {
   }, [uploadResults]);
 
   return (
-    <Card className="w-[calc(100%)]">
-      <CardHeader 
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div>
-          <CardTitle>Bulk Upload</CardTitle>
-          {!isExpanded && (
-            <CardDescription>
-              Click to manage bulk image uploads
-            </CardDescription>
-          )}
-        </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </Button>
-      </CardHeader>
-      {isExpanded && (
-        <CardContent className="text-sm text-muted-foreground">
+    <div className="space-y-4">
           <div className="space-y-4">
             <Input
               type="file"
@@ -268,7 +241,7 @@ export function BulkUpload() {
             />
             <div className="flex space-x-2">
               <Button onClick={handleUpload} disabled={isUploading}>
-                {isUploading ? 'Uploading...' : 'Upload Files'}
+                {isUploading ? "Uploading..." : "Upload Files"}
               </Button>
               {uploadResults.length > 0 && (
                 <Button onClick={generatePDF} variant="outline">
@@ -284,7 +257,10 @@ export function BulkUpload() {
                 <h3 className="font-semibold mb-2">Upload Results:</h3>
                 <ul className="list-disc pl-5">
                   {uploadResults.map((result, index) => (
-                    <li key={index} className={`text-${result.status === 'failed' ? 'red' : 'green'}-600`}>
+                    <li
+                      key={index}
+                      className={`text-${result.status === "failed" ? "red" : "green"}-600`}
+                    >
                       {result.fileName} - {result.status}
                     </li>
                   ))}
@@ -292,14 +268,12 @@ export function BulkUpload() {
               </div>
             )}
           </div>
-        </CardContent>
-      )}
       <OverwriteConfirmationDialog
         isOpen={overwriteDialogOpen}
         onConfirm={overwriteHandlers.handleConfirm}
         onCancel={overwriteHandlers.handleCancel}
-        fileName={currentFile?.name || ''}
+        fileName={currentFile?.name || ""}
       />
-    </Card>
+    </div>
   );
 }

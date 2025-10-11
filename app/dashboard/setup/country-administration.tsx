@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -14,8 +7,6 @@ import {
   Plus,
   Search,
   Edit,
-  ChevronDown,
-  ChevronUp,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -61,9 +52,8 @@ export function CountryAdministration() {
     name: string;
   } | null>(null);
   const { toast } = useToast();
-  const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [relatedCountry, setRelatedCountry] = useState<{
@@ -129,14 +119,10 @@ export function CountryAdministration() {
   };
 
   useEffect(() => {
-    if (isExpanded) {
-      fetchCountries(currentPage);
-    }
-  }, [currentPage, itemsPerPage, isExpanded]);
+    fetchCountries(currentPage);
+  }, [currentPage, itemsPerPage]);
 
   const handleSearch = async () => {
-    if (!isExpanded) return;
-
     setIsLoading(true);
     try {
       if (!searchName) {
@@ -178,10 +164,8 @@ export function CountryAdministration() {
         title: "Success",
         description: "Country added successfully"
       });
-      if (isExpanded) {
-        await fetchCountries(1);
-        setCurrentPage(1);
-      }
+      await fetchCountries(1);
+      setCurrentPage(1);
     } catch (error) {
       toast({
         title: "Error adding country",
@@ -203,9 +187,7 @@ export function CountryAdministration() {
       });
       setIsEditDialogOpen(false);
       setSelectedCountry(null);
-      if (isExpanded) {
-        fetchCountries(currentPage);
-      }
+      fetchCountries(currentPage);
     } catch (error) {
       toast({
         title: "Error updating country",
@@ -227,9 +209,7 @@ export function CountryAdministration() {
       });
       setIsEditDialogOpen(false);
       setSelectedCountry(null);
-      if (isExpanded) {
-        fetchCountries(currentPage);
-      }
+      fetchCountries(currentPage);
     } catch (error) {
       toast({
         title: "Error deleting country",
@@ -240,19 +220,8 @@ export function CountryAdministration() {
     }
   };
 
-  const handleToggleExpand = () => {
-    const newExpandedState = !isExpanded;
-    setIsExpanded(newExpandedState);
-
-    // If expanding and no data has been fetched yet, fetch data
-    if (newExpandedState && !isDataFetched) {
-      fetchCountries(currentPage);
-    }
-  };
 
   const handleClearSearch = async () => {
-    if (!isExpanded) return;
-
     setSearchName("");
     await fetchCountries(1);
     setCurrentPage(1);
@@ -264,27 +233,7 @@ export function CountryAdministration() {
   };
 
   return (
-    <Card>
-      <CardHeader
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={handleToggleExpand}
-      >
-        <div>
-          <CardTitle>Country Management</CardTitle>
-          {!isExpanded && (
-            <CardDescription>Click to manage countries</CardDescription>
-          )}
-        </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </Button>
-      </CardHeader>
-      {isExpanded && (
-        <CardContent className="space-y-4">
+    <div className="space-y-4">
           <div className="flex space-x-4">
             <div className="flex-1">
               <Input
@@ -381,7 +330,6 @@ export function CountryAdministration() {
                       <SelectValue placeholder="Items per page" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="5">5 per page</SelectItem>
                       <SelectItem value="10">10 per page</SelectItem>
                       <SelectItem value="25">25 per page</SelectItem>
                       <SelectItem value="50">50 per page</SelectItem>
@@ -454,8 +402,6 @@ export function CountryAdministration() {
             }}
             country={relatedCountry}
           />
-        </CardContent>
-      )}
-    </Card>
+    </div>
   );
 }

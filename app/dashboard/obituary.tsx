@@ -54,7 +54,7 @@ export function Obituary({
   return (
     <>
       {/* Desktop Table Row */}
-      <TableRow className="hidden table:table-row">
+      <TableRow className="hidden table:table-row hover:bg-blue-100/50 transition-colors duration-200">
         <TableCell className="whitespace-pre">{obituary.reference}</TableCell>
         <TableCell>{obituary.surname ?? "N/A"}</TableCell>
         <TableCell>{obituary.givenNames ?? "N/A"}</TableCell>
@@ -127,9 +127,9 @@ export function Obituary({
       </TableRow>
 
       {/* Mobile Card Layout */}
-      <TableRow className="table:hidden">
+      <TableRow className="table:hidden hover:bg-blue-100/50 transition-colors duration-200">
         <TableCell colSpan={7} className="p-0">
-          <div className="p-3 border-b">
+          <div className="p-3 border-b hover:bg-blue-100/30 transition-colors duration-200">
             {/* Three-column layout for medium screens (600px-1014px) */}
             <div className="grid grid-cols-1 card:grid-cols-3 gap-4">
               {/* Left Column - Main Info */}

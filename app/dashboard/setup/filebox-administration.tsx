@@ -1,16 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronDown, ChevronUp, Edit, Plus, Search } from "lucide-react";
+import { Edit, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   addFileBox,
@@ -39,19 +32,18 @@ export function FileBoxAdministration() {
     number: number;
   } | null>(null);
   const { toast } = useToast();
-  const [isExpanded, setIsExpanded] = useState(false);
   const [currentOpenFileBoxId, setCurrentOpenFileBoxId] = useState<
     number | null
   >(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
 
-  // Only fetch data when component is expanded and data hasn't been fetched yet
+  // Fetch data when component mounts
   useEffect(() => {
-    if (isExpanded && !isDataFetched) {
+    if (!isDataFetched) {
       fetchData();
     }
-  }, [isExpanded, isDataFetched]);
+  }, [isDataFetched]);
 
   const fetchData = async () => {
     if (isLoading) return;
@@ -242,29 +234,7 @@ export function FileBoxAdministration() {
   };
 
   return (
-    <Card>
-      <CardHeader
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div>
-          <CardTitle>File Box Management</CardTitle>
-          {!isExpanded && (
-            <CardDescription>
-              Click to manage file boxes and search records
-            </CardDescription>
-          )}
-        </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </Button>
-      </CardHeader>
-      {isExpanded && (
-        <CardContent className="space-y-4">
+    <div className="space-y-4">
           <div className="flex space-x-4">
             <div className="flex-1">
               <Input
@@ -397,8 +367,6 @@ export function FileBoxAdministration() {
             onDeleteFileBox={handleDeleteFileBox}
             fileBox={selectedFileBox}
           />
-        </CardContent>
-      )}
-    </Card>
+    </div>
   );
 }

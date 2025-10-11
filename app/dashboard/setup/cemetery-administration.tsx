@@ -2,13 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
-import {
   Command,
   CommandEmpty,
   CommandGroup,
@@ -25,9 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
   Check,
-  ChevronDown,
   ChevronsUpDown,
-  ChevronUp,
   Plus,
   Search,
   ChevronLeft,
@@ -73,9 +64,8 @@ export function CemeteryAdministration() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCemetery, setSelectedCemetery] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const { toast } = useToast();
@@ -159,14 +149,12 @@ export function CemeteryAdministration() {
   };
 
   useEffect(() => {
-    if (isExpanded) {
-      fetchData();
-    }
-  }, [currentPage, itemsPerPage, isExpanded]);
+    fetchData();
+  }, [currentPage, itemsPerPage]);
 
-  // Initialize shared data when component expands
+  // Initialize shared data when component mounts
   useEffect(() => {
-    if (isExpanded && !isInitialized) {
+    if (!isInitialized) {
       initializeData().catch(error => {
         toast({
           title: "Error",
@@ -175,7 +163,7 @@ export function CemeteryAdministration() {
         });
       });
     }
-  }, [isExpanded, isInitialized, initializeData, toast]);
+  }, [isInitialized, initializeData, toast]);
 
   // Safe filtering effect
   useEffect(() => {
@@ -205,15 +193,13 @@ export function CemeteryAdministration() {
     try {
       await addCemetery(name, cityId);
 
-      if (isExpanded) {
-        const result = await getCemeteriesWithPagination(
-          currentPage,
-          itemsPerPage
-        );
-        setCemeteries(result.cemeteries);
-        setTotalPages(result.totalPages);
-        fetchObituaryCounts(result.cemeteries);
-      }
+      const result = await getCemeteriesWithPagination(
+        currentPage,
+        itemsPerPage
+      );
+      setCemeteries(result.cemeteries);
+      setTotalPages(result.totalPages);
+      fetchObituaryCounts(result.cemeteries);
 
       toast({
         title: "Success",
@@ -237,15 +223,13 @@ export function CemeteryAdministration() {
     try {
       await updateCemetery(id, name, cityId);
 
-      if (isExpanded) {
-        const result = await getCemeteriesWithPagination(
-          currentPage,
-          itemsPerPage
-        );
-        setCemeteries(result.cemeteries);
-        setTotalPages(result.totalPages);
-        fetchObituaryCounts(result.cemeteries);
-      }
+      const result = await getCemeteriesWithPagination(
+        currentPage,
+        itemsPerPage
+      );
+      setCemeteries(result.cemeteries);
+      setTotalPages(result.totalPages);
+      fetchObituaryCounts(result.cemeteries);
 
       toast({
         title: "Success",
@@ -267,15 +251,13 @@ export function CemeteryAdministration() {
     try {
       await deleteCemetery(id);
 
-      if (isExpanded) {
-        const result = await getCemeteriesWithPagination(
-          currentPage,
-          itemsPerPage
-        );
-        setCemeteries(result.cemeteries);
-        setTotalPages(result.totalPages);
-        fetchObituaryCounts(result.cemeteries);
-      }
+      const result = await getCemeteriesWithPagination(
+        currentPage,
+        itemsPerPage
+      );
+      setCemeteries(result.cemeteries);
+      setTotalPages(result.totalPages);
+      fetchObituaryCounts(result.cemeteries);
 
       toast({
         title: "Success",
@@ -294,8 +276,6 @@ export function CemeteryAdministration() {
   };
 
   const handleSearch = async () => {
-    if (!isExpanded) return;
-
     try {
       setIsLoading(true);
       const result = await searchCemeteries(
@@ -325,16 +305,7 @@ export function CemeteryAdministration() {
     }
   };
 
-  const handleToggleExpanded = () => {
-    const newExpandedState = !isExpanded;
-    setIsExpanded(newExpandedState);
-
-    // If expanding and data hasn't been fetched yet, we'll let the useEffect trigger the fetch
-  };
-
   const handleClearSearch = async () => {
-    if (!isExpanded) return;
-
     setSearchName("");
     setSearchCityId(undefined);
 
@@ -372,72 +343,69 @@ export function CemeteryAdministration() {
   };
 
   return (
-    <Card>
-      <CardHeader
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={handleToggleExpanded}
-      >
-        <div>
-          <CardTitle>Interment Place Management</CardTitle>
-          {!isExpanded && (
-            <CardDescription>
-              Click to manage interment places and search records
-            </CardDescription>
-          )}
+    <div className="space-y-4">
+      <div className="flex space-x-4">
+        <div className="flex-1">
+          <Input
+            placeholder="Search by name"
+            value={searchName}
+            onChange={e => setSearchName(e.target.value)}
+          />
         </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </Button>
-      </CardHeader>
-      {isExpanded && (
-        <CardContent className="space-y-4">
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search by name"
-                value={searchName}
-                onChange={e => setSearchName(e.target.value)}
-              />
-            </div>
-            <div className="flex-1">
-              <Popover open={openCitySelect} onOpenChange={setOpenCitySelect}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={openCitySelect}
-                    className="w-full justify-between"
-                  >
-                    {searchCityId
-                      ? (cities?.find(
-                          city => city?.id?.toString() === searchCityId
-                        )?.name ?? "Unnamed")
-                      : "All Cities"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[400px] p-0">
-                  <div className="flex flex-col">
-                    <div className="border-b p-2">
-                      <Input
-                        placeholder="Search city..."
-                        value={citySearch}
-                        onChange={e => setCitySearch(e.target.value)}
-                        className="border-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                      />
-                    </div>
-                    <Command>
-                      <CommandList>
-                        <CommandEmpty>No city found.</CommandEmpty>
-                        <CommandGroup className="max-h-[300px] overflow-y-auto p-1">
+        <div className="flex-1">
+          <Popover open={openCitySelect} onOpenChange={setOpenCitySelect}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={openCitySelect}
+                className="w-full justify-between"
+              >
+                {searchCityId
+                  ? (cities?.find(city => city?.id?.toString() === searchCityId)
+                      ?.name ?? "Unnamed")
+                  : "All Cities"}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[400px] p-0">
+              <div className="flex flex-col">
+                <div className="border-b p-2">
+                  <Input
+                    placeholder="Search city..."
+                    value={citySearch}
+                    onChange={e => setCitySearch(e.target.value)}
+                    className="border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                </div>
+                <Command>
+                  <CommandList>
+                    <CommandEmpty>No city found.</CommandEmpty>
+                    <CommandGroup className="max-h-[300px] overflow-y-auto p-1">
+                      <CommandItem
+                        value="all-cities"
+                        onSelect={() => {
+                          setSearchCityId(undefined);
+                          setCitySearch("");
+                          setOpenCitySelect(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            !searchCityId ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        All Cities
+                      </CommandItem>
+                      {(filteredCities || []).map(city => {
+                        if (!city?.id) return null;
+                        return (
                           <CommandItem
-                            value="all-cities"
+                            key={city.id}
+                            value={city.id.toString()}
                             onSelect={() => {
-                              setSearchCityId(undefined);
+                              setSearchCityId(city.id?.toString());
                               setCitySearch("");
                               setOpenCitySelect(false);
                             }}
@@ -445,222 +413,190 @@ export function CemeteryAdministration() {
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
-                                !searchCityId ? "opacity-100" : "opacity-0"
+                                searchCityId === city.id?.toString()
+                                  ? "opacity-100"
+                                  : "opacity-0"
                               )}
                             />
-                            All Cities
+                            {city.name ?? "Unnamed"}{" "}
+                            {city.country?.name ? `(${city.country.name})` : ""}
                           </CommandItem>
-                          {(filteredCities || []).map(city => {
-                            if (!city?.id) return null;
-                            return (
-                              <CommandItem
-                                key={city.id}
-                                value={city.id.toString()}
-                                onSelect={() => {
-                                  setSearchCityId(city.id?.toString());
-                                  setCitySearch("");
-                                  setOpenCitySelect(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    searchCityId === city.id?.toString()
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                {city.name ?? "Unnamed"}{" "}
-                                {city.country?.name
-                                  ? `(${city.country.name})`
-                                  : ""}
-                              </CommandItem>
-                            );
-                          })}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-            <Button
-              onClick={handleSearch}
-              variant="secondary"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="mr-2 h-4 w-4" />
-              )}
-              Search
-            </Button>
-            <Button
-              onClick={handleClearSearch}
-              variant="outline"
-              disabled={isLoading || (!searchName && !searchCityId)}
-            >
-              Reset
-            </Button>
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              variant="outline"
-              disabled={isLoading}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add New
-            </Button>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+        <Button onClick={handleSearch} variant="secondary" disabled={isLoading}>
+          {isLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Search className="mr-2 h-4 w-4" />
+          )}
+          Search
+        </Button>
+        <Button
+          onClick={handleClearSearch}
+          variant="outline"
+          disabled={isLoading || (!searchName && !searchCityId)}
+        >
+          Reset
+        </Button>
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          variant="outline"
+          disabled={isLoading}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Add New
+        </Button>
+      </div>
+
+      {/* Cemetery List */}
+      {isLoading && !isDataFetched ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : cemeteries.length > 0 ? (
+        <>
+          <div className="grid gap-2">
+            {cemeteries.map(cemetery => (
+              <div
+                key={cemetery.id}
+                className="p-2 border rounded flex justify-between items-center"
+              >
+                <div>
+                  <span className="font-medium">
+                    {cemetery.name || "Unnamed"}
+                  </span>
+                  {cemetery.city && (
+                    <span className="ml-2 text-sm text-muted-foreground">
+                      ({cemetery.city.name}
+                      {cemetery.city.province && `, ${cemetery.city.province}`}
+                      {cemetery.city.country?.name &&
+                        `, ${cemetery.city.country.name}`}
+                      )
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {loadingRelationIds.includes(cemetery.id) ? (
+                    <span className="text-xs text-muted-foreground flex items-center">
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Loading...
+                    </span>
+                  ) : obituaryCounts[cemetery.id] > 0 ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1 px-2 text-xs bg-green-50 hover:bg-green-100 border-green-200"
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleOpenRelatedObituaries(cemetery);
+                      }}
+                    >
+                      <FileText className="h-3 w-3" />
+                      {obituaryCounts[cemetery.id]} Obituaries
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={e => {
+                      e.stopPropagation();
+                      setSelectedCemetery(cemetery);
+                      setIsEditDialogOpen(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Cemetery List */}
-          {isLoading && !isDataFetched ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="flex justify-between items-center">
+            <div>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={handleItemsPerPageChange}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Items per page" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10 per page</SelectItem>
+                  <SelectItem value="25">25 per page</SelectItem>
+                  <SelectItem value="50">50 per page</SelectItem>
+                  <SelectItem value="100">100 per page</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          ) : cemeteries.length > 0 ? (
-            <>
-              <div className="grid gap-2">
-                {cemeteries.map(cemetery => (
-                  <div
-                    key={cemetery.id}
-                    className="p-2 border rounded flex justify-between items-center"
-                  >
-                    <div>
-                      <span className="font-medium">
-                        {cemetery.name || "Unnamed"}
-                      </span>
-                      {cemetery.city && (
-                        <span className="ml-2 text-sm text-muted-foreground">
-                          ({cemetery.city.name}
-                          {cemetery.city.province &&
-                            `, ${cemetery.city.province}`}
-                          {cemetery.city.country?.name &&
-                            `, ${cemetery.city.country.name}`}
-                          )
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {loadingRelationIds.includes(cemetery.id) ? (
-                        <span className="text-xs text-muted-foreground flex items-center">
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          Loading...
-                        </span>
-                      ) : obituaryCounts[cemetery.id] > 0 ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center gap-1 px-2 text-xs bg-green-50 hover:bg-green-100 border-green-200"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleOpenRelatedObituaries(cemetery);
-                          }}
-                        >
-                          <FileText className="h-3 w-3" />
-                          {obituaryCounts[cemetery.id]} Obituaries
-                        </Button>
-                      ) : null}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setSelectedCemetery(cemetery);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex justify-between items-center">
-                <div>
-                  <Select
-                    value={itemsPerPage.toString()}
-                    onValueChange={handleItemsPerPageChange}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Items per page" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5 per page</SelectItem>
-                      <SelectItem value="10">10 per page</SelectItem>
-                      <SelectItem value="25">25 per page</SelectItem>
-                      <SelectItem value="50">50 per page</SelectItem>
-                      <SelectItem value="100">100 per page</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage(prev => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1 || isLoading}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="py-2 px-3 text-sm">
-                    Page {currentPage} of {totalPages || 1}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage(prev => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages || isLoading}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          ) : isDataFetched ? (
-            <div className="py-8 text-center text-muted-foreground">
-              No interment places found
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1 || isLoading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="py-2 px-3 text-sm">
+                Page {currentPage} of {totalPages || 1}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage(prev => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages || isLoading}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-          ) : null}
+          </div>
+        </>
+      ) : isDataFetched ? (
+        <div className="py-8 text-center text-muted-foreground">
+          No interment places found
+        </div>
+      ) : null}
 
-          <AddCemeteryDialog
-            isOpen={isDialogOpen}
-            onClose={() => setIsDialogOpen(false)}
-            onAddCemetery={handleAddCemetery}
-            cities={formattedCities}
-            initialValues={{
-              name: searchName,
-              cityId: searchCityId ? parseInt(searchCityId) : undefined
-            }}
-          />
+      <AddCemeteryDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onAddCemetery={handleAddCemetery}
+        cities={formattedCities}
+        initialValues={{
+          name: searchName,
+          cityId: searchCityId ? parseInt(searchCityId) : undefined
+        }}
+      />
 
-          <EditCemeteryDialog
-            isOpen={isEditDialogOpen}
-            onClose={() => {
-              setIsEditDialogOpen(false);
-              setSelectedCemetery(null);
-            }}
-            onEditCemetery={handleEditCemetery}
-            onDeleteCemetery={handleDeleteCemetery}
-            cemetery={selectedCemetery}
-            cities={formattedCities}
-          />
+      <EditCemeteryDialog
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setSelectedCemetery(null);
+        }}
+        onEditCemetery={handleEditCemetery}
+        onDeleteCemetery={handleDeleteCemetery}
+        cemetery={selectedCemetery}
+        cities={formattedCities}
+      />
 
-          <RelatedCemeteryObituariesDialog
-            isOpen={isRelatedDialogOpen}
-            onClose={() => {
-              setIsRelatedDialogOpen(false);
-              setRelatedCemetery(null);
-            }}
-            cemetery={relatedCemetery}
-          />
-        </CardContent>
-      )}
-    </Card>
+      <RelatedCemeteryObituariesDialog
+        isOpen={isRelatedDialogOpen}
+        onClose={() => {
+          setIsRelatedDialogOpen(false);
+          setRelatedCemetery(null);
+        }}
+        cemetery={relatedCemetery}
+      />
+    </div>
   );
 }

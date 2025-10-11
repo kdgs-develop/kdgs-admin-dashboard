@@ -1,13 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -18,10 +11,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
   Edit,
   Loader2,
   Plus,
@@ -73,9 +64,8 @@ export function BatchNumberAdministration() {
     latestEditorRole?: string | null;
   } | null>(null);
   const { toast } = useToast();
-  const [isExpanded, setIsExpanded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
   const [isDataFetched, setIsDataFetched] = useState(false);
   const [batchStatusFilter, setBatchStatusFilter] = useState<
@@ -114,23 +104,17 @@ export function BatchNumberAdministration() {
   };
 
   useEffect(() => {
-    if (isExpanded) {
-      // Only fetch if the component is expanded and we're changing pages
-      // or if it's the first load (data hasn't been fetched yet)
-      fetchBatchNumbers(currentPage);
-    }
+    // Fetch data when component mounts or when dependencies change
+    fetchBatchNumbers(currentPage);
   }, [
     currentPage,
     itemsPerPage,
-    isExpanded,
     sortOrder,
     editorRoleFilter,
     batchStatusFilter
   ]);
 
   const handleSearch = async () => {
-    if (!isExpanded) return;
-
     setIsLoading(true);
     try {
       if (!searchNumber) {
@@ -174,10 +158,8 @@ export function BatchNumberAdministration() {
         title: "Success",
         description: "Batch number added successfully"
       });
-      if (isExpanded) {
-        await fetchBatchNumbers(1);
-        setCurrentPage(1);
-      }
+      await fetchBatchNumbers(1);
+      setCurrentPage(1);
     } catch (error) {
       toast({
         title: "Error adding batch number",
@@ -206,9 +188,7 @@ export function BatchNumberAdministration() {
       });
       setIsEditDialogOpen(false);
       setSelectedBatchNumber(null);
-      if (isExpanded) {
-        fetchBatchNumbers(currentPage);
-      }
+      fetchBatchNumbers(currentPage);
     } catch (error) {
       toast({
         title: "Error updating batch number",
@@ -232,9 +212,7 @@ export function BatchNumberAdministration() {
       });
       setIsEditDialogOpen(false);
       setSelectedBatchNumber(null);
-      if (isExpanded) {
-        fetchBatchNumbers(currentPage);
-      }
+      fetchBatchNumbers(currentPage);
     } catch (error) {
       toast({
         title: "Error deleting batch number",
@@ -247,15 +225,6 @@ export function BatchNumberAdministration() {
     }
   };
 
-  const handleToggleExpand = () => {
-    const newExpandedState = !isExpanded;
-    setIsExpanded(newExpandedState);
-
-    // If expanding and no data has been fetched yet, fetch data
-    if (newExpandedState && !isDataFetched) {
-      fetchBatchNumbers(currentPage);
-    }
-  };
 
   const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(Number(value));
@@ -263,27 +232,7 @@ export function BatchNumberAdministration() {
   };
 
   return (
-    <Card>
-      <CardHeader
-        className="cursor-pointer flex flex-row items-center justify-between"
-        onClick={handleToggleExpand}
-      >
-        <div>
-          <CardTitle>Batch Number Management</CardTitle>
-          {!isExpanded && (
-            <CardDescription>Click to manage batch numbers</CardDescription>
-          )}
-        </div>
-        <Button variant="ghost" size="icon">
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </Button>
-      </CardHeader>
-      {isExpanded && (
-        <CardContent className="space-y-4">
+    <div className="space-y-4">
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
               <div className="md:col-span-3">
@@ -593,7 +542,6 @@ export function BatchNumberAdministration() {
                       <SelectValue placeholder="Items per page" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="5">5 per page</SelectItem>
                       <SelectItem value="10">10 per page</SelectItem>
                       <SelectItem value="25">25 per page</SelectItem>
                       <SelectItem value="50">50 per page</SelectItem>
@@ -657,8 +605,6 @@ export function BatchNumberAdministration() {
             onDeleteBatchNumber={handleDeleteBatchNumber}
             batchNumber={selectedBatchNumber}
           />
-        </CardContent>
-      )}
-    </Card>
+    </div>
   );
 }

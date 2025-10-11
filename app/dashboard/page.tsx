@@ -7,7 +7,7 @@ import { useSearchLoading } from "./search-loading-context";
 export default function ObituaryIndexPage() {
   const searchParams = useSearchParams();
   const offset = parseInt(searchParams.get("offset") ?? "0", 10);
-  const limit = parseInt(searchParams.get("limit") ?? "5", 10);
+  const limit = parseInt(searchParams.get("limit") ?? "10", 10);
   const search = searchParams.get("q") ?? "";
   const { setIsSearchLoading } = useSearchLoading();
 
