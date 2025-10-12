@@ -816,12 +816,12 @@ export function RequestObituaryDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg flex flex-col max-h-[calc(100vh-2rem)]">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[80vh]">
+        <ScrollArea className="flex-1 overflow-y-auto">
           <div className="py-4 pr-6">{renderContent()}</div>
         </ScrollArea>
       </DialogContent>
