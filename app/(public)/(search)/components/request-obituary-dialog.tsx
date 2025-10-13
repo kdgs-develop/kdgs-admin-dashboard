@@ -816,7 +816,7 @@ export function RequestObituaryDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg flex flex-col max-h-[calc(100vh-2rem)]">
+      <DialogContent className="sm:max-w-lg flex flex-col max-h-[calc(100vh-3rem)] sm:max-h-[calc(100vh-2rem)]">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
