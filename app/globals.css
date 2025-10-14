@@ -101,7 +101,7 @@
     /* Use dynamic viewport height for mobile */
   }
 
-  /* Mobile browser navigation bar handling */
+  /* Mobile browser navigation bar handling - Conservative approach */
   @supports (height: 100dvh) {
     .mobile-safe-height {
       height: 100dvh;
@@ -112,10 +112,36 @@
     }
   }
 
+  /* Conservative dialog height for mobile browsers */
+  .dialog-conservative-height {
+    max-height: 80vh;
+    max-height: calc(var(--vh, 1vh) * 80);
+  }
+
+  @media (min-width: 640px) {
+    .dialog-conservative-height {
+      max-height: 85vh;
+      max-height: calc(var(--vh, 1vh) * 85);
+    }
+  }
+
   /* Ensure dialogs respect safe areas on mobile */
   @media (max-width: 640px) {
     .dialog-content-mobile {
       padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+  }
+
+  /* Fallback for browsers without CSS variable support */
+  @supports not (color: var(--vh)) {
+    .dialog-conservative-height {
+      max-height: 80vh;
+    }
+
+    @media (min-width: 640px) {
+      .dialog-conservative-height {
+        max-height: 85vh;
+      }
     }
   }
 }
