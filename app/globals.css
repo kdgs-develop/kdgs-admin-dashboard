@@ -100,6 +100,24 @@
     min-height: 100dvh;
     /* Use dynamic viewport height for mobile */
   }
+
+  /* Mobile browser navigation bar handling */
+  @supports (height: 100dvh) {
+    .mobile-safe-height {
+      height: 100dvh;
+    }
+
+    .mobile-safe-min-height {
+      min-height: 100dvh;
+    }
+  }
+
+  /* Ensure dialogs respect safe areas on mobile */
+  @media (max-width: 640px) {
+    .dialog-content-mobile {
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+  }
 }
 
 /* Chrome, Safari, Edge, Opera */
