@@ -160,6 +160,26 @@ export function RequestObituaryDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, obituaryRef, session?.isLoggedIn, form]);
 
+  // Set up viewport height calculation for better mobile browser compatibility
+  useEffect(() => {
+    const setViewportHeight = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+
+    // Set initial value
+    setViewportHeight();
+
+    // Update on resize
+    window.addEventListener("resize", setViewportHeight);
+    window.addEventListener("orientationchange", setViewportHeight);
+
+    return () => {
+      window.removeEventListener("resize", setViewportHeight);
+      window.removeEventListener("orientationchange", setViewportHeight);
+    };
+  }, []);
+
   const fetchDetails = async (
     ref: string,
     nextStepOnSuccess: RequestStep = "infoDisplay",
@@ -816,7 +836,7 @@ export function RequestObituaryDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg flex flex-col max-h-[calc(100dvh-3rem)] sm:max-h-[calc(100dvh-2rem)]">
+      <DialogContent className="sm:max-w-lg flex flex-col dialog-conservative-height">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
