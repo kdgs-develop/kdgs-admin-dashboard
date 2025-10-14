@@ -128,6 +128,10 @@ export default function RootLayout({
     <Providers>
       <html lang="en">
         <head>
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, viewport-fit=cover"
+          />
           <link rel="icon" href="/kdgs.png" type="image/png" />
           <link rel="shortcut icon" href="/kdgs.png" type="image/png" />
           <link rel="apple-touch-icon" href="/kdgs.png" />
