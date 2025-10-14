@@ -343,7 +343,7 @@ export function RequestObituaryDialog({
                 {error || "Could not load obituary details."}
               </AlertDescription>
             </Alert>
-            <DialogFooter className="pt-4">
+            <DialogFooter className="pt-4 sm:pb-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <DialogClose asChild>
                 <Button variant="outline">Close</Button>
               </DialogClose>
@@ -423,7 +423,7 @@ export function RequestObituaryDialog({
               </Alert>
             )}
 
-            <DialogFooter className="pt-4 sm:justify-start flex-col sm:flex-row sm:gap-2">
+            <DialogFooter className="pt-4 sm:pb-6 pb-[max(1rem,env(safe-area-inset-bottom))] sm:justify-start flex-col sm:flex-row sm:gap-2">
               {isLoggedIn && details.hasImages && (
                 <Button onClick={handleDownload} disabled={isDownloading}>
                   {isDownloading ? (
@@ -638,7 +638,7 @@ export function RequestObituaryDialog({
                   </div>
                 </div>
 
-                <DialogFooter className="pt-4">
+                <DialogFooter className="pt-4 sm:pb-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
                   <Button
                     variant="outline"
                     onClick={() => setStep("infoDisplay")}
@@ -680,7 +680,7 @@ export function RequestObituaryDialog({
             <p className="text-sm text-muted-foreground mt-4">
               File Number: {obituaryRef}
             </p>
-            <DialogFooter className="pt-4">
+            <DialogFooter className="pt-4 sm:pb-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <DialogClose asChild>
                 <Button>Close</Button>
               </DialogClose>
@@ -763,7 +763,7 @@ export function RequestObituaryDialog({
               applicable). If no image is found, you can submit an email
               request.
             </p>
-            <DialogFooter className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <DialogFooter className="pt-4 sm:pb-6 pb-[max(1rem,env(safe-area-inset-bottom))] grid grid-cols-1 sm:grid-cols-2 gap-2">
               <Button onClick={onSignInRequest} className="w-full">
                 <LogIn className="mr-2 h-4 w-4" /> Member Sign In
               </Button>
@@ -816,7 +816,7 @@ export function RequestObituaryDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg flex flex-col max-h-[calc(100vh-3rem)] sm:max-h-[calc(100vh-2rem)]">
+      <DialogContent className="sm:max-w-lg flex flex-col max-h-[calc(100dvh-3rem)] sm:max-h-[calc(100dvh-2rem)]">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
