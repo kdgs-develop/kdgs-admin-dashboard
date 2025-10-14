@@ -112,16 +112,24 @@
     }
   }
 
-  /* Conservative dialog height for mobile browsers */
+  /* Very conservative dialog height for mobile browsers */
   .dialog-conservative-height {
-    max-height: 80vh;
-    max-height: calc(var(--vh, 1vh) * 80);
+    max-height: 70vh;
+    max-height: calc(var(--vh, 1vh) * 70);
+  }
+
+  /* Extra conservative for very small screens */
+  @media (max-width: 480px) {
+    .dialog-conservative-height {
+      max-height: 65vh;
+      max-height: calc(var(--vh, 1vh) * 65);
+    }
   }
 
   @media (min-width: 640px) {
     .dialog-conservative-height {
-      max-height: 85vh;
-      max-height: calc(var(--vh, 1vh) * 85);
+      max-height: 80vh;
+      max-height: calc(var(--vh, 1vh) * 80);
     }
   }
 
@@ -130,17 +138,29 @@
     .dialog-content-mobile {
       padding-bottom: max(1rem, env(safe-area-inset-bottom));
     }
+
+    /* Extra conservative spacing for mobile dialogs */
+    .dialog-conservative-height {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
   }
 
   /* Fallback for browsers without CSS variable support */
   @supports not (color: var(--vh)) {
     .dialog-conservative-height {
-      max-height: 80vh;
+      max-height: 70vh;
+    }
+
+    @media (max-width: 480px) {
+      .dialog-conservative-height {
+        max-height: 65vh;
+      }
     }
 
     @media (min-width: 640px) {
       .dialog-conservative-height {
-        max-height: 85vh;
+        max-height: 80vh;
       }
     }
   }
