@@ -9,6 +9,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks/stripe(.*)",
   "/",
   "/api/download-all-files(.*)",
+  "/payment-success(.*)",
   "/robots.txt",
   "/sitemap.xml"
 ]);
